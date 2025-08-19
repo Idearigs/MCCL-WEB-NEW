@@ -607,54 +607,54 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
           </div>
         </div>
 
-        {/* Mobile Navigation Bar - Luxury Design */}
-        <div className="lg:hidden bg-white border-b border-gray-100">
-          <div className="flex items-center px-8 py-6">
-            {/* Left - Menu */}
+        {/* Mobile Navigation Bar - Minimal Luxury Design */}
+        <div className="lg:hidden bg-white/95 backdrop-blur-sm border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 py-4">
+            {/* Left - Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1 flex-shrink-0"
+              className="p-2 rounded-full hover:bg-gray-50 transition-colors"
             >
-              <Menu className="w-5 h-5 text-gray-600" />
+              <Menu className="w-5 h-5 text-gray-700" />
             </button>
 
-            {/* Center - Logo Only */}
+            {/* Center - Minimal Logo/Brand */}
             <div className="flex-1 flex justify-center">
-              <Link to="/" className="flex items-center">
-                {/* Test Logo - Clean Design */}
-                <img 
-                  src="/test.png" 
-                  alt="McCulloch Jewellers" 
-                  className="h-20 w-auto object-contain"
-                />
+              <Link to="/" className="flex flex-col items-center">
+                <div className="text-lg font-serif tracking-[0.2em] uppercase text-gray-900">
+                  McCulloch
+                </div>
+                <div className="text-[10px] font-serif tracking-[0.3em] uppercase text-gray-500 -mt-0.5">
+                  Jewellers
+                </div>
               </Link>
             </div>
 
-            {/* Right - Actions */}
-            <div className="flex items-center space-x-4 flex-shrink-0">
+            {/* Right - Minimal Actions */}
+            <div className="flex items-center space-x-2">
               {/* Search */}
               <button
                 onClick={() => {
                   setSearchOpen(true);
                   setSearchQuery('');
                 }}
-                className="p-1"
+                className="p-2 rounded-full hover:bg-gray-50 transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <circle cx="11" cy="11" r="8"/>
                   <path d="m21 21-4.35-4.35"/>
                 </svg>
               </button>
 
               {/* Shopping Bag */}
-              <button onClick={openCart} className="p-1 relative">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <button onClick={openCart} className="p-2 rounded-full hover:bg-gray-50 transition-colors relative">
+                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
                   <path d="M3 6h18"/>
                   <path d="M16 10a4 4 0 0 1-8 0"/>
                 </svg>
                 {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gray-900 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
+                  <span className="absolute -top-0.5 -right-0.5 bg-gray-900 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
                     {cartItems.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 )}
@@ -664,116 +664,137 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
         </div>
       </header>
 
-      {/* Mobile Menu - Full Screen Overlay */}
+      {/* Mobile Menu - Elegant Full Screen Overlay */}
         {mobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 bg-white z-50">
             <div className="h-full overflow-y-auto">
-              {/* Mobile Header */}
-              <div className="border-b border-gray-200 px-6 py-4">
+              {/* Mobile Header - Minimal */}
+              <div className="border-b border-gray-100 px-4 py-6">
                 <div className="flex items-center justify-between">
-                  <div className="text-center flex-1">
-                    <div className="text-lg font-light text-gray-900 tracking-[0.25em] uppercase">
-                      McCulloch Jewellers
+                  <div className="flex-1 text-center">
+                    <div className="text-xl font-serif tracking-[0.2em] uppercase text-gray-900">
+                      McCulloch
                     </div>
-                    <div className="text-xs font-light text-gray-500 tracking-[0.3em] uppercase mt-0.5">
-                      London
+                    <div className="text-xs font-serif tracking-[0.3em] uppercase text-gray-500 mt-1">
+                      Jewellers • London
                     </div>
                   </div>
                   <button 
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    className="p-2 hover:bg-gray-50 rounded-full transition-colors"
                   >
-                    <X className="w-5 h-5 text-gray-700" />
+                    <X className="w-5 h-5 text-gray-600" />
                   </button>
                 </div>
               </div>
             
-              <nav className="px-0 py-0 overflow-y-auto">
-                {/* Main Categories */}
-                <div className="grid grid-cols-2 gap-4 p-6">
+              <nav className="px-4 py-6 overflow-y-auto">
+                {/* Main Categories - Clean Grid */}
+                <div className="grid grid-cols-2 gap-3">
                   {/* Engagement */}
                   <Link
                     to="/engagement"
-                    className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <img 
                       src={categoryImages.Engagement}
                       alt="Engagement"
-                      className="w-16 h-16 object-cover rounded-lg mb-3"
+                      className="w-14 h-14 object-cover rounded-lg mb-3 group-hover:scale-105 transition-transform duration-200"
                     />
-                    <span className="text-sm font-light text-gray-800 tracking-wide">Engagement</span>
+                    <span className="text-sm font-serif text-gray-800 tracking-wide">Engagement</span>
                   </Link>
 
                   {/* Wedding */}
                   <Link
                     to="/wedding"
-                    className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <img 
                       src={categoryImages.Wedding}
                       alt="Wedding"
-                      className="w-16 h-16 object-cover rounded-lg mb-3"
+                      className="w-14 h-14 object-cover rounded-lg mb-3 group-hover:scale-105 transition-transform duration-200"
                     />
-                    <span className="text-sm font-light text-gray-800 tracking-wide">Wedding</span>
+                    <span className="text-sm font-serif text-gray-800 tracking-wide">Wedding</span>
                   </Link>
 
                   {/* Diamonds */}
                   <Link
                     to="/diamonds"
-                    className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <img 
                       src={categoryImages.Diamonds}
                       alt="Diamonds"
-                      className="w-16 h-16 object-cover rounded-lg mb-3"
+                      className="w-14 h-14 object-cover rounded-lg mb-3 group-hover:scale-105 transition-transform duration-200"
                     />
-                    <span className="text-sm font-light text-gray-800 tracking-wide">Diamonds</span>
+                    <span className="text-sm font-serif text-gray-800 tracking-wide">Diamonds</span>
                   </Link>
 
                   {/* Jewellery */}
                   <Link
                     to="/jewellery"
-                    className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <img 
                       src={categoryImages.Jewellery}
                       alt="Jewellery"
-                      className="w-16 h-16 object-cover rounded-lg mb-3"
+                      className="w-14 h-14 object-cover rounded-lg mb-3 group-hover:scale-105 transition-transform duration-200"
                     />
-                    <span className="text-sm font-light text-gray-800 tracking-wide">Jewellery</span>
+                    <span className="text-sm font-serif text-gray-800 tracking-wide">Jewellery</span>
+                  </Link>
+
+                  {/* Watches */}
+                  <Link
+                    to="/watches"
+                    className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                      <svg className="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                      </svg>
+                    </div>
+                    <span className="text-sm font-serif text-gray-800 tracking-wide">Watches</span>
                   </Link>
 
                   {/* Heritage */}
                   <Link
                     to="/heritage"
-                    className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <img 
                       src="/images/desilva-family.jpg"
                       alt="Heritage"
-                      className="w-16 h-16 object-cover rounded-lg mb-3"
+                      className="w-14 h-14 object-cover rounded-lg mb-3 group-hover:scale-105 transition-transform duration-200"
                     />
-                    <span className="text-sm font-light text-gray-800 tracking-wide">Heritage</span>
+                    <span className="text-sm font-serif text-gray-800 tracking-wide">Heritage</span>
                   </Link>
+                </div>
 
-                  {/* Contact */}
-                  <Link
-                    to="/contact"
-                    className="flex flex-col items-center text-center p-4 hover:bg-gray-50 rounded-lg transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </div>
-                    <span className="text-sm font-light text-gray-800 tracking-wide">Contact</span>
-                  </Link>
+                {/* Additional Links - Minimal */}
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <div className="flex flex-col space-y-4">
+                    <Link
+                      to="/contact"
+                      className="text-center py-3 text-sm font-serif text-gray-700 hover:text-gray-900 transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Contact Us
+                    </Link>
+                    <Link
+                      to="/guides"
+                      className="text-center py-3 text-sm font-serif text-gray-700 hover:text-gray-900 transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Guides
+                    </Link>
+                  </div>
                 </div>
 
               </nav>

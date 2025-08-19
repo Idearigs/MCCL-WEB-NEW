@@ -187,15 +187,15 @@
     animation-delay: 800ms;
   }
 
-  /* Pop reveal animation for mobile banner */
+  /* Enhanced pop reveal animation for mobile banner */
   @keyframes pop-reveal {
     0% {
       opacity: 0;
-      transform: scale(0.8) translateY(10px);
+      transform: scale(0.7) translateY(15px);
     }
-    20% {
+    60% {
       opacity: 1;
-      transform: scale(1.05) translateY(0);
+      transform: scale(1.08) translateY(-3px);
     }
     100% {
       opacity: 1;
@@ -204,7 +204,23 @@
   }
 
   .animate-pop-reveal {
-    animation: pop-reveal 0.6s ease-out forwards;
+    animation: pop-reveal 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+
+  /* Slide out animation for previous banner item */
+  @keyframes slide-out-up {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+  }
+
+  .animate-slide-out-up {
+    animation: slide-out-up 0.3s ease-in forwards;
   }
 
   /* Search overlay animations */
