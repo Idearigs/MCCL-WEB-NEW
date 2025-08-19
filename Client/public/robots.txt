@@ -1,14 +1,13 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# robots.txt for McCulloch Jewelry
 User-agent: *
 Allow: /
+
+# Block admin or sensitive areas (when backend is added)
+# Disallow: /admin/
+# Disallow: /api/
+
+# Sitemap location
+Sitemap: https://buymediamonds.co.uk/sitemap.xml
+
+# Crawl-delay to be respectful
+Crawl-delay: 1
