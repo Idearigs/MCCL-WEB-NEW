@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronUp, Calendar, Phone, Mail, HelpCircle } from "lucide-react";
 import TopBanner from "./TopBanner";
 
 const LuxuryNavigation = (): JSX.Element => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -228,23 +229,26 @@ const LuxuryNavigation = (): JSX.Element => {
         </nav>
       </div>
 
-      {/* Mobile Menu - Elegant Full Screen Overlay */}
+      {/* Mobile Menu - Professional Structure */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 bg-white z-50">
           <div className="h-full overflow-y-auto">
-            {/* Mobile Header - Minimal */}
-            <div className="border-b border-gray-100 px-4 py-6">
-              <div className="flex items-center justify-between">
+            {/* Mobile Header */}
+            <div className="border-b border-gray-200 px-0 py-0">
+              <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex-1 text-center">
-                  <div className="text-xl font-serif tracking-[0.2em] uppercase text-gray-900">
+                  <div className="text-lg font-serif tracking-[0.2em] uppercase text-gray-900">
                     McCulloch
                   </div>
-                  <div className="text-xs font-serif tracking-[0.3em] uppercase text-gray-500 mt-1">
-                    Jewellers • London
+                  <div className="text-xs font-serif tracking-[0.3em] uppercase text-gray-500 mt-0.5">
+                    Jewellers
                   </div>
                 </div>
                 <button 
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setExpandedSection(null);
+                  }}
                   className="p-2 hover:bg-gray-50 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-600" />
@@ -252,93 +256,277 @@ const LuxuryNavigation = (): JSX.Element => {
               </div>
             </div>
           
-            <nav className="px-4 py-6 overflow-y-auto">
-              {/* Main Categories - Clean Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Engagement */}
-                <Link
-                  to="/engagement"
-                  className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                    <span className="text-2xl">💍</span>
-                  </div>
-                  <span className="text-sm font-serif text-gray-800 tracking-wide">Engagement</span>
-                </Link>
+            <nav className="px-0 py-0 overflow-y-auto">
+              {/* Main Navigation Sections */}
+              <div className="border-b border-gray-200">
+                {/* Engagement Section */}
+                <div className="border-b border-gray-100">
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === 'engagement' ? null : 'engagement')}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">ENGAGEMENT</span>
+                    {expandedSection === 'engagement' ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                  
+                  {expandedSection === 'engagement' && (
+                    <div className="bg-gray-50 border-t border-gray-200">
+                      {/* Diamond Engagement Rings Subsection */}
+                      <div className="px-6 py-4 border-b border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-medium text-gray-700 uppercase tracking-wider">DIAMOND ENGAGEMENT RINGS</span>
+                          <ChevronDown className="w-3 h-3 text-gray-400" />
+                        </div>
+                        <div className="space-y-3 ml-4">
+                          <Link
+                            to="/engagement/all"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            All Engagement Rings
+                          </Link>
+                          <Link
+                            to="/engagement/quickship"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Quickship Collection
+                          </Link>
+                          <Link
+                            to="/engagement/inspiration"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Inspiration Gallery
+                          </Link>
+                          <Link
+                            to="/engagement/reviews"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Reviews
+                          </Link>
+                        </div>
+                      </div>
 
-                {/* Wedding */}
-                <Link
-                  to="/wedding"
-                  className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                    <span className="text-2xl">💒</span>
-                  </div>
-                  <span className="text-sm font-serif text-gray-800 tracking-wide">Wedding</span>
-                </Link>
+                      {/* Shop by Styles Subsection */}
+                      <div className="px-6 py-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-medium text-gray-700 uppercase tracking-wider">SHOP BY STYLES</span>
+                          <ChevronDown className="w-3 h-3 text-gray-400" />
+                        </div>
+                        <div className="space-y-3 ml-4">
+                          <Link
+                            to="/engagement/solitaire"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Solitaire
+                          </Link>
+                          <Link
+                            to="/engagement/trilogy"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Trilogy
+                          </Link>
+                          <Link
+                            to="/engagement/diamond-band"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Diamond Band
+                          </Link>
+                          <Link
+                            to="/engagement/halo"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Halo
+                          </Link>
+                          <Link
+                            to="/engagement/platinum"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Platinum
+                          </Link>
+                          <Link
+                            to="/engagement/rose-gold"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Rose Gold
+                          </Link>
+                          <Link
+                            to="/engagement/yellow-gold"
+                            className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
+                            Yellow Gold
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                {/* Diamonds */}
-                <Link
-                  to="/diamonds"
-                  className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                    <span className="text-2xl">💎</span>
-                  </div>
-                  <span className="text-sm font-serif text-gray-800 tracking-wide">Diamonds</span>
-                </Link>
+                {/* Wedding Section */}
+                <div className="border-b border-gray-100">
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === 'wedding' ? null : 'wedding')}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">WEDDING</span>
+                    {expandedSection === 'wedding' ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
 
-                {/* Jewellery */}
-                <Link
-                  to="/jewellery"
-                  className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                    <span className="text-2xl">✨</span>
-                  </div>
-                  <span className="text-sm font-serif text-gray-800 tracking-wide">Jewellery</span>
-                </Link>
+                {/* Diamonds Section */}
+                <div className="border-b border-gray-100">
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === 'diamonds' ? null : 'diamonds')}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">DIAMONDS</span>
+                    {expandedSection === 'diamonds' ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
 
-                {/* Watches */}
-                <Link
-                  to="/watches"
-                  className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                    <span className="text-2xl">⌚</span>
-                  </div>
-                  <span className="text-sm font-serif text-gray-800 tracking-wide">Watches</span>
-                </Link>
+                {/* Jewellery Section */}
+                <div className="border-b border-gray-100">
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === 'jewellery' ? null : 'jewellery')}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">JEWELLERY</span>
+                    {expandedSection === 'jewellery' ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
 
-                {/* Heritage */}
-                <Link
-                  to="/heritage"
-                  className="flex flex-col items-center text-center p-6 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                    <span className="text-2xl">🏛️</span>
-                  </div>
-                  <span className="text-sm font-serif text-gray-800 tracking-wide">Heritage</span>
-                </Link>
+                {/* Guides Section */}
+                <div className="border-b border-gray-100">
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === 'guides' ? null : 'guides')}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">GUIDES</span>
+                    {expandedSection === 'guides' ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+
+                {/* About Us Section */}
+                <div>
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === 'about' ? null : 'about')}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">ABOUT US</span>
+                    {expandedSection === 'about' ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {/* Additional Links - Minimal */}
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <div className="flex flex-col space-y-4">
-                  <Link
-                    to="/contact"
-                    className="text-center py-3 text-sm font-serif text-gray-700 hover:text-gray-900 transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Contact Us
-                  </Link>
-                </div>
+              {/* Contact & Services Section */}
+              <div className="bg-gray-50">
+                {/* Book Appointment */}
+                <Link
+                  to="/appointment"
+                  className="flex items-center px-6 py-4 border-b border-gray-200 hover:bg-gray-100 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                    <Calendar className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">Book Appointment</div>
+                    <div className="text-xs text-gray-600">Schedule your free consultation</div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
+                </Link>
+
+                {/* Phone */}
+                <Link
+                  to="/contact"
+                  className="flex items-center px-6 py-4 border-b border-gray-200 hover:bg-gray-100 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                    <Phone className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">Phone</div>
+                    <div className="text-xs text-gray-600">Call on +44 207 831 1901</div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
+                </Link>
+
+                {/* Email */}
+                <Link
+                  to="/contact"
+                  className="flex items-center px-6 py-4 border-b border-gray-200 hover:bg-gray-100 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                    <Mail className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">Email</div>
+                    <div className="text-xs text-gray-600">Got any questions about rings? Send us an email</div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
+                </Link>
+
+                {/* Help & FAQs */}
+                <Link
+                  to="/faq"
+                  className="flex items-center px-6 py-4 hover:bg-gray-100 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                    <HelpCircle className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">Help & FAQs</div>
+                    <div className="text-xs text-gray-600">Phone lines available Mon-Fri 9:30am - 6pm</div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
+                </Link>
               </div>
             </nav>
           </div>
