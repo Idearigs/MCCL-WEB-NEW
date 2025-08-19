@@ -232,7 +232,7 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
             <span>UK HANDCRAFTED</span>
           </div>
           
-          {/* Mobile - Pop Reveal Animation */}
+          {/* Mobile - Enhanced Pop Reveal Animation */}
           <div className="lg:hidden flex items-center justify-center h-full w-full">
             <div 
               key={currentBannerIndex}
