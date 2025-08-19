@@ -1,0 +1,65 @@
+name: Deploy to Coolify
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          Client/package-lock.json
+          Server/package-lock.json
+    
+    - name: Install Frontend Dependencies
+      run: |
+        cd Client
+        npm ci
+    
+    - name: Install Backend Dependencies
+      run: |
+        cd Server
+        npm ci
+    
+    - name: Lint Frontend
+      run: |
+        cd Client
+        npm run lint
+    
+    - name: Build Frontend
+      run: |
+        cd Client
+        npm run build
+    
+    - name: Test Backend (when tests are added)
+      run: |
+        cd Server
+        echo "Backend tests will be added here"
+        # npm test
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Coolify
+      uses: fjogeleit/http-request-action@v1
+      with:
+        url: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+        method: 'POST'
+        customHeaders: '{"Content-Type": "application/json"}'
+        data: '{"branch": "main", "commit": "${{ github.sha }}"}'
