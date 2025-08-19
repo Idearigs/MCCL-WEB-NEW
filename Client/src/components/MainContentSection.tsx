@@ -258,9 +258,9 @@ export default function MainContentSection(): JSX.Element {
           Your browser does not support the video tag.
         </video>
         <div className="absolute inset-0 bg-black bg-opacity-40" />
-        <div className="relative flex flex-col items-center justify-center h-full text-center text-white px-4 max-w-none w-full">
+        <div className="relative flex flex-col items-center justify-center h-full text-center text-white px-4 max-w-none w-full pt-16">
           <h1 
-            className="text-[40px] md:text-[56px] leading-[48px] md:leading-[64px] mb-4 md:mb-6 max-w-[700px] opacity-0 animate-fade-in-up shine-effect" 
+            className="text-[40px] md:text-[56px] leading-[48px] md:leading-[64px] mb-4 md:mb-6 max-w-[700px] opacity-0 animate-fade-in-up" 
             style={{ 
               fontFamily: 'Dancing Script, cursive', 
               fontWeight: 400,
