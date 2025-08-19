@@ -2,42 +2,39 @@
 
 # Stage 1: Build the React frontend
 FROM node:18-alpine AS frontend-build
-WORKDIR /app/client
+WORKDIR /app
 COPY Client/package*.json ./
 RUN npm ci
 COPY Client/ .
 RUN npm run build
 
-# Stage 2: Setup the Node.js backend
-FROM node:18-alpine AS backend-build
-WORKDIR /app/server
-COPY Server/package*.json ./
-RUN npm ci
-COPY Server/ .
+# Stage 2: Production image with nginx to serve the frontend
+FROM nginx:alpine AS production
 
-# Stage 3: Production image
-FROM node:18-alpine AS production
-WORKDIR /app
+# Copy built React app to nginx
+COPY --from=frontend-build /app/dist /usr/share/nginx/html
 
-# Install serve to serve static files
-RUN npm install -g serve
+# Copy custom nginx config
+COPY <<EOF /etc/nginx/conf.d/default.conf
+server {
+    listen 3000;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    # Handle React Router
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+    
+    # Handle static assets
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+EOF
 
-# Copy backend files
-COPY --from=backend-build /app/server ./server
-WORKDIR /app/server
-RUN npm ci --only=production
+EXPOSE 3000
 
-# Copy built frontend files
-COPY --from=frontend-build /app/client/dist ./public
-
-# Create a simple script to start both services
-WORKDIR /app
-RUN echo '#!/bin/sh' > start.sh && \
-    echo 'serve -s ./public -p 3000 &' >> start.sh && \
-    echo 'cd server && npm start &' >> start.sh && \
-    echo 'wait' >> start.sh && \
-    chmod +x start.sh
-
-EXPOSE 3000 3001
-
-CMD ["./start.sh"]
+CMD ["nginx", "-g", "daemon off;"]
