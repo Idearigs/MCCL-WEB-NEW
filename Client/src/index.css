@@ -187,24 +187,20 @@
     animation-delay: 800ms;
   }
 
-  /* Enhanced pop reveal animation for mobile banner */
+  /* Clean pop reveal animation for mobile banner */
   @keyframes pop-reveal {
     0% {
       opacity: 0;
-      transform: scale(0.7) translateY(15px);
-    }
-    60% {
-      opacity: 1;
-      transform: scale(1.08) translateY(-3px);
+      transform: translateY(8px);
     }
     100% {
       opacity: 1;
-      transform: scale(1) translateY(0);
+      transform: translateY(0);
     }
   }
 
   .animate-pop-reveal {
-    animation: pop-reveal 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    animation: pop-reveal 0.4s ease-out forwards;
   }
 
   /* Slide out animation for previous banner item */
