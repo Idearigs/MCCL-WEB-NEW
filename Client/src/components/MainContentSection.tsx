@@ -258,9 +258,9 @@ export default function MainContentSection(): JSX.Element {
           Your browser does not support the video tag.
         </video>
         <div className="absolute inset-0 bg-black bg-opacity-40" />
-        <div className="relative flex flex-col items-center md:items-start justify-end pb-24 h-full text-center md:text-left text-white px-4 md:pl-32 md:pr-16 max-w-none w-full">
+        <div className="relative flex flex-col items-center justify-center h-full text-center text-white px-4 max-w-none w-full">
           <h1 
-            className="text-[40px] md:text-[56px] leading-[48px] md:leading-[64px] mb-4 md:mb-6 max-w-[700px] opacity-0 animate-fade-in-up" 
+            className="text-[40px] md:text-[56px] leading-[48px] md:leading-[64px] mb-4 md:mb-6 max-w-[700px] opacity-0 animate-fade-in-up shine-effect" 
             style={{ 
               fontFamily: 'Dancing Script, cursive', 
               fontWeight: 400,
@@ -282,7 +282,7 @@ export default function MainContentSection(): JSX.Element {
           </p>
           <Button
             variant="outline"
-            className="h-[45px] md:h-[50px] w-[240px] md:w-[280px] bg-white bg-opacity-95 border-0 text-gray-900 hover:bg-white hover:bg-opacity-100 transition-all duration-300 font-normal tracking-wider uppercase opacity-0 animate-fade-in-up"
+            className="h-[45px] md:h-[50px] w-[240px] md:w-[280px] bg-white bg-opacity-95 border-0 text-gray-900 hover:bg-white hover:bg-opacity-100 hover:scale-105 transition-all duration-300 font-normal tracking-wider uppercase opacity-0 animate-fade-in-up"
             style={{
               animationDelay: '1.1s',
               animationFillMode: 'forwards'
