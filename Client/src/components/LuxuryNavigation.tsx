@@ -188,12 +188,12 @@ const LuxuryNavigation = (): JSX.Element => {
               {/* Center - Minimal Logo/Brand */}
               <div className="flex-1 flex justify-center">
                 <Link to="/" className="flex flex-col items-center">
-                  <div className={`text-lg font-serif tracking-[0.2em] uppercase transition-colors duration-300 ${
+                  <div className={`text-lg font-cormorant tracking-[0.2em] uppercase transition-colors duration-300 ${
                     isScrolled ? 'text-gray-900' : 'text-white'
                   }`}>
                     McCulloch
                   </div>
-                  <div className={`text-[10px] font-serif tracking-[0.3em] uppercase transition-colors duration-300 ${
+                  <div className={`text-[10px] font-cormorant tracking-[0.3em] uppercase transition-colors duration-300 ${
                     isScrolled ? 'text-gray-500' : 'text-white/70'
                   }`}>
                     Jewellers
@@ -237,10 +237,10 @@ const LuxuryNavigation = (): JSX.Element => {
             <div className="border-b border-gray-200 px-0 py-0">
               <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex-1 text-center">
-                  <div className="text-lg font-serif tracking-[0.2em] uppercase text-gray-900">
+                  <div className="text-lg font-cormorant tracking-[0.2em] uppercase text-gray-900">
                     McCulloch
                   </div>
-                  <div className="text-xs font-serif tracking-[0.3em] uppercase text-gray-500 mt-0.5">
+                  <div className="text-xs font-cormorant tracking-[0.3em] uppercase text-gray-500 mt-0.5">
                     Jewellers
                   </div>
                 </div>
@@ -265,7 +265,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'engagement' ? null : 'engagement')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">ENGAGEMENT</span>
+                    <span className="text-sm font-cormorant font-medium text-gray-800 uppercase tracking-wider">ENGAGEMENT</span>
                     {expandedSection === 'engagement' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -278,7 +278,7 @@ const LuxuryNavigation = (): JSX.Element => {
                       {/* Diamond Engagement Rings Subsection */}
                       <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs font-medium text-gray-700 uppercase tracking-wider">DIAMOND ENGAGEMENT RINGS</span>
+                          <span className="text-xs font-cormorant font-medium text-gray-700 uppercase tracking-wider">DIAMOND ENGAGEMENT RINGS</span>
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-3 ml-4">
@@ -320,7 +320,7 @@ const LuxuryNavigation = (): JSX.Element => {
                       {/* Shop by Styles Subsection */}
                       <div className="px-6 py-4">
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs font-medium text-gray-700 uppercase tracking-wider">SHOP BY STYLES</span>
+                          <span className="text-xs font-cormorant font-medium text-gray-700 uppercase tracking-wider">SHOP BY STYLES</span>
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-3 ml-4">
@@ -392,7 +392,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'wedding' ? null : 'wedding')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">WEDDING</span>
+                    <span className="text-sm font-cormorant font-medium text-gray-800 uppercase tracking-wider">WEDDING</span>
                     {expandedSection === 'wedding' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -407,7 +407,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'diamonds' ? null : 'diamonds')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">DIAMONDS</span>
+                    <span className="text-sm font-cormorant font-medium text-gray-800 uppercase tracking-wider">DIAMONDS</span>
                     {expandedSection === 'diamonds' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -422,7 +422,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'jewellery' ? null : 'jewellery')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">JEWELLERY</span>
+                    <span className="text-sm font-cormorant font-medium text-gray-800 uppercase tracking-wider">JEWELLERY</span>
                     {expandedSection === 'jewellery' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -437,7 +437,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'guides' ? null : 'guides')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">GUIDES</span>
+                    <span className="text-sm font-cormorant font-medium text-gray-800 uppercase tracking-wider">GUIDES</span>
                     {expandedSection === 'guides' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -452,7 +452,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'about' ? null : 'about')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-800 uppercase tracking-wider">ABOUT US</span>
+                    <span className="text-sm font-cormorant font-medium text-gray-800 uppercase tracking-wider">ABOUT US</span>
                     {expandedSection === 'about' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -474,8 +474,8 @@ const LuxuryNavigation = (): JSX.Element => {
                     <Calendar className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">Book Appointment</div>
-                    <div className="text-xs text-gray-600">Schedule your free consultation</div>
+                    <div className="text-sm font-cormorant font-medium text-gray-900">Book Appointment</div>
+                    <div className="text-xs font-cormorant text-gray-600">Schedule your free consultation</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>
@@ -490,8 +490,8 @@ const LuxuryNavigation = (): JSX.Element => {
                     <Phone className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">Phone</div>
-                    <div className="text-xs text-gray-600">Call on +44 207 831 1901</div>
+                    <div className="text-sm font-cormorant font-medium text-gray-900">Phone</div>
+                    <div className="text-xs font-cormorant text-gray-600">Call on +44 207 831 1901</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>
@@ -506,8 +506,8 @@ const LuxuryNavigation = (): JSX.Element => {
                     <Mail className="w-5 h-5 text-purple-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">Email</div>
-                    <div className="text-xs text-gray-600">Got any questions about rings? Send us an email</div>
+                    <div className="text-sm font-cormorant font-medium text-gray-900">Email</div>
+                    <div className="text-xs font-cormorant text-gray-600">Got any questions about rings? Send us an email</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>
@@ -522,8 +522,8 @@ const LuxuryNavigation = (): JSX.Element => {
                     <HelpCircle className="w-5 h-5 text-orange-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">Help & FAQs</div>
-                    <div className="text-xs text-gray-600">Phone lines available Mon-Fri 9:30am - 6pm</div>
+                    <div className="text-sm font-cormorant font-medium text-gray-900">Help & FAQs</div>
+                    <div className="text-xs font-cormorant text-gray-600">Phone lines available Mon-Fri 9:30am - 6pm</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>

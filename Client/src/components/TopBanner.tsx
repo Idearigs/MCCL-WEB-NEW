@@ -39,7 +39,7 @@ const TopBanner = (): JSX.Element => {
       <div className="lg:hidden flex items-center justify-center h-full w-full">
         <div 
           key={currentBannerIndex}
-          className="animate-pop-reveal text-center font-light uppercase tracking-wider"
+          className="animate-pop-reveal text-center font-cormorant font-light uppercase tracking-wider"
         >
           {bannerItems[currentBannerIndex]}
         </div>
