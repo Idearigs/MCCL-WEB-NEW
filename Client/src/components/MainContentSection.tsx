@@ -28,36 +28,171 @@ const jewelryCategories = [
   },
 ];
 
-const productCarouselData = [
-  {
-    id: "ashoka-five-stone-platinum-diamond-eternity-ring",
-    name: "Ashoka Five Stone Half Platinum Diamond Eternity Ring",
-    image: "/images/12045CFRDOP_450x.webp"
-  },
-  {
-    id: "classic-evermore-half-hoop-platinum-diamond-eternity-ring",
-    name: "Classic Evermore Half Hoop Platinum Diamond Eternity Ring", 
-    image: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=400&h=400&fit=crop"
-  },
-  {
-    id: "national-gallery-play-of-light-chelsea-flower-show-ng200-ring",
-    name: "The National Gallery Play of Light Chelsea Flower Show NG200 Ring",
-    image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop"
-  },
-  {
-    id: "blossom-triple-rose-gold-diamond-ring",
-    name: "Blossom Triple Rose Gold Diamond Ring",
-    image: "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=400&h=400&fit=crop"
-  }
-];
+const allProductsData = {
+  'Rings': [
+    {
+      id: "ashoka-five-stone-platinum-diamond-eternity-ring",
+      name: "Ashoka Five Stone Half Platinum Diamond Eternity Ring",
+      image: "/images/12045CFRDOP_450x.webp"
+    },
+    {
+      id: "classic-evermore-half-hoop-platinum-diamond-eternity-ring",
+      name: "Classic Evermore Half Hoop Platinum Diamond Eternity Ring", 
+      image: "/images/prod1.png"
+    },
+    {
+      id: "national-gallery-play-of-light-chelsea-flower-show-ng200-ring",
+      name: "The National Gallery Play of Light Chelsea Flower Show NG200 Ring",
+      image: "/images/prod2.png"
+    },
+    {
+      id: "blossom-triple-rose-gold-diamond-ring",
+      name: "Blossom Triple Rose Gold Diamond Ring",
+      image: "/images/prod3.png"
+    },
+    {
+      id: "beach-yellow-gold-diamond-ring",
+      name: "Beach Yellow Gold Diamond Ring",
+      image: "/images/prod4.png"
+    },
+    {
+      id: "florentine-dolce-vita-cushion-aquamarine-ring",
+      name: "Florentine Dolce Vita Cushion Aquamarine French Yellow Gold Ring",
+      image: "/images/prod5.png"
+    }
+  ],
+  'Earrings': [
+    {
+      id: "diamond-drop-earrings",
+      name: "Classic Diamond Drop Earrings",
+      image: "/images/prod1.png"
+    },
+    {
+      id: "pearl-stud-earrings",
+      name: "Elegant Pearl Stud Earrings",
+      image: "/images/prod2.png"
+    },
+    {
+      id: "gold-hoop-earrings",
+      name: "Rose Gold Hoop Earrings",
+      image: "/images/prod3.png"
+    },
+    {
+      id: "sapphire-cluster-earrings",
+      name: "Sapphire Cluster Drop Earrings",
+      image: "/images/prod4.png"
+    }
+  ],
+  'Necklaces': [
+    {
+      id: "diamond-tennis-necklace",
+      name: "Classic Diamond Tennis Necklace",
+      image: "/images/prod2.png"
+    },
+    {
+      id: "pearl-strand-necklace",
+      name: "Cultured Pearl Strand Necklace",
+      image: "/images/prod3.png"
+    },
+    {
+      id: "emerald-pendant-necklace",
+      name: "Emerald Pendant Gold Necklace",
+      image: "/images/prod4.png"
+    },
+    {
+      id: "vintage-locket-necklace",
+      name: "Vintage Rose Gold Locket Necklace",
+      image: "/images/prod5.png"
+    }
+  ],
+  'Bracelets': [
+    {
+      id: "diamond-tennis-bracelet",
+      name: "Classic Diamond Tennis Bracelet",
+      image: "/images/prod3.png"
+    },
+    {
+      id: "charm-bracelet",
+      name: "Sterling Silver Charm Bracelet",
+      image: "/images/prod4.png"
+    },
+    {
+      id: "gold-bangle-set",
+      name: "Rose Gold Bangle Set",
+      image: "/images/prod5.png"
+    },
+    {
+      id: "vintage-link-bracelet",
+      name: "Vintage Chain Link Bracelet",
+      image: "/images/prod1.png"
+    }
+  ]
+};
+
+const productCarouselData = allProductsData['Rings'];
 
 
 export default function MainContentSection(): JSX.Element {
   const [activeIndex, setActiveIndex] = useState(0);
   const [mobileCarouselIndex, setMobileCarouselIndex] = useState(0);
   const [activeFilter, setActiveFilter] = useState('Rings');
+  const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
+  const desktopScrollRef = useRef<HTMLDivElement>(null);
+
+  // Get current products based on active filter
+  const currentProducts = allProductsData[activeFilter as keyof typeof allProductsData] || allProductsData['Rings'];
+
+  // Auto-slide functionality - every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (desktopScrollRef.current) {
+        const container = desktopScrollRef.current;
+        const cardWidth = 320 + 32; // card width + gap (space-x-8 = 32px)
+        const containerWidth = container.clientWidth;
+        const cardsVisible = Math.floor(containerWidth / cardWidth);
+        const maxIndex = Math.max(0, currentProducts.length - cardsVisible);
+        
+        if (currentProductIndex >= maxIndex) {
+          // Reset to beginning
+          container.scrollTo({ left: 0, behavior: 'smooth' });
+          setCurrentProductIndex(0);
+        } else {
+          // Move to next slide
+          const nextIndex = currentProductIndex + 1;
+          container.scrollTo({ left: nextIndex * cardWidth, behavior: 'smooth' });
+          setCurrentProductIndex(nextIndex);
+        }
+      }
+    }, 3000); // 3 seconds
+
+    return () => clearInterval(interval);
+  }, [currentProductIndex, currentProducts.length]);
+
+  // Navigation arrow handlers
+  const handlePrevious = () => {
+    if (desktopScrollRef.current) {
+      const container = desktopScrollRef.current;
+      const cardWidth = 320 + 32;
+      const newIndex = Math.max(0, currentProductIndex - 1);
+      container.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
+      setCurrentProductIndex(newIndex);
+    }
+  };
+
+  const handleNext = () => {
+    if (desktopScrollRef.current) {
+      const container = desktopScrollRef.current;
+      const cardWidth = 320 + 32;
+      const containerWidth = container.clientWidth;
+      const cardsVisible = Math.floor(containerWidth / cardWidth);
+      const maxIndex = Math.max(0, currentProducts.length - cardsVisible);
+      const newIndex = Math.min(maxIndex, currentProductIndex + 1);
+      container.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
+      setCurrentProductIndex(newIndex);
+    }
+  };
 
   const handleScroll = () => {
     if (scrollRef.current) {
@@ -75,9 +210,21 @@ export default function MainContentSection(): JSX.Element {
       const cardWidth = 200 + 12; // card width + gap
       const scrollLeft = container.scrollLeft;
       const index = Math.round(scrollLeft / cardWidth);
-      setMobileCarouselIndex(Math.min(index, productCarouselData.length - 1));
+      setMobileCarouselIndex(Math.min(index, currentProducts.length - 1));
     }
   };
+
+  // Reset carousels when filter changes
+  useEffect(() => {
+    setMobileCarouselIndex(0);
+    setCurrentProductIndex(0);
+    if (mobileScrollRef.current) {
+      mobileScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+    if (desktopScrollRef.current) {
+      desktopScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [activeFilter]);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -370,28 +517,43 @@ export default function MainContentSection(): JSX.Element {
           {/* Desktop Category Tabs */}
           <div className="hidden lg:flex items-center justify-between mb-12 px-6 lg:px-16">
             <div className="flex space-x-12">
-              <button className="text-xs font-serif font-medium text-gray-900 uppercase tracking-[0.15em] border-b border-gray-900 pb-2 relative">
-                Rings
-              </button>
-              <button className="text-xs font-serif font-medium text-gray-500 uppercase tracking-[0.15em] hover:text-gray-900 transition-colors duration-300 pb-2">
-                Earrings
-              </button>
-              <button className="text-xs font-serif font-medium text-gray-500 uppercase tracking-[0.15em] hover:text-gray-900 transition-colors duration-300 pb-2">
-                Necklaces
-              </button>
-              <button className="text-xs font-serif font-medium text-gray-500 uppercase tracking-[0.15em] hover:text-gray-900 transition-colors duration-300 pb-2">
-                Bracelets
-              </button>
+              {['Rings', 'Earrings', 'Necklaces', 'Bracelets'].map((filter) => (
+                <button 
+                  key={filter}
+                  onClick={() => {
+                    setActiveFilter(filter);
+                    setCurrentProductIndex(0); // Reset to beginning when changing filter
+                  }}
+                  className={`text-sm font-serif font-medium uppercase tracking-[0.15em] transition-colors duration-300 pb-2 relative ${
+                    activeFilter === filter 
+                      ? 'text-gray-900 border-b border-gray-900' 
+                      : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
             </div>
             
             {/* Navigation Arrows */}
             <div className="flex space-x-3">
-              <button className="w-10 h-10 border border-gray-300 hover:border-gray-500 transition-colors duration-300 flex items-center justify-center">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button 
+                onClick={handlePrevious}
+                disabled={currentProductIndex === 0}
+                className={`w-10 h-10 border transition-colors duration-300 flex items-center justify-center ${
+                  currentProductIndex === 0 
+                    ? 'border-gray-200 cursor-not-allowed' 
+                    : 'border-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <svg className={`w-4 h-4 ${currentProductIndex === 0 ? 'text-gray-300' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <button className="w-10 h-10 border border-gray-300 hover:border-gray-500 transition-colors duration-300 flex items-center justify-center">
+              <button 
+                onClick={handleNext}
+                className="w-10 h-10 border border-gray-300 hover:border-gray-500 transition-colors duration-300 flex items-center justify-center"
+              >
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                 </svg>
@@ -406,7 +568,7 @@ export default function MainContentSection(): JSX.Element {
                 <button 
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
-                  className={`text-[13px] font-cormorant font-medium uppercase transition-colors duration-300 pb-2 relative ${
+                  className={`text-[15px] font-cormorant font-medium uppercase transition-colors duration-300 pb-2 relative ${
                     activeFilter === filter 
                       ? 'text-gray-900 border-b border-gray-900' 
                       : 'text-gray-500 hover:text-gray-900'
@@ -419,38 +581,16 @@ export default function MainContentSection(): JSX.Element {
           </div>
 
           {/* Desktop Product Carousel */}
-          <div className="hidden lg:block overflow-x-auto scrollbar-hide px-6 lg:px-16">
-            <div className="flex space-x-8 pb-8">
+          <div 
+            ref={desktopScrollRef}
+            className="hidden lg:block overflow-x-auto scrollbar-hide px-6 lg:px-16"
+          >
+            <div className="flex space-x-8 pb-8 transition-all duration-300">
               {/* Product Cards */}
-              {[
-                {
-                  name: "Ashoka Five Stone Half Platinum Diamond Eternity Ring",
-                  image: "/images/12045CFRDOP_450x.webp"
-                },
-                {
-                  name: "Classic Evermore Half Hoop Platinum Diamond Eternity Ring",
-                  image: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=400&h=400&fit=crop"
-                },
-                {
-                  name: "The National Gallery Play of Light Chelsea Flower Show NG200 Ring",
-                  image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop"
-                },
-                {
-                  name: "Blossom Triple Rose Gold Diamond Ring",
-                  image: "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=400&h=400&fit=crop"
-                },
-                {
-                  name: "Beach Yellow Gold Diamond Ring",
-                  image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop"
-                },
-                {
-                  name: "Florentine Dolce Vita Cushion Aquamarine French Yellow Gold Ring",
-                  image: "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=400&h=400&fit=crop"
-                }
-              ].map((product, index) => (
+              {currentProducts.map((product, index) => (
                 <Link 
-                  key={index}
-                  to={`/product/${product.id || 'ashoka-five-stone-platinum-diamond-eternity-ring'}`}
+                  key={`${activeFilter}-${index}`}
+                  to={`/product/${product.id}`}
                   className="flex-shrink-0 group cursor-pointer block"
                   style={{ width: '320px', minHeight: '520px' }}
                 >
@@ -482,7 +622,7 @@ export default function MainContentSection(): JSX.Element {
                 }}
               >
                 <div className="flex gap-4" style={{ width: 'max-content' }}>
-                  {productCarouselData.map((product, index) => (
+                  {currentProducts.map((product, index) => (
                     <Link 
                       key={index}
                       to={`/product/${product.id}`}
@@ -511,7 +651,7 @@ export default function MainContentSection(): JSX.Element {
             {/* Mobile Reactive Scroll Indicator */}
             <div className="flex justify-center">
               <div className="flex space-x-2">
-                {productCarouselData.map((_, index) => (
+                {currentProducts.map((_, index) => (
                   <div
                     key={index}
                     className={`h-0.5 rounded-full transition-all duration-300 ${
@@ -526,9 +666,16 @@ export default function MainContentSection(): JSX.Element {
           {/* Desktop Scroll Indicator */}
           <div className="hidden lg:flex justify-center mt-12">
             <div className="flex space-x-2">
-              <div className="w-8 h-0.5 bg-gray-900"></div>
-              <div className="w-4 h-0.5 bg-gray-300"></div>
-              <div className="w-4 h-0.5 bg-gray-300"></div>
+              {currentProducts.slice(0, Math.min(currentProducts.length, 4)).map((_, index) => (
+                <div
+                  key={`${activeFilter}-indicator-${index}`}
+                  className={`h-0.5 rounded-full transition-all duration-500 ease-in-out ${
+                    index === currentProductIndex 
+                      ? 'w-8 bg-gray-900' 
+                      : 'w-4 bg-gray-300'
+                  }`}
+                />
+              ))}
             </div>
           </div>
         </div>

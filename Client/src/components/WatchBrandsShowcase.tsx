@@ -40,7 +40,7 @@ const watchBrands: WatchBrand[] = [
     title: "Roamer",
     description: "Swiss precision meets timeless elegance. Roamer has been crafting exceptional timepieces since 1888, combining traditional Swiss watchmaking with cutting-edge technology to create watches that stand the test of time.",
     location: "SWITZERLAND",
-    video: "/images/watch.mp4",
+    video: "/videos/Workshop - landscape 1080p.mp4",
     route: "/roamer",
     color: "#2C5530"
   }
@@ -59,7 +59,7 @@ const WatchBrandsShowcase = (): JSX.Element => {
       setTimeout(() => {
         setCurrentBrandIndex((prev) => (prev + 1) % watchBrands.length);
         setIsTransitioning(false);
-      }, 1200);
+      }, 400); // Quick content transition
     }, 15000); // Change every 15 seconds
 
     return () => clearInterval(interval);
@@ -67,21 +67,25 @@ const WatchBrandsShowcase = (): JSX.Element => {
 
   return (
     <section className="relative h-[800px] overflow-hidden">
-      {/* Video Background with Transition */}
+      {/* Video Background with Crossfade Transition */}
       <div className="absolute inset-0">
-        <video
-          key={currentBrand.id}
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-[1500ms] ease-in-out ${
-            isTransitioning ? 'opacity-0' : 'opacity-100'
-          }`}
-          autoPlay
-          loop
-          muted
-          playsInline
-        >
-          <source src={currentBrand.video} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        {/* Render all videos and show/hide with opacity */}
+        {watchBrands.map((brand, index) => (
+          <video
+            key={brand.id}
+            className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-800 ease-in-out ${
+              index === currentBrandIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+          >
+            <source src={brand.video} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        ))}
       </div>
       
       {/* Dark Overlay */}
@@ -92,7 +96,7 @@ const WatchBrandsShowcase = (): JSX.Element => {
         <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full">
           
           {/* Left Content */}
-          <div className={`flex flex-col justify-center px-6 md:px-12 lg:pl-32 lg:pr-16 text-white transition-all duration-[1200ms] ease-in-out ${
+          <div className={`flex flex-col justify-center px-6 md:px-12 lg:pl-32 lg:pr-16 text-white transition-all duration-800 ease-in-out ${
             isTransitioning ? 'opacity-0 transform translate-y-8' : 'opacity-100 transform translate-y-0'
           }`}>
             <h1 
@@ -123,7 +127,7 @@ const WatchBrandsShowcase = (): JSX.Element => {
           </div>
           
           {/* Right Content - Large Brand Text */}
-          <div className={`hidden lg:flex flex-col justify-center items-end pr-16 xl:pr-24 transition-all duration-[1200ms] ease-in-out ${
+          <div className={`hidden lg:flex flex-col justify-center items-end pr-16 xl:pr-24 transition-all duration-800 ease-in-out ${
             isTransitioning ? 'opacity-0 transform translate-x-8' : 'opacity-100 transform translate-x-0'
           }`}>
             <div className="text-right">
@@ -146,7 +150,7 @@ const WatchBrandsShowcase = (): JSX.Element => {
       </div>
       
       {/* Mobile Brand Text Overlay */}
-      <div className={`lg:hidden absolute bottom-8 right-6 text-right transition-all duration-[1200ms] ease-in-out ${
+      <div className={`lg:hidden absolute bottom-8 right-6 text-right transition-all duration-800 ease-in-out ${
         isTransitioning ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
       }`}>
         <h2 
@@ -169,11 +173,13 @@ const WatchBrandsShowcase = (): JSX.Element => {
           <button
             key={index}
             onClick={() => {
-              setIsTransitioning(true);
-              setTimeout(() => {
-                setCurrentBrandIndex(index);
-                setIsTransitioning(false);
-              }, 600);
+              if (index !== currentBrandIndex) {
+                setIsTransitioning(true);
+                setTimeout(() => {
+                  setCurrentBrandIndex(index);
+                  setIsTransitioning(false);
+                }, 400);
+              }
             }}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${
               index === currentBrandIndex 

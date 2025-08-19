@@ -4,7 +4,13 @@
       "Bash(npm run lint)",
       "Bash(npm run build:*)",
       "WebFetch(domain:localhost)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "WebFetch(domain:coolify.io)",
+      "Bash(mkdir:*)",
+      "WebFetch(domain:coolify.buymediamonds.co.uk)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
