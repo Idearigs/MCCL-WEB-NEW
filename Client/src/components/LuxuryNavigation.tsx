@@ -2,11 +2,31 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, ChevronDown, ChevronUp, Calendar, Phone, Mail, HelpCircle } from "lucide-react";
 import TopBanner from "./TopBanner";
+import CartSlide from "./CartSlide";
+import SearchOverlay from "./SearchOverlay";
+import { useCart } from "../contexts/CartContext";
+import { useIsMobile } from "../hooks/use-mobile";
 
 const LuxuryNavigation = (): JSX.Element => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  
+  // Cart context
+  const { 
+    cartItems, 
+    isCartOpen, 
+    isCartVisible, 
+    openCart, 
+    closeCart, 
+    updateQuantity, 
+    removeItem, 
+    getCartCount 
+  } = useCart();
+
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,12 +38,35 @@ const LuxuryNavigation = (): JSX.Element => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Functions for mobile menu animation
+  const openMobileMenu = () => {
+    setMobileMenuVisible(true);
+    setTimeout(() => setMobileMenuOpen(true), 10);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+    setTimeout(() => {
+      setMobileMenuVisible(false);
+      setExpandedSection(null);
+    }, 200);
+  };
+
+  // Functions for search
+  const openSearch = () => {
+    setSearchOpen(true);
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 z-50">
         <TopBanner />
         <nav 
-          className={`transition-all duration-300 ${
+          className={`relative transition-all duration-300 ${
             isScrolled 
               ? 'bg-white/95 backdrop-blur-sm shadow-sm' 
               : 'bg-transparent'
@@ -59,14 +102,16 @@ const LuxuryNavigation = (): JSX.Element => {
 
                 {/* Right Icons */}
                 <div className="flex items-center space-x-4 min-w-[120px] justify-end">
-                  <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                    isScrolled 
-                      ? 'text-gray-600 hover:text-gray-900' 
-                      : 'text-white hover:text-white/80'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
-                  </svg>
+                  <button onClick={openSearch}>
+                    <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
+                      isScrolled 
+                        ? 'text-gray-600 hover:text-gray-900' 
+                        : 'text-white hover:text-white/80'
+                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                  </button>
                   <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
                     isScrolled 
                       ? 'text-gray-600 hover:text-gray-900' 
@@ -82,15 +127,29 @@ const LuxuryNavigation = (): JSX.Element => {
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                   </svg>
-                  <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                    isScrolled 
-                      ? 'text-gray-600 hover:text-gray-900' 
-                      : 'text-white hover:text-white/80'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-                    <path d="M3 6h18"/>
-                    <path d="M16 10a4 4 0 0 1-8 0"/>
-                  </svg>
+                  <button 
+                    onClick={openCart}
+                    className="relative"
+                  >
+                    <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
+                      isScrolled 
+                        ? 'text-gray-600 hover:text-gray-900' 
+                        : 'text-white hover:text-white/80'
+                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                      <path d="M3 6h18"/>
+                      <path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                    {getCartCount() > 0 && (
+                      <span className={`absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium ${
+                        isScrolled 
+                          ? 'bg-gray-900 text-white' 
+                          : 'bg-white text-gray-900'
+                      }`}>
+                        {getCartCount()}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -177,7 +236,7 @@ const LuxuryNavigation = (): JSX.Element => {
             <div className="flex items-center justify-between">
               {/* Left - Menu Button */}
               <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={openMobileMenu}
                 className="p-2 rounded-full hover:bg-white/10 transition-colors"
               >
                 <Menu className={`w-5 h-5 transition-colors duration-300 ${
@@ -204,7 +263,10 @@ const LuxuryNavigation = (): JSX.Element => {
               {/* Right - Minimal Actions */}
               <div className="flex items-center space-x-2">
                 {/* Search */}
-                <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                <button 
+                  onClick={openSearch}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                >
                   <svg className={`w-4 h-4 transition-colors duration-300 ${
                     isScrolled ? 'text-gray-700' : 'text-white'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -214,7 +276,10 @@ const LuxuryNavigation = (): JSX.Element => {
                 </button>
 
                 {/* Shopping Bag */}
-                <button className="p-2 rounded-full hover:bg-white/10 transition-colors relative">
+                <button 
+                  onClick={openCart}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors relative"
+                >
                   <svg className={`w-4 h-4 transition-colors duration-300 ${
                     isScrolled ? 'text-gray-700' : 'text-white'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -222,17 +287,51 @@ const LuxuryNavigation = (): JSX.Element => {
                     <path d="M3 6h18"/>
                     <path d="M16 10a4 4 0 0 1-8 0"/>
                   </svg>
+                  {getCartCount() > 0 && (
+                    <span className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium ${
+                      isScrolled 
+                        ? 'bg-gray-900 text-white' 
+                        : 'bg-white text-gray-900'
+                    }`}>
+                      {getCartCount()}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
           </div>
+          
+          {/* Desktop Search Overlay - positioned at very top */}
+          {searchOpen && !isMobile && (
+            <div className="absolute top-0 left-0 right-0 z-60">
+              <SearchOverlay
+                isOpen={searchOpen}
+                onClose={closeSearch}
+                isMobile={false}
+              />
+            </div>
+          )}
         </nav>
       </div>
 
-      {/* Mobile Menu - Professional Structure */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 bg-white z-50">
-          <div className="h-full overflow-y-auto">
+      {/* Mobile Menu - Professional Structure with Animations */}
+      {mobileMenuVisible && (
+        <div className="lg:hidden fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div 
+            className={`absolute inset-0 bg-black transition-opacity duration-200 ${
+              mobileMenuOpen ? 'bg-opacity-20' : 'bg-opacity-0'
+            }`}
+            onClick={closeMobileMenu}
+          />
+          
+          {/* Menu Panel */}
+          <div 
+            className={`absolute left-0 top-0 h-full w-full bg-white shadow-xl transform transition-transform duration-200 ease-out ${
+              mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            <div className="h-full overflow-y-auto">
             {/* Mobile Header */}
             <div className="border-b border-gray-200 px-0 py-0">
               <div className="flex items-center justify-between px-6 py-4">
@@ -245,10 +344,7 @@ const LuxuryNavigation = (): JSX.Element => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setExpandedSection(null);
-                  }}
+                  onClick={closeMobileMenu}
                   className="p-2 hover:bg-gray-50 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-600" />
@@ -285,7 +381,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/all"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             All Engagement Rings
@@ -293,7 +389,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/quickship"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Quickship Collection
@@ -301,7 +397,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/inspiration"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Inspiration Gallery
@@ -309,7 +405,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/reviews"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Reviews
@@ -327,7 +423,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/solitaire"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Solitaire
@@ -335,7 +431,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/trilogy"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Trilogy
@@ -343,7 +439,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/diamond-band"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Diamond Band
@@ -351,7 +447,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/halo"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Halo
@@ -359,7 +455,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/platinum"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Platinum
@@ -367,7 +463,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/rose-gold"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Rose Gold
@@ -375,7 +471,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           <Link
                             to="/engagement/yellow-gold"
                             className="flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={closeMobileMenu}
                           >
                             <span className="w-2 h-2 bg-gray-300 rounded-full mr-3"></span>
                             Yellow Gold
@@ -529,8 +625,28 @@ const LuxuryNavigation = (): JSX.Element => {
                 </Link>
               </div>
             </nav>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Cart Slide Component */}
+      <CartSlide
+        isOpen={isCartOpen}
+        isVisible={isCartVisible}
+        cartItems={cartItems}
+        onClose={closeCart}
+        onUpdateQuantity={updateQuantity}
+        onRemoveItem={removeItem}
+      />
+
+      {/* Mobile Search Overlay Component */}
+      {searchOpen && isMobile && (
+        <SearchOverlay
+          isOpen={searchOpen}
+          onClose={closeSearch}
+          isMobile={true}
+        />
       )}
     </>
   );

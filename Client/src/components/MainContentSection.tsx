@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
 import WatchBrandsShowcase from "./WatchBrandsShowcase";
+import AddToCartButton from "./AddToCartButton";
 
 const jewelryCategories = [
   {
@@ -493,19 +494,21 @@ export default function MainContentSection(): JSX.Element {
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
             
-            <div className="px-6 lg:px-0 mx-5 lg:mx-0">
+            <div className="px-6 lg:px-0 mx-5 lg:mx-0 mt-8 lg:mt-0 text-center lg:text-left">
               <h2 className="text-2xl font-serif font-normal text-gray-900 mb-4 tracking-normal leading-tight">
                 Engagement Rings
               </h2>
               <p className="text-sm font-cormorant font-normal text-gray-700 mb-6 leading-relaxed">
                 Start your love story in style with an iconic McCulloch ring
               </p>
-              <button className="group flex items-center text-xs font-serif font-medium text-gray-800 uppercase tracking-[0.15em] hover:text-gray-600 transition-colors duration-300">
-                <span>Discover More</span>
-                <svg className="ml-2 w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+              <div className="flex justify-center lg:justify-start">
+                <button className="group flex items-center text-xs font-serif font-medium text-gray-800 uppercase tracking-[0.15em] hover:text-gray-600 transition-colors duration-300">
+                  <span>Discover More</span>
+                  <svg className="ml-2 w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -594,12 +597,23 @@ export default function MainContentSection(): JSX.Element {
                   className="flex-shrink-0 group cursor-pointer block"
                   style={{ width: '320px', minHeight: '520px' }}
                 >
-                  <div className="relative mb-8 bg-white">
+                  <div className="relative mb-8 bg-white group">
                     <img
                       src={product.image}
                       alt={product.name}
                       className="w-full h-[28rem] object-contain transition-transform duration-500 group-hover:scale-105"
                     />
+                    {/* Add to Cart Button - appears on hover */}
+                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+                      <AddToCartButton 
+                        product={{
+                          id: product.id,
+                          name: product.name,
+                          image: product.image
+                        }}
+                        className="px-6 py-2"
+                      />
+                    </div>
                   </div>
                   <h3 className="text-base font-cormorant font-normal text-gray-900 leading-7 px-2 mt-6">
                     {product.name}
@@ -632,12 +646,23 @@ export default function MainContentSection(): JSX.Element {
                         scrollSnapAlign: 'start'
                       }}
                     >
-                      <div className="relative mb-6 bg-white p-6 shadow-sm rounded-lg transition-transform duration-300 group-hover:scale-[1.02]">
+                      <div className="relative mb-6 bg-white p-6 shadow-sm rounded-lg transition-transform duration-300 group-hover:scale-[1.02] group">
                         <img
                           src={product.image}
                           alt={product.name}
                           className="w-full h-72 object-contain transition-transform duration-500 group-hover:scale-105"
                         />
+                        {/* Add to Cart Button - appears on mobile tap/hover */}
+                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 rounded-lg">
+                          <AddToCartButton 
+                            product={{
+                              id: product.id,
+                              name: product.name,
+                              image: product.image
+                            }}
+                            className="px-4 py-2 text-xs"
+                          />
+                        </div>
                       </div>
                       <h3 className="text-sm font-cormorant font-normal text-gray-900 leading-6 text-left">
                         {product.name}

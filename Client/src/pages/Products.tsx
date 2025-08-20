@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FooterSection } from "../components/FooterSection";
-import LuxuryNavigation from "../components/LuxuryNavigation";
+import StaticNavigation from "../components/StaticNavigation";
 
 const Products = (): JSX.Element => {
   const [likedProducts, setLikedProducts] = useState<Set<number>>(new Set());
@@ -70,10 +70,10 @@ const Products = (): JSX.Element => {
   };
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
-      <LuxuryNavigation />
+      <StaticNavigation />
       
       {/* Main Products Content */}
-      <main className="flex-1 py-8">
+      <main className="flex-1 pt-44 pb-8">
         <div className="w-full px-[40px]">
           {/* Breadcrumb Navigation */}
           <nav className="mb-8">
