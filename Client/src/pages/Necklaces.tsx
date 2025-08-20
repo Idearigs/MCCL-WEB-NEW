@@ -5,6 +5,7 @@ import StaticNavigation from "../components/StaticNavigation";
 const Necklaces = (): JSX.Element => {
   const [likedProducts, setLikedProducts] = useState<Set<number>>(new Set());
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('necklaces');
 
   const toggleLike = (productId: number) => {
     setLikedProducts(prev => {
@@ -75,10 +76,10 @@ const Necklaces = (): JSX.Element => {
       <StaticNavigation />
       
       {/* Main Necklaces Content */}
-      <main className="flex-1 pt-44 pb-8">
-        <div className="w-full px-[40px]">
+      <main className="flex-1 pt-32 lg:pt-44 pb-8">
+        <div className="w-full px-4 lg:px-[40px]">
           {/* Breadcrumb Navigation */}
-          <nav className="mb-8">
+          <nav className="mb-3 lg:mb-8">
             <div className="flex items-center text-sm text-gray-500 font-light">
               <span className="hover:text-gray-700 cursor-pointer">Home</span>
               <span className="mx-2">→</span>
@@ -89,12 +90,12 @@ const Necklaces = (): JSX.Element => {
           </nav>
 
           {/* Page Title and Description */}
-          <div className="mb-12">
-            <h1 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6 font-cormorant">
+          <div className="mb-10 lg:mb-12">
+            <h1 className="text-3xl lg:text-5xl font-normal text-gray-900 mb-4 lg:mb-6 font-cormorant">
               Necklaces
             </h1>
             <div className="max-w-2xl">
-              <p className="text-base text-gray-700 leading-relaxed mb-4 font-cormorant">
+              <p className="text-base lg:text-base text-gray-700 leading-relaxed mb-4 lg:mb-4 font-cormorant">
                 Explore our stunning collection of necklaces, from delicate chains to bold statement pieces. 
                 Each necklace is designed to complement your neckline beautifully, featuring exquisite gemstones 
                 and precious metals that add elegance to any ensemble.
@@ -106,8 +107,65 @@ const Necklaces = (): JSX.Element => {
           </div>
 
           {/* Filter Bar */}
-          <div className="mb-8 pb-6 border-b border-gray-200 relative">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="mb-6 lg:mb-8 pb-4 lg:pb-6 border-b border-gray-200 relative">
+            {/* Mobile Filter Bar - Horizontal Scroll */}
+            <div className="lg:hidden">
+              <div className="flex overflow-x-auto gap-6 pb-2 scrollbar-hide">
+                <button 
+                  onClick={() => setSelectedCategory('necklaces')}
+                  className={`flex-shrink-0 text-sm font-inter uppercase tracking-wider whitespace-nowrap transition-colors ${
+                    selectedCategory === 'necklaces' 
+                      ? 'font-medium text-gray-900' 
+                      : 'font-light text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Necklaces
+                </button>
+                <button 
+                  onClick={() => setSelectedCategory('pendants')}
+                  className={`flex-shrink-0 text-sm font-inter uppercase tracking-wider whitespace-nowrap transition-colors ${
+                    selectedCategory === 'pendants' 
+                      ? 'font-medium text-gray-900' 
+                      : 'font-light text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Pendants
+                </button>
+                <button 
+                  onClick={() => setSelectedCategory('chains')}
+                  className={`flex-shrink-0 text-sm font-inter uppercase tracking-wider whitespace-nowrap transition-colors ${
+                    selectedCategory === 'chains' 
+                      ? 'font-medium text-gray-900' 
+                      : 'font-light text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Chains
+                </button>
+                <button 
+                  onClick={() => setSelectedCategory('chokers')}
+                  className={`flex-shrink-0 text-sm font-inter uppercase tracking-wider whitespace-nowrap transition-colors ${
+                    selectedCategory === 'chokers' 
+                      ? 'font-medium text-gray-900' 
+                      : 'font-light text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Chokers
+                </button>
+                <button 
+                  onClick={() => setSelectedCategory('pearl')}
+                  className={`flex-shrink-0 text-sm font-inter uppercase tracking-wider whitespace-nowrap transition-colors ${
+                    selectedCategory === 'pearl' 
+                      ? 'font-medium text-gray-900' 
+                      : 'font-light text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Pearl Necklaces
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop Filter Bar - Original Layout */}
+            <div className="hidden lg:flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-6 text-sm font-inter relative">
                 {/* Price Filter */}
                 <div className="relative">
@@ -369,10 +427,10 @@ const Necklaces = (): JSX.Element => {
           </div>
           
           {/* Necklace Product Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
             {/* Necklace Product 1 */}
             <div className="group cursor-pointer bg-white transition-all duration-300">
-              <div className="relative bg-gray-50 overflow-hidden mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
+              <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
                 <button 
                   onClick={() => toggleLike(1)}
                   className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center transition-colors"
@@ -422,7 +480,7 @@ const Necklaces = (): JSX.Element => {
 
             {/* Necklace Product 2 */}
             <div className="group cursor-pointer bg-white transition-all duration-300">
-              <div className="relative bg-gray-50 overflow-hidden mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
+              <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
                 <button 
                   onClick={() => toggleLike(2)}
                   className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center transition-colors"
@@ -471,7 +529,7 @@ const Necklaces = (): JSX.Element => {
 
             {/* Necklace Product 3 */}
             <div className="group cursor-pointer bg-white transition-all duration-300">
-              <div className="relative bg-gray-50 overflow-hidden mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
+              <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
                 <button 
                   onClick={() => toggleLike(3)}
                   className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center transition-colors"
@@ -520,7 +578,7 @@ const Necklaces = (): JSX.Element => {
 
             {/* Necklace Product 4 */}
             <div className="group cursor-pointer bg-white transition-all duration-300">
-              <div className="relative bg-gray-50 overflow-hidden mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
+              <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
                 <button 
                   onClick={() => toggleLike(4)}
                   className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center transition-colors"

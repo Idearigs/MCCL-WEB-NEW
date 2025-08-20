@@ -13,6 +13,7 @@ const LuxuryNavigation = (): JSX.Element => {
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [engagementHover, setEngagementHover] = useState(false);
   
   // Cart context
   const { 
@@ -67,9 +68,11 @@ const LuxuryNavigation = (): JSX.Element => {
         <TopBanner />
         <nav 
           className={`relative transition-all duration-300 ${
-            isScrolled 
-              ? 'bg-white/95 backdrop-blur-sm shadow-sm' 
-              : 'bg-transparent'
+            engagementHover
+              ? 'bg-white shadow-lg'
+              : isScrolled 
+                ? 'bg-white/95 backdrop-blur-sm shadow-sm' 
+                : 'bg-transparent'
           }`}
         >
           {/* Desktop Navigation */}
@@ -80,7 +83,7 @@ const LuxuryNavigation = (): JSX.Element => {
                 {/* Left side */}
                 <div className="flex items-center space-x-4 min-w-[120px]">
                   <span className={`text-xs uppercase tracking-widest transition-colors duration-300 ${
-                    isScrolled ? 'text-gray-600' : 'text-white/70'
+                    engagementHover || isScrolled ? 'text-gray-600' : 'text-white/70'
                   }`}>UK</span>
                 </div>
 
@@ -88,12 +91,12 @@ const LuxuryNavigation = (): JSX.Element => {
                 <div className="flex-1 flex justify-center mx-12">
                   <Link to="/" className="flex flex-col items-center">
                     <div className={`text-2xl font-serif font-light tracking-[0.3em] uppercase transition-colors duration-300 ${
-                      isScrolled ? 'text-gray-900' : 'text-white'
+                      engagementHover || isScrolled ? 'text-gray-900' : 'text-white'
                     }`}>
                       McCulloch
                     </div>
                     <div className={`text-sm font-light tracking-[0.5em] uppercase transition-colors duration-300 ${
-                      isScrolled ? 'text-gray-600' : 'text-white/80'
+                      engagementHover || isScrolled ? 'text-gray-600' : 'text-white/80'
                     }`}>
                       Jewellers
                     </div>
@@ -104,7 +107,7 @@ const LuxuryNavigation = (): JSX.Element => {
                 <div className="flex items-center space-x-4 min-w-[120px] justify-end">
                   <button onClick={openSearch}>
                     <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                      isScrolled 
+                      engagementHover || isScrolled 
                         ? 'text-gray-600 hover:text-gray-900' 
                         : 'text-white hover:text-white/80'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -113,7 +116,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     </svg>
                   </button>
                   <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                    isScrolled 
+                    engagementHover || isScrolled 
                       ? 'text-gray-600 hover:text-gray-900' 
                       : 'text-white hover:text-white/80'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -121,7 +124,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     <path d="M20 21a8 8 0 1 0-16 0"/>
                   </svg>
                   <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                    isScrolled 
+                    engagementHover || isScrolled 
                       ? 'text-gray-600 hover:text-gray-900' 
                       : 'text-white hover:text-white/80'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -132,7 +135,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     className="relative"
                   >
                     <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                      isScrolled 
+                      engagementHover || isScrolled 
                         ? 'text-gray-600 hover:text-gray-900' 
                         : 'text-white hover:text-white/80'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -142,7 +145,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     </svg>
                     {getCartCount() > 0 && (
                       <span className={`absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium ${
-                        isScrolled 
+                        engagementHover || isScrolled 
                           ? 'bg-gray-900 text-white' 
                           : 'bg-white text-gray-900'
                       }`}>
@@ -156,16 +159,123 @@ const LuxuryNavigation = (): JSX.Element => {
               {/* Bottom Row - Navigation Links */}
               <div className="w-full flex items-center justify-center mt-1">
                 <div className="flex items-center justify-center space-x-6 lg:space-x-8 xl:space-x-10">
-                  <Link 
-                    to="/engagement" 
-                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
-                      isScrolled 
-                        ? 'text-gray-700 hover:text-gray-900' 
-                        : 'text-white hover:text-white/80'
-                    }`}
+                  <div 
+                    className="relative"
+                    onMouseEnter={() => setEngagementHover(true)}
+                    onMouseLeave={() => setEngagementHover(false)}
                   >
-                    Engagement
-                  </Link>
+                    <Link 
+                      to="/engagement" 
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
+                        engagementHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
+                    >
+                      Engagement
+                    </Link>
+                    
+                    {/* Engagement Dropdown */}
+                    {engagementHover && (
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 w-screen max-w-6xl bg-white shadow-xl border-t border-gray-100 z-50">
+                        <div className="px-8 py-12">
+                          <div className="grid grid-cols-4 gap-12">
+                            {/* RING TYPES Column */}
+                            <div>
+                              <h3 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-6">RING TYPES</h3>
+                              <div className="space-y-4">
+                                <Link to="/wedding-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Wedding</Link>
+                                <Link to="/engagement-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Engagement</Link>
+                                <Link to="/vintage-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Vintage</Link>
+                                <Link to="/promise-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Promise</Link>
+                                <Link to="/wishbone-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Wishbone</Link>
+                                <Link to="/stacking-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Stacking</Link>
+                                <Link to="/cocktail-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Cocktail</Link>
+                                <Link to="/bridal-sets" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Bridal sets</Link>
+                                <Link to="/mens-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Men's Rings</Link>
+                                <Link to="/all-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">All Rings</Link>
+                              </div>
+                            </div>
+
+                            {/* GEMSTONE Column */}
+                            <div>
+                              <h3 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-6">GEMSTONE</h3>
+                              <div className="space-y-4">
+                                <Link to="/mined-diamond" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Mined Diamond</Link>
+                                <Link to="/lab-grown-diamond" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Lab Grown Diamond</Link>
+                                <Link to="/sapphire" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Sapphire</Link>
+                                <Link to="/emerald" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Emerald</Link>
+                                <Link to="/ruby" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Ruby</Link>
+                                <Link to="/aquamarine" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Aquamarine</Link>
+                                <Link to="/tanzanite" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Tanzanite</Link>
+                                <Link to="/blue-topaz" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Blue Topaz</Link>
+                              </div>
+                            </div>
+
+                            {/* ETERNITY RINGS Column */}
+                            <div>
+                              <h3 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-6">ETERNITY RINGS</h3>
+                              <div className="space-y-4">
+                                <Link to="/diamond-full-band" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Diamond Full Band</Link>
+                                <Link to="/diamond-half-band" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Diamond Half Band</Link>
+                                <Link to="/unique-eternity-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Unique Eternity Rings</Link>
+                                <Link to="/sapphire-eternity" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Sapphire</Link>
+                                <Link to="/emerald-eternity" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Emerald</Link>
+                                <Link to="/ruby-eternity" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Ruby</Link>
+                                <Link to="/mens-eternity-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Men's Eternity Rings</Link>
+                                <Link to="/all-eternity-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">All Eternity Rings</Link>
+                              </div>
+                            </div>
+
+                            {/* METALS & Image Column */}
+                            <div>
+                              <h3 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-6">METALS</h3>
+                              <div className="space-y-4 mb-8">
+                                <Link to="/yellow-gold" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Yellow Gold</Link>
+                                <Link to="/white-gold" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">White Gold</Link>
+                                <Link to="/platinum" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Platinum</Link>
+                                <Link to="/silver" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Silver</Link>
+                                <Link to="/gold-vermeil" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Gold Vermeil</Link>
+                              </div>
+                              
+                              {/* Ring Image */}
+                              <div className="bg-gray-100 rounded-lg p-8 text-center">
+                                <div className="w-24 h-24 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M12 1v6m0 6v6m11-7h-6M8 12H2"/>
+                                  </svg>
+                                </div>
+                                <Link to="/rings" className="text-xs font-inter font-medium text-gray-700 hover:text-gray-900 uppercase tracking-wider transition-colors">
+                                  EXPLORE RINGS
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Bottom Section */}
+                          <div className="mt-12 pt-8 border-t border-gray-100">
+                            <div className="grid grid-cols-5 gap-8">
+                              <div>
+                                <h4 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-3">BEST SELLERS</h4>
+                                <div className="space-y-2">
+                                  <Link to="/best-selling-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Best-Selling Rings</Link>
+                                  <Link to="/under-250" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Under £250</Link>
+                                  <Link to="/250-350" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£250 - £350</Link>
+                                  <Link to="/350-500" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£350 - £500</Link>
+                                  <Link to="/500-1000" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£500 - £1000</Link>
+                                  <Link to="/1000-2000" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£1000 - £2000</Link>
+                                  <Link to="/2000+" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£2000+</Link>
+                                  <Link to="/new-in" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">New In</Link>
+                                  <Link to="/sample-sale" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Sample Sale</Link>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <Link 
                     to="/wedding" 
                     className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${

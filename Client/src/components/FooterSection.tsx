@@ -55,9 +55,10 @@ export const FooterSection = (): JSX.Element => {
 
 
   const customerService = [
-    { name: "SHOP RINGS BY SHAPE", url: "/rings" },
-    { name: "ENGAGEMENT RING SIZE", url: "/ring-size" },
-    { name: "FURTHER MORE RINGS", url: "/more-rings" },
+    { name: "SHOP RINGS", url: "/rings" },
+    { name: "SHOP EARRINGS", url: "/earrings" },
+    { name: "SHOP NECKLACES", url: "/necklaces" },
+    { name: "SHOP BRACELETS", url: "/bracelets" },
   ];
 
   const information = [

@@ -20,6 +20,13 @@ import Checkout from "./pages/Checkout";
 import Roamer from "./pages/Roamer";
 import Briston from "./pages/Briston";
 import Festina from "./pages/Festina";
+import Rings from "./pages/Rings";
+import Earrings from "./pages/Earrings";
+import Necklaces from "./pages/Necklaces";
+import Bracelets from "./pages/Bracelets";
+import FestinaWatches from "./pages/FestinaWatches";
+import BristonWatches from "./pages/BristonWatches";
+import RoamerWatches from "./pages/RoamerWatches";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +51,13 @@ const App = () => (
             <Route path="/roamer" element={<Roamer />} />
             <Route path="/briston" element={<Briston />} />
             <Route path="/festina" element={<Festina />} />
+            <Route path="/rings" element={<Rings />} />
+            <Route path="/earrings" element={<Earrings />} />
+            <Route path="/necklaces" element={<Necklaces />} />
+            <Route path="/bracelets" element={<Bracelets />} />
+            <Route path="/festina-watches" element={<FestinaWatches />} />
+            <Route path="/briston-watches" element={<BristonWatches />} />
+            <Route path="/roamer-watches" element={<RoamerWatches />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
