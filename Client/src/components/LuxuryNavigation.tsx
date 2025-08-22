@@ -14,6 +14,21 @@ const LuxuryNavigation = (): JSX.Element => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [engagementHover, setEngagementHover] = useState(false);
+  const [weddingHover, setWeddingHover] = useState(false);
+  const [diamondsHover, setDiamondsHover] = useState(false);
+  const [jewelleryHover, setJewelleryHover] = useState(false);
+  const [watchesHover, setWatchesHover] = useState(false);
+  const [heritageHover, setHeritageHover] = useState(false);
+  const [navbarHover, setNavbarHover] = useState(false);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  
+  // Closing animation states
+  const [engagementClosing, setEngagementClosing] = useState(false);
+  const [weddingClosing, setWeddingClosing] = useState(false);
+  const [diamondsClosing, setDiamondsClosing] = useState(false);
+  const [jewelleryClosing, setJewelleryClosing] = useState(false);
+  const [watchesClosing, setWatchesClosing] = useState(false);
+  const [heritageClosing, setHeritageClosing] = useState(false);
   
   // Cart context
   const { 
@@ -28,6 +43,7 @@ const LuxuryNavigation = (): JSX.Element => {
   } = useCart();
 
   const isMobile = useIsMobile();
+  const anyDropdownOpen = engagementHover || weddingHover || diamondsHover || jewelleryHover || watchesHover || heritageHover;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,18 +78,56 @@ const LuxuryNavigation = (): JSX.Element => {
     setSearchOpen(false);
   };
 
+  // Functions for hover with delay
+  const handleHoverEnter = (setHover: (value: boolean) => void) => () => {
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      setHoverTimeout(null);
+    }
+    // Close all other dropdowns
+    setEngagementHover(false);
+    setWeddingHover(false);
+    setDiamondsHover(false);
+    setJewelleryHover(false);
+    setWatchesHover(false);
+    setHeritageHover(false);
+    // Reset all closing states
+    setEngagementClosing(false);
+    setWeddingClosing(false);
+    setDiamondsClosing(false);
+    setJewelleryClosing(false);
+    setWatchesClosing(false);
+    setHeritageClosing(false);
+    // Open the current one
+    setHover(true);
+  };
+
+  const handleHoverLeave = (setHover: (value: boolean) => void, setClosing: (value: boolean) => void) => () => {
+    const timeout = setTimeout(() => {
+      setClosing(true);
+      // Wait for closing animation to complete before hiding
+      setTimeout(() => {
+        setHover(false);
+        setClosing(false);
+      }, 200); // Match the animation duration
+    }, 100); // 100ms delay
+    setHoverTimeout(timeout);
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 z-50">
         <TopBanner />
         <nav 
-          className={`relative transition-all duration-300 ${
-            engagementHover
+          className={`relative transition-all duration-0 ${
+            anyDropdownOpen || navbarHover
               ? 'bg-white shadow-lg'
               : isScrolled 
                 ? 'bg-white/95 backdrop-blur-sm shadow-sm' 
                 : 'bg-transparent'
           }`}
+          onMouseEnter={() => setNavbarHover(true)}
+          onMouseLeave={() => setNavbarHover(false)}
         >
           {/* Desktop Navigation */}
           <div className="hidden lg:block max-w-7xl mx-auto px-8">
@@ -82,21 +136,21 @@ const LuxuryNavigation = (): JSX.Element => {
               <div className="flex items-center justify-between w-full mb-6">
                 {/* Left side */}
                 <div className="flex items-center space-x-4 min-w-[120px]">
-                  <span className={`text-xs uppercase tracking-widest transition-colors duration-300 ${
-                    engagementHover || isScrolled ? 'text-gray-600' : 'text-white/70'
+                  <span className={`text-xs uppercase tracking-widest transition-colors duration-0 ${
+                    anyDropdownOpen || navbarHover || isScrolled ? 'text-gray-600' : 'text-white/70'
                   }`}>UK</span>
                 </div>
 
                 {/* Center Logo */}
                 <div className="flex-1 flex justify-center mx-12">
                   <Link to="/" className="flex flex-col items-center">
-                    <div className={`text-2xl font-serif font-light tracking-[0.3em] uppercase transition-colors duration-300 ${
-                      engagementHover || isScrolled ? 'text-gray-900' : 'text-white'
+                    <div className={`text-2xl font-serif font-light tracking-[0.3em] uppercase transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled ? 'text-gray-900' : 'text-white'
                     }`}>
                       McCulloch
                     </div>
-                    <div className={`text-sm font-light tracking-[0.5em] uppercase transition-colors duration-300 ${
-                      engagementHover || isScrolled ? 'text-gray-600' : 'text-white/80'
+                    <div className={`text-sm font-light tracking-[0.5em] uppercase transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled ? 'text-gray-600' : 'text-white/80'
                     }`}>
                       Jewellers
                     </div>
@@ -106,8 +160,8 @@ const LuxuryNavigation = (): JSX.Element => {
                 {/* Right Icons */}
                 <div className="flex items-center space-x-4 min-w-[120px] justify-end">
                   <button onClick={openSearch}>
-                    <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                      engagementHover || isScrolled 
+                    <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled 
                         ? 'text-gray-600 hover:text-gray-900' 
                         : 'text-white hover:text-white/80'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -115,16 +169,16 @@ const LuxuryNavigation = (): JSX.Element => {
                       <path d="m21 21-4.35-4.35"/>
                     </svg>
                   </button>
-                  <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                    engagementHover || isScrolled 
+                  <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                    anyDropdownOpen || navbarHover || isScrolled 
                       ? 'text-gray-600 hover:text-gray-900' 
                       : 'text-white hover:text-white/80'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <circle cx="12" cy="8" r="5"/>
                     <path d="M20 21a8 8 0 1 0-16 0"/>
                   </svg>
-                  <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                    engagementHover || isScrolled 
+                  <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                    anyDropdownOpen || navbarHover || isScrolled 
                       ? 'text-gray-600 hover:text-gray-900' 
                       : 'text-white hover:text-white/80'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -134,8 +188,8 @@ const LuxuryNavigation = (): JSX.Element => {
                     onClick={openCart}
                     className="relative"
                   >
-                    <svg className={`w-5 h-5 cursor-pointer transition-colors duration-300 ${
-                      engagementHover || isScrolled 
+                    <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled 
                         ? 'text-gray-600 hover:text-gray-900' 
                         : 'text-white hover:text-white/80'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -144,8 +198,8 @@ const LuxuryNavigation = (): JSX.Element => {
                       <path d="M16 10a4 4 0 0 1-8 0"/>
                     </svg>
                     {getCartCount() > 0 && (
-                      <span className={`absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium ${
-                        engagementHover || isScrolled 
+                      <span className={`absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
                           ? 'bg-gray-900 text-white' 
                           : 'bg-white text-gray-900'
                       }`}>
@@ -161,175 +215,104 @@ const LuxuryNavigation = (): JSX.Element => {
                 <div className="flex items-center justify-center space-x-6 lg:space-x-8 xl:space-x-10">
                   <div 
                     className="relative"
-                    onMouseEnter={() => setEngagementHover(true)}
-                    onMouseLeave={() => setEngagementHover(false)}
+                    onMouseEnter={handleHoverEnter(setEngagementHover)}
+                    onMouseLeave={handleHoverLeave(setEngagementHover, setEngagementClosing)}
                   >
                     <Link 
                       to="/engagement" 
-                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
-                        engagementHover || isScrolled 
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
                           ? 'text-gray-700 hover:text-gray-900' 
                           : 'text-white hover:text-white/80'
                       }`}
                     >
                       Engagement
                     </Link>
-                    
-                    {/* Engagement Dropdown */}
-                    {engagementHover && (
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 w-screen max-w-6xl bg-white shadow-xl border-t border-gray-100 z-50">
-                        <div className="px-8 py-12">
-                          <div className="grid grid-cols-4 gap-12">
-                            {/* RING TYPES Column */}
-                            <div>
-                              <h3 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-6">RING TYPES</h3>
-                              <div className="space-y-4">
-                                <Link to="/wedding-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Wedding</Link>
-                                <Link to="/engagement-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Engagement</Link>
-                                <Link to="/vintage-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Vintage</Link>
-                                <Link to="/promise-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Promise</Link>
-                                <Link to="/wishbone-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Wishbone</Link>
-                                <Link to="/stacking-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Stacking</Link>
-                                <Link to="/cocktail-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Cocktail</Link>
-                                <Link to="/bridal-sets" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Bridal sets</Link>
-                                <Link to="/mens-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Men's Rings</Link>
-                                <Link to="/all-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">All Rings</Link>
-                              </div>
-                            </div>
-
-                            {/* GEMSTONE Column */}
-                            <div>
-                              <h3 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-6">GEMSTONE</h3>
-                              <div className="space-y-4">
-                                <Link to="/mined-diamond" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Mined Diamond</Link>
-                                <Link to="/lab-grown-diamond" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Lab Grown Diamond</Link>
-                                <Link to="/sapphire" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Sapphire</Link>
-                                <Link to="/emerald" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Emerald</Link>
-                                <Link to="/ruby" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Ruby</Link>
-                                <Link to="/aquamarine" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Aquamarine</Link>
-                                <Link to="/tanzanite" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Tanzanite</Link>
-                                <Link to="/blue-topaz" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Blue Topaz</Link>
-                              </div>
-                            </div>
-
-                            {/* ETERNITY RINGS Column */}
-                            <div>
-                              <h3 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-6">ETERNITY RINGS</h3>
-                              <div className="space-y-4">
-                                <Link to="/diamond-full-band" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Diamond Full Band</Link>
-                                <Link to="/diamond-half-band" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Diamond Half Band</Link>
-                                <Link to="/unique-eternity-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Unique Eternity Rings</Link>
-                                <Link to="/sapphire-eternity" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Sapphire</Link>
-                                <Link to="/emerald-eternity" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Emerald</Link>
-                                <Link to="/ruby-eternity" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Ruby</Link>
-                                <Link to="/mens-eternity-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Men's Eternity Rings</Link>
-                                <Link to="/all-eternity-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">All Eternity Rings</Link>
-                              </div>
-                            </div>
-
-                            {/* METALS & Image Column */}
-                            <div>
-                              <h3 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-6">METALS</h3>
-                              <div className="space-y-4 mb-8">
-                                <Link to="/yellow-gold" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Yellow Gold</Link>
-                                <Link to="/white-gold" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">White Gold</Link>
-                                <Link to="/platinum" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Platinum</Link>
-                                <Link to="/silver" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Silver</Link>
-                                <Link to="/gold-vermeil" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Gold Vermeil</Link>
-                              </div>
-                              
-                              {/* Ring Image */}
-                              <div className="bg-gray-100 rounded-lg p-8 text-center">
-                                <div className="w-24 h-24 mx-auto mb-4 bg-white rounded-full flex items-center justify-center shadow-sm">
-                                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="3"/>
-                                    <path d="M12 1v6m0 6v6m11-7h-6M8 12H2"/>
-                                  </svg>
-                                </div>
-                                <Link to="/rings" className="text-xs font-inter font-medium text-gray-700 hover:text-gray-900 uppercase tracking-wider transition-colors">
-                                  EXPLORE RINGS
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Bottom Section */}
-                          <div className="mt-12 pt-8 border-t border-gray-100">
-                            <div className="grid grid-cols-5 gap-8">
-                              <div>
-                                <h4 className="text-xs font-inter font-medium text-gray-900 uppercase tracking-wider mb-3">BEST SELLERS</h4>
-                                <div className="space-y-2">
-                                  <Link to="/best-selling-rings" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Best-Selling Rings</Link>
-                                  <Link to="/under-250" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Under £250</Link>
-                                  <Link to="/250-350" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£250 - £350</Link>
-                                  <Link to="/350-500" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£350 - £500</Link>
-                                  <Link to="/500-1000" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£500 - £1000</Link>
-                                  <Link to="/1000-2000" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£1000 - £2000</Link>
-                                  <Link to="/2000+" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">£2000+</Link>
-                                  <Link to="/new-in" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">New In</Link>
-                                  <Link to="/sample-sale" className="block text-sm font-cormorant text-gray-600 hover:text-gray-900 transition-colors">Sample Sale</Link>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                  </div>
+                  <div 
+                    className="relative"
+                    onMouseEnter={handleHoverEnter(setWeddingHover)}
+                    onMouseLeave={handleHoverLeave(setWeddingHover, setWeddingClosing)}
+                  >
+                    <Link 
+                      to="/wedding" 
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
+                    >
+                      Wedding
+                    </Link>
+                  </div>
+                  <div 
+                    className="relative"
+                    onMouseEnter={handleHoverEnter(setDiamondsHover)}
+                    onMouseLeave={handleHoverLeave(setDiamondsHover, setDiamondsClosing)}
+                  >
+                    <Link 
+                      to="/diamonds" 
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
+                    >
+                      Diamonds
+                    </Link>
+                  </div>
+                  <div 
+                    className="relative"
+                    onMouseEnter={handleHoverEnter(setJewelleryHover)}
+                    onMouseLeave={handleHoverLeave(setJewelleryHover, setJewelleryClosing)}
+                  >
+                    <Link 
+                      to="/jewellery" 
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
+                    >
+                      Jewellery
+                    </Link>
+                  </div>
+                  <div 
+                    className="relative"
+                    onMouseEnter={handleHoverEnter(setWatchesHover)}
+                    onMouseLeave={handleHoverLeave(setWatchesHover, setWatchesClosing)}
+                  >
+                    <Link 
+                      to="/watches" 
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
+                    >
+                      Watches
+                    </Link>
+                  </div>
+                  <div 
+                    className="relative"
+                    onMouseEnter={handleHoverEnter(setHeritageHover)}
+                    onMouseLeave={handleHoverLeave(setHeritageHover, setHeritageClosing)}
+                  >
+                    <Link 
+                      to="/heritage" 
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
+                    >
+                      Our Heritage
+                    </Link>
                   </div>
                   <Link 
-                    to="/wedding" 
-                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
-                      isScrolled 
-                        ? 'text-gray-700 hover:text-gray-900' 
-                        : 'text-white hover:text-white/80'
-                    }`}
-                  >
-                    Wedding
-                  </Link>
-                  <Link 
-                    to="/diamonds" 
-                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
-                      isScrolled 
-                        ? 'text-gray-700 hover:text-gray-900' 
-                        : 'text-white hover:text-white/80'
-                    }`}
-                  >
-                    Diamonds
-                  </Link>
-                  <Link 
-                    to="/jewellery" 
-                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
-                      isScrolled 
-                        ? 'text-gray-700 hover:text-gray-900' 
-                        : 'text-white hover:text-white/80'
-                    }`}
-                  >
-                    Jewellery
-                  </Link>
-                  <Link 
-                    to="/watches" 
-                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
-                      isScrolled 
-                        ? 'text-gray-700 hover:text-gray-900' 
-                        : 'text-white hover:text-white/80'
-                    }`}
-                  >
-                    Watches
-                  </Link>
-                  <Link 
-                    to="/heritage" 
-                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
-                      isScrolled 
-                        ? 'text-gray-700 hover:text-gray-900' 
-                        : 'text-white hover:text-white/80'
-                    }`}
-                  >
-                    Our Heritage
-                  </Link>
-                  <Link 
                     to="/contact" 
-                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-300 ${
-                      isScrolled 
+                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled 
                         ? 'text-gray-700 hover:text-gray-900' 
                         : 'text-white hover:text-white/80'
                     }`}
@@ -340,6 +323,509 @@ const LuxuryNavigation = (): JSX.Element => {
               </div>
             </div>
           </div>
+
+          {/* Engagement Dropdown - Positioned at nav level */}
+          {engagementHover && (
+            <div 
+              className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
+                engagementClosing 
+                  ? 'animate-out slide-out-to-top-4' 
+                  : 'animate-in slide-in-from-top-4'
+              }`}
+              onMouseEnter={handleHoverEnter(setEngagementHover)}
+              onMouseLeave={handleHoverLeave(setEngagementHover, setEngagementClosing)}
+              style={{backgroundColor: '#fcfcfc'}}
+            >
+              <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
+                <div className="grid grid-cols-4 gap-8">
+                  {/* RING TYPES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">RING TYPES</h3>
+                    <div className="space-y-1">
+                      <Link to="/wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Wedding</Link>
+                      <Link to="/engagement-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Engagement</Link>
+                      <Link to="/vintage-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Vintage</Link>
+                      <Link to="/promise-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Promise</Link>
+                      <Link to="/wishbone-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Wishbone</Link>
+                      <Link to="/stacking-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Stacking</Link>
+                      <Link to="/cocktail-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Cocktail</Link>
+                      <Link to="/bridal-sets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Bridal sets</Link>
+                      <Link to="/mens-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Men's Rings</Link>
+                      <Link to="/all-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>All Rings</Link>
+                    </div>
+                  </div>
+
+                  {/* GEMSTONE Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">GEMSTONE</h3>
+                    <div className="space-y-1">
+                      <Link to="/mined-diamond" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Mined Diamond</Link>
+                      <Link to="/lab-grown-diamond" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Lab Grown Diamond</Link>
+                      <Link to="/sapphire" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Sapphire</Link>
+                      <Link to="/emerald" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Emerald</Link>
+                      <Link to="/ruby" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Ruby</Link>
+                      <Link to="/aquamarine" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Aquamarine</Link>
+                      <Link to="/tanzanite" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Tanzanite</Link>
+                      <Link to="/blue-topaz" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Blue Topaz</Link>
+                    </div>
+                  </div>
+
+                  {/* ETERNITY RINGS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">ETERNITY RINGS</h3>
+                    <div className="space-y-1">
+                      <Link to="/diamond-full-band" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Full Band</Link>
+                      <Link to="/diamond-half-band" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Half Band</Link>
+                      <Link to="/unique-eternity-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Unique Eternity Rings</Link>
+                      <Link to="/sapphire-eternity" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Sapphire</Link>
+                      <Link to="/emerald-eternity" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Emerald</Link>
+                      <Link to="/ruby-eternity" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Ruby</Link>
+                      <Link to="/mens-eternity-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Men's Eternity Rings</Link>
+                      <Link to="/all-eternity-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>All Eternity Rings</Link>
+                    </div>
+                  </div>
+
+                  {/* METALS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">METALS</h3>
+                    <div className="space-y-1">
+                      <Link to="/yellow-gold" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Yellow Gold</Link>
+                      <Link to="/white-gold" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>White Gold</Link>
+                      <Link to="/platinum" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Platinum</Link>
+                      <Link to="/silver" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Silver</Link>
+                      <Link to="/gold-vermeil" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Gold Vermeil</Link>
+                    </div>
+                    
+                    {/* Explore Rings Button */}
+                    <div className="mt-4">
+                      <Link 
+                        to="/rings" 
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                      >
+                        EXPLORE RINGS
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Wedding Dropdown */}
+          {weddingHover && (
+            <div 
+              className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
+                weddingClosing 
+                  ? 'animate-out slide-out-to-top-4' 
+                  : 'animate-in slide-in-from-top-4'
+              }`}
+              onMouseEnter={handleHoverEnter(setWeddingHover)}
+              onMouseLeave={handleHoverLeave(setWeddingHover, setWeddingClosing)}
+              style={{backgroundColor: '#fcfcfc'}}
+            >
+              <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
+                <div className="grid grid-cols-4 gap-8">
+                  {/* WEDDING RINGS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">WEDDING RINGS</h3>
+                    <div className="space-y-1">
+                      <Link to="/wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Wedding Bands</Link>
+                      <Link to="/his-hers-sets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>His & Hers Sets</Link>
+                      <Link to="/womens-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Women's Wedding Rings</Link>
+                      <Link to="/mens-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Men's Wedding Rings</Link>
+                      <Link to="/diamond-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Wedding Rings</Link>
+                      <Link to="/plain-wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Plain Wedding Bands</Link>
+                      <Link to="/vintage-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Vintage Wedding Rings</Link>
+                      <Link to="/matching-wedding-sets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Matching Wedding Sets</Link>
+                    </div>
+                  </div>
+
+                  {/* STYLES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">STYLES</h3>
+                    <div className="space-y-1">
+                      <Link to="/classic-wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Classic Bands</Link>
+                      <Link to="/pavé-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Pavé Setting</Link>
+                      <Link to="/channel-set-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Channel Set</Link>
+                      <Link to="/eternity-wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Eternity Style</Link>
+                      <Link to="/engraved-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Engraved</Link>
+                      <Link to="/milgrain-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Milgrain Detail</Link>
+                      <Link to="/twisted-wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Twisted Design</Link>
+                      <Link to="/curved-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Curved Bands</Link>
+                    </div>
+                  </div>
+
+                  {/* METALS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">METALS</h3>
+                    <div className="space-y-1">
+                      <Link to="/platinum-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Platinum</Link>
+                      <Link to="/white-gold-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>White Gold</Link>
+                      <Link to="/yellow-gold-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Yellow Gold</Link>
+                      <Link to="/rose-gold-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Rose Gold</Link>
+                      <Link to="/titanium-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Titanium</Link>
+                      <Link to="/mixed-metal-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Mixed Metals</Link>
+                    </div>
+                  </div>
+
+                  {/* SERVICES & GUIDE Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">SERVICES & GUIDE</h3>
+                    <div className="space-y-1">
+                      <Link to="/wedding-ring-guide" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Wedding Ring Guide</Link>
+                      <Link to="/ring-sizing" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Ring Sizing</Link>
+                      <Link to="/custom-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Custom Design</Link>
+                      <Link to="/wedding-ring-engraving" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Engraving Services</Link>
+                      <Link to="/wedding-ring-care" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Care & Maintenance</Link>
+                    </div>
+                    
+                    {/* Explore Wedding Button */}
+                    <div className="mt-4">
+                      <Link 
+                        to="/wedding" 
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                      >
+                        EXPLORE WEDDING
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Diamonds Dropdown */}
+          {diamondsHover && (
+            <div 
+              className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
+                diamondsClosing 
+                  ? 'animate-out slide-out-to-top-4' 
+                  : 'animate-in slide-in-from-top-4'
+              }`}
+              onMouseEnter={handleHoverEnter(setDiamondsHover)}
+              onMouseLeave={handleHoverLeave(setDiamondsHover, setDiamondsClosing)}
+              style={{backgroundColor: '#fcfcfc'}}
+            >
+              <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
+                <div className="grid grid-cols-4 gap-8">
+                  {/* DIAMOND TYPES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND TYPES</h3>
+                    <div className="space-y-1">
+                      <Link to="/natural-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Natural Diamonds</Link>
+                      <Link to="/lab-grown-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Lab Grown Diamonds</Link>
+                      <Link to="/certified-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Certified Diamonds</Link>
+                      <Link to="/loose-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Loose Diamonds</Link>
+                      <Link to="/colored-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Colored Diamonds</Link>
+                      <Link to="/vintage-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Vintage Diamonds</Link>
+                    </div>
+                  </div>
+
+                  {/* SHAPES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND SHAPES</h3>
+                    <div className="space-y-1">
+                      <Link to="/round-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Round</Link>
+                      <Link to="/princess-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Princess</Link>
+                      <Link to="/oval-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Oval</Link>
+                      <Link to="/emerald-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Emerald</Link>
+                      <Link to="/cushion-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Cushion</Link>
+                      <Link to="/pear-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Pear</Link>
+                      <Link to="/marquise-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Marquise</Link>
+                      <Link to="/heart-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Heart</Link>
+                    </div>
+                  </div>
+
+                  {/* QUALITY Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND QUALITY</h3>
+                    <div className="space-y-1">
+                      <Link to="/diamond-cut" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Cut Quality</Link>
+                      <Link to="/diamond-color" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Color Grades</Link>
+                      <Link to="/diamond-clarity" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Clarity Grades</Link>
+                      <Link to="/diamond-carat" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Carat Weight</Link>
+                      <Link to="/diamond-certification" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Certification</Link>
+                      <Link to="/diamond-grading" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Grading Reports</Link>
+                    </div>
+                  </div>
+
+                  {/* EDUCATION & SERVICES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">EDUCATION & SERVICES</h3>
+                    <div className="space-y-1">
+                      <Link to="/diamond-education" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Education</Link>
+                      <Link to="/4cs-guide" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>The 4 C's Guide</Link>
+                      <Link to="/diamond-appraisal" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Appraisal</Link>
+                      <Link to="/diamond-upgrade" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Upgrade</Link>
+                      <Link to="/diamond-care" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Care</Link>
+                    </div>
+                    
+                    {/* Explore Diamonds Button */}
+                    <div className="mt-4">
+                      <Link 
+                        to="/diamonds" 
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                      >
+                        EXPLORE DIAMONDS
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Jewellery Dropdown */}
+          {jewelleryHover && (
+            <div 
+              className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
+                jewelleryClosing 
+                  ? 'animate-out slide-out-to-top-4' 
+                  : 'animate-in slide-in-from-top-4'
+              }`}
+              onMouseEnter={handleHoverEnter(setJewelleryHover)}
+              onMouseLeave={handleHoverLeave(setJewelleryHover, setJewelleryClosing)}
+              style={{backgroundColor: '#fcfcfc'}}
+            >
+              <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
+                <div className="grid grid-cols-4 gap-8">
+                  {/* EARRINGS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">EARRINGS</h3>
+                    <div className="space-y-1">
+                      <Link to="/stud-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Stud Earrings</Link>
+                      <Link to="/drop-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Drop Earrings</Link>
+                      <Link to="/hoop-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Hoop Earrings</Link>
+                      <Link to="/chandelier-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Chandelier Earrings</Link>
+                      <Link to="/huggie-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Huggie Earrings</Link>
+                      <Link to="/diamond-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Earrings</Link>
+                      <Link to="/pearl-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Pearl Earrings</Link>
+                      <Link to="/gemstone-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Gemstone Earrings</Link>
+                    </div>
+                  </div>
+
+                  {/* NECKLACES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">NECKLACES</h3>
+                    <div className="space-y-1">
+                      <Link to="/pendant-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Pendant Necklaces</Link>
+                      <Link to="/chain-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Chain Necklaces</Link>
+                      <Link to="/choker-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Choker Necklaces</Link>
+                      <Link to="/tennis-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Tennis Necklaces</Link>
+                      <Link to="/layering-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Layering Necklaces</Link>
+                      <Link to="/lockets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Lockets</Link>
+                      <Link to="/statement-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Statement Necklaces</Link>
+                      <Link to="/pearl-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Pearl Necklaces</Link>
+                    </div>
+                  </div>
+
+                  {/* BRACELETS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">BRACELETS</h3>
+                    <div className="space-y-1">
+                      <Link to="/tennis-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Tennis Bracelets</Link>
+                      <Link to="/charm-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Charm Bracelets</Link>
+                      <Link to="/bangle-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Bangle Bracelets</Link>
+                      <Link to="/link-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Link Bracelets</Link>
+                      <Link to="/cuff-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Cuff Bracelets</Link>
+                      <Link to="/diamond-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Bracelets</Link>
+                      <Link to="/gemstone-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Gemstone Bracelets</Link>
+                      <Link to="/pearl-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Pearl Bracelets</Link>
+                    </div>
+                  </div>
+
+                  {/* GIFTS & OCCASIONS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">GIFTS & OCCASIONS</h3>
+                    <div className="space-y-1">
+                      <Link to="/birthday-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Birthday Gifts</Link>
+                      <Link to="/anniversary-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Anniversary Gifts</Link>
+                      <Link to="/mothers-day-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Mother's Day</Link>
+                      <Link to="/valentine-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Valentine's Day</Link>
+                      <Link to="/graduation-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Graduation Gifts</Link>
+                      <Link to="/gift-sets" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Gift Sets</Link>
+                    </div>
+                    
+                    {/* Explore Jewellery Button */}
+                    <div className="mt-4">
+                      <Link 
+                        to="/jewellery" 
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                      >
+                        EXPLORE JEWELLERY
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Watches Dropdown */}
+          {watchesHover && (
+            <div 
+              className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
+                watchesClosing 
+                  ? 'animate-out slide-out-to-top-4' 
+                  : 'animate-in slide-in-from-top-4'
+              }`}
+              onMouseEnter={handleHoverEnter(setWatchesHover)}
+              onMouseLeave={handleHoverLeave(setWatchesHover, setWatchesClosing)}
+              style={{backgroundColor: '#fcfcfc'}}
+            >
+              <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
+                <div className="grid grid-cols-4 gap-8">
+                  {/* LUXURY BRANDS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">LUXURY BRANDS</h3>
+                    <div className="space-y-1">
+                      <Link to="/rolex-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Rolex</Link>
+                      <Link to="/omega-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Omega</Link>
+                      <Link to="/cartier-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Cartier</Link>
+                      <Link to="/breitling-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Breitling</Link>
+                      <Link to="/patek-philippe-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Patek Philippe</Link>
+                      <Link to="/tag-heuer-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>TAG Heuer</Link>
+                      <Link to="/tudor-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Tudor</Link>
+                      <Link to="/longines-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Longines</Link>
+                    </div>
+                  </div>
+
+                  {/* WATCH TYPES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">WATCH TYPES</h3>
+                    <div className="space-y-1">
+                      <Link to="/dress-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Dress Watches</Link>
+                      <Link to="/sports-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Sports Watches</Link>
+                      <Link to="/diving-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diving Watches</Link>
+                      <Link to="/chronograph-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Chronograph</Link>
+                      <Link to="/automatic-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Automatic</Link>
+                      <Link to="/quartz-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Quartz</Link>
+                      <Link to="/vintage-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Vintage Watches</Link>
+                      <Link to="/limited-edition-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Limited Edition</Link>
+                    </div>
+                  </div>
+
+                  {/* COLLECTIONS Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">COLLECTIONS</h3>
+                    <div className="space-y-1">
+                      <Link to="/mens-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Men's Watches</Link>
+                      <Link to="/womens-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Women's Watches</Link>
+                      <Link to="/unisex-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Unisex Watches</Link>
+                      <Link to="/diamond-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Diamond Watches</Link>
+                      <Link to="/gold-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Gold Watches</Link>
+                      <Link to="/steel-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Steel Watches</Link>
+                      <Link to="/leather-strap-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Leather Strap</Link>
+                      <Link to="/metal-bracelet-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Metal Bracelet</Link>
+                    </div>
+                  </div>
+
+                  {/* SERVICES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">SERVICES</h3>
+                    <div className="space-y-1">
+                      <Link to="/watch-repair" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Watch Repair</Link>
+                      <Link to="/watch-servicing" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Watch Servicing</Link>
+                      <Link to="/watch-valuation" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Watch Valuation</Link>
+                      <Link to="/watch-authentication" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Authentication</Link>
+                      <Link to="/watch-insurance" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Watch Insurance</Link>
+                      <Link to="/watch-buying-guide" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Buying Guide</Link>
+                    </div>
+                    
+                    {/* Explore Watches Button */}
+                    <div className="mt-4">
+                      <Link 
+                        to="/watches" 
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                      >
+                        EXPLORE WATCHES
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Our Heritage Dropdown */}
+          {heritageHover && (
+            <div 
+              className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
+                heritageClosing 
+                  ? 'animate-out slide-out-to-top-4' 
+                  : 'animate-in slide-in-from-top-4'
+              }`}
+              onMouseEnter={handleHoverEnter(setHeritageHover)}
+              onMouseLeave={handleHoverLeave(setHeritageHover, setHeritageClosing)}
+              style={{backgroundColor: '#fcfcfc'}}
+            >
+              <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
+                <div className="grid grid-cols-4 gap-8">
+                  {/* OUR STORY Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">OUR STORY</h3>
+                    <div className="space-y-1">
+                      <Link to="/about-us" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>About Us</Link>
+                      <Link to="/our-history" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Our History</Link>
+                      <Link to="/our-craftsmen" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Our Craftsmen</Link>
+                      <Link to="/our-philosophy" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Our Philosophy</Link>
+                      <Link to="/awards-recognition" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Awards & Recognition</Link>
+                      <Link to="/testimonials" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Customer Stories</Link>
+                    </div>
+                  </div>
+
+                  {/* SERVICES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">SERVICES</h3>
+                    <div className="space-y-1">
+                      <Link to="/bespoke-design" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Bespoke Design</Link>
+                      <Link to="/jewellery-repair" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Jewellery Repair</Link>
+                      <Link to="/ring-resizing" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Ring Resizing</Link>
+                      <Link to="/valuations" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Valuations</Link>
+                      <Link to="/cleaning-maintenance" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Cleaning & Care</Link>
+                      <Link to="/engraving-services" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Engraving Services</Link>
+                      <Link to="/gift-wrapping" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Gift Wrapping</Link>
+                    </div>
+                  </div>
+
+                  {/* LOCATION & CONTACT Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">VISIT US</h3>
+                    <div className="space-y-1">
+                      <Link to="/our-showroom" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Our Showroom</Link>
+                      <Link to="/book-appointment" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Book Appointment</Link>
+                      <Link to="/private-viewing" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Private Viewing</Link>
+                      <Link to="/directions" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Directions</Link>
+                      <Link to="/opening-hours" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Opening Hours</Link>
+                      <Link to="/parking-info" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Parking Information</Link>
+                    </div>
+                  </div>
+
+                  {/* TRUST & GUARANTEES Column */}
+                  <div>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">TRUST & GUARANTEES</h3>
+                    <div className="space-y-1">
+                      <Link to="/lifetime-warranty" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Lifetime Warranty</Link>
+                      <Link to="/money-back-guarantee" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Money Back Guarantee</Link>
+                      <Link to="/certified-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Certified Quality</Link>
+                      <Link to="/ethical-sourcing" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Ethical Sourcing</Link>
+                      <Link to="/secure-shopping" className="block font-inter font-light text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-sm transition-all duration-200 ease-out leading-relaxed px-1 py-0.5 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-white/80" style={{fontSize: '12.36px'}}>Secure Shopping</Link>
+                    </div>
+                    
+                    {/* Learn More Button */}
+                    <div className="mt-4">
+                      <Link 
+                        to="/heritage" 
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                      >
+                        LEARN MORE
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Mobile Navigation */}
           <div className="lg:hidden px-4 py-4">
