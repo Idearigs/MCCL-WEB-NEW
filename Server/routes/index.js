@@ -7,6 +7,17 @@ const adminRoutes = require('./admin');
 const filtersRoutes = require('./filters');
 const watchRoutes = require('./watchRoutes');
 
+// Health check endpoint
+router.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is healthy',
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.API_VERSION || 'v1',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Mount routes
 router.use('/products', productRoutes);
 router.use('/admin', adminRoutes);
