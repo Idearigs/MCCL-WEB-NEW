@@ -72,8 +72,9 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			fontFamily: {
-				serif: ['Inria Serif', 'serif'],
-				sans: ['Inria Serif', 'serif'],
+				sans: ['Satoshi', 'system-ui', 'sans-serif'],
+				serif: ['Cormorant Garamond', 'serif'],
+				'satoshi': ['Satoshi', 'system-ui', 'sans-serif'],
 				'cormorant': ['Cormorant Garamond', 'serif']
 			},
 			keyframes: {

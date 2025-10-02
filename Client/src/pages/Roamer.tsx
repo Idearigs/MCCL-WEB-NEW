@@ -1,8 +1,50 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigation from "../components/LuxuryNavigation";
+import { Link } from "react-router-dom";
+
+interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  watches_count: number;
+}
 
 const Roamer = (): JSX.Element => {
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch Roamer collections on component mount
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        setLoading(true);
+        const brandsResponse = await fetch('http://localhost:5000/api/v1/watches/brands');
+        const brandsData = await brandsResponse.json();
+
+        if (brandsData.success) {
+          const roamerBrand = brandsData.data.find((b: any) => b.slug === 'roamer');
+          if (roamerBrand) {
+            const collectionsResponse = await fetch(`http://localhost:5000/api/v1/watches/brands/${roamerBrand.id}/collections`);
+            const collectionsData = await collectionsResponse.json();
+
+            if (collectionsData.success) {
+              setCollections(collectionsData.data);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching Roamer collections:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCollections();
+  }, []);
+
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
       <LuxuryNavigation />
@@ -61,23 +103,53 @@ const Roamer = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Brand Story Section */}
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-3xl font-light text-gray-900 mb-6">Heritage & Innovation</h2>
-            <p className="text-gray-700 mb-4 leading-relaxed">
-              For over 130 years, Roamer has been synonymous with Swiss watchmaking excellence. 
-              Founded in 1888, Roamer combines traditional Swiss craftsmanship with innovative 
-              design to create timepieces that embody precision and elegance.
+      {/* Authorized Retailer Section */}
+      <div className="relative bg-white py-24 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-20 left-1/4 w-32 h-32 border border-gray-900 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-20 right-1/4 w-24 h-24 border border-gray-900 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-gray-900 rounded-full animate-pulse" style={{animationDelay: '2s'}}></div>
+        </div>
+
+        <div className="relative max-w-4xl mx-auto px-6 text-center">
+          {/* Roamer Logo */}
+          <div className="mb-12 group">
+            <div className="relative inline-block">
+              <img
+                src="/images/roamer-logo-white.png"
+                alt="Roamer Logo"
+                className="h-32 md:h-40 mx-auto transition-all duration-700 group-hover:scale-110 animate-fade-in-up opacity-0 invert"
+                style={{animationDelay: '0.3s', animationFillMode: 'forwards'}}
+              />
+              {/* Glow effect on hover */}
+              <div className="absolute inset-0 rounded-full bg-gray-900/10 blur-xl scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            </div>
+          </div>
+
+          {/* Heritage Text */}
+          <div className="space-y-6 animate-fade-in-up opacity-0" style={{animationDelay: '0.8s', animationFillMode: 'forwards'}}>
+            <div className="relative">
+              <p className="text-sm md:text-base font-inter font-light text-gray-900 uppercase tracking-[0.3em] mb-2">
+                Since 1888
+              </p>
+              <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gray-900 to-transparent mx-auto"></div>
+            </div>
+
+            <p className="text-sm md:text-base font-inter font-light text-gray-700 uppercase tracking-[0.25em]">
+              Official Authorized Retailer
             </p>
-            <p className="text-gray-700 leading-relaxed">
-              Our collaboration with McCulloch Jewellers brings you the finest selection of 
-              Roamer watches, each piece representing the pinnacle of Swiss horological artistry.
+
+            <p className="text-xs md:text-sm font-inter font-light text-gray-600 tracking-[0.2em] max-w-2xl mx-auto leading-relaxed">
+              Swiss precision and traditional craftsmanship for over 130 years of watchmaking excellence
             </p>
           </div>
-          <div className="bg-gray-100 h-80 rounded flex items-center justify-center">
-            <span className="text-gray-500">Roamer Collection Image</span>
+
+          {/* Decorative Elements */}
+          <div className="mt-16 flex justify-center items-center space-x-8 animate-fade-in-up opacity-0" style={{animationDelay: '1.3s', animationFillMode: 'forwards'}}>
+            <div className="w-16 h-px bg-gradient-to-r from-transparent to-gray-900/30"></div>
+            <div className="w-2 h-2 bg-gray-900 rounded-full animate-pulse"></div>
+            <div className="w-16 h-px bg-gradient-to-l from-transparent to-gray-900/30"></div>
           </div>
         </div>
       </div>
@@ -112,31 +184,65 @@ const Roamer = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Collection Showcase */}
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <h3 className="text-2xl font-light text-center text-gray-900 mb-12">Featured Collection</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="bg-gray-100 h-64 rounded mb-4 flex items-center justify-center">
-              <span className="text-gray-500">Roamer Watch 1</span>
+      {/* Collection Cards Section */}
+      <div className="relative bg-white py-20 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-4xl md:text-5xl font-thin text-gray-900 font-cormorant mb-16 text-center">
+            Our Collections
+          </h2>
+
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <p className="text-gray-500">Loading collections...</p>
             </div>
-            <h4 className="text-lg font-medium text-gray-900">Classic Collection</h4>
-            <p className="text-gray-600">From £450</p>
-          </div>
-          <div className="text-center">
-            <div className="bg-gray-100 h-64 rounded mb-4 flex items-center justify-center">
-              <span className="text-gray-500">Roamer Watch 2</span>
+          ) : collections.length > 0 ? (
+            <div className="flex justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl">
+                {collections.map((collection) => (
+                  <Link
+                    key={collection.id}
+                    to={`/collections/${collection.slug}`}
+                    className="group"
+                  >
+                    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 aspect-[3/4] overflow-hidden transition-all duration-500 group-hover:shadow-2xl">
+                      {collection.image_url ? (
+                        <img
+                          src={collection.image_url}
+                          alt={collection.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <svg className="w-24 h-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" strokeWidth="0.5"/>
+                            <polyline points="12,6 12,12 16,14" strokeWidth="0.5"/>
+                          </svg>
+                        </div>
+                      )}
+
+                      {/* Overlay with Collection Name */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-center p-8">
+                        <div className="text-center transform transition-transform duration-300 group-hover:-translate-y-2">
+                          <h3 className="text-2xl md:text-3xl font-cormorant text-white mb-3 leading-tight">
+                            {collection.name.replace('Roamer ', '')}
+                          </h3>
+                          {collection.watches_count > 0 && (
+                            <p className="text-sm text-white/80 font-inter uppercase tracking-wider">
+                              {collection.watches_count} {collection.watches_count === 1 ? 'Timepiece' : 'Timepieces'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-            <h4 className="text-lg font-medium text-gray-900">Sport Collection</h4>
-            <p className="text-gray-600">From £650</p>
-          </div>
-          <div className="text-center">
-            <div className="bg-gray-100 h-64 rounded mb-4 flex items-center justify-center">
-              <span className="text-gray-500">Roamer Watch 3</span>
+          ) : (
+            <div className="flex justify-center items-center py-20">
+              <p className="text-gray-500">No collections available</p>
             </div>
-            <h4 className="text-lg font-medium text-gray-900">Dress Collection</h4>
-            <p className="text-gray-600">From £850</p>
-          </div>
+          )}
         </div>
       </div>
 

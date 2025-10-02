@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { FooterSection } from "../components/FooterSection";
-import StaticNavigation from "../components/StaticNavigation";
+import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 
 const Watches = (): JSX.Element => {
   const [likedProducts, setLikedProducts] = useState<Set<number>>(new Set());
@@ -73,7 +73,7 @@ const Watches = (): JSX.Element => {
 
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
-      <StaticNavigation />
+      <LuxuryNavigationWhite />
       
       {/* Main Watch Products Content */}
       <main className="flex-1 pt-32 lg:pt-44 pb-8">

@@ -27,6 +27,15 @@ import Bracelets from "./pages/Bracelets";
 import FestinaWatches from "./pages/FestinaWatches";
 import BristonWatches from "./pages/BristonWatches";
 import RoamerWatches from "./pages/RoamerWatches";
+import FestinaClassicCollection from "./pages/FestinaClassicCollection";
+import BristonHeritageCollection from "./pages/BristonHeritageCollection";
+import RoamerSwissTradition from "./pages/RoamerSwissTradition";
+import Contact from "./pages/Contact";
+import OurStory from "./pages/OurStory";
+import CustomerService from "./pages/CustomerService";
+import VisitUs from "./pages/VisitUs";
+import TrustGuarantees from "./pages/TrustGuarantees";
+import AdminApp from "./admin/AdminApp";
 
 const queryClient = new QueryClient();
 
@@ -58,7 +67,19 @@ const App = () => (
             <Route path="/festina-watches" element={<FestinaWatches />} />
             <Route path="/briston-watches" element={<BristonWatches />} />
             <Route path="/roamer-watches" element={<RoamerWatches />} />
+            <Route path="/collections/festina-classic-collection" element={<FestinaClassicCollection />} />
+            <Route path="/collections/briston-heritage-collection" element={<BristonHeritageCollection />} />
+            <Route path="/collections/roamer-swiss-tradition" element={<RoamerSwissTradition />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/our-story" element={<OurStory />} />
+            <Route path="/customer-service" element={<CustomerService />} />
+            <Route path="/visit-us" element={<VisitUs />} />
+            <Route path="/trust-guarantees" element={<TrustGuarantees />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin/*" element={<AdminApp />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Frontend Service (React + Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: mcculloch-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - mcculloch-network
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  # Backend API Service (Node.js + Express)
+  backend:
+    build:
+      context: ./Server
+      dockerfile: Dockerfile
+    container_name: mcculloch-backend
+    ports:
+      - "5000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - API_VERSION=v1
+      # Database Configuration
+      - PG_HOST=${PG_HOST:-31.97.116.89}
+      - PG_PORT=${PG_PORT:-5433}
+      - PG_DATABASE=${PG_DATABASE:-mcculloch_db}
+      - PG_USERNAME=${PG_USERNAME:-mcculloch_admin}
+      - PG_PASSWORD=${PG_PASSWORD}
+      # MongoDB Configuration
+      - MONGODB_URI=${MONGODB_URI}
+      # JWT Configuration
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=24h
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      # CORS Configuration
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://buymediamonds.co.uk,http://buymediamonds.co.uk,http://localhost:3000}
+      # Upload Configuration
+      - MAX_FILE_SIZE=10485760
+      - UPLOAD_PATH=/app/uploads
+      # Security Configuration
+      - BCRYPT_SALT_ROUNDS=12
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+      # Logging Configuration
+      - LOG_LEVEL=info
+      - LOG_FORMAT=combined
+    volumes:
+      - backend-uploads:/app/uploads
+    networks:
+      - mcculloch-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/v1/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy (Optional - if you want unified routing)
+  nginx:
+    image: nginx:alpine
+    container_name: mcculloch-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - mcculloch-network
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    profiles:
+      - with-proxy
+
+networks:
+  mcculloch-network:
+    driver: bridge
+
+volumes:
+  backend-uploads:
+    driver: local

@@ -11,33 +11,47 @@ interface SearchOverlayProps {
 const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, isMobile }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-
-  // Sample search data - replace with actual product data
-  const sampleProducts = [
-    { id: 1, name: "Ashoka Five Stone Half Platinum Diamond Eternity Ring", category: "Rings", image: "/images/prod1.png" },
-    { id: 2, name: "Classic Diamond Drop Earrings", category: "Earrings", image: "/images/prod2.png" },
-    { id: 3, name: "Diamond Tennis Necklace", category: "Necklaces", image: "/images/prod3.png" },
-    { id: 4, name: "Rose Gold Hoop Earrings", category: "Earrings", image: "/images/prod4.png" },
-    { id: 5, name: "Vintage Rose Gold Locket Necklace", category: "Necklaces", image: "/images/prod5.png" },
-    { id: 6, name: "Engagement Ring Collection", category: "Engagement", image: "/images/Engagement.png" },
-  ];
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const popularSearches = [
-    "Diamond Rings", "Engagement Rings", "Wedding Bands", "Pearl Earrings", 
+    "Diamond Rings", "Engagement Rings", "Wedding Bands", "Pearl Earrings",
     "Gold Necklaces", "Tennis Bracelets", "Vintage Jewelry", "Platinum Rings"
   ];
 
+  // Fetch all products when component mounts
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/api/v1/products');
+        const data = await response.json();
+        if (data.success) {
+          setAllProducts(data.data.products);
+        }
+      } catch (error) {
+        console.error('Error fetching products for search:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Filter products based on search query
   useEffect(() => {
     if (searchQuery.length > 0) {
-      const filtered = sampleProducts.filter(product =>
+      const filtered = allProducts.filter(product =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchQuery.toLowerCase())
+        (product.category && product.category.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (product.collection && product.collection.name.toLowerCase().includes(searchQuery.toLowerCase()))
       );
       setSearchResults(filtered);
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, allProducts]);
 
   if (!isOpen) return null;
 
@@ -80,27 +94,27 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, isMobile
                 {searchResults.map((product, index) => (
                   <Link
                     key={product.id}
-                    to={`/product/${product.id}`}
+                    to={`/product/${product.slug}`}
                     onClick={onClose}
                     className="block group opacity-0 animate-search-content-stagger"
                     style={{ animationDelay: `${0.1 * index}s` }}
                   >
                     {/* Product Image */}
                     <div className="w-full h-80 bg-gray-50 mb-4 overflow-hidden flex items-center justify-center">
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
+                      <img
+                        src={product.image?.url || '/images/placeholder.png'}
+                        alt={product.image?.alt || product.name}
                         className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
-                    
+
                     {/* Product Details */}
                     <div className="text-center">
                       <h4 className="text-base font-cormorant font-normal text-gray-900 leading-tight mb-2">
                         {product.name}
                       </h4>
                       <p className="text-sm font-cormorant text-gray-600">
-                        £2,500
+                        {product.price}
                       </p>
                     </div>
                   </Link>
@@ -148,44 +162,87 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, isMobile
 
         {/* Search Results */}
         {searchQuery.length > 0 && (
-          <div className="mt-6 animate-search-content-stagger">
-            <h3 className="text-sm font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-4">
-              Search Results ({searchResults.length})
-            </h3>
-            {searchResults.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {searchResults.map((product, index) => (
-                  <Link
-                    key={product.id}
-                    to={`/product/${product.id}`}
-                    onClick={onClose}
-                    className="group p-3 hover:bg-gray-50 rounded-lg transition-all opacity-0 animate-search-content-stagger"
-                    style={{ animationDelay: `${0.05 * index}s` }}
-                  >
-                    <div className="w-full h-20 bg-gray-50 rounded mb-3 overflow-hidden">
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <h4 className="text-xs font-cormorant font-medium text-gray-900 leading-tight mb-1">
-                      {product.name}
-                    </h4>
-                    <p className="text-xs font-cormorant text-gray-500">
-                      {product.category}
-                    </p>
-                  </Link>
-                ))}
+          <div className="mt-6">
+            {/* Suggestions Section */}
+            <div className="mb-6">
+              <h3 className="text-sm font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-3">
+                SUGGESTIONS
+              </h3>
+              <div className="space-y-1">
+                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
+                  eternity <span className="font-medium text-gray-900">rings</span>
+                </div>
+                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
+                  <span className="font-medium text-gray-900">rings</span>
+                </div>
+                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
+                  oval engagement <span className="font-medium text-gray-900">rings</span>
+                </div>
+                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
+                  Women's Rings
+                </div>
+                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
+                  Heart Rings
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm font-cormorant text-gray-500">
-                  No products found for "{searchQuery}"
-                </p>
+            </div>
+
+            {/* Products Section */}
+            <div className="mb-6">
+              <h3 className="text-sm font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-3">
+                PRODUCTS
+              </h3>
+              {searchResults.length > 0 ? (
+                <div className="space-y-3">
+                  {searchResults.slice(0, 5).map((product, index) => (
+                    <Link
+                      key={product.id}
+                      to={`/product/${product.slug}`}
+                      onClick={onClose}
+                      className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-all group"
+                    >
+                      <div className="w-16 h-16 bg-gray-50 rounded overflow-hidden flex-shrink-0">
+                        <img
+                          src={product.image?.url || '/images/placeholder.png'}
+                          alt={product.image?.alt || product.name}
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-cormorant text-gray-900 leading-tight mb-1 line-clamp-2">
+                          {product.name}
+                        </h4>
+                        <p className="text-sm font-cormorant text-blue-600 font-medium">
+                          {product.price}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm font-cormorant text-gray-500">
+                    No products found for "{searchQuery}"
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Pages Section */}
+            <div>
+              <h3 className="text-sm font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-3">
+                PAGES
+              </h3>
+              <div className="space-y-1">
+                <Link to="/eternity-rings" className="block text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
+                  Eternity Rings
+                </Link>
+                <Link to="/ring-resizing" className="block text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
+                  Ring & Jewellery Resizing
+                </Link>
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>

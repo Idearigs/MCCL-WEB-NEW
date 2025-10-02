@@ -7,6 +7,25 @@ import SearchOverlay from "./SearchOverlay";
 import { useCart } from "../contexts/CartContext";
 import { useIsMobile } from "../hooks/use-mobile";
 
+interface WatchCollection {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  is_featured: boolean;
+  launch_year?: number;
+  watches_count: number;
+}
+
+interface WatchBrand {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url?: string;
+  collections: WatchCollection[];
+}
+
 const LuxuryNavigation = (): JSX.Element => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -21,7 +40,11 @@ const LuxuryNavigation = (): JSX.Element => {
   const [heritageHover, setHeritageHover] = useState(false);
   const [navbarHover, setNavbarHover] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
-  
+
+  // Watch brands and collections state
+  const [watchBrands, setWatchBrands] = useState<WatchBrand[]>([]);
+  const [loadingWatches, setLoadingWatches] = useState(false);
+
   // Closing animation states
   const [engagementClosing, setEngagementClosing] = useState(false);
   const [weddingClosing, setWeddingClosing] = useState(false);
@@ -53,6 +76,27 @@ const LuxuryNavigation = (): JSX.Element => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Fetch watch brands and collections on component mount
+  useEffect(() => {
+    const fetchWatchBrands = async () => {
+      try {
+        setLoadingWatches(true);
+        const response = await fetch('http://localhost:5000/api/v1/watches/featured-collections');
+        const data = await response.json();
+
+        if (data.success) {
+          setWatchBrands(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching watch brands:', error);
+      } finally {
+        setLoadingWatches(false);
+      }
+    };
+
+    fetchWatchBrands();
   }, []);
 
   // Functions for mobile menu animation
@@ -159,54 +203,85 @@ const LuxuryNavigation = (): JSX.Element => {
 
                 {/* Right Icons */}
                 <div className="flex items-center space-x-4 min-w-[120px] justify-end">
-                  <button onClick={openSearch}>
+                  {/* Search Icon */}
+                  <div className="relative group">
+                    <button onClick={openSearch}>
+                      <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled
+                          ? 'text-gray-600 hover:text-gray-900'
+                          : 'text-white hover:text-white/80'
+                      }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                      </svg>
+                    </button>
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                      Search
+                    </div>
+                  </div>
+
+                  {/* Account Icon */}
+                  <div className="relative group">
                     <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
-                      anyDropdownOpen || navbarHover || isScrolled 
-                        ? 'text-gray-600 hover:text-gray-900' 
+                      anyDropdownOpen || navbarHover || isScrolled
+                        ? 'text-gray-600 hover:text-gray-900'
                         : 'text-white hover:text-white/80'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <circle cx="11" cy="11" r="8"/>
-                      <path d="m21 21-4.35-4.35"/>
+                      <circle cx="12" cy="8" r="5"/>
+                      <path d="M20 21a8 8 0 1 0-16 0"/>
                     </svg>
-                  </button>
-                  <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
-                    anyDropdownOpen || navbarHover || isScrolled 
-                      ? 'text-gray-600 hover:text-gray-900' 
-                      : 'text-white hover:text-white/80'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <circle cx="12" cy="8" r="5"/>
-                    <path d="M20 21a8 8 0 1 0-16 0"/>
-                  </svg>
-                  <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
-                    anyDropdownOpen || navbarHover || isScrolled 
-                      ? 'text-gray-600 hover:text-gray-900' 
-                      : 'text-white hover:text-white/80'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                  <button 
-                    onClick={openCart}
-                    className="relative"
-                  >
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                      Account
+                    </div>
+                  </div>
+
+                  {/* Favorites Icon */}
+                  <div className="relative group">
                     <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
-                      anyDropdownOpen || navbarHover || isScrolled 
-                        ? 'text-gray-600 hover:text-gray-900' 
+                      anyDropdownOpen || navbarHover || isScrolled
+                        ? 'text-gray-600 hover:text-gray-900'
                         : 'text-white hover:text-white/80'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-                      <path d="M3 6h18"/>
-                      <path d="M16 10a4 4 0 0 1-8 0"/>
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
-                    {getCartCount() > 0 && (
-                      <span className={`absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium transition-colors duration-0 ${
-                        anyDropdownOpen || navbarHover || isScrolled 
-                          ? 'bg-gray-900 text-white' 
-                          : 'bg-white text-gray-900'
-                      }`}>
-                        {getCartCount()}
-                      </span>
-                    )}
-                  </button>
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                      Favorites
+                    </div>
+                  </div>
+
+                  {/* Cart Icon */}
+                  <div className="relative group">
+                    <button
+                      onClick={openCart}
+                      className="relative"
+                    >
+                      <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled
+                          ? 'text-gray-600 hover:text-gray-900'
+                          : 'text-white hover:text-white/80'
+                      }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                        <path d="M3 6h18"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                      </svg>
+                      {getCartCount() > 0 && (
+                        <span className={`absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium transition-colors duration-0 ${
+                          anyDropdownOpen || navbarHover || isScrolled
+                            ? 'bg-gray-900 text-white'
+                            : 'bg-white text-gray-900'
+                        }`}>
+                          {getCartCount()}
+                        </span>
+                      )}
+                    </button>
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                      Cart ({getCartCount()})
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -663,85 +738,108 @@ const LuxuryNavigation = (): JSX.Element => {
 
           {/* Watches Dropdown */}
           {watchesHover && (
-            <div 
+            <div
               className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
-                watchesClosing 
-                  ? 'animate-out slide-out-to-top-4' 
+                watchesClosing
+                  ? 'animate-out slide-out-to-top-4'
                   : 'animate-in slide-in-from-top-4'
               }`}
               onMouseEnter={handleHoverEnter(setWatchesHover)}
               onMouseLeave={handleHoverLeave(setWatchesHover, setWatchesClosing)}
               style={{backgroundColor: '#fcfcfc'}}
             >
-              <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
-                <div className="grid grid-cols-4 gap-8">
-                  {/* LUXURY BRANDS Column */}
-                  <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">LUXURY BRANDS</h3>
-                    <div className="space-y-1">
-                      <Link to="/rolex-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Rolex</Link>
-                      <Link to="/omega-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Omega</Link>
-                      <Link to="/cartier-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Cartier</Link>
-                      <Link to="/breitling-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Breitling</Link>
-                      <Link to="/patek-philippe-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Patek Philippe</Link>
-                      <Link to="/tag-heuer-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>TAG Heuer</Link>
-                      <Link to="/tudor-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Tudor</Link>
-                      <Link to="/longines-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Longines</Link>
-                    </div>
+              <div className="max-w-7xl mx-auto px-12 pt-8 pb-10">
+                {loadingWatches ? (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-sm font-inter text-gray-500">Loading collections...</p>
                   </div>
+                ) : watchBrands.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-12">
+                    {watchBrands.map((brand) => (
+                      <div key={brand.id} className="space-y-4">
+                        {/* Brand Header */}
+                        <div className="border-b border-gray-200 pb-3">
+                          <Link
+                            to={`/watches?brand=${brand.slug}`}
+                            className="group flex items-center space-x-2 hover:opacity-70 transition-opacity"
+                          >
+                            <h3 className="text-sm font-cormorant font-semibold text-gray-950 uppercase tracking-wider">
+                              {brand.name}
+                            </h3>
+                            <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
+                          </Link>
+                        </div>
 
-                  {/* WATCH TYPES Column */}
-                  <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">WATCH TYPES</h3>
-                    <div className="space-y-1">
-                      <Link to="/dress-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Dress Watches</Link>
-                      <Link to="/sports-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Sports Watches</Link>
-                      <Link to="/diving-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diving Watches</Link>
-                      <Link to="/chronograph-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Chronograph</Link>
-                      <Link to="/automatic-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Automatic</Link>
-                      <Link to="/quartz-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Quartz</Link>
-                      <Link to="/vintage-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Vintage Watches</Link>
-                      <Link to="/limited-edition-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Limited Edition</Link>
-                    </div>
-                  </div>
+                        {/* Collections */}
+                        <div className="space-y-3">
+                          {brand.collections.length > 0 ? (
+                            brand.collections.map((collection) => (
+                              <Link
+                                key={collection.id}
+                                to={`/watches?brand=${brand.slug}&collection=${collection.slug}`}
+                                className="group block"
+                              >
+                                <div className="flex items-start space-x-3">
+                                  {collection.image_url && (
+                                    <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-sm overflow-hidden">
+                                      <img
+                                        src={collection.image_url}
+                                        alt={collection.name}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-inter font-medium text-gray-900 group-hover:text-gray-600 transition-colors leading-snug">
+                                      {collection.name}
+                                      {collection.is_featured && (
+                                        <span className="ml-1.5 inline-block w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                                      )}
+                                    </p>
+                                    {collection.launch_year && (
+                                      <p className="text-xs font-inter text-gray-500 mt-0.5">
+                                        Est. {collection.launch_year}
+                                      </p>
+                                    )}
+                                    {collection.watches_count > 0 && (
+                                      <p className="text-xs font-inter text-gray-400 mt-0.5">
+                                        {collection.watches_count} {collection.watches_count === 1 ? 'watch' : 'watches'}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </Link>
+                            ))
+                          ) : (
+                            <p className="text-xs font-inter text-gray-400 italic">No collections available</p>
+                          )}
 
-                  {/* COLLECTIONS Column */}
-                  <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">COLLECTIONS</h3>
-                    <div className="space-y-1">
-                      <Link to="/mens-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Men's Watches</Link>
-                      <Link to="/womens-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Women's Watches</Link>
-                      <Link to="/unisex-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Unisex Watches</Link>
-                      <Link to="/diamond-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Watches</Link>
-                      <Link to="/gold-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Gold Watches</Link>
-                      <Link to="/steel-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Steel Watches</Link>
-                      <Link to="/leather-strap-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Leather Strap</Link>
-                      <Link to="/metal-bracelet-watches" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Metal Bracelet</Link>
-                    </div>
+                          {/* View All Link */}
+                          <Link
+                            to={`/watches?brand=${brand.slug}`}
+                            className="inline-flex items-center text-xs font-inter font-medium text-gray-600 hover:text-gray-900 transition-colors mt-2"
+                          >
+                            View all {brand.name}
+                            <ChevronDown className="w-3 h-3 ml-1 transform rotate-[-90deg]" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-sm font-inter text-gray-500">No watch collections available</p>
+                  </div>
+                )}
 
-                  {/* SERVICES Column */}
-                  <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">SERVICES</h3>
-                    <div className="space-y-1">
-                      <Link to="/watch-repair" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Watch Repair</Link>
-                      <Link to="/watch-servicing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Watch Servicing</Link>
-                      <Link to="/watch-valuation" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Watch Valuation</Link>
-                      <Link to="/watch-authentication" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Authentication</Link>
-                      <Link to="/watch-insurance" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Watch Insurance</Link>
-                      <Link to="/watch-buying-guide" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Buying Guide</Link>
-                    </div>
-                    
-                    {/* Explore Watches Button */}
-                    <div className="mt-4">
-                      <Link 
-                        to="/watches" 
-                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
-                      >
-                        EXPLORE WATCHES
-                      </Link>
-                    </div>
-                  </div>
+                {/* Explore All Watches Button */}
+                <div className="mt-8 pt-6 border-t border-gray-200 flex justify-center">
+                  <Link
+                    to="/watches"
+                    className="inline-flex items-center justify-center px-8 py-3 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wider hover:bg-gray-800 hover:shadow-lg hover:scale-105 transition-all duration-200 ease-out rounded-sm"
+                  >
+                    EXPLORE ALL WATCHES
+                  </Link>
                 </div>
               </div>
             </div>
@@ -765,26 +863,26 @@ const LuxuryNavigation = (): JSX.Element => {
                   <div>
                     <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">OUR STORY</h3>
                     <div className="space-y-1">
-                      <Link to="/about-us" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>About Us</Link>
-                      <Link to="/our-history" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our History</Link>
-                      <Link to="/our-craftsmen" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Craftsmen</Link>
-                      <Link to="/our-philosophy" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Philosophy</Link>
-                      <Link to="/awards-recognition" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Awards & Recognition</Link>
-                      <Link to="/testimonials" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Customer Stories</Link>
+                      <Link to="/our-story#about-us" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>About Us</Link>
+                      <Link to="/our-story#our-history" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our History</Link>
+                      <Link to="/our-story#our-craftsmen" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Craftsmen</Link>
+                      <Link to="/our-story#our-philosophy" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Philosophy</Link>
+                      <Link to="/our-story#awards-recognition" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Awards & Recognition</Link>
+                      <Link to="/our-story#customer-stories" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Customer Stories</Link>
                     </div>
                   </div>
 
                   {/* SERVICES Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">SERVICES</h3>
+                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">CUSTOMER SERVICE</h3>
                     <div className="space-y-1">
-                      <Link to="/bespoke-design" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Bespoke Design</Link>
-                      <Link to="/jewellery-repair" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Jewellery Repair</Link>
-                      <Link to="/ring-resizing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ring Resizing</Link>
-                      <Link to="/valuations" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Valuations</Link>
-                      <Link to="/cleaning-maintenance" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Cleaning & Care</Link>
-                      <Link to="/engraving-services" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Engraving Services</Link>
-                      <Link to="/gift-wrapping" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Gift Wrapping</Link>
+                      <Link to="/customer-service#bespoke-design" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Bespoke Design</Link>
+                      <Link to="/customer-service#jewellery-repair" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Jewellery Repair</Link>
+                      <Link to="/customer-service#ring-resizing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ring Resizing</Link>
+                      <Link to="/customer-service#valuations" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Valuations</Link>
+                      <Link to="/customer-service#cleaning-care" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Cleaning & Care</Link>
+                      <Link to="/customer-service#engraving-services" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Engraving Services</Link>
+                      <Link to="/customer-service#gift-wrapping" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Gift Wrapping</Link>
                     </div>
                   </div>
 
@@ -792,12 +890,12 @@ const LuxuryNavigation = (): JSX.Element => {
                   <div>
                     <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">VISIT US</h3>
                     <div className="space-y-1">
-                      <Link to="/our-showroom" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Showroom</Link>
-                      <Link to="/book-appointment" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Book Appointment</Link>
-                      <Link to="/private-viewing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Private Viewing</Link>
-                      <Link to="/directions" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Directions</Link>
-                      <Link to="/opening-hours" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Opening Hours</Link>
-                      <Link to="/parking-info" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Parking Information</Link>
+                      <Link to="/visit-us#our-showroom" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Showroom</Link>
+                      <Link to="/visit-us#book-appointment" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Book Appointment</Link>
+                      <Link to="/visit-us#private-viewing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Private Viewing</Link>
+                      <Link to="/visit-us#directions" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Directions</Link>
+                      <Link to="/visit-us#opening-hours" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Opening Hours</Link>
+                      <Link to="/visit-us#parking-information" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Parking Information</Link>
                     </div>
                   </div>
 
@@ -805,17 +903,17 @@ const LuxuryNavigation = (): JSX.Element => {
                   <div>
                     <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">TRUST & GUARANTEES</h3>
                     <div className="space-y-1">
-                      <Link to="/lifetime-warranty" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Lifetime Warranty</Link>
-                      <Link to="/money-back-guarantee" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Money Back Guarantee</Link>
-                      <Link to="/certified-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Certified Quality</Link>
-                      <Link to="/ethical-sourcing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ethical Sourcing</Link>
-                      <Link to="/secure-shopping" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Secure Shopping</Link>
+                      <Link to="/trust-guarantees#lifetime-warranty" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Lifetime Warranty</Link>
+                      <Link to="/trust-guarantees#money-back-guarantee" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Money Back Guarantee</Link>
+                      <Link to="/trust-guarantees#certified-quality" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Certified Quality</Link>
+                      <Link to="/trust-guarantees#ethical-sourcing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ethical Sourcing</Link>
+                      <Link to="/trust-guarantees#secure-shopping" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Secure Shopping</Link>
                     </div>
                     
                     {/* Learn More Button */}
                     <div className="mt-4">
                       <Link 
-                        to="/heritage" 
+                        to="/trust-guarantees#learn-more" 
                         className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                       >
                         LEARN MORE

@@ -1,20 +1,64 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigation from "../components/LuxuryNavigation";
+import { Link } from "react-router-dom";
+
+interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url?: string;
+  watches_count: number;
+}
 
 const Festina = (): JSX.Element => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const totalSlides = 7;
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const totalSlides = collections.length || 1;
+
+  // Fetch Festina collections on component mount
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        setLoading(true);
+        // Fetch brand collections - we need the brand ID first
+        const brandsResponse = await fetch('http://localhost:5000/api/v1/watches/brands');
+        const brandsData = await brandsResponse.json();
+
+        if (brandsData.success) {
+          const festinaBrand = brandsData.data.find((b: any) => b.slug === 'festina');
+          if (festinaBrand) {
+            const collectionsResponse = await fetch(`http://localhost:5000/api/v1/watches/brands/${festinaBrand.id}/collections`);
+            const collectionsData = await collectionsResponse.json();
+
+            if (collectionsData.success) {
+              setCollections(collectionsData.data);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching Festina collections:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCollections();
+  }, []);
 
   // Auto-swipe effect every 3 seconds
   useEffect(() => {
+    if (collections.length === 0) return;
+
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % totalSlides);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [totalSlides]);
+  }, [totalSlides, collections.length]);
 
   // Scroll to current slide
   useEffect(() => {
@@ -124,164 +168,65 @@ const Festina = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Horizontal Watch Collection Section */}
-      <div className="relative bg-white py-16 overflow-hidden">
-        <div className="max-w-full">
-          {/* Collection Scrollable Display */}
-          <div className="relative">
-            {/* Navigation Arrows */}
-            <button 
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full flex items-center justify-center hover:bg-white hover:border-[#003A63] hover:text-[#003A63] transition-all duration-300 shadow-lg group"
-            >
-              <svg className="w-5 h-5 text-gray-600 group-hover:text-[#003A63] transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7"/>
-              </svg>
-            </button>
-            
-            <button 
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full flex items-center justify-center hover:bg-white hover:border-[#003A63] hover:text-[#003A63] transition-all duration-300 shadow-lg group"
-            >
-              <svg className="w-5 h-5 text-gray-600 group-hover:text-[#003A63] transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7"/>
-              </svg>
-            </button>
+      {/* Collection Cards Section */}
+      <div className="relative bg-white py-20 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-4xl md:text-5xl font-thin text-gray-900 font-cormorant mb-16 text-center">
+            Our Collections
+          </h2>
 
-            <div 
-              ref={scrollContainerRef}
-              className="flex space-x-6 overflow-x-auto scrollbar-hide pb-8 px-6" 
-              style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}
-            >
-              {/* Watch 1 */}
-              <div className="flex-none w-72 group cursor-pointer">
-                <div className="bg-white mb-4">
-                  <div className="aspect-[4/5] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:bg-gray-100 transition-colors duration-300">
-                    <div className="text-center text-gray-400 group-hover:scale-105 transition-transform duration-300">
-                      <svg className="w-20 h-20 mx-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-base md:text-lg font-cormorant text-gray-700 leading-tight">Festina Chronograph Watches</h3>
-                </div>
-              </div>
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <p className="text-gray-500">Loading collections...</p>
+            </div>
+          ) : collections.length > 0 ? (
+            <div className="flex justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl">
+                {collections.map((collection) => (
+                  <Link
+                    key={collection.id}
+                    to={`/collections/${collection.slug}`}
+                    className="group"
+                  >
+                    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 aspect-[3/4] overflow-hidden transition-all duration-500 group-hover:shadow-2xl">
+                      {collection.image_url ? (
+                        <img
+                          src={collection.image_url}
+                          alt={collection.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <svg className="w-24 h-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" strokeWidth="0.5"/>
+                            <polyline points="12,6 12,12 16,14" strokeWidth="0.5"/>
+                          </svg>
+                        </div>
+                      )}
 
-              {/* Watch 2 */}
-              <div className="flex-none w-72 group cursor-pointer">
-                <div className="bg-white mb-4">
-                  <div className="aspect-[4/5] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:bg-gray-100 transition-colors duration-300">
-                    <div className="text-center text-gray-400 group-hover:scale-105 transition-transform duration-300">
-                      <svg className="w-20 h-20 mx-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                      </svg>
+                      {/* Overlay with Collection Name */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-center p-8">
+                        <div className="text-center transform transition-transform duration-300 group-hover:-translate-y-2">
+                          <h3 className="text-2xl md:text-3xl font-cormorant text-white mb-3 leading-tight">
+                            {collection.name.replace('Festina ', '')}
+                          </h3>
+                          {collection.watches_count > 0 && (
+                            <p className="text-sm text-white/80 font-inter uppercase tracking-wider">
+                              {collection.watches_count} {collection.watches_count === 1 ? 'Timepiece' : 'Timepieces'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-base md:text-lg font-cormorant text-gray-700 leading-tight">Festina Grand Chronograph Watches</h3>
-                </div>
-              </div>
-
-              {/* Watch 3 */}
-              <div className="flex-none w-72 group cursor-pointer">
-                <div className="bg-white mb-4">
-                  <div className="aspect-[4/5] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:bg-gray-100 transition-colors duration-300">
-                    <div className="text-center text-gray-400 group-hover:scale-105 transition-transform duration-300">
-                      <svg className="w-20 h-20 mx-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-base md:text-lg font-cormorant text-gray-700 leading-tight">Festina Calatrava Watches</h3>
-                </div>
-              </div>
-
-              {/* Watch 4 */}
-              <div className="flex-none w-72 group cursor-pointer">
-                <div className="bg-white mb-4">
-                  <div className="aspect-[4/5] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:bg-gray-100 transition-colors duration-300">
-                    <div className="text-center text-gray-400 group-hover:scale-105 transition-transform duration-300">
-                      <svg className="w-20 h-20 mx-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-base md:text-lg font-cormorant text-gray-700 leading-tight">Festina Nautilus Watches</h3>
-                </div>
-              </div>
-
-              {/* Watch 5 */}
-              <div className="flex-none w-72 group cursor-pointer">
-                <div className="bg-white mb-4">
-                  <div className="aspect-[4/5] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:bg-gray-100 transition-colors duration-300">
-                    <div className="text-center text-gray-400 group-hover:scale-105 transition-transform duration-300">
-                      <svg className="w-20 h-20 mx-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-base md:text-lg font-cormorant text-gray-700 leading-tight">Festina Twenty-4 Watches</h3>
-                </div>
-              </div>
-
-              {/* Watch 6 */}
-              <div className="flex-none w-72 group cursor-pointer">
-                <div className="bg-white mb-4">
-                  <div className="aspect-[4/5] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:bg-gray-100 transition-colors duration-300">
-                    <div className="text-center text-gray-400 group-hover:scale-105 transition-transform duration-300">
-                      <svg className="w-20 h-20 mx-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-base md:text-lg font-cormorant text-gray-700 leading-tight">Festina Aquanaut Watches</h3>
-                </div>
-              </div>
-
-              {/* Watch 7 */}
-              <div className="flex-none w-72 group cursor-pointer">
-                <div className="bg-white mb-4">
-                  <div className="aspect-[4/5] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:bg-gray-100 transition-colors duration-300">
-                    <div className="text-center text-gray-400 group-hover:scale-105 transition-transform duration-300">
-                      <svg className="w-20 h-20 mx-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12,6 12,12 16,14"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-base md:text-lg font-cormorant text-gray-700 leading-tight">Festina Golden Ellipse Watches</h3>
-                </div>
+                  </Link>
+                ))}
               </div>
             </div>
-            
-            {/* Progress indicator */}
-            <div className="flex justify-center mt-8">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-[#003A63] rounded-full"></div>
-                <div className="w-8 h-2 bg-[#003A63]/30 rounded-full"></div>
-                <div className="w-2 h-2 bg-[#003A63]/30 rounded-full"></div>
-              </div>
+          ) : (
+            <div className="flex justify-center items-center py-20">
+              <p className="text-gray-500">No collections available</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

@@ -1,61 +1,155 @@
 const express = require('express');
 const cors = require('cors');
+const morgan = require('morgan');
+const compression = require('compression');
 const path = require('path');
-require('dotenv').config();
+const config = require('./config');
+const { connectDatabases, logger } = require('./config/database');
+
+const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { helmetConfig, securityLogger, generalRateLimit } = require('./middleware/security');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Trust proxy for accurate IP addresses
+app.set('trust proxy', 1);
 
-// API Routes
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
-});
+// Security middleware
+app.use(helmetConfig);
+app.use(securityLogger);
+app.use(generalRateLimit);
 
-// Sample products API endpoint
-app.get('/api/products', (req, res) => {
-  const products = [
-    {
-      id: 1,
-      name: 'Diamond Constellation Necklace',
-      category: 'necklaces',
-      collection: 'The Celestial',
-      price: 4500,
-      image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=300&fit=crop'
-    },
-    {
-      id: 2,
-      name: 'Sapphire Royal Ring',
-      category: 'rings',
-      collection: 'Royal Heritage',
-      price: 3200,
-      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=300&fit=crop'
-    },
-    {
-      id: 3,
-      name: 'Minimalist Diamond Earrings',
-      category: 'earrings',
-      collection: 'Modern Minimalist',
-      price: 1800,
-      image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=400&h=300&fit=crop'
+// CORS configuration
+const corsOptions = {
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:3000', // React Dev Server
+      'http://localhost:8080', // Frontend URL
+      'http://127.0.0.1:8080', // Alternative frontend URL
+      ...(config.cors?.allowedOrigins || []) // Any additional origins from config
+    ];
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked by CORS: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
     }
-  ];
-  
-  res.json(products);
-});
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+};
 
-// Serve static assets in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../Client/dist')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../Client/dist/index.html'));
-  });
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
+// Compression and parsing middleware
+app.use(compression());
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+
+// Logging middleware
+if (config.NODE_ENV !== 'test') {
+  app.use(morgan(config.logging.format, {
+    stream: {
+      write: (message) => logger.info(message.trim())
+    }
+  }));
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Static file serving for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Server is running',
+    environment: config.NODE_ENV,
+    version: config.API_VERSION,
+    timestamp: new Date().toISOString()
+  });
 });
+
+// Initialize database models
+const { initializeModels } = require('./models');
+
+// API routes
+const apiRoutes = require('./routes');
+app.use(`/api/${config.API_VERSION}`, apiRoutes);
+
+// Error handling middleware (must be last)
+app.use(notFound);
+app.use(errorHandler);
+
+// Graceful shutdown
+const gracefulShutdown = (signal) => {
+  logger.info(`Received ${signal}, shutting down gracefully...`);
+
+  server.close(async () => {
+    logger.info('HTTP server closed');
+
+    try {
+      const { closeDatabases } = require('./config/database');
+      await closeDatabases();
+      logger.info('Database connections closed');
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during shutdown:', error);
+      process.exit(1);
+    }
+  });
+};
+
+// Handle shutdown signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// Start server
+const startServer = async () => {
+  try {
+    await connectDatabases();
+
+    // Initialize database models
+    initializeModels();
+    logger.info('Database models initialized');
+
+    const server = app.listen(config.PORT, () => {
+      logger.info(`🚀 Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);
+      logger.info(`📚 API Documentation: http://localhost:${config.PORT}/api/${config.API_VERSION}`);
+    });
+
+    // Export server for testing
+    module.exports = { app, server };
+
+    return server;
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Start the server if this file is run directly
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, startServer }; // restarting

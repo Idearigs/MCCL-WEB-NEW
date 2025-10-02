@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, ChevronUp, Plus, X, Minus, ZoomIn, ZoomOut } from 'lucide-react';
-import StaticNavigation from '@/components/StaticNavigation';
+import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
 import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
 
@@ -12,12 +12,53 @@ const ProductDetail = () => {
   const [selectedMetal, setSelectedMetal] = useState('platinum');
   const [selectedSize, setSelectedSize] = useState('L');
   const [isLoading, setIsLoading] = useState(false);
+  const [productData, setProductData] = useState(null);
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Hardcoded ring sizes for all rings with UK/US/EU equivalents
+  const ringSizes = [
+    { value: 'A', label: 'UK Size A (US 0, EU 37.5)' },
+    { value: 'B', label: 'UK Size B (US 0.5, EU 38.2)' },
+    { value: 'C', label: 'UK Size C (US 1, EU 38.8)' },
+    { value: 'D', label: 'UK Size D (US 1.5, EU 39.5)' },
+    { value: 'E', label: 'UK Size E (US 2, EU 40.1)' },
+    { value: 'F', label: 'UK Size F (US 2.5, EU 40.8)' },
+    { value: 'G', label: 'UK Size G (US 3, EU 41.4)' },
+    { value: 'H', label: 'UK Size H (US 3.5, EU 42.1)' },
+    { value: 'I', label: 'UK Size I (US 4, EU 42.8)' },
+    { value: 'J', label: 'UK Size J (US 4.5, EU 43.4)' },
+    { value: 'K', label: 'UK Size K (US 5, EU 44.1)' },
+    { value: 'L', label: 'UK Size L (US 5.5, EU 44.8)' },
+    { value: 'M', label: 'UK Size M (US 6, EU 45.4)' },
+    { value: 'N', label: 'UK Size N (US 6.5, EU 46.1)' },
+    { value: 'O', label: 'UK Size O (US 7, EU 46.8)' },
+    { value: 'P', label: 'UK Size P (US 7.5, EU 47.4)' },
+    { value: 'Q', label: 'UK Size Q (US 8, EU 48.1)' },
+    { value: 'R', label: 'UK Size R (US 8.5, EU 48.7)' },
+    { value: 'S', label: 'UK Size S (US 9, EU 49.4)' },
+    { value: 'T', label: 'UK Size T (US 9.5, EU 50.1)' },
+    { value: 'U', label: 'UK Size U (US 10, EU 50.7)' },
+    { value: 'V', label: 'UK Size V (US 10.5, EU 51.4)' },
+    { value: 'W', label: 'UK Size W (US 11, EU 52.1)' },
+    { value: 'X', label: 'UK Size X (US 11.5, EU 52.7)' },
+    { value: 'Y', label: 'UK Size Y (US 12, EU 53.4)' },
+    { value: 'Z', label: 'UK Size Z (US 12.5, EU 54.1)' }
+  ];
   
   // Use global cart context
   const { addToCart } = useCart();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
+
+  // Helper function to check if file is video
+  const isVideoFile = (url) => {
+    if (!url) return false;
+    const videoExtensions = ['.mp4', '.webm', '.ogg'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
   const [zoomLevel, setZoomLevel] = useState(1);
   const [currentRecommendationIndex, setCurrentRecommendationIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
@@ -27,6 +68,43 @@ const ProductDetail = () => {
     delivery: false,
     insurance: false
   });
+
+  // Fetch product data
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (!productId) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(`http://localhost:5000/api/v1/products/${productId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          console.log('Product data received:', data.data.product);
+          console.log('Number of images:', data.data.product.images?.length);
+          console.log('Images array:', data.data.product.images);
+          setProductData(data.data.product);
+          setRecommendedProducts(data.data.recommended_products || []);
+
+          // Set initial metal selection to first available metal
+          if (data.data.product.available_metals && data.data.product.available_metals.length > 0) {
+            setSelectedMetal(data.data.product.available_metals[0].id);
+          }
+        } else {
+          setError(data.message || 'Failed to fetch product');
+        }
+      } catch (err) {
+        setError('Failed to fetch product');
+        console.error('Error fetching product:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [productId]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -47,7 +125,7 @@ const ProductDetail = () => {
         price: productData.price,
         metal: selectedMetal,
         size: selectedSize,
-        image: productData.images[0]
+        image: productData.images[0]?.url
       };
       
       addToCart(newItem);
@@ -129,81 +207,147 @@ const ProductDetail = () => {
     }
   };
 
-  const productData = {
-    id: 'ashoka-five-stone-platinum-diamond-eternity-ring',
-    name: 'The National Gallery Play of Light Platinum Ring',
-    price: '£12,500',
-    priceNote: 'Or We\'ve detected you are browsing from Sri Lanka, please note the UK price for this piece is £12,500',
-    images: [
-      '/images/Screenshot 2025-08-08 190135.png',
-      '/images/Screenshot 2025-08-08 190223.png',
-      '/images/Screenshot 2025-08-08 190300.png',
-    ],
-    metals: [
-      { id: 'platinum', name: 'Platinum', color: '#E5E4E2' },
-      { id: 'gold', name: 'Gold', color: '#FFD700' },
-      { id: 'rose-gold', name: 'Rose Gold', color: '#E8B4B8' }
-    ],
-    sizes: ['H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'],
-    description: 'Renowned for their brilliance and inner fire, Ashoka diamonds are some of the rarest in the world; less than two percent of diamonds mined can be cut in this way. From Rosalies, a magnificent five stone Ashoka cut eternity ring in a platinum...',
-    breadcrumbs: [
-      { name: 'Rings', href: '/rings' },
-      { name: 'Ashoka Five Stone Half Platinum Diamond Eternity Ring', href: '#' }
-    ]
-  };
+  // Static fallback data will be replaced by API data
+  // const staticProductData = { ... }; // Removed - using dynamic productData from API
 
-  const recommendedProducts = [
-    {
-      id: 'ashoka-seven-stone',
-      name: 'Ashoka Diamond Seven Stone Half Platinum Eternity Ring',
-      price: '£16,667',
-      image: '/images/Screenshot 2025-08-08 190135.png'
-    },
-    {
-      id: 'classic-ashoka-semi',
-      name: 'Classic Ashoka Diamond Platinum Semi Eternity Ring',
-      price: '£15,999',
-      image: '/images/Screenshot 2025-08-08 190223.png'
-    },
-    {
-      id: 'classic-ashoka-wedding',
-      name: 'Classic Ashoka Diamond Platinum Wedding Ring',
-      price: '£4,799',
-      image: '/images/Screenshot 2025-08-08 190300.png'
-    },
-    {
-      id: 'ashoka-classic-full-hoop',
-      name: 'Ashoka Classic Full Hoop Platinum Eternity Ring',
-      price: '£28,500',
-      image: '/images/Screenshot 2025-08-08 190135.png'
-    },
-    {
-      id: 'diamond-trilogy',
-      name: 'Diamond Trilogy Platinum Engagement Ring',
-      price: '£12,999',
-      image: '/images/Screenshot 2025-08-08 190223.png'
-    },
-    {
-      id: 'vintage-inspired',
-      name: 'Vintage Inspired Diamond Platinum Band',
-      price: '£8,750',
-      image: '/images/Screenshot 2025-08-08 190300.png'
-    }
-  ];
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle case where product not found
+  if (!productData) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 text-lg">Product not found</p>
+          <Link
+            to="/rings"
+            className="mt-4 inline-block px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800"
+          >
+            Back to Rings
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
-      <StaticNavigation />
+      <LuxuryNavigationWhite />
       
-      <main className="max-w-full mx-auto px-0 pt-44 pb-8">
+      {/* Mobile Breadcrumb */}
+      <nav className="block lg:hidden px-4 py-3 mb-4 pt-24">
+        <div className="flex items-center text-xs text-gray-500 font-light">
+          <Link to="/" className="hover:text-gray-700">Home</Link>
+          <span className="mx-2">→</span>
+          <Link to="/rings" className="hover:text-gray-700">Rings</Link>
+          <span className="mx-2">→</span>
+          <span className="text-gray-900">{productData.name}</span>
+        </div>
+      </nav>
+
+      {/* Mobile Image Carousel - Full Width */}
+      <div className="block lg:hidden w-full">
+        <div
+          className="relative w-full h-[50vh] bg-gray-50 cursor-pointer"
+          onClick={() => openLightbox(currentImageIndex)}
+        >
+          {isVideoFile(productData.images[currentImageIndex]?.url) ? (
+            <video
+              src={productData.images[currentImageIndex]?.url}
+              controls
+              autoPlay
+              muted
+              className="w-full h-full object-contain p-4"
+            />
+          ) : (
+            <img
+              src={productData.images[currentImageIndex]?.url}
+              alt={productData.images[currentImageIndex]?.alt || productData.name}
+              className="w-full h-full object-contain p-4"
+            />
+          )}
+
+          {/* Navigation Arrows */}
+          {productData.images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevImage();
+                }}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg z-10"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-700" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextImage();
+                }}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg z-10"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-700" />
+              </button>
+            </>
+          )}
+
+          {/* Dots Pagination */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1.5 z-10">
+            {productData.images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToImage(index)}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  index === currentImageIndex
+                    ? 'bg-gray-900'
+                    : 'bg-gray-400 hover:bg-gray-600'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Product Details */}
+      <div className="block lg:hidden px-6 py-4 bg-white">
+        {/* Mobile content will be added here if needed */}
+      </div>
+
+      <main className="max-w-full mx-auto px-0 pt-0 lg:pt-44 pb-8">
         {/* Breadcrumb - Desktop Only */}
         <nav className="hidden lg:flex items-center space-x-2 text-sm text-gray-600 mb-8 px-8">
           <Link to="/" className="hover:text-gray-900">Home</Link>
           {productData.breadcrumbs.map((crumb, index) => (
             <React.Fragment key={index}>
               <ChevronRight className="w-4 h-4" />
-              <Link 
-                to={crumb.href} 
+              <Link
+                to={crumb.href}
                 className={`hover:text-gray-900 ${index === productData.breadcrumbs.length - 1 ? 'text-gray-900 font-medium' : ''}`}
               >
                 {crumb.name}
@@ -212,224 +356,74 @@ const ProductDetail = () => {
           ))}
         </nav>
 
-        {/* Mobile Layout */}
-        <div className="block lg:hidden">
-          {/* Mobile Image Carousel */}
-          <div 
-            className="relative w-full h-[70vh] bg-gray-50 cursor-pointer"
-            onClick={() => openLightbox(currentImageIndex)}
-          >
-            <img
-              src={productData.images[currentImageIndex]}
-              alt={productData.name}
-              className="w-full h-full object-contain p-8"
-            />
-            
-            {/* Navigation Arrows */}
-            {productData.images.length > 1 && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    prevImage();
-                  }}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg z-10"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-700" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    nextImage();
-                  }}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg z-10"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-700" />
-                </button>
-              </>
-            )}
-            
-            {/* Dots Pagination */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
-              {productData.images.map((_, index) => (
-                <button
+        {/* Desktop Layout */}
+        <div className="hidden lg:grid lg:grid-cols-[60%,40%] gap-0">
+          {/* Left Side - Dynamic Image Grid */}
+          <div className="w-full px-4">
+            {/* Fixed 2-Column Grid for all media */}
+            <div className="grid grid-cols-2 gap-2">
+              {productData.images.map((image, index) => (
+                <div
                   key={index}
-                  onClick={() => goToImage(index)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    index === currentImageIndex 
-                      ? 'bg-gray-900' 
-                      : 'bg-gray-400 hover:bg-gray-600'
-                  }`}
-                />
+                  className="relative bg-gray-50 overflow-hidden group cursor-pointer"
+                  style={{ height: '950px' }}
+                  onClick={() => openLightbox(index)}
+                >
+                  {/* Loading skeleton for videos */}
+                  {isVideoFile(image?.url) && (
+                    <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+                      <div className="w-16 h-16 border-4 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                    </div>
+                  )}
+
+                  {isVideoFile(image?.url) ? (
+                    <div className="relative w-full h-full">
+                      <video
+                        src={image?.url}
+                        muted
+                        loop
+                        className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
+                        onLoadedData={(e) => {
+                          // Hide loading skeleton when video loads
+                          const loadingDiv = e.target.parentElement.previousElementSibling;
+                          if (loadingDiv) loadingDiv.style.display = 'none';
+                        }}
+                      />
+                      {/* Play button overlay for videos */}
+                      <div className="absolute bottom-4 left-4 w-8 h-8 bg-black bg-opacity-60 rounded-full flex items-center justify-center text-white">
+                        <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M8 5v10l8-5-8-5z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={image?.url}
+                      alt={image?.alt || `${productData.name} - Image ${index + 1}`}
+                      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                        index === 0 ? 'p-8' : ''
+                      }`}
+                    />
+                  )}
+
+                  {/* Zoom Button - only on first image and not videos */}
+                  {index === 0 && !isVideoFile(image?.url) && (
+                    <>
+                      <button className="absolute top-8 left-8 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110">
+                        <Plus className="w-6 h-6 text-gray-700" />
+                      </button>
+                      <span className="absolute top-24 left-8 text-base text-gray-700 bg-white/90 px-4 py-2 rounded font-serif">
+                        Zoom
+                      </span>
+                    </>
+                  )}
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Mobile Product Details */}
-          <div className="px-6 py-6 bg-white">
-            {/* Breadcrumb */}
-            <div className="text-xs text-gray-500 mb-4">
-              Rings — {productData.name}
-            </div>
-
-            {/* Product Title and Price */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-cormorant font-light text-gray-900 mb-4 leading-tight">
-                {productData.name}
-              </h1>
-              <div className="mb-3">
-                <div className="text-xl font-cormorant text-gray-900 mb-2">
-                  {productData.price}
-                </div>
-                <div className="flex items-start space-x-2 text-xs text-gray-500 leading-relaxed">
-                  <svg className="w-3 h-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <span>We've detected you are browsing from Sri Lanka, please note the UK price for this piece is £15,000</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Metal Selection */}
-            <div className="mb-6">
-              <h3 className="text-xs font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-4">
-                Metal: Platinum
-              </h3>
-              <div className="flex space-x-3">
-                {productData.metals.map((metal) => (
-                  <button
-                    key={metal.id}
-                    onClick={() => setSelectedMetal(metal.id)}
-                    className={`w-12 h-12 rounded-full border-2 transition-all duration-200 ${
-                      selectedMetal === metal.id 
-                        ? 'border-gray-800' 
-                        : 'border-gray-300 hover:border-gray-500'
-                    }`}
-                    style={{ backgroundColor: metal.color }}
-                    title={metal.name}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Size Selection */}
-            <div className="mb-6">
-              <h3 className="text-xs font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-4">
-                Size
-              </h3>
-              <select
-                value={selectedSize}
-                onChange={(e) => setSelectedSize(e.target.value)}
-                className="w-full border border-gray-300 px-4 py-4 font-cormorant text-gray-900 focus:outline-none focus:border-gray-800 bg-white text-sm"
-              >
-                {productData.sizes.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3 mb-6">
-              <Button 
-                onClick={handleAddToCart}
-                disabled={isLoading}
-                className={`w-full h-12 font-cormorant font-medium uppercase tracking-wider text-xs border-0 transition-all duration-300 relative overflow-hidden ${
-                  isLoading 
-                    ? 'bg-gray-900 text-white cursor-not-allowed' 
-                    : 'bg-[#f4e6c8] hover:bg-[#f0ddb0] text-gray-900'
-                }`}
-              >
-                {isLoading && (
-                  <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
-                    <div className="w-24 h-0.5 bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-white rounded-full w-full animate-pulse"></div>
-                    </div>
-                  </div>
-                )}
-                <span className={`${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
-                  Add to Bag
-                </span>
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full h-12 border border-gray-300 hover:border-gray-800 text-gray-900 font-cormorant font-medium uppercase tracking-wider text-xs bg-white"
-              >
-                Enquire
-              </Button>
-            </div>
-
-            {/* Add to Wishlist */}
-            <div className="text-center mb-6">
-              <button className="flex items-center justify-center w-full text-gray-600 hover:text-gray-900 transition-colors">
-                <Heart className="w-4 h-4 mr-2" />
-                <span className="font-cormorant text-sm">Add to Wishlist</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden lg:grid lg:grid-cols-[60%,40%] gap-0">
-          {/* Left Side - Edge-to-Edge 2x2 Image Grid */}
-          <div className="w-full">
-            {/* Top Row */}
-            <div className="grid grid-cols-2 gap-0 mb-0">
-              {/* Main Product Image with Zoom */}
-              <div 
-                className="relative bg-gray-50 overflow-hidden group cursor-pointer" 
-                style={{ height: '650px' }}
-                onClick={() => openLightbox(0)}
-              >
-                <img
-                  src={productData.images[0]}
-                  alt={productData.name}
-                  className="w-full h-full object-contain p-12 transition-transform duration-500 group-hover:scale-105"
-                />
-                {/* Zoom Button */}
-                <button className="absolute top-8 left-8 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110">
-                  <Plus className="w-6 h-6 text-gray-700" />
-                </button>
-                <span className="absolute top-24 left-8 text-base text-gray-700 bg-white/90 px-4 py-2 rounded font-serif">
-                  Zoom
-                </span>
-              </div>
-              
-              {/* Lifestyle Image */}
-              <div 
-                className="bg-gray-50 overflow-hidden group cursor-pointer" 
-                style={{ height: '650px' }}
-                onClick={() => openLightbox(1)}
-              >
-                <img
-                  src={productData.images[1]}
-                  alt="Lifestyle shot"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-            </div>
-
-            {/* Bottom Row */}
-            <div className="grid grid-cols-2 gap-0">
-              {/* Detail Shot */}
-              <div 
-                className="bg-gray-50 overflow-hidden group cursor-pointer" 
-                style={{ height: '650px' }}
-                onClick={() => openLightbox(2)}
-              >
-                <img
-                  src={productData.images[2]}
-                  alt="Detail view"
-                  className="w-full h-full object-contain p-12 transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Right Side - Product Information */}
-          <div className="px-4 max-w-lg mx-auto pt-0 sticky top-8 self-start bg-white">
+          <div className="pt-0 sticky top-8 self-start bg-white" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}>
             {/* Product Title and Price */}
             <div className="mb-8">
               <h1 className="text-3xl font-cormorant font-light text-gray-900 mb-6 leading-tight">
@@ -449,26 +443,28 @@ const ProductDetail = () => {
             </div>
 
             {/* Metal Selection */}
-            <div className="mb-8">
-              <h3 className="text-xs font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-4">
-                Metal: Platinum
-              </h3>
-              <div className="flex space-x-2">
-                {productData.metals.map((metal) => (
-                  <button
-                    key={metal.id}
-                    onClick={() => setSelectedMetal(metal.id)}
-                    className={`w-12 h-12 rounded-full border-2 transition-all duration-200 ${
-                      selectedMetal === metal.id 
-                        ? 'border-gray-800' 
-                        : 'border-gray-300 hover:border-gray-500'
-                    }`}
-                    style={{ backgroundColor: metal.color }}
-                    title={metal.name}
-                  />
-                ))}
+            {productData.available_metals && productData.available_metals.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xs font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-4">
+                  Metal: {productData.available_metals.find(metal => metal.id === selectedMetal)?.name || productData.available_metals[0]?.name || 'Not Selected'}
+                </h3>
+                <div className="flex space-x-2">
+                  {productData.available_metals.map((metal) => (
+                    <button
+                      key={metal.id}
+                      onClick={() => setSelectedMetal(metal.id)}
+                      className={`w-12 h-12 rounded-full border-2 transition-all duration-200 ${
+                        selectedMetal === metal.id
+                          ? 'border-gray-800'
+                          : 'border-gray-300 hover:border-gray-500'
+                      }`}
+                      style={{ backgroundColor: metal.color }}
+                      title={metal.name}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Size Selection */}
             <div className="mb-8">
@@ -480,9 +476,9 @@ const ProductDetail = () => {
                 onChange={(e) => setSelectedSize(e.target.value)}
                 className="w-full border border-gray-300 px-4 py-3 font-cormorant text-gray-900 focus:outline-none focus:border-gray-800 bg-white text-sm"
               >
-                {productData.sizes.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
+                {ringSizes.map((size) => (
+                  <option key={size.value} value={size.value}>
+                    {size.label}
                   </option>
                 ))}
               </select>
@@ -678,11 +674,26 @@ const ProductDetail = () => {
                     : 'border-gray-300 hover:border-gray-600'
                 }`}
               >
-                <img 
-                  src={image} 
-                  alt={`Product view ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
+                {isVideoFile(image.url) ? (
+                  <div className="relative w-full h-full bg-gray-100 flex items-center justify-center">
+                    <video
+                      src={image.url}
+                      className="w-full h-full object-cover"
+                      muted
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                        <div className="w-0 h-0 border-l-[6px] border-l-gray-600 border-t-[3px] border-t-transparent border-b-[3px] border-b-transparent ml-0.5"></div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={image.url}
+                    alt={image.alt || `Product view ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </button>
             ))}
           </div>
@@ -714,12 +725,23 @@ const ProductDetail = () => {
                 transition: 'transform 0.3s ease-out'
               }}
             >
-              <img 
-                src={productData.images[lightboxImageIndex]} 
-                alt={productData.name}
-                className="max-w-full max-h-full object-contain"
-                style={{ maxHeight: '80vh', maxWidth: '80vw' }}
-              />
+              {isVideoFile(productData.images[lightboxImageIndex]?.url) ? (
+                <video
+                  src={productData.images[lightboxImageIndex]?.url}
+                  controls
+                  autoPlay
+                  muted
+                  className="max-w-full max-h-full object-contain"
+                  style={{ maxHeight: '80vh', maxWidth: '80vw' }}
+                />
+              ) : (
+                <img
+                  src={productData.images[lightboxImageIndex]?.url}
+                  alt={productData.images[lightboxImageIndex]?.alt || productData.name}
+                  className="max-w-full max-h-full object-contain"
+                  style={{ maxHeight: '80vh', maxWidth: '80vw' }}
+                />
+              )}
             </div>
           </div>
 
@@ -826,64 +848,68 @@ const ProductDetail = () => {
         </div>
       </section>
 
-      {/* You May Also Like Section */}
-      <section className="py-16 px-6 lg:px-8 bg-white">
-        <div className="max-w-6xl mx-auto">
-          {/* Section Header */}
-          <div className="flex items-center justify-between mb-12">
-            <h2 className="text-2xl lg:text-3xl font-cormorant font-light text-gray-900">
-              You may also like
-            </h2>
-            
-            {/* Navigation Arrows */}
-            <div className="flex space-x-2">
-              <button
-                onClick={prevRecommendation}
-                disabled={currentRecommendationIndex === 0}
-                className="w-8 h-8 lg:w-10 lg:h-10 border border-gray-300 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 lg:w-5 lg:h-5 text-gray-700" />
-              </button>
-              <button
-                onClick={nextRecommendation}
-                disabled={currentRecommendationIndex + 4 >= recommendedProducts.length}
-                className="w-8 h-8 lg:w-10 lg:h-10 border border-gray-300 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5 text-gray-700" />
-              </button>
-            </div>
-          </div>
+      {/* You May Also Like Section - Only show if there are recommendations */}
+      {recommendedProducts && recommendedProducts.length > 0 && (
+        <section className="py-16 px-6 lg:px-8 bg-white">
+          <div className="max-w-6xl mx-auto">
+            {/* Section Header */}
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-2xl lg:text-3xl font-cormorant font-light text-gray-900">
+                You may also like
+              </h2>
 
-          {/* Products Horizontal Layout */}
-          <div className="flex space-x-8 lg:space-x-12 overflow-x-auto scrollbar-hide pb-4">
-            {recommendedProducts.slice(currentRecommendationIndex, currentRecommendationIndex + 4).map((product, index) => (
-              <div key={product.id} className="group cursor-pointer flex-shrink-0 w-80 lg:w-96">
-                {/* Product Image */}
-                <div className="relative bg-gray-50 mb-6 overflow-hidden">
-                  <div className="aspect-square">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-contain p-6 lg:p-8 transition-transform duration-500 group-hover:scale-105"
-                    />
+              {/* Navigation Arrows */}
+              {recommendedProducts.length > 4 && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={prevRecommendation}
+                    disabled={currentRecommendationIndex === 0}
+                    className="w-8 h-8 lg:w-10 lg:h-10 border border-gray-300 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 lg:w-5 lg:h-5 text-gray-700" />
+                  </button>
+                  <button
+                    onClick={nextRecommendation}
+                    disabled={currentRecommendationIndex + 4 >= recommendedProducts.length}
+                    className="w-8 h-8 lg:w-10 lg:h-10 border border-gray-300 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5 text-gray-700" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Products Horizontal Layout */}
+            <div className="flex space-x-8 lg:space-x-12 overflow-x-auto scrollbar-hide pb-4">
+              {recommendedProducts.slice(currentRecommendationIndex, currentRecommendationIndex + 4).map((product, index) => (
+                <div key={product.id} className="group cursor-pointer flex-shrink-0 w-80 lg:w-96">
+                  {/* Product Image */}
+                  <div className="relative bg-gray-50 mb-6 overflow-hidden">
+                    <div className="aspect-square">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-contain p-6 lg:p-8 transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="space-y-2">
+                    <h3 className="font-cormorant text-gray-900 text-base lg:text-lg leading-tight">
+                      {product.name}
+                    </h3>
+                    <p className="font-cormorant text-gray-600 text-sm lg:text-base">
+                      {product.price}
+                    </p>
                   </div>
                 </div>
+              ))}
+            </div>
 
-                {/* Product Info */}
-                <div className="space-y-2">
-                  <h3 className="font-cormorant text-gray-900 text-base lg:text-lg leading-tight">
-                    {product.name}
-                  </h3>
-                  <p className="font-cormorant text-gray-600 text-sm lg:text-base">
-                    {product.price}
-                  </p>
-                </div>
-              </div>
-            ))}
           </div>
-
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Chat Widget */}
       <div className="fixed bottom-6 right-6 z-50">

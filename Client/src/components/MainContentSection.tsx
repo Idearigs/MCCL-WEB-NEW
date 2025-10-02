@@ -29,39 +29,20 @@ const jewelryCategories = [
   },
 ];
 
+// Interface for product data structure
+interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  price: string;
+  image: {
+    url: string;
+    alt: string;
+  } | null;
+}
+
 const allProductsData = {
-  'Rings': [
-    {
-      id: "ashoka-five-stone-platinum-diamond-eternity-ring",
-      name: "Ashoka Five Stone Half Platinum Diamond Eternity Ring",
-      image: "/images/12045CFRDOP_450x.webp"
-    },
-    {
-      id: "classic-evermore-half-hoop-platinum-diamond-eternity-ring",
-      name: "Classic Evermore Half Hoop Platinum Diamond Eternity Ring", 
-      image: "/images/prod1.png"
-    },
-    {
-      id: "national-gallery-play-of-light-chelsea-flower-show-ng200-ring",
-      name: "The National Gallery Play of Light Chelsea Flower Show NG200 Ring",
-      image: "/images/prod2.png"
-    },
-    {
-      id: "blossom-triple-rose-gold-diamond-ring",
-      name: "Blossom Triple Rose Gold Diamond Ring",
-      image: "/images/prod3.png"
-    },
-    {
-      id: "beach-yellow-gold-diamond-ring",
-      name: "Beach Yellow Gold Diamond Ring",
-      image: "/images/prod4.png"
-    },
-    {
-      id: "florentine-dolce-vita-cushion-aquamarine-ring",
-      name: "Florentine Dolce Vita Cushion Aquamarine French Yellow Gold Ring",
-      image: "/images/prod5.png"
-    }
-  ],
+  'Rings': [] as Product[], // Will be populated from API
   'Earrings': [
     {
       id: "diamond-drop-earrings",
@@ -130,7 +111,6 @@ const allProductsData = {
   ]
 };
 
-const productCarouselData = allProductsData['Rings'];
 
 
 export default function MainContentSection(): JSX.Element {
@@ -138,12 +118,44 @@ export default function MainContentSection(): JSX.Element {
   const [mobileCarouselIndex, setMobileCarouselIndex] = useState(0);
   const [activeFilter, setActiveFilter] = useState('Rings');
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
+  const [ringProducts, setRingProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const desktopScrollRef = useRef<HTMLDivElement>(null);
 
   // Get current products based on active filter
-  const currentProducts = allProductsData[activeFilter as keyof typeof allProductsData] || allProductsData['Rings'];
+  const currentProducts = activeFilter === 'Rings' ? ringProducts : allProductsData[activeFilter as keyof typeof allProductsData] || ringProducts;
+
+  // Fetch ring products from API
+  useEffect(() => {
+    const fetchRingProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/api/v1/products/category/rings');
+        const data = await response.json();
+
+        if (data.success) {
+          // Transform API data to match the expected structure
+          const transformedProducts: Product[] = data.data.products.map((product: any) => ({
+            id: product.slug,
+            name: product.name,
+            slug: product.slug,
+            price: product.price,
+            image: product.image
+          }));
+          setRingProducts(transformedProducts.slice(0, 6)); // Limit to 6 products for carousel
+        }
+      } catch (error) {
+        console.error('Error fetching ring products:', error);
+        // Keep empty array on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRingProducts();
+  }, []);
 
   // Auto-slide functionality - every 3 seconds
   useEffect(() => {
@@ -590,26 +602,40 @@ export default function MainContentSection(): JSX.Element {
           >
             <div className="flex space-x-8 pb-8 transition-all duration-300">
               {/* Product Cards */}
-              {currentProducts.map((product, index) => (
+              {loading && activeFilter === 'Rings' ? (
+                // Loading skeleton for rings
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={`loading-${index}`}
+                    className="flex-shrink-0 animate-pulse"
+                    style={{ width: '320px', minHeight: '520px' }}
+                  >
+                    <div className="bg-gray-200 h-[28rem] mb-8 rounded"></div>
+                    <div className="bg-gray-200 h-6 rounded mb-2"></div>
+                    <div className="bg-gray-200 h-4 w-3/4 rounded"></div>
+                  </div>
+                ))
+              ) : (
+                currentProducts.map((product, index) => (
                 <Link 
                   key={`${activeFilter}-${index}`}
-                  to={`/product/${product.id}`}
+                  to={`/product/${product.slug || product.id}`}
                   className="flex-shrink-0 group cursor-pointer block"
                   style={{ width: '320px', minHeight: '520px' }}
                 >
                   <div className="relative mb-8 bg-white group">
                     <img
-                      src={product.image}
-                      alt={product.name}
+                      src={product.image?.url || product.image || ''}
+                      alt={product.image?.alt || product.name}
                       className="w-full h-[28rem] object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                     {/* Add to Cart Button - appears on hover */}
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                      <AddToCartButton 
+                      <AddToCartButton
                         product={{
                           id: product.id,
                           name: product.name,
-                          image: product.image
+                          image: product.image?.url || product.image || ''
                         }}
                         className="px-6 py-2"
                       />
@@ -619,7 +645,8 @@ export default function MainContentSection(): JSX.Element {
                     {product.name}
                   </h3>
                 </Link>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -636,10 +663,24 @@ export default function MainContentSection(): JSX.Element {
                 }}
               >
                 <div className="flex gap-4" style={{ width: 'max-content' }}>
-                  {currentProducts.map((product, index) => (
+                  {loading && activeFilter === 'Rings' ? (
+                    // Loading skeleton for mobile rings
+                    Array.from({ length: 6 }).map((_, index) => (
+                      <div
+                        key={`mobile-loading-${index}`}
+                        className="flex-shrink-0 animate-pulse"
+                        style={{ width: '200px', scrollSnapAlign: 'start' }}
+                      >
+                        <div className="bg-gray-200 h-72 mb-6 rounded-lg"></div>
+                        <div className="bg-gray-200 h-4 rounded mb-2"></div>
+                        <div className="bg-gray-200 h-3 w-3/4 rounded"></div>
+                      </div>
+                    ))
+                  ) : (
+                    currentProducts.map((product, index) => (
                     <Link 
                       key={index}
-                      to={`/product/${product.id}`}
+                      to={`/product/${product.slug || product.id}`}
                       className="flex-shrink-0 group cursor-pointer block" 
                       style={{ 
                         width: '200px',
@@ -648,17 +689,17 @@ export default function MainContentSection(): JSX.Element {
                     >
                       <div className="relative mb-6 bg-white p-6 shadow-sm rounded-lg transition-transform duration-300 group-hover:scale-[1.02] group">
                         <img
-                          src={product.image}
-                          alt={product.name}
+                          src={product.image?.url || product.image || ''}
+                          alt={product.image?.alt || product.name}
                           className="w-full h-72 object-contain transition-transform duration-500 group-hover:scale-105"
                         />
                         {/* Add to Cart Button - appears on mobile tap/hover */}
                         <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 rounded-lg">
-                          <AddToCartButton 
+                          <AddToCartButton
                             product={{
                               id: product.id,
                               name: product.name,
-                              image: product.image
+                              image: product.image?.url || product.image || ''
                             }}
                             className="px-4 py-2 text-xs"
                           />
@@ -668,7 +709,8 @@ export default function MainContentSection(): JSX.Element {
                         {product.name}
                       </h3>
                     </Link>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
