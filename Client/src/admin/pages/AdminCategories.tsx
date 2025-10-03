@@ -6,6 +6,7 @@ import AdminLayout from '../components/AdminLayout';
 import ToastContainer from '../components/Toast';
 import { useToast } from '../hooks/useToast';
 import { LoadingState } from '../components/LoadingSpinner';
+import API_BASE_URL from '../../config/api';
 
 interface Category {
   id: string;
@@ -105,19 +106,19 @@ const AdminCategories: React.FC = () => {
       };
 
       const [categoriesRes, ringTypesRes, gemstonesRes, metalsRes, collectionsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/v1/admin/categories', { 
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories`, { 
           headers: new Headers(headers) 
         }),
-        fetch('http://localhost:5000/api/v1/admin/categories/ring-types', { 
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/ring-types`, { 
           headers: new Headers(headers) 
         }),
-        fetch('http://localhost:5000/api/v1/admin/categories/gemstones', { 
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/gemstones`, { 
           headers: new Headers(headers) 
         }),
-        fetch('http://localhost:5000/api/v1/admin/categories/metals', { 
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/metals`, { 
           headers: new Headers(headers) 
         }),
-        fetch('http://localhost:5000/api/v1/admin/categories/collections', { 
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/collections`, { 
           headers: new Headers(headers) 
         })
       ]);
@@ -214,7 +215,7 @@ const AdminCategories: React.FC = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/v1/admin/${endpointPath}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/${endpointPath}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -288,7 +289,7 @@ const AdminCategories: React.FC = () => {
 
       // Delete all selected items
       const deletePromises = selectedItems.map(itemId =>
-        fetch(`http://localhost:5000/api/v1/admin/${endpointBase}/${itemId}`, {
+        fetch(`${API_BASE_URL}/admin/${endpointBase}/${itemId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         })

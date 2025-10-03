@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigation from "../components/LuxuryNavigation";
 import { Link } from "react-router-dom";
+import API_BASE_URL from '../config/api';
 
 interface Collection {
   id: string;
@@ -25,13 +26,13 @@ const Festina = (): JSX.Element => {
       try {
         setLoading(true);
         // Fetch brand collections - we need the brand ID first
-        const brandsResponse = await fetch('http://localhost:5000/api/v1/watches/brands');
+        const brandsResponse = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/watches/brands`);
         const brandsData = await brandsResponse.json();
 
         if (brandsData.success) {
           const festinaBrand = brandsData.data.find((b: any) => b.slug === 'festina');
           if (festinaBrand) {
-            const collectionsResponse = await fetch(`http://localhost:5000/api/v1/watches/brands/${festinaBrand.id}/collections`);
+            const collectionsResponse = await fetch(`${API_BASE_URL}/watches/brands/${festinaBrand.id}/collections`);
             const collectionsData = await collectionsResponse.json();
 
             if (collectionsData.success) {

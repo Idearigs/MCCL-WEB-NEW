@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
 import { LoadingState } from '../components/LoadingSpinner';
+import API_BASE_URL from '../../config/api';
 import {
   Package,
   FolderOpen,
@@ -47,7 +48,7 @@ const AdminDashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('admin_token');
-        const response = await fetch('http://localhost:5000/api/v1/admin/dashboard/stats', {
+        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/dashboard/stats`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

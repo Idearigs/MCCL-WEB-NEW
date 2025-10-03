@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 import { Heart } from "lucide-react";
+import API_BASE_URL from '../config/api';
 
 interface Watch {
   id: string;
@@ -55,7 +56,7 @@ const BristonHeritageCollection = (): JSX.Element => {
     const fetchCollectionData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/v1/watches/collections/briston-heritage-collection');
+        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/watches/collections/briston-heritage-collection`);
         const data = await response.json();
 
         if (data.success) {

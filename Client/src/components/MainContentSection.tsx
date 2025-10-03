@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
 import WatchBrandsShowcase from "./WatchBrandsShowcase";
 import AddToCartButton from "./AddToCartButton";
+import API_BASE_URL from '../config/api';
 
 const jewelryCategories = [
   {
@@ -132,7 +133,7 @@ export default function MainContentSection(): JSX.Element {
     const fetchRingProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/v1/products/category/rings');
+        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/products/category/rings`);
         const data = await response.json();
 
         if (data.success) {

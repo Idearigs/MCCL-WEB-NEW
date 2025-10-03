@@ -7,6 +7,7 @@ import Alert from '../components/Alert';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProductFormModal from '../components/ProductFormModal';
 import ProductViewModal from '../components/ProductViewModal';
+import API_BASE_URL from '../../config/api';
 import {
   Package,
   Plus,
@@ -130,7 +131,7 @@ const AdminProducts: React.FC = () => {
         sortOrder
       });
 
-      const response = await fetch(`http://localhost:5000/api/v1/admin/products?${queryParams}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products?${queryParams}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -156,7 +157,7 @@ const AdminProducts: React.FC = () => {
       const token = localStorage.getItem('admin_token');
 
       // Fetch all product options in a single request
-      const productsOptionsResponse = await fetch('http://localhost:5000/api/v1/admin/products/options', {
+      const productsOptionsResponse = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/products/options`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -169,23 +170,23 @@ const AdminProducts: React.FC = () => {
         collectionsResponse
       ] = await Promise.all([
         // Categories
-        fetch('http://localhost:5000/api/v1/admin/categories', {
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Ring types
-        fetch('http://localhost:5000/api/v1/admin/categories/ring-types', {
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/ring-types`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Gemstones
-        fetch('http://localhost:5000/api/v1/admin/categories/gemstones', {
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/gemstones`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Metals
-        fetch('http://localhost:5000/api/v1/admin/categories/metals', {
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/metals`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Collections
-        fetch('http://localhost:5000/api/v1/admin/categories/collections', {
+        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/collections`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -279,7 +280,7 @@ const AdminProducts: React.FC = () => {
   const handleBulkAction = async (action: string, value?: string) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:5000/api/v1/admin/products/bulk/update', {
+      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/products/bulk/update`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -321,7 +322,7 @@ const AdminProducts: React.FC = () => {
   const toggleProductStatus = async (productId: string) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:5000/api/v1/admin/products/${productId}/toggle-status`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/toggle-status`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -344,7 +345,7 @@ const AdminProducts: React.FC = () => {
   const toggleFeaturedStatus = async (productId: string) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:5000/api/v1/admin/products/${productId}/toggle-featured`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/toggle-featured`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -420,7 +421,7 @@ const AdminProducts: React.FC = () => {
           });
         }
 
-        response = await fetch('http://localhost:5000/api/v1/admin/products/with-media', {
+        response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/products/with-media`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -442,7 +443,7 @@ const AdminProducts: React.FC = () => {
             .map((vid: any) => ({ url: vid.url, title: vid.title }));
         }
 
-        response = await fetch('http://localhost:5000/api/v1/admin/products', {
+        response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/products`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -474,7 +475,7 @@ const AdminProducts: React.FC = () => {
     try {
       setFormLoading(true);
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:5000/api/v1/admin/products/${editingProduct?.id}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${editingProduct?.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -505,7 +506,7 @@ const AdminProducts: React.FC = () => {
     try {
       setFormLoading(true);
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:5000/api/v1/admin/products/${deletingProduct?.id}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${deletingProduct?.id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -539,7 +540,7 @@ const AdminProducts: React.FC = () => {
     try {
       setFormLoading(true);
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:5000/api/v1/admin/products/${product.id}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products/${product.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

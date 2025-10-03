@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigation from "../components/LuxuryNavigation";
 import { Link } from "react-router-dom";
+import API_BASE_URL from '../config/api';
 
 interface Collection {
   id: string;
@@ -21,13 +22,13 @@ const Roamer = (): JSX.Element => {
     const fetchCollections = async () => {
       try {
         setLoading(true);
-        const brandsResponse = await fetch('http://localhost:5000/api/v1/watches/brands');
+        const brandsResponse = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/watches/brands`);
         const brandsData = await brandsResponse.json();
 
         if (brandsData.success) {
           const roamerBrand = brandsData.data.find((b: any) => b.slug === 'roamer');
           if (roamerBrand) {
-            const collectionsResponse = await fetch(`http://localhost:5000/api/v1/watches/brands/${roamerBrand.id}/collections`);
+            const collectionsResponse = await fetch(`${API_BASE_URL}/watches/brands/${roamerBrand.id}/collections`);
             const collectionsData = await collectionsResponse.json();
 
             if (collectionsData.success) {

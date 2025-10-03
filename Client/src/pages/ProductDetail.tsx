@@ -6,6 +6,7 @@ import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, Ch
 import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
 import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
+import API_BASE_URL from '../config/api';
 
 const ProductDetail = () => {
   const { productId } = useParams();
@@ -78,7 +79,7 @@ const ProductDetail = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`http://localhost:5000/api/v1/products/${productId}`);
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`);
         const data = await response.json();
 
         if (data.success) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
+import API_BASE_URL from '../config/api';
 
 interface RingProduct {
   id: string;
@@ -90,11 +91,11 @@ const Rings = (): JSX.Element => {
           gemstonesResponse,
           metalsResponse
         ] = await Promise.all([
-          fetch('http://localhost:5000/api/v1/products/category/rings'),
-          fetch('http://localhost:5000/api/v1/filters/collections'),
-          fetch('http://localhost:5000/api/v1/filters/ring-types'),
-          fetch('http://localhost:5000/api/v1/filters/gemstones'),
-          fetch('http://localhost:5000/api/v1/filters/metals')
+          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/products/category/rings`),
+          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/filters/collections`),
+          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/filters/ring-types`),
+          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/filters/gemstones`),
+          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/filters/metals`)
         ]);
 
         // Handle products data

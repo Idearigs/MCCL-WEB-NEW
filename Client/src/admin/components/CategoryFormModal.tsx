@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import API_BASE_URL from '../../config/api';
 
 interface CategoryFormModalProps {
   isOpen: boolean;
@@ -105,8 +106,8 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
 
       const endpoint = endpoints[type];
       const url = mode === 'create'
-        ? `http://localhost:5000/api/v1/admin/${endpoint}`
-        : `http://localhost:5000/api/v1/admin/${endpoint}/${item.id}`;
+        ? `${API_BASE_URL}/admin/${endpoint}`
+        : `${API_BASE_URL}/admin/${endpoint}/${item.id}`;
 
       const method = mode === 'create' ? 'POST' : 'PUT';
 

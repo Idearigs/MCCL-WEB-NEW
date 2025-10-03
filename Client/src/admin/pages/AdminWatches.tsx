@@ -21,6 +21,7 @@ import Modal from '../components/Modal';
 import Alert from '../components/Alert';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
+import API_BASE_URL from '../../config/api';
 
 interface WatchBrand {
   id: string;
@@ -142,7 +143,7 @@ const AdminWatches: React.FC = () => {
   const fetchBrands = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:5000/api/v1/admin/watches/brands', {
+      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/watches/brands`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -166,7 +167,7 @@ const AdminWatches: React.FC = () => {
       }
 
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:5000/api/v1/admin/watches/brands/${brandId}/collections`, {
+      const response = await fetch(`${API_BASE_URL}/admin/watches/brands/${brandId}/collections`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -189,7 +190,7 @@ const AdminWatches: React.FC = () => {
       if (searchTerm) params.append('search', searchTerm);
 
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:5000/api/v1/admin/watches/watches?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/watches/watches?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -224,7 +225,7 @@ const AdminWatches: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:5000/api/v1/admin/watches/brands', {
+      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/watches/brands`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -254,7 +255,7 @@ const AdminWatches: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:5000/api/v1/admin/watches/collections', {
+      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/watches/collections`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -284,7 +285,7 @@ const AdminWatches: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:5000/api/v1/admin/watches/watches', {
+      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/watches/watches`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -323,11 +324,11 @@ const AdminWatches: React.FC = () => {
     try {
       let endpoint = '';
       if (deleteConfirm.type === 'brand') {
-        endpoint = `http://localhost:5000/api/v1/admin/watches/brands/${deleteConfirm.id}`;
+        endpoint = `${API_BASE_URL}/admin/watches/brands/${deleteConfirm.id}`;
       } else if (deleteConfirm.type === 'collection') {
-        endpoint = `http://localhost:5000/api/v1/admin/watches/collections/${deleteConfirm.id}`;
+        endpoint = `${API_BASE_URL}/admin/watches/collections/${deleteConfirm.id}`;
       } else {
-        endpoint = `http://localhost:5000/api/v1/admin/watches/watches/${deleteConfirm.id}`;
+        endpoint = `${API_BASE_URL}/admin/watches/watches/${deleteConfirm.id}`;
       }
 
       const token = localStorage.getItem('admin_token');
