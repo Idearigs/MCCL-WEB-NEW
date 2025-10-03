@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import API_BASE_URL from '../../config/api';
 
 interface AdminUser {
   id: string;
@@ -30,8 +31,6 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefin
 interface AdminAuthProviderProps {
   children: ReactNode;
 }
-
-const API_BASE_URL = 'http://localhost:5000/api/v1';
 
 export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }) => {
   const [admin, setAdmin] = useState<AdminUser | null>(null);
