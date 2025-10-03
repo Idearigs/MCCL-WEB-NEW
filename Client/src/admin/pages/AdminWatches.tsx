@@ -226,7 +226,7 @@ const AdminWatches: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/watches/brands`, {
+      const response = await fetch(`${API_BASE_URL}/admin/watches/brands`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -256,7 +256,7 @@ const AdminWatches: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/watches/collections`, {
+      const response = await fetch(`${API_BASE_URL}/admin/watches/collections`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -286,7 +286,7 @@ const AdminWatches: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/watches/watches`, {
+      const response = await fetch(`${API_BASE_URL}/admin/watches/watches`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

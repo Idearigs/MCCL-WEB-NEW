@@ -48,7 +48,7 @@ const AdminDashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('admin_token');
-        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/dashboard/stats`, {
+        const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

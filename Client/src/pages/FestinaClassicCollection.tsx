@@ -56,7 +56,7 @@ const FestinaClassicCollection = (): JSX.Element => {
     const fetchCollectionData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/watches/collections/festina-classic-collection`);
+        const response = await fetch(`${API_BASE_URL}/watches/collections/festina-classic-collection`);
         const data = await response.json();
 
         if (data.success) {

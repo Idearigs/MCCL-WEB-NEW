@@ -56,7 +56,7 @@ const RoamerSwissTradition = (): JSX.Element => {
     const fetchCollectionData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/watches/collections/roamer-swiss-tradition`);
+        const response = await fetch(`${API_BASE_URL}/watches/collections/roamer-swiss-tradition`);
         const data = await response.json();
 
         if (data.success) {

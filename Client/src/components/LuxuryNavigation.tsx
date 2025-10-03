@@ -84,7 +84,7 @@ const LuxuryNavigation = (): JSX.Element => {
     const fetchWatchBrands = async () => {
       try {
         setLoadingWatches(true);
-        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/watches/featured-collections`);
+        const response = await fetch(`${API_BASE_URL}/watches/featured-collections`);
         const data = await response.json();
 
         if (data.success) {

@@ -106,19 +106,19 @@ const AdminCategories: React.FC = () => {
       };
 
       const [categoriesRes, ringTypesRes, gemstonesRes, metalsRes, collectionsRes] = await Promise.all([
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories`, { 
+        fetch(`${API_BASE_URL}/admin/categories`, { 
           headers: new Headers(headers) 
         }),
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/ring-types`, { 
+        fetch(`${API_BASE_URL}/admin/categories/ring-types`, { 
           headers: new Headers(headers) 
         }),
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/gemstones`, { 
+        fetch(`${API_BASE_URL}/admin/categories/gemstones`, { 
           headers: new Headers(headers) 
         }),
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/metals`, { 
+        fetch(`${API_BASE_URL}/admin/categories/metals`, { 
           headers: new Headers(headers) 
         }),
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/collections`, { 
+        fetch(`${API_BASE_URL}/admin/categories/collections`, { 
           headers: new Headers(headers) 
         })
       ]);

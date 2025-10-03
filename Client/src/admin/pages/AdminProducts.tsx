@@ -157,7 +157,7 @@ const AdminProducts: React.FC = () => {
       const token = localStorage.getItem('admin_token');
 
       // Fetch all product options in a single request
-      const productsOptionsResponse = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/products/options`, {
+      const productsOptionsResponse = await fetch(`${API_BASE_URL}/admin/products/options`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -170,23 +170,23 @@ const AdminProducts: React.FC = () => {
         collectionsResponse
       ] = await Promise.all([
         // Categories
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories`, {
+        fetch(`${API_BASE_URL}/admin/categories`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Ring types
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/ring-types`, {
+        fetch(`${API_BASE_URL}/admin/categories/ring-types`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Gemstones
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/gemstones`, {
+        fetch(`${API_BASE_URL}/admin/categories/gemstones`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Metals
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/metals`, {
+        fetch(`${API_BASE_URL}/admin/categories/metals`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Collections
-        fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/categories/collections`, {
+        fetch(`${API_BASE_URL}/admin/categories/collections`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -280,7 +280,7 @@ const AdminProducts: React.FC = () => {
   const handleBulkAction = async (action: string, value?: string) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/products/bulk/update`, {
+      const response = await fetch(`${API_BASE_URL}/admin/products/bulk/update`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -421,7 +421,7 @@ const AdminProducts: React.FC = () => {
           });
         }
 
-        response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/products/with-media`, {
+        response = await fetch(`${API_BASE_URL}/admin/products/with-media`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -443,7 +443,7 @@ const AdminProducts: React.FC = () => {
             .map((vid: any) => ({ url: vid.url, title: vid.title }));
         }
 
-        response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/products`, {
+        response = await fetch(`${API_BASE_URL}/admin/products`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

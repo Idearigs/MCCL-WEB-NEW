@@ -22,7 +22,7 @@ const Roamer = (): JSX.Element => {
     const fetchCollections = async () => {
       try {
         setLoading(true);
-        const brandsResponse = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/watches/brands`);
+        const brandsResponse = await fetch(`${API_BASE_URL}/watches/brands`);
         const brandsData = await brandsResponse.json();
 
         if (brandsData.success) {

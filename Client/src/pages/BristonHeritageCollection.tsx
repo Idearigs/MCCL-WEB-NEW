@@ -56,7 +56,7 @@ const BristonHeritageCollection = (): JSX.Element => {
     const fetchCollectionData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/watches/collections/briston-heritage-collection`);
+        const response = await fetch(`${API_BASE_URL}/watches/collections/briston-heritage-collection`);
         const data = await response.json();
 
         if (data.success) {

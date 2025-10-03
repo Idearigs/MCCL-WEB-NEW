@@ -133,10 +133,10 @@ export default function MainContentSection(): JSX.Element {
     const fetchRingProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/products/category/rings`);
+        const response = await fetch(`${API_BASE_URL}/products/category/rings`);
         const data = await response.json();
 
-        if (data.success) {
+        if (data.success && data.data && data.data.products) {
           // Transform API data to match the expected structure
           const transformedProducts: Product[] = data.data.products.map((product: any) => ({
             id: product.slug,

@@ -25,7 +25,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, isMobile
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/products`);
+        const response = await fetch(`${API_BASE_URL}/products`);
         const data = await response.json();
         if (data.success) {
           setAllProducts(data.data.products);

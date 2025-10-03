@@ -91,11 +91,11 @@ const Rings = (): JSX.Element => {
           gemstonesResponse,
           metalsResponse
         ] = await Promise.all([
-          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/products/category/rings`),
-          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/filters/collections`),
-          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/filters/ring-types`),
-          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/filters/gemstones`),
-          fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/filters/metals`)
+          fetch(`${API_BASE_URL}/products/category/rings`),
+          fetch(`${API_BASE_URL}/filters/collections`),
+          fetch(`${API_BASE_URL}/filters/ring-types`),
+          fetch(`${API_BASE_URL}/filters/gemstones`),
+          fetch(`${API_BASE_URL}/filters/metals`)
         ]);
 
         // Handle products data
