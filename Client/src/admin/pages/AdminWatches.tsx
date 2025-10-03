@@ -143,7 +143,7 @@ const AdminWatches: React.FC = () => {
   const fetchBrands = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(import.meta.env.VITE_API_URL || `${API_BASE_URL}/admin/watches/brands`, {
+      const response = await fetch(`${API_BASE_URL}/admin/watches/brands`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -151,11 +151,12 @@ const AdminWatches: React.FC = () => {
       });
       const data = await response.json();
       if (data.success) {
-        setBrands(data.data);
+        setBrands(data.data || []);
       }
     } catch (error) {
       console.error('Error fetching brands:', error);
       setAlert({ type: 'error', message: 'Failed to fetch brands' });
+      setBrands([]);
     }
   };
 
@@ -360,11 +361,11 @@ const AdminWatches: React.FC = () => {
     }
   };
 
-  const filteredBrands = brands.filter(brand =>
+  const filteredBrands = (brands || []).filter(brand =>
     brand.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredCollections = collections.filter(collection =>
+  const filteredCollections = (collections || []).filter(collection =>
     collection.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
