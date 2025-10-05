@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import { CartProvider } from "./contexts/CartContext";
+import { UserAuthProvider } from "./contexts/UserAuthContext";
+import { FavoritesProvider } from "./contexts/FavoritesContext";
 import Index from "./pages/Index";
 import Collections from "./pages/Collections";
 import Jewellery from "./pages/Jewellery";
@@ -35,6 +37,8 @@ import OurStory from "./pages/OurStory";
 import CustomerService from "./pages/CustomerService";
 import VisitUs from "./pages/VisitUs";
 import TrustGuarantees from "./pages/TrustGuarantees";
+import Favorites from "./pages/Favorites";
+import Account from "./pages/Account";
 import AdminApp from "./admin/AdminApp";
 
 const queryClient = new QueryClient();
@@ -42,12 +46,14 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <CartProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Routes>
+      <UserAuthProvider>
+        <FavoritesProvider>
+          <CartProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/collections" element={<Collections />} />
             <Route path="/products" element={<Products />} />
@@ -77,13 +83,19 @@ const App = () => (
             <Route path="/trust-guarantees" element={<TrustGuarantees />} />
             <Route path="/product/:productId" element={<ProductDetail />} />
 
+            {/* User Account Routes */}
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/account" element={<Account />} />
+
             {/* Admin Routes */}
             <Route path="/admin/*" element={<AdminApp />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </CartProvider>
+          </CartProvider>
+        </FavoritesProvider>
+      </UserAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
