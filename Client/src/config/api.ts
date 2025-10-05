@@ -1,8 +1,8 @@
 // API Configuration
 // This file centralizes the API URL configuration for all environments
 
-// Get API URL from environment variable or use default
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+// Get API URL from environment variable or use production URL as default
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.buymediamonds.co.uk/api/v1';
 
 // Helper function to build full API URLs (includes /api/v1 prefix)
 export const api = (path: string): string => {
