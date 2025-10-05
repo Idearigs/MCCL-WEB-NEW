@@ -2,7 +2,7 @@ import React from 'react';
 import { Heart, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LuxuryNavigation from '../components/LuxuryNavigation';
-import FooterSection from '../components/FooterSection';
+import { FooterSection } from '../components/FooterSection';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useUserAuth } from '../contexts/UserAuthContext';
 import { useCart } from '../contexts/CartContext';

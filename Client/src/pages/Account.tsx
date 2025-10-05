@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Mail, Calendar, Heart, Package, Settings, Shield } from 'lucide-react';
 import LuxuryNavigation from '../components/LuxuryNavigation';
-import FooterSection from '../components/FooterSection';
+import { FooterSection } from '../components/FooterSection';
 import { useUserAuth } from '../contexts/UserAuthContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { Link } from 'react-router-dom';
