@@ -1022,7 +1022,7 @@ const createProductWithMedia = async (req, res) => {
     } = getModelInstance();
 
     // Parse form data
-    const {
+    let {
       name,
       description,
       short_description,
@@ -1045,6 +1045,20 @@ const createProductWithMedia = async (req, res) => {
       meta_title,
       meta_description
     } = req.body;
+
+    // Convert empty strings to null for numeric fields
+    if (sale_price === '') {
+      sale_price = null;
+    }
+    if (stock_quantity === '') {
+      stock_quantity = null;
+    }
+    if (weight === '') {
+      weight = null;
+    }
+    if (collection_id === '') {
+      collection_id = null;
+    }
 
     // Parse array fields that come as JSON strings
     const parsedRingTypeIds = ring_type_ids ? JSON.parse(ring_type_ids) : [];
