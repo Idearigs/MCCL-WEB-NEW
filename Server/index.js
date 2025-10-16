@@ -74,7 +74,7 @@ if (config.NODE_ENV !== 'test') {
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check endpoint
+// Health check endpoint - returns server and database status
 app.get('/health', async (req, res) => {
   const { postgresDB } = require('./config/database');
   let dbStatus = 'disconnected';
