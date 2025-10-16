@@ -116,7 +116,7 @@ const Favorites: React.FC = () => {
                   <div className="flex flex-col md:flex-row gap-6 p-6">
                     {/* Product image */}
                     <Link
-                      to={`/product/${favorite.product.slug}`}
+                      to={`/${favorite.product.category?.slug || 'product'}/${favorite.product.slug}`}
                       className="flex-shrink-0 w-full md:w-48 h-48 bg-gray-100 rounded-md overflow-hidden group"
                     >
                       {favorite.product.image ? (
@@ -136,7 +136,7 @@ const Favorites: React.FC = () => {
                     <div className="flex-1 flex flex-col">
                       <div className="flex-1">
                         <Link
-                          to={`/product/${favorite.product.slug}`}
+                          to={`/${favorite.product.category?.slug || 'product'}/${favorite.product.slug}`}
                           className="group"
                         >
                           <h3 className="text-xl font-light text-gray-900 group-hover:text-amber-700 transition-colors mb-2">
@@ -181,7 +181,7 @@ const Favorites: React.FC = () => {
                           Add to Cart
                         </button>
                         <Link
-                          to={`/product/${favorite.product.slug}`}
+                          to={`/${favorite.product.category?.slug || 'product'}/${favorite.product.slug}`}
                           className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200 font-light text-sm"
                         >
                           View Details

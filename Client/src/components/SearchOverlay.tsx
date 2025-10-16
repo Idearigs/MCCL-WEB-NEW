@@ -95,7 +95,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, isMobile
                 {searchResults.map((product, index) => (
                   <Link
                     key={product.id}
-                    to={`/product/${product.slug}`}
+                    to={`/${product.category?.slug || 'product'}/${product.slug}`}
                     onClick={onClose}
                     className="block group opacity-0 animate-search-content-stagger"
                     style={{ animationDelay: `${0.1 * index}s` }}
@@ -198,7 +198,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, isMobile
                   {searchResults.slice(0, 5).map((product, index) => (
                     <Link
                       key={product.id}
-                      to={`/product/${product.slug}`}
+                      to={`/${product.category?.slug || 'product'}/${product.slug}`}
                       onClick={onClose}
                       className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-all group"
                     >

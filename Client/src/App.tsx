@@ -88,6 +88,19 @@ const App = () => (
             <Route path="/customer-service" element={<CustomerService />} />
             <Route path="/visit-us" element={<VisitUs />} />
             <Route path="/trust-guarantees" element={<TrustGuarantees />} />
+
+            {/* Category-based product URLs */}
+            <Route path="/engagement-rings/:productId" element={<ProductDetail />} />
+            <Route path="/wedding-rings/:productId" element={<ProductDetail />} />
+            <Route path="/rings/:productId" element={<ProductDetail />} />
+            <Route path="/earrings/:productId" element={<ProductDetail />} />
+            <Route path="/necklaces/:productId" element={<ProductDetail />} />
+            <Route path="/bracelets/:productId" element={<ProductDetail />} />
+            <Route path="/jewellery/:productId" element={<ProductDetail />} />
+            <Route path="/watches/:productId" element={<ProductDetail />} />
+            <Route path="/diamonds/:productId" element={<ProductDetail />} />
+
+            {/* Legacy product URL - redirect to category-based */}
             <Route path="/product/:productId" element={<ProductDetail />} />
 
             {/* User Account Routes */}

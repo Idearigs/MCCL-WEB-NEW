@@ -723,7 +723,7 @@ const Rings = (): JSX.Element => {
                 return (
                   <Link
                     key={product.id}
-                    to={`/product/${product.slug}`}
+                    to={`/${product.category.slug}/${product.slug}`}
                     className="group cursor-pointer bg-white transition-all duration-300 block"
                   >
                     <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>

@@ -616,9 +616,9 @@ export default function MainContentSection(): JSX.Element {
                 ))
               ) : (
                 currentProducts.map((product, index) => (
-                <Link 
+                <Link
                   key={`${activeFilter}-${index}`}
-                  to={`/product/${product.slug || product.id}`}
+                  to={`/${product.category?.slug || activeFilter.toLowerCase()}/${product.slug || product.id}`}
                   className="flex-shrink-0 group cursor-pointer block"
                   style={{ width: '320px', minHeight: '520px' }}
                 >
@@ -677,11 +677,11 @@ export default function MainContentSection(): JSX.Element {
                     ))
                   ) : (
                     currentProducts.map((product, index) => (
-                    <Link 
+                    <Link
                       key={index}
-                      to={`/product/${product.slug || product.id}`}
-                      className="flex-shrink-0 group cursor-pointer block" 
-                      style={{ 
+                      to={`/${product.category?.slug || activeFilter.toLowerCase()}/${product.slug || product.id}`}
+                      className="flex-shrink-0 group cursor-pointer block"
+                      style={{
                         width: '200px',
                         scrollSnapAlign: 'start'
                       }}

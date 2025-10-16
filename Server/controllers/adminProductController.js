@@ -285,6 +285,7 @@ const createProduct = async (req, res) => {
       name,
       description,
       short_description,
+      sku: providedSku,
       base_price,
       sale_price,
       currency = 'GBP',
@@ -325,9 +326,9 @@ const createProduct = async (req, res) => {
       });
     }
 
-    // Generate unique slug and SKU
+    // Generate unique slug and use provided SKU or generate one
     const slug = await generateUniqueSlug(name, Product);
-    const sku = generateSKU(name, category.slug);
+    const sku = providedSku && providedSku.trim() !== '' ? providedSku.trim() : generateSKU(name, category.slug);
 
     // Create product
     const product = await Product.create({
@@ -1026,6 +1027,7 @@ const createProductWithMedia = async (req, res) => {
       name,
       description,
       short_description,
+      sku: providedSku,
       base_price,
       sale_price,
       currency = 'GBP',
@@ -1082,9 +1084,9 @@ const createProductWithMedia = async (req, res) => {
       });
     }
 
-    // Generate unique slug and SKU
+    // Generate unique slug and use provided SKU or generate one
     const slug = await generateUniqueSlug(name, Product);
-    const sku = generateSKU(name, category.slug);
+    const sku = providedSku && providedSku.trim() !== '' ? providedSku.trim() : generateSKU(name, category.slug);
 
     // Create product
     const product = await Product.create({

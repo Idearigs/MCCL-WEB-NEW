@@ -17,6 +17,8 @@ const ProductDetail = () => {
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userCountry, setUserCountry] = useState<string | null>(null);
+  const [userCountryName, setUserCountryName] = useState<string | null>(null);
 
   // Hardcoded ring sizes for all rings with UK/US/EU equivalents
   const ringSizes = [
@@ -69,6 +71,29 @@ const ProductDetail = () => {
     delivery: false,
     insurance: false
   });
+
+  // Fetch user's country based on IP
+  useEffect(() => {
+    const fetchUserCountry = async () => {
+      try {
+        // Using ipapi.co for geolocation - free tier allows 1000 requests/day
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+
+        if (data.country_code && data.country_name) {
+          setUserCountry(data.country_code);
+          setUserCountryName(data.country_name);
+          console.log('User country detected:', data.country_name, data.country_code);
+        }
+      } catch (err) {
+        console.log('Could not detect user country:', err);
+        // Fallback: don't show the message if we can't detect
+        setUserCountry('GB'); // Default to GB (no message shown)
+      }
+    };
+
+    fetchUserCountry();
+  }, []);
 
   // Fetch product data
   useEffect(() => {
@@ -265,10 +290,17 @@ const ProductDetail = () => {
       <nav className="block lg:hidden px-4 py-3 mb-4 pt-24">
         <div className="flex items-center text-xs text-gray-500 font-light">
           <Link to="/" className="hover:text-gray-700">Home</Link>
-          <span className="mx-2">→</span>
-          <Link to="/rings" className="hover:text-gray-700">Rings</Link>
-          <span className="mx-2">→</span>
-          <span className="text-gray-900">{productData.name}</span>
+          {productData.breadcrumbs && productData.breadcrumbs.map((crumb, index) => (
+            <React.Fragment key={index}>
+              <span className="mx-2">→</span>
+              <Link
+                to={crumb.href}
+                className={`hover:text-gray-700 ${index === productData.breadcrumbs.length - 1 ? 'text-gray-900' : ''}`}
+              >
+                {crumb.name}
+              </Link>
+            </React.Fragment>
+          ))}
         </div>
       </nav>
 
@@ -434,12 +466,14 @@ const ProductDetail = () => {
                 <div className="text-lg font-cormorant text-gray-900 mb-3">
                   {productData.price}
                 </div>
-                <div className="flex items-start space-x-2 text-xs text-gray-500 leading-relaxed">
-                  <svg className="w-3 h-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <span>We've detected you are browsing from Sri Lanka, please note the UK price for this piece is £15,300</span>
-                </div>
+                {userCountry && userCountry !== 'GB' && userCountryName && (
+                  <div className="flex items-start space-x-2 text-xs text-gray-500 leading-relaxed">
+                    <svg className="w-3 h-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <span>We've detected you are browsing from {userCountryName}, please note the UK price for this piece is {productData.price}</span>
+                  </div>
+                )}
               </div>
             </div>
 

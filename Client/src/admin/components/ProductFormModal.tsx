@@ -7,6 +7,7 @@ interface ProductFormData {
   name: string;
   description: string;
   short_description: string;
+  sku: string;
   base_price: string;
   sale_price: string;
   currency: string;
@@ -73,6 +74,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     name: '',
     description: '',
     short_description: '',
+    sku: '',
     base_price: '',
     sale_price: '',
     currency: 'GBP',
@@ -119,6 +121,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         name: '',
         description: '',
         short_description: '',
+        sku: '',
         base_price: '',
         sale_price: '',
         currency: 'GBP',
@@ -510,6 +513,22 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     placeholder="0"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                  SKU (Stock Keeping Unit)
+                </label>
+                <input
+                  type="text"
+                  value={formData.sku}
+                  onChange={(e) => handleInputChange('sku', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
+                  placeholder="Enter SKU manually (optional)"
+                />
+                <p className="text-xs text-gray-500 mt-1 font-satoshi">
+                  Leave empty to auto-generate SKU based on product name
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
