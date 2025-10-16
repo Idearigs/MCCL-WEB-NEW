@@ -31,7 +31,7 @@ EXPOSE 3000
 # Health check - uses PORT environment variable or defaults to 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "const port = process.env.PORT || 3000; \
-    require('http').get('http://localhost:' + port + '/api/v1/health', (res) => { \
+    require('http').get('http://localhost:' + port + '/health', (res) => { \
       if (res.statusCode === 200) process.exit(0); \
       else process.exit(1); \
     }).on('error', () => process.exit(1));"
