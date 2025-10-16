@@ -5,7 +5,8 @@ const {
   getAllProducts,
   getProductBySlug,
   getAllCategories,
-  getProductsByCategory
+  getProductsByCategory,
+  getNavigationData
 } = require('../controllers/productController');
 
 const { joiValidation, validatePagination, sanitizeQuery } = require('../middleware/validation');
@@ -24,6 +25,9 @@ router.get('/',
 
 // GET /api/v1/products/categories - Get all categories
 router.get('/categories', getAllCategories);
+
+// GET /api/v1/products/navigation - Get navigation data (ring types, gemstones, metals, collections)
+router.get('/navigation', getNavigationData);
 
 // GET /api/v1/products/category/:categorySlug - Get products by category
 router.get('/category/:categorySlug',

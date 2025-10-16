@@ -14,7 +14,8 @@ import {
   Search,
   ChevronDown,
   Diamond,
-  Watch
+  Watch,
+  Layers
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -31,7 +32,8 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Products', href: '/admin/products', icon: Package },
-  { name: 'Categories', href: '/admin/categories', icon: FolderOpen },
+  // { name: 'Categories', href: '/admin/categories', icon: FolderOpen }, // Hidden - use Jewelry Categories instead
+  { name: 'Jewelry Categories', href: '/admin/jewelry-categories', icon: Layers },
   { name: 'Collections', href: '/admin/collections', icon: Diamond },
   { name: 'Watches', href: '/admin/watches', icon: Watch },
   { name: 'Users', href: '/admin/users', icon: Users },

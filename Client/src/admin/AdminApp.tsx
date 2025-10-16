@@ -6,7 +6,9 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import AdminCategories from './pages/AdminCategories';
+import AdminJewelryCategories from './pages/AdminJewelryCategories';
 import AdminWatches from './pages/AdminWatches';
+import AdminUsers from './pages/AdminUsers';
 
 const AdminApp: React.FC = () => {
   return (
@@ -44,10 +46,28 @@ const AdminApp: React.FC = () => {
         />
 
         <Route
+          path="/jewelry-categories"
+          element={
+            <ProtectedRoute>
+              <AdminJewelryCategories />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/watches"
           element={
             <ProtectedRoute>
               <AdminWatches />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <AdminUsers />
             </ProtectedRoute>
           }
         />

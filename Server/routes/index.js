@@ -8,6 +8,7 @@ const filtersRoutes = require('./filters');
 const watchRoutes = require('./watchRoutes');
 const userRoutes = require('./users');
 const favoritesRoutes = require('./favorites');
+const authRoutes = require('./auth');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -27,6 +28,7 @@ router.use('/filters', filtersRoutes);
 router.use('/watches', watchRoutes);
 router.use('/users', userRoutes);
 router.use('/favorites', favoritesRoutes);
+router.use('/auth', authRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {

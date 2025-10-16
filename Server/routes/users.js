@@ -2,9 +2,11 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const pool = require('../config/database');
+const pool = require('../config/pool');
 const { authMiddleware: auth } = require('../middleware/auth');
+const { adminAuth } = require('../middleware/adminAuth');
 const crypto = require('crypto');
+const { sendVerificationEmail, sendWelcomeEmail } = require('../utils/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
@@ -107,19 +109,25 @@ router.post('/signup', async (req, res) => {
       [user.id, refreshToken, refreshExpires, req.headers['user-agent'], req.ip]
     );
 
-    // TODO: Send verification email with verificationToken
-    // For now, we'll auto-verify in development
-    if (process.env.NODE_ENV === 'development') {
-      await pool.query(
-        'UPDATE users SET email_verified = TRUE WHERE id = $1',
-        [user.id]
-      );
-      user.email_verified = true;
-    }
+    // TEMPORARY: Auto-verify emails until SMTP is configured
+    // Remove this block when email service is ready
+    await pool.query(
+      'UPDATE users SET email_verified = TRUE WHERE id = $1',
+      [user.id]
+    );
+    user.email_verified = true;
+
+    // Send verification email (disabled until SMTP configured)
+    // try {
+    //   await sendVerificationEmail(user.email, verificationToken, user.first_name);
+    //   console.log(`Verification email sent to ${user.email}`);
+    // } catch (emailError) {
+    //   console.error('Failed to send verification email:', emailError);
+    // }
 
     res.status(201).json({
       success: true,
-      message: 'Account created successfully',
+      message: 'Account created successfully!',
       data: {
         user: {
           id: user.id,
@@ -127,7 +135,8 @@ router.post('/signup', async (req, res) => {
           firstName: user.first_name,
           lastName: user.last_name,
           emailVerified: user.email_verified,
-          fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || null
+          fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || null,
+          createdAt: user.created_at
         },
         accessToken,
         refreshToken
@@ -557,6 +566,319 @@ router.post('/change-password', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to change password'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/v1/users/verify-email/:token
+ * @desc    Verify user email with token
+ * @access  Public
+ */
+router.get('/verify-email/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Find user with this verification token
+    const result = await pool.query(
+      `SELECT id, email, first_name, email_verified, verification_token_expires
+       FROM users
+       WHERE verification_token = $1`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    const user = result.rows[0];
+
+    // Check if already verified
+    if (user.email_verified) {
+      return res.status(200).json({
+        success: true,
+        message: 'Email already verified',
+        data: { alreadyVerified: true }
+      });
+    }
+
+    // Check if token expired
+    if (new Date() > new Date(user.verification_token_expires)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification token has expired. Please request a new one.',
+        data: { expired: true }
+      });
+    }
+
+    // Verify the email
+    await pool.query(
+      `UPDATE users
+       SET email_verified = TRUE,
+           verification_token = NULL,
+           verification_token_expires = NULL
+       WHERE id = $1`,
+      [user.id]
+    );
+
+    // Send welcome email
+    try {
+      await sendWelcomeEmail(user.email, user.first_name);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully!',
+      data: {
+        verified: true,
+        email: user.email
+      }
+    });
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify email'
+    });
+  }
+});
+
+/**
+ * @route   POST /api/v1/users/resend-verification
+ * @desc    Resend verification email
+ * @access  Private
+ */
+router.post('/resend-verification', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get user details
+    const result = await pool.query(
+      'SELECT id, email, first_name, email_verified FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = result.rows[0];
+
+    // Check if already verified
+    if (user.email_verified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Update user with new token
+    await pool.query(
+      `UPDATE users
+       SET verification_token = $1, verification_token_expires = $2
+       WHERE id = $3`,
+      [verificationToken, verificationExpires, userId]
+    );
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.email, verificationToken, user.first_name);
+
+      res.status(200).json({
+        success: true,
+        message: 'Verification email sent successfully'
+      });
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send verification email. Please try again later.'
+      });
+    }
+
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend verification email'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/v1/users/admin/all
+ * @desc    Get all users with their details (Admin only)
+ * @access  Private (Admin)
+ */
+router.get('/admin/all', adminAuth, async (req, res) => {
+  try {
+
+    const result = await pool.query(
+      `SELECT
+        u.id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.phone,
+        u.avatar_url,
+        u.email_verified,
+        u.password_hash,
+        u.created_at,
+        u.last_login_at,
+        u.newsletter_subscribed,
+        CASE
+          WHEN u.password_hash = 'GOOGLE_OAUTH' THEN 'google'
+          ELSE 'email'
+        END as registration_method,
+        COUNT(DISTINCT f.id) as favorites_count
+       FROM users u
+       LEFT JOIN user_favorites f ON u.id = f.user_id
+       GROUP BY u.id
+       ORDER BY u.created_at DESC`
+    );
+
+    const users = result.rows.map(user => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'N/A',
+      phone: user.phone,
+      avatarUrl: user.avatar_url,
+      emailVerified: user.email_verified,
+      registrationMethod: user.registration_method,
+      favoritesCount: parseInt(user.favorites_count) || 0,
+      newsletterSubscribed: user.newsletter_subscribed,
+      createdAt: user.created_at,
+      lastLoginAt: user.last_login_at
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        users,
+        totalCount: users.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch users'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/v1/users/admin/:userId
+ * @desc    Get detailed user info including favorites (Admin only)
+ * @access  Private (Admin)
+ */
+router.get('/admin/:userId', adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Get user details
+    const userResult = await pool.query(
+      `SELECT
+        id, email, first_name, last_name, phone, avatar_url,
+        date_of_birth, gender, newsletter_subscribed, sms_notifications,
+        email_verified, created_at, last_login_at, password_hash
+       FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Get user's favorites with product details
+    const favoritesResult = await pool.query(
+      `SELECT
+        f.id as favorite_id,
+        f.product_id,
+        f.created_at as favorited_at,
+        p.name as product_name,
+        p.slug as product_slug,
+        p.base_price,
+        p.sale_price,
+        (SELECT pi.image_url FROM product_images pi
+         WHERE pi.product_id = p.id AND pi.is_primary = true
+         LIMIT 1) as product_image
+       FROM user_favorites f
+       LEFT JOIN products p ON f.product_id = p.id
+       WHERE f.user_id = $1
+       ORDER BY f.created_at DESC`,
+      [userId]
+    );
+
+    // TODO: Get user's orders when order system is implemented
+    // For now, return empty array
+    const orders = [];
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          fullName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'N/A',
+          phone: user.phone,
+          avatarUrl: user.avatar_url,
+          dateOfBirth: user.date_of_birth,
+          gender: user.gender,
+          newsletterSubscribed: user.newsletter_subscribed,
+          smsNotifications: user.sms_notifications,
+          emailVerified: user.email_verified,
+          registrationMethod: user.password_hash === 'GOOGLE_OAUTH' ? 'google' : 'email',
+          createdAt: user.created_at,
+          lastLoginAt: user.last_login_at
+        },
+        favorites: favoritesResult.rows.map(fav => ({
+          id: fav.favorite_id,
+          productId: fav.product_id,
+          productName: fav.product_name,
+          productSlug: fav.product_slug,
+          productImage: fav.product_image,
+          basePrice: fav.base_price,
+          salePrice: fav.sale_price,
+          favoritedAt: fav.favorited_at
+        })),
+        orders: orders,
+        stats: {
+          favoritesCount: favoritesResult.rows.length,
+          ordersCount: orders.length,
+          totalSpent: 0 // TODO: Calculate from orders when implemented
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user details'
     });
   }
 });

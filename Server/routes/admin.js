@@ -12,6 +12,7 @@ const {
 
 const adminProductController = require('../controllers/adminProductController');
 const adminCategoriesRoutes = require('./adminCategories');
+const adminJewelryCategoriesRoutes = require('./adminJewelryCategories');
 const uploadRoutes = require('./upload');
 const watchRoutes = require('./watchRoutes');
 const { validateProduct, validateBulkUpdate } = require('../validators/productValidator');
@@ -70,6 +71,9 @@ router.patch('/products/bulk/update', validateBulkUpdate, adminProductController
 
 // Category Management Routes
 router.use('/categories', adminCategoriesRoutes);
+
+// Jewelry Category Management Routes (New hierarchical system)
+router.use('/jewelry-categories', adminJewelryCategoriesRoutes);
 
 // Watch Management Routes
 router.use('/watches', watchRoutes);

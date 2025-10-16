@@ -273,16 +273,14 @@ export default function MainContentSection(): JSX.Element {
         </video>
         <div className="absolute inset-0 bg-black bg-opacity-40" />
         <div className="relative flex flex-col items-center justify-center h-full text-center text-white px-4 max-w-none w-full pt-16">
-          <h1 
-            className="text-[40px] md:text-[56px] leading-[48px] md:leading-[64px] mb-4 md:mb-6 max-w-[700px] opacity-0 animate-fade-in-up" 
-            style={{ 
-              fontFamily: 'Dancing Script, cursive', 
-              fontWeight: 400,
+          <h1
+            className="text-[40px] md:text-[56px] leading-[48px] md:leading-[64px] mb-4 md:mb-6 max-w-[700px] opacity-0 animate-fade-in-up font-cormorant font-semibold whitespace-nowrap"
+            style={{
               animationDelay: '0.5s',
               animationFillMode: 'forwards'
             }}
           >
-            The Celestial Collection
+            THE CELESTIAL <span className="italic">COLLECTION</span>
           </h1>
           <p 
             className="text-[14px] md:text-[16px] leading-6 font-normal mb-6 md:mb-8 max-w-[500px] tracking-wide opacity-0 animate-fade-in-up" 

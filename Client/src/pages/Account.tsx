@@ -1,20 +1,52 @@
 import React, { useState } from 'react';
-import { User, Mail, Calendar, Heart, Package, Settings, Shield } from 'lucide-react';
-import LuxuryNavigation from '../components/LuxuryNavigation';
+import { User, Mail, Calendar, Heart, Package, Settings, Shield, AlertCircle, Check, Loader2, TrendingUp } from 'lucide-react';
+import LuxuryNavigationWhite from '../components/LuxuryNavigationWhite';
 import { FooterSection } from '../components/FooterSection';
 import { useUserAuth } from '../contexts/UserAuthContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { Link } from 'react-router-dom';
+import { api } from '../config/api';
 
 const Account: React.FC = () => {
   const { user, isAuthenticated } = useUserAuth();
   const { favoritesCount } = useFavorites();
   const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'security'>('overview');
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendMessage, setResendMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleResendVerification = async () => {
+    setResendingEmail(true);
+    setResendMessage(null);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(api('/users/resend-verification'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setResendMessage({ type: 'success', text: data.message || 'Verification email sent successfully!' });
+      } else {
+        setResendMessage({ type: 'error', text: data.message || 'Failed to send verification email' });
+      }
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      setResendMessage({ type: 'error', text: 'Failed to send verification email. Please try again.' });
+    } finally {
+      setResendingEmail(false);
+    }
+  };
 
   if (!isAuthenticated || !user) {
     return (
       <>
-        <LuxuryNavigation />
+        <LuxuryNavigationWhite />
         <div className="min-h-screen bg-gray-50 pt-32">
           <div className="max-w-4xl mx-auto px-4 py-16 text-center">
             <h1 className="text-3xl font-light text-gray-900 mb-4">Please sign in to view your account</h1>
@@ -27,14 +59,63 @@ const Account: React.FC = () => {
 
   return (
     <>
-      <LuxuryNavigation />
-      <div className="min-h-screen bg-gray-50 pt-32">
+      <LuxuryNavigationWhite />
+      <div className="min-h-screen bg-gray-50 pt-48">
         <div className="max-w-6xl mx-auto px-4 py-12">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-light text-gray-900 mb-2">My Account</h1>
             <p className="text-gray-600 font-light">Manage your profile and preferences</p>
           </div>
+
+          {/* Email Verification Banner */}
+          {!user.emailVerified && (
+            <div className="mb-8 bg-amber-50 border border-amber-200 rounded-lg p-6">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-medium text-amber-900 mb-1">Verify Your Email Address</h3>
+                  <p className="text-sm text-amber-800 font-light mb-4">
+                    Please verify your email address to access all features and ensure you receive important updates about your orders.
+                  </p>
+
+                  {resendMessage && (
+                    <div className={`mb-4 p-3 rounded-md flex items-center gap-2 ${
+                      resendMessage.type === 'success'
+                        ? 'bg-green-100 border border-green-200'
+                        : 'bg-red-100 border border-red-200'
+                    }`}>
+                      {resendMessage.type === 'success' ? (
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                      )}
+                      <p className={`text-sm font-light ${
+                        resendMessage.type === 'success' ? 'text-green-800' : 'text-red-800'
+                      }`}>
+                        {resendMessage.text}
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={resendingEmail}
+                    className="inline-flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 transition-colors duration-200 text-sm font-light disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {resendingEmail ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <span>Resend Verification Email</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Content Grid */}
           <div className="grid md:grid-cols-3 gap-8">
@@ -111,6 +192,13 @@ const Account: React.FC = () => {
                   </div>
                   <span className="text-sm font-medium text-gray-900">0</span>
                 </Link>
+                <div className="flex items-center justify-between p-3 rounded-md bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                    <span className="text-sm font-light text-gray-700">Total Spent</span>
+                  </div>
+                  <span className="text-sm font-bold text-green-700">£0.00</span>
+                </div>
               </div>
             </div>
 

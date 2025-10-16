@@ -69,6 +69,7 @@ interface ProductsResponse {
 interface ProductOptions {
   categories: Array<{ id: string; name: string; slug: string }>;
   collections: Array<{ id: string; name: string; slug: string }>;
+  jewelrySubTypes: Array<{ id: string; name: string; slug: string }>; // Engagement/Wedding
   metals: Array<{ id: string; name: string; color_code: string; price_multiplier: number }>;
   sizes: Array<{ id: string; size_name: string; size_value: string; category_id: string }>;
   ringTypes: Array<{ id: string; name: string; slug: string }>;
@@ -164,6 +165,7 @@ const AdminProducts: React.FC = () => {
       // Fetch all categories and their related data
       const [
         categoriesResponse,
+        jewelrySubTypesResponse,
         ringTypesResponse,
         gemstonesResponse,
         metalsResponse,
@@ -171,6 +173,10 @@ const AdminProducts: React.FC = () => {
       ] = await Promise.all([
         // Categories
         fetch(`${API_BASE_URL}/admin/categories`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        // Jewelry Sub Types (Engagement/Wedding)
+        fetch(`${API_BASE_URL}/admin/jewelry-categories/jewelry-sub-types`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Ring types
@@ -194,12 +200,14 @@ const AdminProducts: React.FC = () => {
       // Parse all responses
       const [
         categoriesData,
+        jewelrySubTypesData,
         ringTypesData,
         gemstonesData,
         metalsData,
         collectionsData
       ] = await Promise.all([
         categoriesResponse.json(),
+        jewelrySubTypesResponse.json(),
         ringTypesResponse.json(),
         gemstonesResponse.json(),
         metalsResponse.json(),
@@ -213,6 +221,7 @@ const AdminProducts: React.FC = () => {
       const combinedOptions: ProductOptions = {
         categories: Array.isArray(categoriesData) ? categoriesData.filter(cat => cat.level === 0) : [],
         collections: Array.isArray(collectionsData) ? collectionsData : [],
+        jewelrySubTypes: jewelrySubTypesData.success ? jewelrySubTypesData.data : [],
         ringTypes: Array.isArray(ringTypesData) ? ringTypesData : [],
         gemstones: Array.isArray(gemstonesData) ? gemstonesData : [],
         metals: Array.isArray(metalsData) ? metalsData : [],
@@ -226,6 +235,7 @@ const AdminProducts: React.FC = () => {
       setProductOptions({
         categories: [],
         collections: [],
+        jewelrySubTypes: [],
         ringTypes: [],
         gemstones: [],
         metals: [],
@@ -997,6 +1007,7 @@ const AdminProducts: React.FC = () => {
         mode={editingProduct ? 'edit' : 'create'}
         categories={productOptions?.categories || []}
         collections={productOptions?.collections || []}
+        jewelrySubTypes={productOptions?.jewelrySubTypes || []}
         ringTypes={productOptions?.ringTypes || []}
         gemstones={productOptions?.gemstones || []}
         metals={productOptions?.metals || []}

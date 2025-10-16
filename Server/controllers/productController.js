@@ -449,9 +449,9 @@ const getProductBySlug = asyncHandler(async (req, res) => {
 const getAllCategories = asyncHandler(async (req, res) => {
   const { Category, Product } = getModelInstance();
   const categories = await Category.findAll({
-    where: { is_active: true },
+    where: { is_active: true, parent_id: null }, // Only get parent categories
     order: [['sort_order', 'ASC'], ['name', 'ASC']],
-    attributes: ['id', 'name', 'slug', 'description', 'image_url'],
+    attributes: ['id', 'name', 'slug', 'description', 'image_url', 'parent_id'],
     include: [
       {
         model: Product,
@@ -459,6 +459,22 @@ const getAllCategories = asyncHandler(async (req, res) => {
         attributes: ['id'],
         where: { is_active: true },
         required: false
+      },
+      {
+        model: Category,
+        as: 'children',
+        attributes: ['id', 'name', 'slug', 'description', 'image_url', 'parent_id'],
+        where: { is_active: true },
+        required: false,
+        include: [
+          {
+            model: Product,
+            as: 'products',
+            attributes: ['id'],
+            where: { is_active: true },
+            required: false
+          }
+        ]
       }
     ]
   });
@@ -469,7 +485,17 @@ const getAllCategories = asyncHandler(async (req, res) => {
     slug: category.slug,
     description: category.description,
     image_url: category.image_url,
-    product_count: category.products.length
+    parent_id: category.parent_id,
+    product_count: category.products.length,
+    children: category.children ? category.children.map(child => ({
+      id: child.id,
+      name: child.name,
+      slug: child.slug,
+      description: child.description,
+      image_url: child.image_url,
+      parent_id: child.parent_id,
+      product_count: child.products.length
+    })) : []
   }));
 
   res.json({
@@ -499,9 +525,57 @@ const getProductsByCategory = asyncHandler(async (req, res) => {
   await getAllProducts(req, res);
 });
 
+const getNavigationData = asyncHandler(async (req, res) => {
+  const { RingTypes, Gemstones, ProductMetals, Collection } = getModelInstance();
+
+  try {
+    // Fetch all navigation data in parallel
+    const [ringTypes, gemstones, metals, collections] = await Promise.all([
+      RingTypes.findAll({
+        where: { is_active: true },
+        order: [['sort_order', 'ASC'], ['name', 'ASC']],
+        attributes: ['id', 'name', 'slug', 'description']
+      }),
+      Gemstones.findAll({
+        where: { is_active: true },
+        order: [['sort_order', 'ASC'], ['name', 'ASC']],
+        attributes: ['id', 'name', 'slug', 'description']
+      }),
+      ProductMetals.findAll({
+        where: { is_active: true },
+        order: [['sort_order', 'ASC'], ['name', 'ASC']],
+        attributes: ['id', 'name', 'color_code']
+      }),
+      Collection.findAll({
+        where: { is_active: true },
+        order: [['sort_order', 'ASC'], ['name', 'ASC']],
+        attributes: ['id', 'name', 'slug', 'description']
+      })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        ring_types: ringTypes,
+        gemstones: gemstones,
+        metals: metals,
+        eternity_rings: collections // Using collections as eternity rings
+      }
+    });
+  } catch (error) {
+    logger.error('Error in getNavigationData:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch navigation data',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
 module.exports = {
   getAllProducts,
   getProductBySlug,
   getAllCategories,
-  getProductsByCategory
+  getProductsByCategory,
+  getNavigationData
 };

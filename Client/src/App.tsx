@@ -23,6 +23,8 @@ import Roamer from "./pages/Roamer";
 import Briston from "./pages/Briston";
 import Festina from "./pages/Festina";
 import Rings from "./pages/Rings";
+import EngagementRings from "./pages/EngagementRings";
+import WeddingRings from "./pages/WeddingRings";
 import Earrings from "./pages/Earrings";
 import Necklaces from "./pages/Necklaces";
 import Bracelets from "./pages/Bracelets";
@@ -39,6 +41,9 @@ import VisitUs from "./pages/VisitUs";
 import TrustGuarantees from "./pages/TrustGuarantees";
 import Favorites from "./pages/Favorites";
 import Account from "./pages/Account";
+import Orders from "./pages/Orders";
+import VerifyEmail from "./pages/VerifyEmail";
+import AuthCallback from "./pages/AuthCallback";
 import AdminApp from "./admin/AdminApp";
 
 const queryClient = new QueryClient();
@@ -67,6 +72,8 @@ const App = () => (
             <Route path="/briston" element={<Briston />} />
             <Route path="/festina" element={<Festina />} />
             <Route path="/rings" element={<Rings />} />
+            <Route path="/engagement-rings" element={<EngagementRings />} />
+            <Route path="/wedding-rings" element={<WeddingRings />} />
             <Route path="/earrings" element={<Earrings />} />
             <Route path="/necklaces" element={<Necklaces />} />
             <Route path="/bracelets" element={<Bracelets />} />
@@ -86,6 +93,9 @@ const App = () => (
             {/* User Account Routes */}
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/account" element={<Account />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
             {/* Admin Routes */}
             <Route path="/admin/*" element={<AdminApp />} />

@@ -6,13 +6,17 @@ import { useFavorites } from '../contexts/FavoritesContext';
 
 interface AccountMenuProps {
   onLoginClick: () => void;
+  isTransparent?: boolean;
 }
 
-const AccountMenu: React.FC<AccountMenuProps> = ({ onLoginClick }) => {
+const AccountMenu: React.FC<AccountMenuProps> = ({ onLoginClick, isTransparent = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, logout } = useUserAuth();
   const { favoritesCount } = useFavorites();
+
+  // Debug log
+  console.log('AccountMenu - isTransparent:', isTransparent, 'isAuthenticated:', isAuthenticated);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -40,10 +44,16 @@ const AccountMenu: React.FC<AccountMenuProps> = ({ onLoginClick }) => {
     return (
       <button
         onClick={onLoginClick}
-        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors duration-200 font-light"
+        className={`transition-colors duration-0 ${
+          isTransparent
+            ? 'text-white hover:text-white/80'
+            : 'text-gray-600 hover:text-gray-900'
+        }`}
       >
-        <User className="w-5 h-5" />
-        <span className="hidden lg:inline">Account</span>
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
       </button>
     );
   }
@@ -53,13 +63,19 @@ const AccountMenu: React.FC<AccountMenuProps> = ({ onLoginClick }) => {
       {/* Trigger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors duration-200 rounded-md hover:bg-gray-50"
+        className={`flex items-center gap-2 px-3 py-2 text-sm transition-colors duration-0 rounded-md ${
+          isTransparent
+            ? 'text-white hover:text-white/80'
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+        }`}
       >
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white text-xs font-medium">
           {user?.firstName?.[0] || user?.email[0].toUpperCase()}
         </div>
         <div className="hidden lg:block text-left">
-          <div className="text-xs font-light text-gray-500">Welcome back</div>
+          <div className={`text-xs font-light transition-colors duration-0 ${
+            isTransparent ? 'text-white/70' : 'text-gray-500'
+          }`}>Welcome back</div>
           <div className="text-sm font-medium">{user?.firstName || 'Account'}</div>
         </div>
         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />

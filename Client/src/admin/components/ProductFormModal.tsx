@@ -12,6 +12,7 @@ interface ProductFormData {
   currency: string;
   category_id: string;
   collection_id: string;
+  jewelry_sub_type_id: string; // Engagement or Wedding rings
   ring_type_ids: string[];
   gemstone_ids: string[];
   metal_ids: string[];
@@ -47,6 +48,7 @@ interface ProductFormModalProps {
   mode: 'create' | 'edit';
   categories: Array<{ id: string; name: string; slug: string }>;
   collections: Array<{ id: string; name: string; slug: string }>;
+  jewelrySubTypes: Array<{ id: string; name: string; slug: string }>; // Engagement/Wedding
   ringTypes: Array<{ id: string; name: string; slug: string }>;
   gemstones: Array<{ id: string; name: string; slug: string; color?: string; price_per_carat?: number }>;
   metals: Array<{ id: string; name: string; color_code: string; price_multiplier?: number }>;
@@ -61,6 +63,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   mode,
   categories,
   collections,
+  jewelrySubTypes,
   ringTypes,
   gemstones,
   metals,
@@ -75,6 +78,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     currency: 'GBP',
     category_id: '',
     collection_id: '',
+    jewelry_sub_type_id: '',
     ring_type_ids: [],
     gemstone_ids: [],
     metal_ids: [],
@@ -120,6 +124,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         currency: 'GBP',
         category_id: '',
         collection_id: '',
+        jewelry_sub_type_id: '',
         ring_type_ids: [],
         gemstone_ids: [],
         metal_ids: [],
@@ -359,6 +364,30 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               {categories.find(cat => cat.id === formData.category_id)?.name?.toLowerCase().includes('ring') && (
                 <div className="border-t border-gray-200 pt-4">
                   <h3 className="text-lg font-medium text-gray-900 mb-4 font-cormorant">Ring Specifications</h3>
+
+                  {/* Jewelry Sub Type - Engagement or Wedding */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                      Ring Type *
+                      <span className="text-xs text-gray-500 ml-2">(Engagement or Wedding Ring)</span>
+                    </label>
+                    <select
+                      value={formData.jewelry_sub_type_id}
+                      onChange={(e) => handleInputChange('jewelry_sub_type_id', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
+                    >
+                      <option value="">Select Ring Type...</option>
+                      {jewelrySubTypes.map((subType) => (
+                        <option key={subType.id} value={subType.id}>
+                          {subType.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1 font-satoshi">
+                      Choose whether this is an Engagement Ring or Wedding Ring. This determines which categories are available.
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
