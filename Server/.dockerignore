@@ -1,19 +1,37 @@
+# Dependencies
 node_modules
 npm-debug.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
 .git
 .gitignore
-README.md
-.env
-.env.example
-.nyc_output
-coverage
-.docker
-Dockerfile*
-docker-compose*
-.dockerignore
+
+# Documentation
 *.md
+README.md
+
+# Test files
+test
+tests
+*.test.js
+*.spec.js
+
+# Development files
 .vscode
 .idea
-*.log
-tests
-.github
+
+# Uploads (should be volume mounted)
+uploads/*
