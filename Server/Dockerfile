@@ -4,6 +4,9 @@ FROM node:18-alpine
 # Set working directory in container
 WORKDIR /app
 
+# Force rebuild timestamp
+RUN echo "Build timestamp: $(date)" > /tmp/build.txt
+
 # Install PostgreSQL client (for database operations)
 RUN apk add --no-cache postgresql-client
 
