@@ -23,11 +23,11 @@ interface RingProduct {
     name: string;
     slug: string;
   };
-  ring_type?: {
+  ringTypes?: Array<{
     id: string;
     name: string;
     slug: string;
-  };
+  }>;
   primary_metal?: {
     id: string;
     name: string;
@@ -250,8 +250,8 @@ const EngagementRings = (): JSX.Element => {
     // Ring type filter
     if (selectedFilters.ringType.length > 0) {
       const matchesRingType = selectedFilters.ringType.some(ringTypeName => {
-        if (!product.ring_type) return false;
-        return product.ring_type.name === ringTypeName;
+        if (!product.ringTypes || product.ringTypes.length === 0) return false;
+        return product.ringTypes.some(ringType => ringType.name === ringTypeName);
       });
       if (!matchesRingType) return false;
     }

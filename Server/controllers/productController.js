@@ -157,7 +157,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
       description: product.short_description || product.description || '',
       category: product.category || null,
       collection: product.collection || null,
-      ring_type: product.ringTypes && product.ringTypes.length > 0 ? product.ringTypes[0] : null,
+      ringTypes: product.ringTypes || [],
       primary_metal: product.metals && product.metals.length > 0 ? product.metals[0] : null,
       gemstones: product.gemstones || [],
       is_featured: product.is_featured || false,
