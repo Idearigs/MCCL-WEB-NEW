@@ -75,12 +75,26 @@ if (config.NODE_ENV !== 'test') {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  const { postgresDB } = require('./config/database');
+  let dbStatus = 'disconnected';
+
+  try {
+    const db = postgresDB();
+    if (db) {
+      await db.authenticate();
+      dbStatus = 'connected';
+    }
+  } catch (error) {
+    dbStatus = 'error';
+  }
+
   res.json({
     success: true,
     message: 'Server is running',
     environment: config.NODE_ENV,
     version: config.API_VERSION,
+    database: dbStatus,
     timestamp: new Date().toISOString()
   });
 });
@@ -133,15 +147,27 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start server
 const startServer = async () => {
   try {
-    await connectDatabases();
+    // Try to connect to databases with retry logic
+    const dbConnected = await connectDatabases();
 
-    // Initialize database models
-    initializeModels();
-    logger.info('Database models initialized');
+    // Initialize database models only if database is connected
+    if (dbConnected) {
+      initializeModels();
+      logger.info('Database models initialized');
+    } else {
+      logger.warn('⚠️  Server starting without database connection');
+      logger.warn('⚠️  Some API endpoints may not work until database is connected');
+    }
 
+    // Start HTTP server regardless of database status
     const server = app.listen(config.PORT, () => {
       logger.info(`🚀 Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);
       logger.info(`📚 API Documentation: http://localhost:${config.PORT}/api/${config.API_VERSION}`);
+
+      if (!dbConnected) {
+        logger.warn('⚠️  Database connection failed - check environment variables:');
+        logger.warn('   - PG_HOST, PG_PORT, PG_DATABASE, PG_USERNAME, PG_PASSWORD');
+      }
     });
 
     // Export server for testing
@@ -149,7 +175,7 @@ const startServer = async () => {
 
     return server;
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    logger.error('Failed to start HTTP server:', error);
     process.exit(1);
   }
 };

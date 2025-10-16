@@ -55,14 +55,28 @@ const connectPostgreSQL = async () => {
 };
 
 
-const connectDatabases = async () => {
-  try {
-    await connectPostgreSQL();
-    logger.info('PostgreSQL connected successfully');
-  } catch (error) {
-    logger.error('Critical database connection failed:', error.message);
-    process.exit(1);
+const connectDatabases = async (retryAttempts = 3, retryDelay = 5000) => {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+    try {
+      await connectPostgreSQL();
+      logger.info('PostgreSQL connected successfully');
+      return true;
+    } catch (error) {
+      lastError = error;
+      logger.error(`PostgreSQL connection attempt ${attempt}/${retryAttempts} failed:`, error.message);
+
+      if (attempt < retryAttempts) {
+        logger.info(`Retrying in ${retryDelay/1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
+    }
   }
+
+  logger.error('All database connection attempts failed. Server will start without database.');
+  logger.error('Last error:', lastError?.message);
+  return false;
 };
 
 const closeDatabases = async () => {
