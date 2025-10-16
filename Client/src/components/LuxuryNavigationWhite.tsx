@@ -27,6 +27,32 @@ interface WatchBrand {
   collections: WatchCollection[];
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image_url?: string;
+  product_count: number;
+  parent_id?: string | null;
+  children?: Category[];
+}
+
+interface NavigationItem {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  color_code?: string;
+}
+
+interface NavigationData {
+  ring_types: NavigationItem[];
+  gemstones: NavigationItem[];
+  metals: NavigationItem[];
+  eternity_rings: NavigationItem[];
+}
+
 const LuxuryNavigationWhite = (): JSX.Element => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -45,6 +71,19 @@ const LuxuryNavigationWhite = (): JSX.Element => {
   // Watch brands and collections state
   const [watchBrands, setWatchBrands] = useState<WatchBrand[]>([]);
   const [loadingWatches, setLoadingWatches] = useState(false);
+
+  // Categories state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  // Navigation data state
+  const [navigationData, setNavigationData] = useState<NavigationData | null>(null);
+  const [loadingNavigation, setLoadingNavigation] = useState(false);
+
+  // Jewelry types state
+  const [earringTypes, setEarringTypes] = useState<NavigationItem[]>([]);
+  const [necklaceTypes, setNecklaceTypes] = useState<NavigationItem[]>([]);
+  const [braceletTypes, setBraceletTypes] = useState<NavigationItem[]>([]);
 
   // Closing animation states
   const [engagementClosing, setEngagementClosing] = useState(false);
@@ -98,6 +137,81 @@ const LuxuryNavigationWhite = (): JSX.Element => {
     };
 
     fetchWatchBrands();
+  }, []);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const response = await fetch(`${API_BASE_URL}/products/categories`);
+        const data = await response.json();
+
+        if (data.success) {
+          setCategories(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Fetch navigation data on component mount
+  useEffect(() => {
+    const fetchNavigationData = async () => {
+      try {
+        setLoadingNavigation(true);
+        const response = await fetch(`${API_BASE_URL}/products/navigation`);
+        const data = await response.json();
+
+        if (data.success) {
+          setNavigationData(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching navigation data:', error);
+      } finally {
+        setLoadingNavigation(false);
+      }
+    };
+
+    fetchNavigationData();
+  }, []);
+
+  // Fetch jewelry types for navigation
+  useEffect(() => {
+    const fetchJewelryTypes = async () => {
+      try {
+        const [earringsRes, necklacesRes, braceletsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/filters/earring-types`),
+          fetch(`${API_BASE_URL}/filters/necklace-types`),
+          fetch(`${API_BASE_URL}/filters/bracelet-types`)
+        ]);
+
+        const [earringsData, necklacesData, braceletsData] = await Promise.all([
+          earringsRes.json(),
+          necklacesRes.json(),
+          braceletsRes.json()
+        ]);
+
+        if (earringsData.success) {
+          setEarringTypes(earringsData.data || []);
+        }
+        if (necklacesData.success) {
+          setNecklaceTypes(necklacesData.data || []);
+        }
+        if (braceletsData.success) {
+          setBraceletTypes(braceletsData.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching jewelry types:', error);
+      }
+    };
+
+    fetchJewelryTypes();
   }, []);
 
   // Functions for mobile menu animation
@@ -254,8 +368,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     onMouseEnter={handleHoverEnter(setEngagementHover)}
                     onMouseLeave={handleHoverLeave(setEngagementHover, setEngagementClosing)}
                   >
-                    <Link 
-                      to="/engagement" 
+                    <Link
+                      to="/engagement-rings"
                       className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
                     >
                       Engagement
@@ -273,18 +387,19 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                       Wedding
                     </Link>
                   </div>
-                  <div 
+                  {/* Diamonds link commented out - client deciding on content */}
+                  {/* <div
                     className="relative"
                     onMouseEnter={handleHoverEnter(setDiamondsHover)}
                     onMouseLeave={handleHoverLeave(setDiamondsHover, setDiamondsClosing)}
                   >
-                    <Link 
-                      to="/diamonds" 
+                    <Link
+                      to="/diamonds"
                       className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
                     >
                       Diamonds
                     </Link>
-                  </div>
+                  </div> */}
                   <div 
                     className="relative"
                     onMouseEnter={handleHoverEnter(setJewelleryHover)}
@@ -334,10 +449,10 @@ const LuxuryNavigationWhite = (): JSX.Element => {
 
           {/* Engagement Dropdown - Positioned at nav level */}
           {engagementHover && (
-            <div 
+            <div
               className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
-                engagementClosing 
-                  ? 'animate-out slide-out-to-top-4' 
+                engagementClosing
+                  ? 'animate-out slide-out-to-top-4'
                   : 'animate-in slide-in-from-top-4'
               }`}
               onMouseEnter={handleHoverEnter(setEngagementHover)}
@@ -345,76 +460,85 @@ const LuxuryNavigationWhite = (): JSX.Element => {
               style={{backgroundColor: '#fcfcfc'}}
             >
               <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
-                <div className="grid grid-cols-4 gap-8">
-                  {/* RING TYPES Column */}
-                  <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">RING TYPES</h3>
-                    <div className="space-y-1">
-                      <Link to="/wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Wedding</Link>
-                      <Link to="/engagement-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Engagement</Link>
-                      <Link to="/vintage-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Vintage</Link>
-                      <Link to="/promise-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Promise</Link>
-                      <Link to="/wishbone-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Wishbone</Link>
-                      <Link to="/stacking-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Stacking</Link>
-                      <Link to="/cocktail-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Cocktail</Link>
-                      <Link to="/bridal-sets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Bridal sets</Link>
-                      <Link to="/mens-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Men's Rings</Link>
-                      <Link to="/all-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>All Rings</Link>
-                    </div>
+                {loadingNavigation ? (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-sm font-inter text-gray-500">Loading...</p>
                   </div>
+                ) : navigationData ? (
+                  <div className="grid grid-cols-4 gap-8">
+                    {/* Ring Types Column */}
+                    <div>
+                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">RING TYPES</h3>
+                      <div className="space-y-1">
+                        {navigationData.ring_types.map((item) => (
+                          <Link
+                            key={item.id}
+                            to={`/engagement-rings?ringType=${encodeURIComponent(item.name)}`}
+                            className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            style={{fontSize: '12.36px'}}
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
 
-                  {/* GEMSTONE Column */}
-                  <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">GEMSTONE</h3>
-                    <div className="space-y-1">
-                      <Link to="/mined-diamond" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Mined Diamond</Link>
-                      <Link to="/lab-grown-diamond" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Lab Grown Diamond</Link>
-                      <Link to="/sapphire" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Sapphire</Link>
-                      <Link to="/emerald" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Emerald</Link>
-                      <Link to="/ruby" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ruby</Link>
-                      <Link to="/aquamarine" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Aquamarine</Link>
-                      <Link to="/tanzanite" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Tanzanite</Link>
-                      <Link to="/blue-topaz" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Blue Topaz</Link>
+                    {/* Gemstones Column */}
+                    <div>
+                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">GEMSTONES</h3>
+                      <div className="space-y-1">
+                        {navigationData.gemstones.map((item) => (
+                          <Link
+                            key={item.id}
+                            to={`/engagement-rings?gemstone=${encodeURIComponent(item.name)}`}
+                            className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            style={{fontSize: '12.36px'}}
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* ETERNITY RINGS Column */}
-                  <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">ETERNITY RINGS</h3>
-                    <div className="space-y-1">
-                      <Link to="/diamond-full-band" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Full Band</Link>
-                      <Link to="/diamond-half-band" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Half Band</Link>
-                      <Link to="/unique-eternity-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Unique Eternity Rings</Link>
-                      <Link to="/sapphire-eternity" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Sapphire</Link>
-                      <Link to="/emerald-eternity" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Emerald</Link>
-                      <Link to="/ruby-eternity" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ruby</Link>
-                      <Link to="/mens-eternity-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Men's Eternity Rings</Link>
-                      <Link to="/all-eternity-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>All Eternity Rings</Link>
+                    {/* Eternity Rings Column */}
+                    <div>
+                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">ETERNITY RINGS</h3>
+                      <div className="space-y-1">
+                        {navigationData.eternity_rings.map((item) => (
+                          <Link
+                            key={item.id}
+                            to={`/engagement-rings?collection=${encodeURIComponent(item.name)}`}
+                            className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            style={{fontSize: '12.36px'}}
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* METALS Column */}
-                  <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">METALS</h3>
-                    <div className="space-y-1">
-                      <Link to="/yellow-gold" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Yellow Gold</Link>
-                      <Link to="/white-gold" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>White Gold</Link>
-                      <Link to="/platinum" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Platinum</Link>
-                      <Link to="/silver" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Silver</Link>
-                      <Link to="/gold-vermeil" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Gold Vermeil</Link>
-                    </div>
-                    
-                    {/* Explore Rings Button */}
-                    <div className="mt-4">
-                      <Link 
-                        to="/rings" 
-                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
-                      >
-                        EXPLORE RINGS
-                      </Link>
+                    {/* Metals Column */}
+                    <div>
+                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">METALS</h3>
+                      <div className="space-y-1">
+                        {navigationData.metals.map((item) => (
+                          <Link
+                            key={item.id}
+                            to={`/engagement-rings?metal=${encodeURIComponent(item.name)}`}
+                            className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            style={{fontSize: '12.36px'}}
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-sm font-inter text-gray-500">No navigation data available</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -502,12 +626,12 @@ const LuxuryNavigationWhite = (): JSX.Element => {
             </div>
           )}
 
-          {/* Diamonds Dropdown */}
-          {diamondsHover && (
-            <div 
+          {/* Diamonds Dropdown - Commented out - client deciding on content */}
+          {/* {diamondsHover && (
+            <div
               className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
-                diamondsClosing 
-                  ? 'animate-out slide-out-to-top-4' 
+                diamondsClosing
+                  ? 'animate-out slide-out-to-top-4'
                   : 'animate-in slide-in-from-top-4'
               }`}
               onMouseEnter={handleHoverEnter(setDiamondsHover)}
@@ -516,7 +640,6 @@ const LuxuryNavigationWhite = (): JSX.Element => {
             >
               <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
                 <div className="grid grid-cols-4 gap-8">
-                  {/* DIAMOND TYPES Column */}
                   <div>
                     <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND TYPES</h3>
                     <div className="space-y-1">
@@ -529,7 +652,6 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     </div>
                   </div>
 
-                  {/* SHAPES Column */}
                   <div>
                     <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND SHAPES</h3>
                     <div className="space-y-1">
@@ -544,7 +666,6 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     </div>
                   </div>
 
-                  {/* QUALITY Column */}
                   <div>
                     <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND QUALITY</h3>
                     <div className="space-y-1">
@@ -557,7 +678,6 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     </div>
                   </div>
 
-                  {/* EDUCATION & SERVICES Column */}
                   <div>
                     <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">EDUCATION & SERVICES</h3>
                     <div className="space-y-1">
@@ -567,11 +687,10 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                       <Link to="/diamond-upgrade" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Upgrade</Link>
                       <Link to="/diamond-care" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Care</Link>
                     </div>
-                    
-                    {/* Explore Diamonds Button */}
+
                     <div className="mt-4">
-                      <Link 
-                        to="/diamonds" 
+                      <Link
+                        to="/diamonds"
                         className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                       >
                         EXPLORE DIAMONDS
@@ -581,7 +700,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Jewellery Dropdown */}
           {jewelleryHover && (
@@ -599,46 +718,61 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 <div className="grid grid-cols-4 gap-8">
                   {/* EARRINGS Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">EARRINGS</h3>
+                    <Link to="/earrings">
+                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">EARRINGS</h3>
+                    </Link>
                     <div className="space-y-1">
-                      <Link to="/stud-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Stud Earrings</Link>
-                      <Link to="/drop-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Drop Earrings</Link>
-                      <Link to="/hoop-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Hoop Earrings</Link>
-                      <Link to="/chandelier-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Chandelier Earrings</Link>
-                      <Link to="/huggie-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Huggie Earrings</Link>
-                      <Link to="/diamond-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Earrings</Link>
-                      <Link to="/pearl-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Pearl Earrings</Link>
-                      <Link to="/gemstone-earrings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Gemstone Earrings</Link>
+                      <Link to="/earrings" className="block font-inter font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12.36px'}}>Shop All Earrings</Link>
+                      {earringTypes.map((type) => (
+                        <Link
+                          key={type.id}
+                          to={`/earrings?type=${encodeURIComponent(type.name)}`}
+                          className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12.36px'}}
+                        >
+                          {type.name}
+                        </Link>
+                      ))}
                     </div>
                   </div>
 
                   {/* NECKLACES Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">NECKLACES</h3>
+                    <Link to="/necklaces">
+                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">NECKLACES</h3>
+                    </Link>
                     <div className="space-y-1">
-                      <Link to="/pendant-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Pendant Necklaces</Link>
-                      <Link to="/chain-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Chain Necklaces</Link>
-                      <Link to="/choker-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Choker Necklaces</Link>
-                      <Link to="/tennis-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Tennis Necklaces</Link>
-                      <Link to="/layering-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Layering Necklaces</Link>
-                      <Link to="/lockets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Lockets</Link>
-                      <Link to="/statement-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Statement Necklaces</Link>
-                      <Link to="/pearl-necklaces" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Pearl Necklaces</Link>
+                      <Link to="/necklaces" className="block font-inter font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12.36px'}}>Shop All Necklaces</Link>
+                      {necklaceTypes.map((type) => (
+                        <Link
+                          key={type.id}
+                          to={`/necklaces?type=${encodeURIComponent(type.name)}`}
+                          className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12.36px'}}
+                        >
+                          {type.name}
+                        </Link>
+                      ))}
                     </div>
                   </div>
 
                   {/* BRACELETS Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">BRACELETS</h3>
+                    <Link to="/bracelets">
+                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">BRACELETS</h3>
+                    </Link>
                     <div className="space-y-1">
-                      <Link to="/tennis-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Tennis Bracelets</Link>
-                      <Link to="/charm-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Charm Bracelets</Link>
-                      <Link to="/bangle-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Bangle Bracelets</Link>
-                      <Link to="/link-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Link Bracelets</Link>
-                      <Link to="/cuff-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Cuff Bracelets</Link>
-                      <Link to="/diamond-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Bracelets</Link>
-                      <Link to="/gemstone-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Gemstone Bracelets</Link>
-                      <Link to="/pearl-bracelets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Pearl Bracelets</Link>
+                      <Link to="/bracelets" className="block font-inter font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12.36px'}}>Shop All Bracelets</Link>
+                      {braceletTypes.map((type) => (
+                        <Link
+                          key={type.id}
+                          to={`/bracelets?type=${encodeURIComponent(type.name)}`}
+                          className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12.36px'}}
+                        >
+                          {type.name}
+                        </Link>
+                      ))}
                     </div>
                   </div>
 
@@ -693,7 +827,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                         {/* Brand Header */}
                         <div className="border-b border-gray-200 pb-3">
                           <Link
-                            to={`/watches?brand=${brand.slug}`}
+                            to={`/${brand.slug}`}
                             className="group flex items-center space-x-2 hover:opacity-70 transition-opacity"
                           >
                             <h3 className="text-sm font-cormorant font-semibold text-gray-950 uppercase tracking-wider">
@@ -749,7 +883,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
 
                           {/* View All Link */}
                           <Link
-                            to={`/watches?brand=${brand.slug}`}
+                            to={`/${brand.slug}`}
                             className="inline-flex items-center text-xs font-inter font-medium text-gray-600 hover:text-gray-900 transition-colors mt-2"
                           >
                             View all {brand.name}
