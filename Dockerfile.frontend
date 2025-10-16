@@ -38,6 +38,13 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # MIME types for video files
+    types {
+        video/mp4 mp4;
+        video/webm webm;
+        video/ogg ogv;
+    }
+
     # Enable gzip compression
     gzip on;
     gzip_vary on;
@@ -62,9 +69,17 @@ server {
     }
 
     # Cache images
-    location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+    location ~* \.(jpg|jpeg|png|gif|ico|svg|webp|avif)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Cache videos - with proper MIME type
+    location ~* \.(mp4|webm|ogg|mov)$ {
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
+        add_header Accept-Ranges bytes;
         access_log off;
     }
 
