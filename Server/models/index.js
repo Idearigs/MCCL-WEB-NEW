@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { postgresDB } = require('../config/database');
 
-let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, Gemstones, ProductRingTypes, ProductGemstones, ProductMetalsJunction;
+let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductMetalsJunction;
 
 const initializeModels = () => {
   const sequelize = postgresDB();
@@ -234,10 +234,17 @@ const initializeModels = () => {
         key: 'id'
       }
     },
-    gemstone_id: {
+    stone_shape_id: {
       type: DataTypes.UUID,
       references: {
-        model: 'gemstones',
+        model: 'stone_shapes',
+        key: 'id'
+      }
+    },
+    stone_type_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'stone_types',
         key: 'id'
       }
     },
@@ -245,6 +252,41 @@ const initializeModels = () => {
       type: DataTypes.UUID,
       references: {
         model: 'product_metals',
+        key: 'id'
+      }
+    },
+    ring_style_1_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'ring_types',
+        key: 'id'
+      }
+    },
+    ring_style_2_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'ring_types',
+        key: 'id'
+      }
+    },
+    ring_style_3_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'ring_types',
+        key: 'id'
+      }
+    },
+    ring_style_4_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'ring_types',
+        key: 'id'
+      }
+    },
+    ring_style_5_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'ring_types',
         key: 'id'
       }
     }
@@ -455,8 +497,8 @@ const initializeModels = () => {
     timestamps: true
   });
 
-  // Gemstones Model (for gemstone categorization)
-  Gemstones = sequelize.define('Gemstones', {
+  // Stone Shapes Model (for stone shape categorization)
+  StoneShapes = sequelize.define('StoneShapes', {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -475,14 +517,39 @@ const initializeModels = () => {
     description: {
       type: DataTypes.TEXT
     },
-    color: {
-      type: DataTypes.STRING(50)
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
     },
-    hardness: {
-      type: DataTypes.DECIMAL(3, 1)
+    sort_order: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    }
+  }, {
+    tableName: 'stone_shapes',
+    underscored: true,
+    timestamps: true
+  });
+
+  // Stone Types Model (for stone type categorization - Natural Diamond, Lab Grown, etc.)
+  StoneTypes = sequelize.define('StoneTypes', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
     },
-    price_per_carat: {
-      type: DataTypes.DECIMAL(10, 2)
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true
+    },
+    slug: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true
+    },
+    description: {
+      type: DataTypes.TEXT
     },
     is_active: {
       type: DataTypes.BOOLEAN,
@@ -493,7 +560,7 @@ const initializeModels = () => {
       defaultValue: 0
     }
   }, {
-    tableName: 'gemstones',
+    tableName: 'stone_types',
     underscored: true,
     timestamps: true
   });
@@ -577,8 +644,8 @@ const initializeModels = () => {
     ]
   });
 
-  // Product Gemstones Junction
-  ProductGemstones = sequelize.define('ProductGemstones', {
+  // Product Stone Shapes Junction
+  ProductStoneShapes = sequelize.define('ProductStoneShapes', {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -592,22 +659,22 @@ const initializeModels = () => {
         key: 'id'
       }
     },
-    gemstone_id: {
+    stone_shape_id: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'gemstones',
+        model: 'stone_shapes',
         key: 'id'
       }
     }
   }, {
-    tableName: 'product_gemstones',
+    tableName: 'product_stone_shapes',
     underscored: true,
     timestamps: true,
     indexes: [
       {
         unique: true,
-        fields: ['product_id', 'gemstone_id']
+        fields: ['product_id', 'stone_shape_id']
       }
     ]
   });
@@ -676,11 +743,23 @@ const initializeModels = () => {
   RingTypes.hasMany(Product, { foreignKey: 'ring_type_id', as: 'products' });
   Product.belongsTo(RingTypes, { foreignKey: 'ring_type_id', as: 'ringType' });
 
-  Gemstones.hasMany(Product, { foreignKey: 'gemstone_id', as: 'products' });
-  Product.belongsTo(Gemstones, { foreignKey: 'gemstone_id', as: 'gemstone' });
+  // Stone associations
+  StoneShapes.hasMany(Product, { foreignKey: 'stone_shape_id', as: 'products' });
+  Product.belongsTo(StoneShapes, { foreignKey: 'stone_shape_id', as: 'stoneShape' });
 
+  StoneTypes.hasMany(Product, { foreignKey: 'stone_type_id', as: 'products' });
+  Product.belongsTo(StoneTypes, { foreignKey: 'stone_type_id', as: 'stoneType' });
+
+  // Metal associations
   ProductMetals.hasMany(Product, { foreignKey: 'metal_id', as: 'products' });
   Product.belongsTo(ProductMetals, { foreignKey: 'metal_id', as: 'metal' });
+
+  // Ring Style associations (5 styles per product)
+  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_1_id', as: 'ringStyle1' });
+  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_2_id', as: 'ringStyle2' });
+  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_3_id', as: 'ringStyle3' });
+  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_4_id', as: 'ringStyle4' });
+  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_5_id', as: 'ringStyle5' });
 
   // Many-to-Many Associations through Junction Tables
   Product.belongsToMany(RingTypes, {
@@ -696,17 +775,17 @@ const initializeModels = () => {
     as: 'ringTypeProducts'
   });
 
-  Product.belongsToMany(Gemstones, {
-    through: ProductGemstones,
+  Product.belongsToMany(StoneShapes, {
+    through: ProductStoneShapes,
     foreignKey: 'product_id',
-    otherKey: 'gemstone_id',
-    as: 'gemstones'
+    otherKey: 'stone_shape_id',
+    as: 'stoneShapes'
   });
-  Gemstones.belongsToMany(Product, {
-    through: ProductGemstones,
-    foreignKey: 'gemstone_id',
+  StoneShapes.belongsToMany(Product, {
+    through: ProductStoneShapes,
+    foreignKey: 'stone_shape_id',
     otherKey: 'product_id',
-    as: 'gemstoneProducts'
+    as: 'stoneShapeProducts'
   });
 
   Product.belongsToMany(ProductMetals, {
@@ -740,9 +819,10 @@ const initializeModels = () => {
     ProductMetals,
     ProductSizes,
     RingTypes,
-    Gemstones,
+    StoneShapes,
+    StoneTypes,
     ProductRingTypes,
-    ProductGemstones,
+    ProductStoneShapes,
     ProductMetalsJunction,
     ...watchModels,
     ...jewelryModels
@@ -768,9 +848,10 @@ module.exports = {
       ProductMetals,
       ProductSizes,
       RingTypes,
-      Gemstones,
+      StoneShapes,
+      StoneTypes,
       ProductRingTypes,
-      ProductGemstones,
+      ProductStoneShapes,
       ProductMetalsJunction,
       ...watchModels,
       ...jewelryModels

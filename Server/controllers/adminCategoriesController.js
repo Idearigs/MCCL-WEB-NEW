@@ -5,7 +5,7 @@ const { syncSchema } = require('../scripts/sync-schema');
 // Helper function to get models
 const getModelInstance = () => {
   const models = getModels();
-  if (!models.Category || !models.RingTypes || !models.Gemstones || !models.ProductMetals || !models.Collection) {
+  if (!models.Category || !models.RingTypes || !models.StoneShapes || !models.StoneTypes || !models.ProductMetals || !models.Collection) {
     throw new Error('Models not initialized properly');
   }
   return models;
@@ -325,6 +325,174 @@ const deleteGemstone = async (req, res) => {
   }
 };
 
+// Stone Shapes Controllers
+const getStoneShapes = async (req, res) => {
+  try {
+    const { StoneShapes } = getModelInstance();
+    const stoneShapes = await StoneShapes.findAll({
+      order: [['sort_order', 'ASC'], ['name', 'ASC']]
+    });
+    res.json(stoneShapes);
+  } catch (error) {
+    console.error('Error fetching stone shapes:', error);
+    res.status(500).json({ message: 'Failed to fetch stone shapes' });
+  }
+};
+
+const getStoneShapeById = async (req, res) => {
+  try {
+    const { StoneShapes } = getModelInstance();
+    const stoneShape = await StoneShapes.findByPk(req.params.id);
+
+    if (!stoneShape) {
+      return res.status(404).json({ message: 'Stone shape not found' });
+    }
+
+    res.json(stoneShape);
+  } catch (error) {
+    console.error('Error fetching stone shape:', error);
+    res.status(500).json({ message: 'Failed to fetch stone shape' });
+  }
+};
+
+const createStoneShape = async (req, res) => {
+  try {
+    const { StoneShapes } = getModelInstance();
+    const stoneShape = await StoneShapes.create(req.body);
+    res.status(201).json(stoneShape);
+  } catch (error) {
+    console.error('Error creating stone shape:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ message: 'Stone shape name or slug already exists' });
+    }
+    res.status(500).json({ message: 'Failed to create stone shape' });
+  }
+};
+
+const updateStoneShape = async (req, res) => {
+  try {
+    const { StoneShapes } = getModelInstance();
+    const [updatedRowsCount] = await StoneShapes.update(req.body, {
+      where: { id: req.params.id }
+    });
+
+    if (updatedRowsCount === 0) {
+      return res.status(404).json({ message: 'Stone shape not found' });
+    }
+
+    const updatedStoneShape = await StoneShapes.findByPk(req.params.id);
+    res.json(updatedStoneShape);
+  } catch (error) {
+    console.error('Error updating stone shape:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ message: 'Stone shape name or slug already exists' });
+    }
+    res.status(500).json({ message: 'Failed to update stone shape' });
+  }
+};
+
+const deleteStoneShape = async (req, res) => {
+  try {
+    const { StoneShapes } = getModelInstance();
+    const deletedRowsCount = await StoneShapes.destroy({
+      where: { id: req.params.id }
+    });
+
+    if (deletedRowsCount === 0) {
+      return res.status(404).json({ message: 'Stone shape not found' });
+    }
+
+    res.json({ message: 'Stone shape deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting stone shape:', error);
+    res.status(500).json({ message: 'Failed to delete stone shape' });
+  }
+};
+
+// Stone Types Controllers
+const getStoneTypes = async (req, res) => {
+  try {
+    const { StoneTypes } = getModelInstance();
+    const stoneTypes = await StoneTypes.findAll({
+      order: [['sort_order', 'ASC'], ['name', 'ASC']]
+    });
+    res.json(stoneTypes);
+  } catch (error) {
+    console.error('Error fetching stone types:', error);
+    res.status(500).json({ message: 'Failed to fetch stone types' });
+  }
+};
+
+const getStoneTypeById = async (req, res) => {
+  try {
+    const { StoneTypes } = getModelInstance();
+    const stoneType = await StoneTypes.findByPk(req.params.id);
+
+    if (!stoneType) {
+      return res.status(404).json({ message: 'Stone type not found' });
+    }
+
+    res.json(stoneType);
+  } catch (error) {
+    console.error('Error fetching stone type:', error);
+    res.status(500).json({ message: 'Failed to fetch stone type' });
+  }
+};
+
+const createStoneType = async (req, res) => {
+  try {
+    const { StoneTypes } = getModelInstance();
+    const stoneType = await StoneTypes.create(req.body);
+    res.status(201).json(stoneType);
+  } catch (error) {
+    console.error('Error creating stone type:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ message: 'Stone type name or slug already exists' });
+    }
+    res.status(500).json({ message: 'Failed to create stone type' });
+  }
+};
+
+const updateStoneType = async (req, res) => {
+  try {
+    const { StoneTypes } = getModelInstance();
+    const [updatedRowsCount] = await StoneTypes.update(req.body, {
+      where: { id: req.params.id }
+    });
+
+    if (updatedRowsCount === 0) {
+      return res.status(404).json({ message: 'Stone type not found' });
+    }
+
+    const updatedStoneType = await StoneTypes.findByPk(req.params.id);
+    res.json(updatedStoneType);
+  } catch (error) {
+    console.error('Error updating stone type:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ message: 'Stone type name or slug already exists' });
+    }
+    res.status(500).json({ message: 'Failed to update stone type' });
+  }
+};
+
+const deleteStoneType = async (req, res) => {
+  try {
+    const { StoneTypes } = getModelInstance();
+    const deletedRowsCount = await StoneTypes.destroy({
+      where: { id: req.params.id }
+    });
+
+    if (deletedRowsCount === 0) {
+      return res.status(404).json({ message: 'Stone type not found' });
+    }
+
+    res.json({ message: 'Stone type deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting stone type:', error);
+    res.status(500).json({ message: 'Failed to delete stone type' });
+  }
+};
+
 // Metals Controllers
 const getMetals = async (req, res) => {
   try {
@@ -550,6 +718,20 @@ module.exports = {
   createGemstone,
   updateGemstone,
   deleteGemstone,
+
+  // Stone Shapes
+  getStoneShapes,
+  getStoneShapeById,
+  createStoneShape,
+  updateStoneShape,
+  deleteStoneShape,
+
+  // Stone Types
+  getStoneTypes,
+  getStoneTypeById,
+  createStoneType,
+  updateStoneType,
+  deleteStoneType,
 
   // Metals
   getMetals,

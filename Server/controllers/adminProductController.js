@@ -6,7 +6,7 @@ const path = require('path');
 // Helper function to get models
 const getModelInstance = () => {
   const models = getModels();
-  if (!models.Product || !models.Category || !models.Collection || !models.ProductImage || !models.ProductVideo || !models.ProductVariant || !models.ProductMetals || !models.ProductSizes || !models.RingTypes || !models.Gemstones) {
+  if (!models.Product || !models.Category || !models.Collection || !models.ProductImage || !models.ProductVideo || !models.ProductVariant || !models.ProductMetals || !models.ProductSizes || !models.RingTypes || !models.StoneShapes || !models.StoneTypes) {
     throw new Error('Models not initialized properly');
   }
   return models;
@@ -183,7 +183,7 @@ const getProducts = async (req, res) => {
 // Get single product by ID for admin
 const getProductById = async (req, res) => {
   try {
-    const { Product, Category, Collection, ProductImage, ProductVideo, ProductVariant, RingTypes, Gemstones, ProductMetals } = getModelInstance();
+    const { Product, Category, Collection, ProductImage, ProductVideo, ProductVariant, RingTypes, StoneShapes, StoneTypes, ProductMetals } = getModelInstance();
     const { id } = req.params;
 
     const product = await Product.findByPk(id, {
@@ -228,10 +228,46 @@ const getProductById = async (req, res) => {
           through: { attributes: [] }
         },
         {
-          model: Gemstones,
-          as: 'gemstones',
-          attributes: ['id', 'name', 'slug', 'color'],
+          model: StoneShapes,
+          as: 'stoneShapes',
+          attributes: ['id', 'name', 'slug'],
           through: { attributes: [] }
+        },
+        {
+          model: StoneTypes,
+          as: 'stoneType',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle1',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle2',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle3',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle4',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle5',
+          attributes: ['id', 'name', 'slug'],
+          required: false
         },
         {
           model: ProductMetals,
@@ -274,10 +310,11 @@ const createProduct = async (req, res) => {
       ProductVideo,
       ProductVariant,
       RingTypes,
-      Gemstones,
+      StoneShapes,
+      StoneTypes,
       ProductMetals,
       ProductRingTypes,
-      ProductGemstones,
+      ProductStoneShapes,
       ProductMetalsJunction
     } = getModelInstance();
 
@@ -292,7 +329,13 @@ const createProduct = async (req, res) => {
       category_id,
       collection_id,
       ring_type_ids = [],
-      gemstone_ids = [],
+      stone_shape_ids = [],
+      stone_type_id = null,
+      ring_style_1_id = null,
+      ring_style_2_id = null,
+      ring_style_3_id = null,
+      ring_style_4_id = null,
+      ring_style_5_id = null,
       metal_ids = [],
       is_active = true,
       is_featured = false,
@@ -342,6 +385,12 @@ const createProduct = async (req, res) => {
       currency,
       category_id,
       collection_id: collection_id || null,
+      stone_type_id: stone_type_id || null,
+      ring_style_1_id: ring_style_1_id || null,
+      ring_style_2_id: ring_style_2_id || null,
+      ring_style_3_id: ring_style_3_id || null,
+      ring_style_4_id: ring_style_4_id || null,
+      ring_style_5_id: ring_style_5_id || null,
       is_active,
       is_featured,
       in_stock,
@@ -396,15 +445,15 @@ const createProduct = async (req, res) => {
       relationshipPromises.push(...ringTypePromises);
     }
 
-    // Gemstone relationships
-    if (gemstone_ids && gemstone_ids.length > 0) {
-      const gemstonePromises = gemstone_ids.map(gemstoneId =>
-        ProductGemstones.create({
+    // Stone shape relationships
+    if (stone_shape_ids && stone_shape_ids.length > 0) {
+      const stoneShapePromises = stone_shape_ids.map(stoneShapeId =>
+        ProductStoneShapes.create({
           product_id: product.id,
-          gemstone_id: gemstoneId
+          stone_shape_id: stoneShapeId
         })
       );
-      relationshipPromises.push(...gemstonePromises);
+      relationshipPromises.push(...stoneShapePromises);
     }
 
     // Metal relationships
@@ -444,7 +493,13 @@ const createProduct = async (req, res) => {
         { model: ProductVideo, as: 'videos' },
         { model: ProductVariant, as: 'variants' },
         { model: RingTypes, as: 'ringTypes' },
-        { model: Gemstones, as: 'gemstones' },
+        { model: StoneShapes, as: 'stoneShapes' },
+        { model: StoneTypes, as: 'stoneType', required: false },
+        { model: RingTypes, as: 'ringStyle1', required: false },
+        { model: RingTypes, as: 'ringStyle2', required: false },
+        { model: RingTypes, as: 'ringStyle3', required: false },
+        { model: RingTypes, as: 'ringStyle4', required: false },
+        { model: RingTypes, as: 'ringStyle5', required: false },
         { model: ProductMetals, as: 'metals' }
       ]
     });
@@ -475,10 +530,11 @@ const updateProduct = async (req, res) => {
       ProductVideo,
       ProductVariant,
       RingTypes,
-      Gemstones,
+      StoneShapes,
+      StoneTypes,
       ProductMetals,
       ProductRingTypes,
-      ProductGemstones,
+      ProductStoneShapes,
       ProductMetalsJunction
     } = getModelInstance();
     const { id } = req.params;
@@ -494,7 +550,7 @@ const updateProduct = async (req, res) => {
     // Extract relationship IDs from request body
     const {
       ring_type_ids = [],
-      gemstone_ids = [],
+      stone_shape_ids = [],
       metal_ids = [],
       ...productData
     } = req.body;
@@ -546,22 +602,22 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // Update gemstone relationships
-    if (gemstone_ids !== undefined) {
-      // Delete existing gemstone relationships
-      await ProductGemstones.destroy({
+    // Update stone shape relationships
+    if (stone_shape_ids !== undefined) {
+      // Delete existing stone shape relationships
+      await ProductStoneShapes.destroy({
         where: { product_id: id }
       });
 
-      // Create new gemstone relationships
-      if (gemstone_ids && gemstone_ids.length > 0) {
-        const gemstonePromises = gemstone_ids.map(gemstoneId =>
-          ProductGemstones.create({
+      // Create new stone shape relationships
+      if (stone_shape_ids && stone_shape_ids.length > 0) {
+        const stoneShapePromises = stone_shape_ids.map(stoneShapeId =>
+          ProductStoneShapes.create({
             product_id: id,
-            gemstone_id: gemstoneId
+            stone_shape_id: stoneShapeId
           })
         );
-        relationshipPromises.push(...gemstonePromises);
+        relationshipPromises.push(...stoneShapePromises);
       }
     }
 
@@ -604,10 +660,46 @@ const updateProduct = async (req, res) => {
           through: { attributes: [] }
         },
         {
-          model: Gemstones,
-          as: 'gemstones',
-          attributes: ['id', 'name', 'slug', 'color'],
+          model: StoneShapes,
+          as: 'stoneShapes',
+          attributes: ['id', 'name', 'slug'],
           through: { attributes: [] }
+        },
+        {
+          model: StoneTypes,
+          as: 'stoneType',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle1',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle2',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle3',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle4',
+          attributes: ['id', 'name', 'slug'],
+          required: false
+        },
+        {
+          model: RingTypes,
+          as: 'ringStyle5',
+          attributes: ['id', 'name', 'slug'],
+          required: false
         },
         {
           model: ProductMetals,
@@ -644,10 +736,11 @@ const updateProductWithMedia = async (req, res) => {
       ProductVideo,
       ProductVariant,
       RingTypes,
-      Gemstones,
+      StoneShapes,
+      StoneTypes,
       ProductMetals,
       ProductRingTypes,
-      ProductGemstones,
+      ProductStoneShapes,
       ProductMetalsJunction
     } = getModelInstance();
 
@@ -767,7 +860,13 @@ const updateProductWithMedia = async (req, res) => {
         { model: ProductVideo, as: 'videos', order: [['sort_order', 'ASC']] },
         { model: ProductVariant, as: 'variants' },
         { model: RingTypes, as: 'ringTypes' },
-        { model: Gemstones, as: 'gemstones' },
+        { model: StoneShapes, as: 'stoneShapes' },
+        { model: StoneTypes, as: 'stoneType', required: false },
+        { model: RingTypes, as: 'ringStyle1', required: false },
+        { model: RingTypes, as: 'ringStyle2', required: false },
+        { model: RingTypes, as: 'ringStyle3', required: false },
+        { model: RingTypes, as: 'ringStyle4', required: false },
+        { model: RingTypes, as: 'ringStyle5', required: false },
         { model: ProductMetals, as: 'metals' }
       ]
     });
@@ -882,9 +981,9 @@ const toggleFeaturedStatus = async (req, res) => {
 // Get product categories and collections for dropdowns
 const getProductOptions = async (req, res) => {
   try {
-    const { Category, Collection, ProductMetals, ProductSizes, RingTypes, Gemstones } = getModelInstance();
+    const { Category, Collection, ProductMetals, ProductSizes, RingTypes, StoneShapes, StoneTypes } = getModelInstance();
 
-    const [categories, collections, metals, sizes, ringTypes, gemstones] = await Promise.all([
+    const [categories, collections, metals, sizes, ringTypes, stoneShapes, stoneTypes] = await Promise.all([
       Category.findAll({
         where: { is_active: true },
         attributes: ['id', 'name', 'slug'],
@@ -917,9 +1016,14 @@ const getProductOptions = async (req, res) => {
         attributes: ['id', 'name', 'slug', 'description'],
         order: [['sort_order', 'ASC'], ['name', 'ASC']]
       }),
-      Gemstones.findAll({
+      StoneShapes.findAll({
         where: { is_active: true },
-        attributes: ['id', 'name', 'slug', 'color', 'price_per_carat'],
+        attributes: ['id', 'name', 'slug', 'description'],
+        order: [['sort_order', 'ASC'], ['name', 'ASC']]
+      }),
+      StoneTypes.findAll({
+        where: { is_active: true },
+        attributes: ['id', 'name', 'slug', 'description'],
         order: [['sort_order', 'ASC'], ['name', 'ASC']]
       })
     ]);
@@ -932,7 +1036,8 @@ const getProductOptions = async (req, res) => {
         metals,
         sizes,
         ringTypes,
-        gemstones
+        stoneShapes,
+        stoneTypes
       }
     });
   } catch (error) {
@@ -1015,10 +1120,11 @@ const createProductWithMedia = async (req, res) => {
       ProductVideo,
       ProductVariant,
       RingTypes,
-      Gemstones,
+      StoneShapes,
+      StoneTypes,
       ProductMetals,
       ProductRingTypes,
-      ProductGemstones,
+      ProductStoneShapes,
       ProductMetalsJunction
     } = getModelInstance();
 
@@ -1034,7 +1140,13 @@ const createProductWithMedia = async (req, res) => {
       category_id,
       collection_id,
       ring_type_ids,
-      gemstone_ids,
+      stone_shape_ids,
+      stone_type_id,
+      ring_style_1_id,
+      ring_style_2_id,
+      ring_style_3_id,
+      ring_style_4_id,
+      ring_style_5_id,
       metal_ids,
       is_active = true,
       is_featured = false,
@@ -1061,11 +1173,77 @@ const createProductWithMedia = async (req, res) => {
     if (collection_id === '') {
       collection_id = null;
     }
+    if (stone_type_id === '') {
+      stone_type_id = null;
+    }
 
     // Parse array fields that come as JSON strings
     const parsedRingTypeIds = ring_type_ids ? JSON.parse(ring_type_ids) : [];
-    const parsedGemstoneIds = gemstone_ids ? JSON.parse(gemstone_ids) : [];
+    const parsedStoneShapeIds = stone_shape_ids ? JSON.parse(stone_shape_ids) : [];
     const parsedMetalIds = metal_ids ? JSON.parse(metal_ids) : [];
+
+    // Handle ring style arrays - extract first element from each array or convert empty to null
+    // Frontend sends arrays (ring_style_1_ids, ring_style_2_ids, etc.)
+    // Database expects single IDs (ring_style_1_id, ring_style_2_id, etc.)
+    let finalRingStyle1Id = null;
+    let finalRingStyle2Id = null;
+    let finalRingStyle3Id = null;
+    let finalRingStyle4Id = null;
+    let finalRingStyle5Id = null;
+
+    // Try to parse as arrays first (new format from frontend)
+    try {
+      if (ring_style_1_id) {
+        const parsed1 = typeof ring_style_1_id === 'string' ? JSON.parse(ring_style_1_id) : ring_style_1_id;
+        finalRingStyle1Id = Array.isArray(parsed1) && parsed1.length > 0 ? parsed1[0] : (parsed1 || null);
+      }
+    } catch (e) {
+      // If parsing fails, treat as single ID
+      finalRingStyle1Id = ring_style_1_id === '' ? null : ring_style_1_id;
+    }
+
+    try {
+      if (ring_style_2_id) {
+        const parsed2 = typeof ring_style_2_id === 'string' ? JSON.parse(ring_style_2_id) : ring_style_2_id;
+        finalRingStyle2Id = Array.isArray(parsed2) && parsed2.length > 0 ? parsed2[0] : (parsed2 || null);
+      }
+    } catch (e) {
+      finalRingStyle2Id = ring_style_2_id === '' ? null : ring_style_2_id;
+    }
+
+    try {
+      if (ring_style_3_id) {
+        const parsed3 = typeof ring_style_3_id === 'string' ? JSON.parse(ring_style_3_id) : ring_style_3_id;
+        finalRingStyle3Id = Array.isArray(parsed3) && parsed3.length > 0 ? parsed3[0] : (parsed3 || null);
+      }
+    } catch (e) {
+      finalRingStyle3Id = ring_style_3_id === '' ? null : ring_style_3_id;
+    }
+
+    try {
+      if (ring_style_4_id) {
+        const parsed4 = typeof ring_style_4_id === 'string' ? JSON.parse(ring_style_4_id) : ring_style_4_id;
+        finalRingStyle4Id = Array.isArray(parsed4) && parsed4.length > 0 ? parsed4[0] : (parsed4 || null);
+      }
+    } catch (e) {
+      finalRingStyle4Id = ring_style_4_id === '' ? null : ring_style_4_id;
+    }
+
+    try {
+      if (ring_style_5_id) {
+        const parsed5 = typeof ring_style_5_id === 'string' ? JSON.parse(ring_style_5_id) : ring_style_5_id;
+        finalRingStyle5Id = Array.isArray(parsed5) && parsed5.length > 0 ? parsed5[0] : (parsed5 || null);
+      }
+    } catch (e) {
+      finalRingStyle5Id = ring_style_5_id === '' ? null : ring_style_5_id;
+    }
+
+    // Reassign to original variable names for use in product creation
+    ring_style_1_id = finalRingStyle1Id;
+    ring_style_2_id = finalRingStyle2Id;
+    ring_style_3_id = finalRingStyle3Id;
+    ring_style_4_id = finalRingStyle4Id;
+    ring_style_5_id = finalRingStyle5Id;
 
     // Validation
     if (!name || !base_price || !category_id) {
@@ -1100,6 +1278,12 @@ const createProductWithMedia = async (req, res) => {
       currency,
       category_id,
       collection_id: collection_id || null,
+      stone_type_id: stone_type_id || null,
+      ring_style_1_id: ring_style_1_id || null,
+      ring_style_2_id: ring_style_2_id || null,
+      ring_style_3_id: ring_style_3_id || null,
+      ring_style_4_id: ring_style_4_id || null,
+      ring_style_5_id: ring_style_5_id || null,
       is_active,
       is_featured,
       in_stock,
@@ -1159,12 +1343,12 @@ const createProductWithMedia = async (req, res) => {
       });
     }
 
-    if (parsedGemstoneIds.length > 0) {
-      parsedGemstoneIds.forEach(gemstoneId => {
+    if (parsedStoneShapeIds.length > 0) {
+      parsedStoneShapeIds.forEach(stoneShapeId => {
         promises.push(
-          ProductGemstones.create({
+          ProductStoneShapes.create({
             product_id: product.id,
-            gemstone_id: gemstoneId
+            stone_shape_id: stoneShapeId
           })
         );
       });
@@ -1193,7 +1377,13 @@ const createProductWithMedia = async (req, res) => {
         { model: ProductVideo, as: 'videos' },
         { model: ProductVariant, as: 'variants' },
         { model: RingTypes, as: 'ringTypes' },
-        { model: Gemstones, as: 'gemstones' },
+        { model: StoneShapes, as: 'stoneShapes' },
+        { model: StoneTypes, as: 'stoneType', required: false },
+        { model: RingTypes, as: 'ringStyle1', required: false },
+        { model: RingTypes, as: 'ringStyle2', required: false },
+        { model: RingTypes, as: 'ringStyle3', required: false },
+        { model: RingTypes, as: 'ringStyle4', required: false },
+        { model: RingTypes, as: 'ringStyle5', required: false },
         { model: ProductMetals, as: 'metals' }
       ]
     });

@@ -73,14 +73,20 @@ interface RingType {
   sort_order: number;
 }
 
-interface Gemstone {
+interface StoneShape {
   id: string;
   name: string;
   slug: string;
   description?: string;
-  color?: string;
-  hardness?: number;
-  price_per_carat?: number;
+  is_active: boolean;
+  sort_order: number;
+}
+
+interface StoneType {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
   is_active: boolean;
   sort_order: number;
 }
@@ -105,8 +111,8 @@ interface Collection {
 }
 
 type ViewMode = 'overview' | 'engagement' | 'wedding' | 'earrings' | 'necklaces' | 'bracelets';
-type SubCategoryType = 'ringTypes' | 'gemstones' | 'metals' | 'collections' | 'earringTypes' | 'necklaceTypes' | 'braceletTypes';
-type CategoryFormType = 'earringType' | 'necklaceType' | 'braceletType' | 'ringType' | 'gemstone' | 'metal' | 'collection' | 'jewelryType' | 'jewelrySubType';
+type SubCategoryType = 'ringTypes' | 'stoneShapes' | 'stoneTypes' | 'metals' | 'collections' | 'earringTypes' | 'necklaceTypes' | 'braceletTypes';
+type CategoryFormType = 'earringType' | 'necklaceType' | 'braceletType' | 'ringType' | 'stoneShape' | 'stoneType' | 'metal' | 'collection' | 'jewelryType' | 'jewelrySubType';
 
 // =====================================================
 // MAIN COMPONENT
@@ -131,7 +137,8 @@ const AdminJewelryCategories: React.FC = () => {
 
   // Existing attribute types (universal for rings)
   const [ringTypes, setRingTypes] = useState<RingType[]>([]);
-  const [gemstones, setGemstones] = useState<Gemstone[]>([]);
+  const [stoneShapes, setStoneShapes] = useState<StoneShape[]>([]);
+  const [stoneTypes, setStoneTypes] = useState<StoneType[]>([]);
   const [metals, setMetals] = useState<ProductMetal[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
 
@@ -178,7 +185,8 @@ const AdminJewelryCategories: React.FC = () => {
         necklaceTypesRes,
         braceletTypesRes,
         ringTypesRes,
-        gemstonesRes,
+        stoneShapesRes,
+        stoneTypesRes,
         metalsRes,
         collectionsRes
       ] = await Promise.all([
@@ -188,7 +196,8 @@ const AdminJewelryCategories: React.FC = () => {
         fetch(`${API_BASE_URL}/admin/jewelry-categories/necklace-types`, { headers }),
         fetch(`${API_BASE_URL}/admin/jewelry-categories/bracelet-types`, { headers }),
         fetch(`${API_BASE_URL}/admin/categories/ring-types`, { headers }),
-        fetch(`${API_BASE_URL}/admin/categories/gemstones`, { headers }),
+        fetch(`${API_BASE_URL}/admin/categories/stone-shapes`, { headers }),
+        fetch(`${API_BASE_URL}/admin/categories/stone-types`, { headers }),
         fetch(`${API_BASE_URL}/admin/categories/metals`, { headers }),
         fetch(`${API_BASE_URL}/admin/categories/collections`, { headers })
       ]);
@@ -199,7 +208,8 @@ const AdminJewelryCategories: React.FC = () => {
       if (!necklaceTypesRes.ok) throw new Error('Failed to fetch necklace types');
       if (!braceletTypesRes.ok) throw new Error('Failed to fetch bracelet types');
       if (!ringTypesRes.ok) throw new Error('Failed to fetch ring types');
-      if (!gemstonesRes.ok) throw new Error('Failed to fetch gemstones');
+      if (!stoneShapesRes.ok) throw new Error('Failed to fetch stone shapes');
+      if (!stoneTypesRes.ok) throw new Error('Failed to fetch stone types');
       if (!metalsRes.ok) throw new Error('Failed to fetch metals');
       if (!collectionsRes.ok) throw new Error('Failed to fetch collections');
 
@@ -215,7 +225,8 @@ const AdminJewelryCategories: React.FC = () => {
       setNecklaceTypes(necklaceTypesData.data || []);
       setBraceletTypes(braceletTypesData.data || []);
       setRingTypes(await ringTypesRes.json());
-      setGemstones(await gemstonesRes.json());
+      setStoneShapes(await stoneShapesRes.json());
+      setStoneTypes(await stoneTypesRes.json());
       setMetals(await metalsRes.json());
       setCollections(await collectionsRes.json());
 
@@ -249,7 +260,8 @@ const AdminJewelryCategories: React.FC = () => {
     } else if (viewMode === 'engagement' || viewMode === 'wedding') {
       // For ring sub-types, show the appropriate attribute category
       if (activeSubCategory === 'ringTypes') data = ringTypes;
-      else if (activeSubCategory === 'gemstones') data = gemstones;
+      else if (activeSubCategory === 'stoneShapes') data = stoneShapes;
+      else if (activeSubCategory === 'stoneTypes') data = stoneTypes;
       else if (activeSubCategory === 'metals') data = metals;
       else if (activeSubCategory === 'collections') data = collections;
     } else if (viewMode === 'earrings') {
@@ -300,7 +312,8 @@ const AdminJewelryCategories: React.FC = () => {
         necklaceType: `jewelry-categories/necklace-types/${itemToDelete.id}`,
         braceletType: `jewelry-categories/bracelet-types/${itemToDelete.id}`,
         ringType: `categories/ring-types/${itemToDelete.id}`,
-        gemstone: `categories/gemstones/${itemToDelete.id}`,
+        stoneShape: `categories/stone-shapes/${itemToDelete.id}`,
+        stoneType: `categories/stone-types/${itemToDelete.id}`,
         metal: `categories/metals/${itemToDelete.id}`,
         collection: `categories/collections/${itemToDelete.id}`
       };
@@ -329,8 +342,10 @@ const AdminJewelryCategories: React.FC = () => {
           setBraceletTypes(prev => prev.filter(item => item.id !== itemToDelete.id));
         } else if (itemToDelete.type === 'ringType') {
           setRingTypes(prev => prev.filter(item => item.id !== itemToDelete.id));
-        } else if (itemToDelete.type === 'gemstone') {
-          setGemstones(prev => prev.filter(item => item.id !== itemToDelete.id));
+        } else if (itemToDelete.type === 'stoneShape') {
+          setStoneShapes(prev => prev.filter(item => item.id !== itemToDelete.id));
+        } else if (itemToDelete.type === 'stoneType') {
+          setStoneTypes(prev => prev.filter(item => item.id !== itemToDelete.id));
         } else if (itemToDelete.type === 'metal') {
           setMetals(prev => prev.filter(item => item.id !== itemToDelete.id));
         } else if (itemToDelete.type === 'collection') {
@@ -357,7 +372,8 @@ const AdminJewelryCategories: React.FC = () => {
     if (viewMode === 'bracelets') return 'braceletType';
     if (viewMode === 'engagement' || viewMode === 'wedding') {
       if (activeSubCategory === 'ringTypes') return 'ringType';
-      if (activeSubCategory === 'gemstones') return 'gemstone';
+      if (activeSubCategory === 'stoneShapes') return 'stoneShape';
+      if (activeSubCategory === 'stoneTypes') return 'stoneType';
       if (activeSubCategory === 'metals') return 'metal';
       if (activeSubCategory === 'collections') return 'collection';
     }
@@ -399,8 +415,10 @@ const AdminJewelryCategories: React.FC = () => {
         setBraceletTypes(prev => [...prev, updatedItem]);
       } else if (modalType === 'ringType') {
         setRingTypes(prev => [...prev, updatedItem]);
-      } else if (modalType === 'gemstone') {
-        setGemstones(prev => [...prev, updatedItem]);
+      } else if (modalType === 'stoneShape') {
+        setStoneShapes(prev => [...prev, updatedItem]);
+      } else if (modalType === 'stoneType') {
+        setStoneTypes(prev => [...prev, updatedItem]);
       } else if (modalType === 'metal') {
         setMetals(prev => [...prev, updatedItem]);
       } else if (modalType === 'collection') {
@@ -422,8 +440,10 @@ const AdminJewelryCategories: React.FC = () => {
         setBraceletTypes(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
       } else if (modalType === 'ringType') {
         setRingTypes(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
-      } else if (modalType === 'gemstone') {
-        setGemstones(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+      } else if (modalType === 'stoneShape') {
+        setStoneShapes(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+      } else if (modalType === 'stoneType') {
+        setStoneTypes(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
       } else if (modalType === 'metal') {
         setMetals(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
       } else if (modalType === 'collection') {
@@ -480,8 +500,9 @@ const AdminJewelryCategories: React.FC = () => {
     if (viewMode !== 'engagement' && viewMode !== 'wedding') return null;
 
     const tabs = [
-      { key: 'ringTypes' as SubCategoryType, label: 'Ring Types', count: ringTypes.length },
-      { key: 'gemstones' as SubCategoryType, label: 'Gemstones', count: gemstones.length },
+      { key: 'ringTypes' as SubCategoryType, label: 'Ring Styles', count: ringTypes.length },
+      { key: 'stoneShapes' as SubCategoryType, label: 'Stone Shapes', count: stoneShapes.length },
+      { key: 'stoneTypes' as SubCategoryType, label: 'Stone Types', count: stoneTypes.length },
       { key: 'metals' as SubCategoryType, label: 'Metals', count: metals.length },
       { key: 'collections' as SubCategoryType, label: 'Collections', count: collections.length }
     ];
@@ -586,9 +607,9 @@ const AdminJewelryCategories: React.FC = () => {
                     Color
                   </th>
                 )}
-                {activeSubCategory === 'gemstones' && isRingAttributes && (
+                {(activeSubCategory === 'stoneShapes' || activeSubCategory === 'stoneTypes') && isRingAttributes && (
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Color
+                    Slug
                   </th>
                 )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -641,9 +662,9 @@ const AdminJewelryCategories: React.FC = () => {
                         </div>
                       </td>
                     )}
-                    {activeSubCategory === 'gemstones' && isRingAttributes && (
+                    {(activeSubCategory === 'stoneShapes' || activeSubCategory === 'stoneTypes') && isRingAttributes && (
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{item.color || '-'}</span>
+                        <span className="text-sm text-gray-900">{item.slug || '-'}</span>
                       </td>
                     )}
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -681,7 +702,8 @@ const AdminJewelryCategories: React.FC = () => {
                             else if (viewMode === 'necklaces') type = 'necklaceType';
                             else if (viewMode === 'bracelets') type = 'braceletType';
                             else if (activeSubCategory === 'ringTypes') type = 'ringType';
-                            else if (activeSubCategory === 'gemstones') type = 'gemstone';
+                            else if (activeSubCategory === 'stoneShapes') type = 'stoneShape';
+                            else if (activeSubCategory === 'stoneTypes') type = 'stoneType';
                             else if (activeSubCategory === 'metals') type = 'metal';
                             else if (activeSubCategory === 'collections') type = 'collection';
 

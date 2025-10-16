@@ -28,6 +28,20 @@ const {
   updateGemstone,
   deleteGemstone,
 
+  // Stone Shapes
+  getStoneShapes,
+  getStoneShapeById,
+  createStoneShape,
+  updateStoneShape,
+  deleteStoneShape,
+
+  // Stone Types
+  getStoneTypes,
+  getStoneTypeById,
+  createStoneType,
+  updateStoneType,
+  deleteStoneType,
+
   // Metals
   getMetals,
   getMetalById,
@@ -67,6 +81,20 @@ router.get('/gemstones/:id', getGemstoneById);
 router.post('/gemstones', createGemstone);
 router.put('/gemstones/:id', updateGemstone);
 router.delete('/gemstones/:id', deleteGemstone);
+
+// Stone Shapes routes
+router.get('/stone-shapes', getStoneShapes);
+router.get('/stone-shapes/:id', getStoneShapeById);
+router.post('/stone-shapes', createStoneShape);
+router.put('/stone-shapes/:id', updateStoneShape);
+router.delete('/stone-shapes/:id', deleteStoneShape);
+
+// Stone Types routes
+router.get('/stone-types', getStoneTypes);
+router.get('/stone-types/:id', getStoneTypeById);
+router.post('/stone-types', createStoneType);
+router.put('/stone-types/:id', updateStoneType);
+router.delete('/stone-types/:id', deleteStoneType);
 
 // Metals routes
 router.get('/metals', getMetals);

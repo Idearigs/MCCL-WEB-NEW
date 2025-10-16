@@ -73,7 +73,8 @@ interface ProductOptions {
   metals: Array<{ id: string; name: string; color_code: string; price_multiplier: number }>;
   sizes: Array<{ id: string; size_name: string; size_value: string; category_id: string }>;
   ringTypes: Array<{ id: string; name: string; slug: string }>;
-  gemstones: Array<{ id: string; name: string; slug: string; color?: string; price_per_carat?: number }>;
+  stoneShapes: Array<{ id: string; name: string; slug: string }>;
+  stoneTypes: Array<{ id: string; name: string; slug: string }>;
 }
 
 const AdminProducts: React.FC = () => {
@@ -167,7 +168,8 @@ const AdminProducts: React.FC = () => {
         categoriesResponse,
         jewelrySubTypesResponse,
         ringTypesResponse,
-        gemstonesResponse,
+        stoneShapesResponse,
+        stoneTypesResponse,
         metalsResponse,
         collectionsResponse
       ] = await Promise.all([
@@ -179,12 +181,16 @@ const AdminProducts: React.FC = () => {
         fetch(`${API_BASE_URL}/admin/jewelry-categories/jewelry-sub-types`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        // Ring types
+        // Ring types (now used for ring styles)
         fetch(`${API_BASE_URL}/admin/categories/ring-types`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        // Gemstones
-        fetch(`${API_BASE_URL}/admin/categories/gemstones`, {
+        // Stone Shapes (renamed from Gemstones)
+        fetch(`${API_BASE_URL}/admin/categories/stone-shapes`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        // Stone Types (new)
+        fetch(`${API_BASE_URL}/admin/categories/stone-types`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         // Metals
@@ -202,18 +208,20 @@ const AdminProducts: React.FC = () => {
         categoriesData,
         jewelrySubTypesData,
         ringTypesData,
-        gemstonesData,
+        stoneShapesData,
+        stoneTypesData,
         metalsData,
         collectionsData
       ] = await Promise.all([
         categoriesResponse.json(),
         jewelrySubTypesResponse.json(),
         ringTypesResponse.json(),
-        gemstonesResponse.json(),
+        stoneShapesResponse.json(),
+        stoneTypesResponse.json(),
         metalsResponse.json(),
         collectionsResponse.json()
       ]);
-      
+
       // Parse product options response
       const productsOptionsData = await productsOptionsResponse.json();
 
@@ -223,7 +231,8 @@ const AdminProducts: React.FC = () => {
         collections: Array.isArray(collectionsData) ? collectionsData : [],
         jewelrySubTypes: jewelrySubTypesData.success ? jewelrySubTypesData.data : [],
         ringTypes: Array.isArray(ringTypesData) ? ringTypesData : [],
-        gemstones: Array.isArray(gemstonesData) ? gemstonesData : [],
+        stoneShapes: Array.isArray(stoneShapesData) ? stoneShapesData : [],
+        stoneTypes: Array.isArray(stoneTypesData) ? stoneTypesData : [],
         metals: Array.isArray(metalsData) ? metalsData : [],
         sizes: productsOptionsData.success ? productsOptionsData.data.sizes : []
       };
@@ -237,7 +246,8 @@ const AdminProducts: React.FC = () => {
         collections: [],
         jewelrySubTypes: [],
         ringTypes: [],
-        gemstones: [],
+        stoneShapes: [],
+        stoneTypes: [],
         metals: [],
         sizes: []
       });
@@ -567,8 +577,16 @@ const AdminProducts: React.FC = () => {
         ...data.data,
         // Transform relationship arrays to ID arrays
         ring_type_ids: data.data.ringTypes?.map((rt: any) => rt.id) || [],
-        gemstone_ids: data.data.gemstones?.map((g: any) => g.id) || [],
+        stone_shape_ids: data.data.stoneShapes?.map((ss: any) => ss.id) || [],
         metal_ids: data.data.metals?.map((m: any) => m.id) || [],
+        // Transform single stone type relationship
+        stone_type_id: data.data.stoneType?.id || '',
+        // Transform 5 ring style relationships to arrays for multi-select
+        ring_style_1_ids: data.data.ringStyle1?.id ? [data.data.ringStyle1.id] : [],
+        ring_style_2_ids: data.data.ringStyle2?.id ? [data.data.ringStyle2.id] : [],
+        ring_style_3_ids: data.data.ringStyle3?.id ? [data.data.ringStyle3.id] : [],
+        ring_style_4_ids: data.data.ringStyle4?.id ? [data.data.ringStyle4.id] : [],
+        ring_style_5_ids: data.data.ringStyle5?.id ? [data.data.ringStyle5.id] : [],
         // Transform images to include both url and alt_text with proper structure
         images: data.data.images?.map((img: any) => ({
           file: null,
@@ -710,6 +728,28 @@ const AdminProducts: React.FC = () => {
                 <option value="true">Featured</option>
                 <option value="false">Not Featured</option>
               </select>
+
+              {/* Sort Dropdown */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+              >
+                <option value="sku">Sort by: SKU</option>
+                <option value="name">Sort by: Name</option>
+                <option value="base_price">Sort by: Price</option>
+                <option value="created_at">Sort by: Date Created</option>
+                <option value="updated_at">Sort by: Date Updated</option>
+              </select>
+
+              {/* Sort Order Toggle */}
+              <button
+                onClick={() => setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')}
+                className="border border-gray-300 rounded-lg px-3 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                title={sortOrder === 'ASC' ? 'Ascending' : 'Descending'}
+              >
+                {sortOrder === 'ASC' ? '↑ A-Z' : '↓ Z-A'}
+              </button>
             </div>
           </div>
         </div>
@@ -1009,7 +1049,8 @@ const AdminProducts: React.FC = () => {
         collections={productOptions?.collections || []}
         jewelrySubTypes={productOptions?.jewelrySubTypes || []}
         ringTypes={productOptions?.ringTypes || []}
-        gemstones={productOptions?.gemstones || []}
+        stoneShapes={productOptions?.stoneShapes || []}
+        stoneTypes={productOptions?.stoneTypes || []}
         metals={productOptions?.metals || []}
         isLoading={formLoading}
       />
