@@ -13,8 +13,8 @@ RUN apk add --no-cache postgresql-client
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (install all deps, NODE_ENV will be set at runtime)
-RUN npm ci && npm cache clean --force
+# Install dependencies (temporarily unset NODE_ENV to ensure all packages are installed)
+RUN NODE_ENV= npm ci && npm cache clean --force
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
