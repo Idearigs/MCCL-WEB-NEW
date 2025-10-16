@@ -70,8 +70,8 @@ const validateConfig = () => {
   if (config.NODE_ENV === 'production') {
     requiredEnvVars.push(
       'JWT_SECRET',
-      'PG_PASSWORD',
-      'MONGODB_URI'
+      'PG_PASSWORD'
+      // MONGODB_URI is optional - only used for logging
     );
   }
 
