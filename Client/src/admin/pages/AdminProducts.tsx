@@ -97,8 +97,8 @@ const AdminProducts: React.FC = () => {
     totalItems: 0,
     limit: 10
   });
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('DESC');
+  const [sortBy, setSortBy] = useState('sku');
+  const [sortOrder, setSortOrder] = useState('ASC');
 
   // Modal states
   const [showProductForm, setShowProductForm] = useState(false);
