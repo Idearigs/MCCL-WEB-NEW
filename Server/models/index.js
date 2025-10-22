@@ -203,6 +203,38 @@ const initializeModels = () => {
     warranty_info: {
       type: DataTypes.TEXT
     },
+    // Nivoda Integration Fields
+    nivoda_enabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    show_stone_type: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    show_carat: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    show_clarity: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    show_colour: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    show_cut: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    show_certificate: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    certificate: {
+      type: DataTypes.STRING(255)
+    },
     meta_title: {
       type: DataTypes.STRING(200)
     },

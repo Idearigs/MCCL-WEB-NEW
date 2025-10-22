@@ -20,6 +20,20 @@ const ProductDetail = () => {
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [userCountryName, setUserCountryName] = useState<string | null>(null);
 
+  // Nivoda Stone Selection States
+  const [selectedStoneType, setSelectedStoneType] = useState<'natural' | 'lab-grown'>('natural');
+  const [selectedCarat, setSelectedCarat] = useState('0.50ct');
+  const [selectedClarity, setSelectedClarity] = useState('VS');
+  const [selectedColour, setSelectedColour] = useState('F-G');
+  const [selectedCut, setSelectedCut] = useState('Good');
+  const [expandedStoneOptions, setExpandedStoneOptions] = useState<{ [key: string]: boolean }>({
+    stoneType: true,
+    carat: true,
+    clarity: true,
+    colour: true,
+    cut: true
+  });
+
   // Hardcoded ring sizes for all rings with UK/US/EU equivalents
   const ringSizes = [
     { value: 'A', label: 'UK Size A (US 0, EU 37.5)' },
@@ -71,6 +85,50 @@ const ProductDetail = () => {
     delivery: false,
     insurance: false
   });
+
+  const [sizeDropdownOpen, setSizeDropdownOpen] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (sizeDropdownOpen && !target.closest('.size-dropdown-container')) {
+        setSizeDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [sizeDropdownOpen]);
+
+  // Nivoda Stone Options (will be dynamic from product data when enabled)
+  const stoneOptions = {
+    stoneType: [
+      { value: 'natural', label: 'Natural' },
+      { value: 'lab-grown', label: 'Lab-Grown' }
+    ],
+    carat: [
+      { value: '0.50ct', label: '0.50ct' },
+      { value: '0.75ct', label: '0.75ct' },
+      { value: '1.00ct', label: '1.00ct' },
+      { value: '1.50ct', label: '1.50ct' }
+    ],
+    clarity: [
+      { value: 'VS', label: 'VS' },
+      { value: 'VVS', label: 'VVS' },
+      { value: 'IF', label: 'IF' }
+    ],
+    colour: [
+      { value: 'F-G', label: 'F-G' },
+      { value: 'D-E', label: 'D-E' },
+      { value: 'H-I', label: 'H-I' }
+    ],
+    cut: [
+      { value: 'Good', label: 'Good' },
+      { value: 'Very Good', label: 'Very Good' },
+      { value: 'Excellent', label: 'Excellent' }
+    ]
+  };
 
   // Fetch user's country based on IP
   useEffect(() => {
@@ -136,6 +194,13 @@ const ProductDetail = () => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
+    }));
+  };
+
+  const toggleStoneOption = (option: string) => {
+    setExpandedStoneOptions(prev => ({
+      ...prev,
+      [option]: !prev[option]
     }));
   };
 
@@ -456,19 +521,19 @@ const ProductDetail = () => {
           </div>
 
           {/* Right Side - Product Information */}
-          <div className="pt-0 sticky top-8 self-start bg-white" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}>
+          <div className="pt-0 sticky top-8 self-start bg-white max-w-lg 2xl:max-w-xl mx-auto" style={{ paddingLeft: '2rem', paddingRight: '2rem' }}>
             {/* Product Title and Price */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-cormorant font-light text-gray-900 mb-6 leading-tight">
+            <div className="mb-6 2xl:mb-10">
+              <h1 className="text-2xl 2xl:text-4xl font-satoshi font-light text-gray-900 mb-3 2xl:mb-5 leading-tight">
                 {productData.name}
               </h1>
-              <div className="mb-4">
-                <div className="text-lg font-cormorant text-gray-900 mb-3">
+              <div className="mb-3 2xl:mb-5">
+                <div className="text-lg 2xl:text-2xl font-satoshi text-gray-900 mb-2">
                   {productData.price}
                 </div>
                 {userCountry && userCountry !== 'GB' && userCountryName && (
-                  <div className="flex items-start space-x-2 text-xs text-gray-500 leading-relaxed">
-                    <svg className="w-3 h-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="flex items-start space-x-1.5 text-[11px] 2xl:text-xs text-gray-500 leading-snug">
+                    <svg className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <span>We've detected you are browsing from {userCountryName}, please note the UK price for this piece is {productData.price}</span>
@@ -479,16 +544,16 @@ const ProductDetail = () => {
 
             {/* Metal Selection */}
             {productData.available_metals && productData.available_metals.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-xs font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-4">
+              <div className="mb-6 2xl:mb-8">
+                <h3 className="text-sm 2xl:text-base font-satoshi font-medium text-gray-900 uppercase tracking-wider mb-3 2xl:mb-4">
                   Metal: {productData.available_metals.find(metal => metal.id === selectedMetal)?.name || productData.available_metals[0]?.name || 'Not Selected'}
                 </h3>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 2xl:space-x-3">
                   {productData.available_metals.map((metal) => (
                     <button
                       key={metal.id}
                       onClick={() => setSelectedMetal(metal.id)}
-                      className={`w-12 h-12 rounded-full border-2 transition-all duration-200 ${
+                      className={`w-11 h-11 2xl:w-12 2xl:h-12 rounded-full border-2 transition-all duration-200 ${
                         selectedMetal === metal.id
                           ? 'border-gray-800'
                           : 'border-gray-300 hover:border-gray-500'
@@ -502,31 +567,241 @@ const ProductDetail = () => {
             )}
 
             {/* Size Selection */}
-            <div className="mb-8">
-              <h3 className="text-xs font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-4">
+            <div className="mb-6 2xl:mb-8 relative size-dropdown-container">
+              <h3 className="text-sm 2xl:text-base font-satoshi font-medium text-gray-900 uppercase tracking-wider mb-3 2xl:mb-4">
                 Size
               </h3>
-              <select
-                value={selectedSize}
-                onChange={(e) => setSelectedSize(e.target.value)}
-                className="w-full border border-gray-300 px-4 py-3 font-cormorant text-gray-900 focus:outline-none focus:border-gray-800 bg-white text-sm"
+
+              {/* Custom Dropdown Trigger */}
+              <button
+                onClick={() => setSizeDropdownOpen(!sizeDropdownOpen)}
+                className="w-full border border-gray-300 px-3 2xl:px-5 py-2.5 2xl:py-3.5 font-satoshi text-gray-900 hover:border-gray-800 focus:outline-none focus:border-gray-800 bg-white text-sm 2xl:text-lg flex items-center justify-between transition-colors"
               >
-                {ringSizes.map((size) => (
-                  <option key={size.value} value={size.value}>
-                    {size.label}
-                  </option>
-                ))}
-              </select>
+                <span>{ringSizes.find(s => s.value === selectedSize)?.label || 'Select Size'}</span>
+                <ChevronDown className={`w-4 h-4 2xl:w-5 2xl:h-5 transition-transform duration-200 ${sizeDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Size Chart Dropdown */}
+              {sizeDropdownOpen && (
+                <div className="absolute z-50 w-full mt-2 bg-white border border-gray-300 shadow-lg rounded-sm">
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      {ringSizes.map((size) => (
+                        <button
+                          key={size.value}
+                          onClick={() => {
+                            setSelectedSize(size.value);
+                            setSizeDropdownOpen(false);
+                          }}
+                          className={`flex items-center justify-between px-4 py-3 text-sm font-satoshi transition-all rounded-sm ${
+                            selectedSize === size.value
+                              ? 'bg-amber-50 text-gray-900 border border-amber-200'
+                              : 'bg-white hover:bg-gray-50 border border-gray-200'
+                          }`}
+                        >
+                          <span className="font-medium">{size.label}</span>
+                          {selectedSize === size.value && (
+                            <svg className="w-4 h-4 text-amber-700" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* YOUR STONE Section */}
+            {productData?.nivoda_enabled && (
+              <div className="mb-8 2xl:mb-10 border-t border-b border-gray-200 py-6 2xl:py-8">
+                <h2 className="text-sm 2xl:text-base font-satoshi font-medium text-gray-900 uppercase tracking-wider mb-5 2xl:mb-6">
+                  YOUR STONE
+                </h2>
+
+                {/* Stone Type */}
+                {productData?.show_stone_type && (
+                  <div className="mb-5 2xl:mb-6">
+                    <div className="flex items-center justify-between mb-3 2xl:mb-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm 2xl:text-base font-satoshi text-gray-700">Stone Type:</span>
+                        <span className="text-sm 2xl:text-base font-satoshi text-[#D4A574] font-medium">
+                          {stoneOptions.stoneType.find(st => st.value === selectedStoneType)?.label}
+                        </span>
+                      </div>
+                      <button onClick={() => toggleStoneOption('stoneType')} className="text-gray-600">
+                        {expandedStoneOptions.stoneType ? <Minus className="w-4 h-4 2xl:w-5 2xl:h-5" /> : <Plus className="w-4 h-4 2xl:w-5 2xl:h-5" />}
+                      </button>
+                    </div>
+                    {expandedStoneOptions.stoneType && (
+                      <div className="flex space-x-2 2xl:space-x-4">
+                        {stoneOptions.stoneType.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => setSelectedStoneType(option.value as 'natural' | 'lab-grown')}
+                            className={`px-5 2xl:px-6 py-2.5 2xl:py-3 text-sm 2xl:text-base font-satoshi border transition-all ${
+                              selectedStoneType === option.value
+                                ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
+                                : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Carat */}
+                {productData?.show_carat && (
+                  <div className="mb-5 2xl:mb-6">
+                    <div className="flex items-center justify-between mb-3 2xl:mb-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm 2xl:text-base font-satoshi text-gray-700">Carat:</span>
+                        <span className="text-sm 2xl:text-base font-satoshi text-[#D4A574] font-medium">{selectedCarat}</span>
+                      </div>
+                      <button onClick={() => toggleStoneOption('carat')} className="text-gray-600">
+                        {expandedStoneOptions.carat ? <Minus className="w-4 h-4 2xl:w-5 2xl:h-5" /> : <Plus className="w-4 h-4 2xl:w-5 2xl:h-5" />}
+                      </button>
+                    </div>
+                    {expandedStoneOptions.carat && (
+                      <div className="flex space-x-2 2xl:space-x-4 flex-wrap gap-2 2xl:gap-4">
+                        {stoneOptions.carat.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => setSelectedCarat(option.value)}
+                            className={`px-5 2xl:px-6 py-2.5 2xl:py-3 text-sm 2xl:text-base font-satoshi border transition-all ${
+                              selectedCarat === option.value
+                                ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
+                                : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Clarity */}
+                {productData?.show_clarity && (
+                  <div className="mb-5 2xl:mb-6">
+                    <div className="flex items-center justify-between mb-3 2xl:mb-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm 2xl:text-base font-satoshi text-gray-700">Clarity:</span>
+                        <span className="text-sm 2xl:text-base font-satoshi text-[#D4A574] font-medium">{selectedClarity}</span>
+                      </div>
+                      <button onClick={() => toggleStoneOption('clarity')} className="text-gray-600">
+                        {expandedStoneOptions.clarity ? <Minus className="w-4 h-4 2xl:w-5 2xl:h-5" /> : <Plus className="w-4 h-4 2xl:w-5 2xl:h-5" />}
+                      </button>
+                    </div>
+                    {expandedStoneOptions.clarity && (
+                      <div className="flex space-x-2 2xl:space-x-4 flex-wrap gap-2 2xl:gap-4">
+                        {stoneOptions.clarity.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => setSelectedClarity(option.value)}
+                            className={`px-5 2xl:px-6 py-2.5 2xl:py-3 text-sm 2xl:text-base font-satoshi border transition-all ${
+                              selectedClarity === option.value
+                                ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
+                                : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Colour */}
+                {productData?.show_colour && (
+                  <div className="mb-5 2xl:mb-6">
+                    <div className="flex items-center justify-between mb-3 2xl:mb-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm 2xl:text-base font-satoshi text-gray-700">Colour:</span>
+                        <span className="text-sm 2xl:text-base font-satoshi text-[#D4A574] font-medium">{selectedColour}</span>
+                      </div>
+                      <button onClick={() => toggleStoneOption('colour')} className="text-gray-600">
+                        {expandedStoneOptions.colour ? <Minus className="w-4 h-4 2xl:w-5 2xl:h-5" /> : <Plus className="w-4 h-4 2xl:w-5 2xl:h-5" />}
+                      </button>
+                    </div>
+                    {expandedStoneOptions.colour && (
+                      <div className="flex space-x-2 2xl:space-x-4 flex-wrap gap-2 2xl:gap-4">
+                        {stoneOptions.colour.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => setSelectedColour(option.value)}
+                            className={`px-5 2xl:px-6 py-2.5 2xl:py-3 text-sm 2xl:text-base font-satoshi border transition-all ${
+                              selectedColour === option.value
+                                ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
+                                : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Cut */}
+                {productData?.show_cut && (
+                  <div className="mb-5 2xl:mb-6">
+                    <div className="flex items-center justify-between mb-3 2xl:mb-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm 2xl:text-base font-satoshi text-gray-700">Cut:</span>
+                        <span className="text-sm 2xl:text-base font-satoshi text-[#D4A574] font-medium">{selectedCut}</span>
+                      </div>
+                      <button onClick={() => toggleStoneOption('cut')} className="text-gray-600">
+                        {expandedStoneOptions.cut ? <Minus className="w-4 h-4 2xl:w-5 2xl:h-5" /> : <Plus className="w-4 h-4 2xl:w-5 2xl:h-5" />}
+                      </button>
+                    </div>
+                    {expandedStoneOptions.cut && (
+                      <div className="flex space-x-2 2xl:space-x-4 flex-wrap gap-2 2xl:gap-4">
+                        {stoneOptions.cut.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => setSelectedCut(option.value)}
+                            className={`px-5 2xl:px-6 py-2.5 2xl:py-3 text-sm 2xl:text-base font-satoshi border transition-all ${
+                              selectedCut === option.value
+                                ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
+                                : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Certificate */}
+                {productData?.show_certificate && productData?.certificate && (
+                  <div className="mb-4 2xl:mb-5">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs 2xl:text-sm font-satoshi text-gray-700">Certificate:</span>
+                      <span className="text-xs 2xl:text-sm font-satoshi text-gray-900 font-medium">{productData.certificate}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Action Buttons */}
-            <div className="space-y-3 mb-8">
-              <Button 
+            <div className="space-y-3 2xl:space-y-4 mb-6 2xl:mb-8">
+              <Button
                 onClick={handleAddToCart}
                 disabled={isLoading}
-                className={`w-full h-12 font-cormorant font-medium uppercase tracking-wider text-xs border-0 transition-all duration-300 relative overflow-hidden ${
-                  isLoading 
-                    ? 'bg-gray-900 text-white cursor-not-allowed' 
+                className={`w-full h-13 2xl:h-16 font-satoshi font-medium uppercase tracking-wider text-base 2xl:text-lg border-0 transition-all duration-300 relative overflow-hidden ${
+                  isLoading
+                    ? 'bg-gray-900 text-white cursor-not-allowed'
                     : 'bg-[#f4e6c8] hover:bg-[#f0ddb0] text-gray-900'
                 }`}
               >
@@ -541,86 +816,90 @@ const ProductDetail = () => {
                   Add to Bag
                 </span>
               </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full h-12 border border-gray-300 hover:border-gray-800 text-gray-900 font-cormorant font-medium uppercase tracking-wider text-xs bg-white"
+
+              <Button
+                variant="outline"
+                className="w-full h-13 2xl:h-16 border border-gray-300 hover:border-gray-800 text-gray-900 font-satoshi font-medium uppercase tracking-wider text-base 2xl:text-lg bg-white"
               >
                 Enquire
               </Button>
             </div>
 
             {/* Add to Wishlist */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6 2xl:mb-8">
               <button className="flex items-center justify-center w-full text-gray-600 hover:text-gray-900 transition-colors">
-                <Heart className="w-4 h-4 mr-2" />
-                <span className="font-cormorant text-sm">Add to Wishlist</span>
+                <Heart className="w-5 h-5 2xl:w-6 2xl:h-6 mr-2" />
+                <span className="font-satoshi text-base 2xl:text-lg">Add to Wishlist</span>
               </button>
             </div>
 
             {/* Contact Options */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 9l6-6" />
+            <div className="grid grid-cols-3 gap-4 2xl:gap-6 pt-5 2xl:pt-7 border-t border-gray-200">
+              <div className="text-center group cursor-pointer">
+                <div className="w-14 h-14 2xl:w-16 2xl:h-16 bg-gradient-to-br from-amber-50 to-orange-50 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-300 hover:shadow-md hover:scale-105 border border-amber-100">
+                  <svg className="w-6 h-6 2xl:w-7 2xl:h-7 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <div className="text-xs font-serif font-medium text-gray-900 uppercase tracking-wider">
+                <div className="text-xs 2xl:text-sm font-satoshi font-medium text-gray-900 uppercase tracking-[0.15em] leading-tight">
                   Book An
                 </div>
-                <div className="text-xs font-serif font-medium text-gray-900 uppercase tracking-wider">
+                <div className="text-xs 2xl:text-sm font-satoshi font-medium text-gray-900 uppercase tracking-[0.15em] leading-tight">
                   Appointment
                 </div>
               </div>
-              
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Phone className="w-5 h-5 text-gray-600" />
+
+              <div className="text-center group cursor-pointer">
+                <div className="w-14 h-14 2xl:w-16 2xl:h-16 bg-gradient-to-br from-amber-50 to-orange-50 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-300 hover:shadow-md hover:scale-105 border border-amber-100">
+                  <svg className="w-6 h-6 2xl:w-7 2xl:h-7 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
                 </div>
-                <div className="text-xs font-serif font-medium text-gray-900 uppercase tracking-wider">
+                <div className="text-xs 2xl:text-sm font-satoshi font-medium text-gray-900 uppercase tracking-[0.15em] leading-tight">
                   Order By Phone
                 </div>
               </div>
-              
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <MessageCircle className="w-5 h-5 text-gray-600" />
+
+              <div className="text-center group cursor-pointer">
+                <div className="w-14 h-14 2xl:w-16 2xl:h-16 bg-gradient-to-br from-amber-50 to-orange-50 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-300 hover:shadow-md hover:scale-105 border border-amber-100">
+                  <svg className="w-6 h-6 2xl:w-7 2xl:h-7 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
                 </div>
-                <div className="text-xs font-serif font-medium text-gray-900 uppercase tracking-wider">
+                <div className="text-xs 2xl:text-sm font-satoshi font-medium text-gray-900 uppercase tracking-[0.15em] leading-tight">
                   Drop A Hint
                 </div>
               </div>
             </div>
 
             {/* Expandable Information Sections */}
-            <div className="space-y-4 pt-6">
+            <div className="space-y-0 pt-6 2xl:pt-8">
               {/* About This Piece */}
               <div className="border-b border-gray-200">
                 <button
                   onClick={() => toggleSection('about')}
-                  className="w-full flex items-center justify-between py-4 text-left"
+                  className="w-full flex items-center justify-between py-4 2xl:py-5 text-left group"
                 >
-                  <h3 className="text-sm font-serif font-medium text-gray-900 uppercase tracking-wider">
+                  <h3 className="text-sm 2xl:text-base font-satoshi font-medium text-gray-900 uppercase tracking-[0.2em]">
                     About This Piece
                   </h3>
-                  <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform duration-300 ease-in-out ${
+                  <ChevronDown className={`w-4 h-4 2xl:w-5 2xl:h-5 text-amber-700 transition-all duration-300 ease-in-out group-hover:text-amber-900 ${
                     expandedSections.about ? 'rotate-180' : 'rotate-0'
-                  }`} />
+                  }`} strokeWidth="2" />
                 </button>
-                <div 
+                <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSections.about 
-                      ? 'max-h-96 opacity-100' 
+                    expandedSections.about
+                      ? 'max-h-96 opacity-100'
                       : 'max-h-0 opacity-0'
                   }`}
                 >
-                  <div className="pb-4">
-                    <p className="text-sm font-cormorant text-gray-700 leading-relaxed mb-4">
+                  <div className="pb-4 2xl:pb-6">
+                    <p className="text-base 2xl:text-lg font-satoshi text-gray-700 leading-relaxed mb-4">
                       {productData.description}
                     </p>
-                    <button className="text-sm font-serif text-gray-900 underline hover:no-underline">
-                      Read More
+                    <button className="text-sm 2xl:text-base font-satoshi text-amber-700 hover:text-amber-900 transition-colors">
+                      Read More →
                     </button>
                   </div>
                 </div>
@@ -630,24 +909,24 @@ const ProductDetail = () => {
               <div className="border-b border-gray-200">
                 <button
                   onClick={() => toggleSection('delivery')}
-                  className="w-full flex items-center justify-between py-4 text-left"
+                  className="w-full flex items-center justify-between py-4 2xl:py-5 text-left group"
                 >
-                  <h3 className="text-sm font-serif font-medium text-gray-900 uppercase tracking-wider">
+                  <h3 className="text-sm 2xl:text-base font-satoshi font-medium text-gray-900 uppercase tracking-[0.2em]">
                     Delivery Information
                   </h3>
-                  <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform duration-300 ease-in-out ${
+                  <ChevronDown className={`w-4 h-4 2xl:w-5 2xl:h-5 text-amber-700 transition-all duration-300 ease-in-out group-hover:text-amber-900 ${
                     expandedSections.delivery ? 'rotate-180' : 'rotate-0'
-                  }`} />
+                  }`} strokeWidth="2" />
                 </button>
-                <div 
+                <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSections.delivery 
-                      ? 'max-h-96 opacity-100' 
+                    expandedSections.delivery
+                      ? 'max-h-96 opacity-100'
                       : 'max-h-0 opacity-0'
                   }`}
                 >
-                  <div className="pb-4">
-                    <p className="text-sm font-cormorant text-gray-700 leading-relaxed">
+                  <div className="pb-4 2xl:pb-6">
+                    <p className="text-base 2xl:text-lg font-satoshi text-gray-700 leading-relaxed">
                       Free worldwide delivery on all orders. Express delivery options available.
                     </p>
                   </div>
@@ -658,24 +937,24 @@ const ProductDetail = () => {
               <div className="border-b border-gray-200">
                 <button
                   onClick={() => toggleSection('insurance')}
-                  className="w-full flex items-center justify-between py-4 text-left"
+                  className="w-full flex items-center justify-between py-4 2xl:py-5 text-left group"
                 >
-                  <h3 className="text-sm font-serif font-medium text-gray-900 uppercase tracking-wider">
+                  <h3 className="text-sm 2xl:text-base font-satoshi font-medium text-gray-900 uppercase tracking-[0.2em]">
                     Complimentary Insurance
                   </h3>
-                  <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform duration-300 ease-in-out ${
+                  <ChevronDown className={`w-4 h-4 2xl:w-5 2xl:h-5 text-amber-700 transition-all duration-300 ease-in-out group-hover:text-amber-900 ${
                     expandedSections.insurance ? 'rotate-180' : 'rotate-0'
-                  }`} />
+                  }`} strokeWidth="2" />
                 </button>
-                <div 
+                <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSections.insurance 
-                      ? 'max-h-96 opacity-100' 
+                    expandedSections.insurance
+                      ? 'max-h-96 opacity-100'
                       : 'max-h-0 opacity-0'
                   }`}
                 >
-                  <div className="pb-4">
-                    <p className="text-sm font-cormorant text-gray-700 leading-relaxed">
+                  <div className="pb-4 2xl:pb-6">
+                    <p className="text-base 2xl:text-lg font-satoshi text-gray-700 leading-relaxed">
                       All pieces come with complimentary insurance coverage for the first year.
                     </p>
                   </div>
@@ -809,10 +1088,10 @@ const ProductDetail = () => {
             {/* Left Column - Simple & Clean */}
             <div className="space-y-8">
               <div className="border-l border-yellow-400 pl-6">
-                <h2 className="text-2xl lg:text-3xl font-cormorant font-light text-gray-900 mb-2">
+                <h2 className="text-2xl lg:text-3xl font-satoshi font-light text-gray-900 mb-2">
                   Experience McCulloch Excellence
                 </h2>
-                <p className="text-sm font-cormorant text-gray-600 italic">
+                <p className="text-sm font-satoshi text-gray-600 italic">
                   Where craftsmanship meets distinction since 1847
                 </p>
               </div>
@@ -820,17 +1099,17 @@ const ProductDetail = () => {
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="font-cormorant text-sm text-gray-700">Private Consultation</span>
+                  <span className="font-satoshi text-sm text-gray-700">Private Consultation</span>
                 </div>
                 
                 <div className="flex items-center space-x-3">
                   <Phone className="w-4 h-4 text-yellow-600" />
-                  <span className="font-cormorant text-sm text-gray-700">+94 11 2 555 555</span>
+                  <span className="font-satoshi text-sm text-gray-700">+94 11 2 555 555</span>
                 </div>
                 
                 <div className="flex items-center space-x-3">
                   <MessageCircle className="w-4 h-4 text-yellow-600" />
-                  <span className="font-cormorant text-sm text-gray-700">Live Consultation</span>
+                  <span className="font-satoshi text-sm text-gray-700">Live Consultation</span>
                 </div>
               </div>
             </div>
@@ -838,7 +1117,7 @@ const ProductDetail = () => {
             {/* Right Column - Clean Service List */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-2">
+                <h3 className="text-lg font-satoshi font-medium text-gray-900 mb-2">
                   Our Promise to You
                 </h3>
                 <div className="w-12 h-px bg-yellow-400"></div>
@@ -848,7 +1127,7 @@ const ProductDetail = () => {
                 <div className="flex items-center justify-between py-2 border-b border-gray-300">
                   <div className="flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-                    <span className="font-cormorant text-sm text-gray-700">WHITE GLOVE DELIVERY</span>
+                    <span className="font-satoshi text-sm text-gray-700">WHITE GLOVE DELIVERY</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </div>
@@ -856,7 +1135,7 @@ const ProductDetail = () => {
                 <div className="flex items-center justify-between py-2 border-b border-gray-300">
                   <div className="flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-                    <span className="font-cormorant text-sm text-gray-700">SIGNATURE PRESENTATION</span>
+                    <span className="font-satoshi text-sm text-gray-700">SIGNATURE PRESENTATION</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </div>
@@ -864,7 +1143,7 @@ const ProductDetail = () => {
                 <div className="flex items-center justify-between py-2 border-b border-gray-300">
                   <div className="flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-                    <span className="font-cormorant text-sm text-gray-700">ETHICAL EXCELLENCE</span>
+                    <span className="font-satoshi text-sm text-gray-700">ETHICAL EXCELLENCE</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </div>
@@ -872,7 +1151,7 @@ const ProductDetail = () => {
                 <div className="flex items-center justify-between py-2 border-b border-gray-300">
                   <div className="flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
-                    <span className="font-cormorant text-sm text-gray-700">SIZING EXPERTISE</span>
+                    <span className="font-satoshi text-sm text-gray-700">SIZING EXPERTISE</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </div>
@@ -889,7 +1168,7 @@ const ProductDetail = () => {
           <div className="max-w-6xl mx-auto">
             {/* Section Header */}
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-2xl lg:text-3xl font-cormorant font-light text-gray-900">
+              <h2 className="text-2xl lg:text-3xl font-satoshi font-light text-gray-900">
                 You may also like
               </h2>
 
@@ -931,10 +1210,10 @@ const ProductDetail = () => {
 
                   {/* Product Info */}
                   <div className="space-y-2">
-                    <h3 className="font-cormorant text-gray-900 text-base lg:text-lg leading-tight">
+                    <h3 className="font-satoshi text-gray-900 text-base lg:text-lg leading-tight">
                       {product.name}
                     </h3>
-                    <p className="font-cormorant text-gray-600 text-sm lg:text-base">
+                    <p className="font-satoshi text-gray-600 text-sm lg:text-base">
                       {product.price}
                     </p>
                   </div>

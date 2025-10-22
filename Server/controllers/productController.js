@@ -6,7 +6,7 @@ const { logger } = require('../config/database');
 // Helper function to get models
 const getModelInstance = () => {
   const models = getModels();
-  if (!models.Category || !models.Collection || !models.Product || !models.ProductImage || !models.ProductVariant || !models.ProductMetals || !models.ProductSizes || !models.RingTypes || !models.Gemstones) {
+  if (!models.Category || !models.Collection || !models.Product || !models.ProductImage || !models.ProductVariant || !models.ProductMetals || !models.ProductSizes || !models.RingTypes) {
     throw new Error('Models not initialized properly');
   }
   return models;
@@ -14,7 +14,7 @@ const getModelInstance = () => {
 
 const getAllProducts = asyncHandler(async (req, res) => {
   try {
-    const { Category, Collection, Product, ProductImage, ProductVariant, RingTypes, Gemstones, ProductMetals } = getModelInstance();
+    const { Category, Collection, Product, ProductImage, ProductVariant, RingTypes, ProductMetals } = getModelInstance();
   const {
     category,
     collection,
@@ -68,13 +68,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
       model: ProductMetals,
       as: 'metals',
       attributes: ['id', 'name', 'color_code'],
-      through: { attributes: [] },
-      required: false
-    },
-    {
-      model: Gemstones,
-      as: 'gemstones',
-      attributes: ['id', 'name', 'slug'],
       through: { attributes: [] },
       required: false
     }
@@ -205,7 +198,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
 });
 
 const getProductBySlug = asyncHandler(async (req, res) => {
-  const { Category, Collection, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, RingTypes, Gemstones } = getModelInstance();
+  const { Category, Collection, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, RingTypes } = getModelInstance();
   const { slug } = req.params;
 
   const product = await Product.findOne({
@@ -250,13 +243,6 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       {
         model: RingTypes,
         as: 'ringTypes',
-        attributes: ['id', 'name', 'slug'],
-        through: { attributes: [] },
-        required: false
-      },
-      {
-        model: Gemstones,
-        as: 'gemstones',
         attributes: ['id', 'name', 'slug'],
         through: { attributes: [] },
         required: false
@@ -385,6 +371,15 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     is_featured: product.is_featured,
     in_stock: product.in_stock,
     stock_quantity: product.stock_quantity,
+    // Nivoda Integration Fields
+    nivoda_enabled: product.nivoda_enabled,
+    show_stone_type: product.show_stone_type,
+    show_carat: product.show_carat,
+    show_clarity: product.show_clarity,
+    show_colour: product.show_colour,
+    show_cut: product.show_cut,
+    show_certificate: product.show_certificate,
+    certificate: product.certificate,
     images: mediaItems,
     variants: product.variants.map(variant => ({
       id: variant.id,
@@ -526,17 +521,12 @@ const getProductsByCategory = asyncHandler(async (req, res) => {
 });
 
 const getNavigationData = asyncHandler(async (req, res) => {
-  const { RingTypes, Gemstones, ProductMetals, Collection } = getModelInstance();
+  const { RingTypes, ProductMetals, Collection } = getModelInstance();
 
   try {
     // Fetch all navigation data in parallel
-    const [ringTypes, gemstones, metals, collections] = await Promise.all([
+    const [ringTypes, metals, collections] = await Promise.all([
       RingTypes.findAll({
-        where: { is_active: true },
-        order: [['sort_order', 'ASC'], ['name', 'ASC']],
-        attributes: ['id', 'name', 'slug', 'description']
-      }),
-      Gemstones.findAll({
         where: { is_active: true },
         order: [['sort_order', 'ASC'], ['name', 'ASC']],
         attributes: ['id', 'name', 'slug', 'description']
@@ -557,7 +547,6 @@ const getNavigationData = asyncHandler(async (req, res) => {
       success: true,
       data: {
         ring_types: ringTypes,
-        gemstones: gemstones,
         metals: metals,
         eternity_rings: collections // Using collections as eternity rings
       }
@@ -572,10 +561,122 @@ const getNavigationData = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * Get dynamic Nivoda price for a product based on diamond selections
+ * POST /api/v1/products/:productId/nivoda-price
+ */
+const getNivodaPrice = asyncHandler(async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { stoneType, carat, clarity, color, cut, shape, metalType, metalWeight } = req.body;
+
+    logger.info(`Getting Nivoda price for product ${productId}`);
+
+    // Get product from database
+    const product = await db.Product.findByPk(productId, {
+      attributes: ['id', 'name', 'sku', 'base_price', 'nivoda_enabled', 'currency']
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Check if Nivoda is enabled for this product
+    if (!product.nivoda_enabled) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nivoda integration is not enabled for this product'
+      });
+    }
+
+    // Import Nivoda service
+    const nivodaService = require('../services/nivodaService');
+
+    // Check if Nivoda is configured
+    if (!nivodaService.isConfigured()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Nivoda API is not configured on the server'
+      });
+    }
+
+    // Calculate price using Nivoda service
+    const priceBreakdown = await nivodaService.calculateProductPrice(product, {
+      stoneType: stoneType || 'natural',
+      carat: parseFloat(carat) || 0.5,
+      clarity: clarity || 'VS1',
+      color: color || 'G',
+      cut: cut || 'EX',
+      shape: shape || 'round',
+      metalType: metalType || 'gold',
+      metalWeight: parseFloat(metalWeight) || 3
+    });
+
+    logger.info(`Nivoda price calculated: ${priceBreakdown.totalPrice} ${priceBreakdown.currency}`);
+
+    res.json({
+      success: true,
+      data: {
+        productId: product.id,
+        productName: product.name,
+        sku: product.sku,
+        pricing: {
+          diamondPrice: priceBreakdown.diamondPrice,
+          metalCost: priceBreakdown.metalCost,
+          settingMarkup: priceBreakdown.markup,
+          totalPrice: priceBreakdown.totalPrice,
+          currency: priceBreakdown.currency
+        },
+        diamond: priceBreakdown.diamond,
+        selections: {
+          stoneType,
+          carat,
+          clarity,
+          color,
+          cut,
+          shape,
+          metalType,
+          metalWeight
+        }
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error in getNivodaPrice:', error);
+
+    // Handle specific Nivoda errors
+    if (error.message.includes('No matching diamonds')) {
+      return res.status(404).json({
+        success: false,
+        message: 'No diamonds found matching your specifications. Please try different options.',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+
+    if (error.message.includes('authentication')) {
+      return res.status(503).json({
+        success: false,
+        message: 'Unable to connect to diamond inventory service',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to calculate price',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
 module.exports = {
   getAllProducts,
   getProductBySlug,
   getAllCategories,
   getProductsByCategory,
-  getNavigationData
+  getNavigationData,
+  getNivodaPrice
 };

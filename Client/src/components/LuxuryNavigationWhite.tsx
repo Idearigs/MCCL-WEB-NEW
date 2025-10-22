@@ -47,10 +47,10 @@ interface NavigationItem {
 }
 
 interface NavigationData {
-  ring_types: NavigationItem[];
-  gemstones: NavigationItem[];
-  metals: NavigationItem[];
-  eternity_rings: NavigationItem[];
+  ring_types?: NavigationItem[];
+  gemstones?: NavigationItem[];
+  metals?: NavigationItem[];
+  eternity_rings?: NavigationItem[];
 }
 
 const LuxuryNavigationWhite = (): JSX.Element => {
@@ -467,72 +467,80 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 ) : navigationData ? (
                   <div className="grid grid-cols-4 gap-8">
                     {/* Ring Types Column */}
-                    <div>
-                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">RING TYPES</h3>
-                      <div className="space-y-1">
-                        {navigationData.ring_types.map((item) => (
-                          <Link
-                            key={item.id}
-                            to={`/engagement-rings?ringType=${encodeURIComponent(item.name)}`}
-                            className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                            style={{fontSize: '12.36px'}}
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
+                    {navigationData?.ring_types && navigationData.ring_types.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">RING TYPES</h3>
+                        <div className="space-y-1">
+                          {navigationData.ring_types.map((item) => (
+                            <Link
+                              key={item.id}
+                              to={`/engagement-rings?ringType=${encodeURIComponent(item.name)}`}
+                              className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                              style={{fontSize: '12.36px'}}
+                            >
+                              {item.name}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Gemstones Column */}
-                    <div>
-                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">GEMSTONES</h3>
-                      <div className="space-y-1">
-                        {navigationData.gemstones.map((item) => (
-                          <Link
-                            key={item.id}
-                            to={`/engagement-rings?gemstone=${encodeURIComponent(item.name)}`}
-                            className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                            style={{fontSize: '12.36px'}}
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
+                    {navigationData?.gemstones && navigationData.gemstones.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">GEMSTONES</h3>
+                        <div className="space-y-1">
+                          {navigationData.gemstones.map((item) => (
+                            <Link
+                              key={item.id}
+                              to={`/engagement-rings?gemstone=${encodeURIComponent(item.name)}`}
+                              className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                              style={{fontSize: '12.36px'}}
+                            >
+                              {item.name}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Eternity Rings Column */}
-                    <div>
-                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">ETERNITY RINGS</h3>
-                      <div className="space-y-1">
-                        {navigationData.eternity_rings.map((item) => (
-                          <Link
-                            key={item.id}
-                            to={`/engagement-rings?collection=${encodeURIComponent(item.name)}`}
-                            className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                            style={{fontSize: '12.36px'}}
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
+                    {navigationData?.eternity_rings && navigationData.eternity_rings.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">ETERNITY RINGS</h3>
+                        <div className="space-y-1">
+                          {navigationData.eternity_rings.map((item) => (
+                            <Link
+                              key={item.id}
+                              to={`/engagement-rings?collection=${encodeURIComponent(item.name)}`}
+                              className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                              style={{fontSize: '12.36px'}}
+                            >
+                              {item.name}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Metals Column */}
-                    <div>
-                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">METALS</h3>
-                      <div className="space-y-1">
-                        {navigationData.metals.map((item) => (
-                          <Link
-                            key={item.id}
-                            to={`/engagement-rings?metal=${encodeURIComponent(item.name)}`}
-                            className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                            style={{fontSize: '12.36px'}}
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
+                    {navigationData?.metals && navigationData.metals.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">METALS</h3>
+                        <div className="space-y-1">
+                          {navigationData.metals.map((item) => (
+                            <Link
+                              key={item.id}
+                              to={`/engagement-rings?metal=${encodeURIComponent(item.name)}`}
+                              className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                              style={{fontSize: '12.36px'}}
+                            >
+                              {item.name}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-12">

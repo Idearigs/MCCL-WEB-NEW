@@ -6,8 +6,11 @@ const {
   getProductBySlug,
   getAllCategories,
   getProductsByCategory,
-  getNavigationData
+  getNavigationData,
+  getNivodaPrice
 } = require('../controllers/productController');
+
+const nivodaService = require('../services/nivodaService');
 
 const { joiValidation, validatePagination, sanitizeQuery } = require('../middleware/validation');
 const { productQuerySchema } = require('../validators/productValidators');
@@ -35,6 +38,41 @@ router.get('/category/:categorySlug',
   sanitizeQuery(['price_min', 'price_max', 'metal', 'gemstone', 'featured', 'in_stock', 'sort', 'order']),
   getProductsByCategory
 );
+
+// POST /api/v1/products/:productId/nivoda-price - Get dynamic Nivoda price for product
+router.post('/:productId/nivoda-price', getNivodaPrice);
+
+// GET /api/v1/products/nivoda/search - Search diamonds from Nivoda API
+router.get('/nivoda/search', async (req, res) => {
+  try {
+    const filters = {
+      labgrown: req.query.labgrown === 'true',
+      color: req.query.color ? req.query.color.split(',') : [],
+      clarity: req.query.clarity ? req.query.clarity.split(',') : [],
+      cut: req.query.cut ? req.query.cut.split(',') : [],
+      minCarat: parseFloat(req.query.minCarat) || 0.5,
+      maxCarat: parseFloat(req.query.maxCarat) || 10,
+      minPrice: parseInt(req.query.minPrice) || 0,
+      maxPrice: parseInt(req.query.maxPrice) || 500000,
+      limit: parseInt(req.query.limit) || 20,
+      offset: parseInt(req.query.offset) || 0
+    };
+
+    const result = await nivodaService.searchDiamonds(filters);
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Nivoda search error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to search diamonds',
+      details: error.response?.data || null
+    });
+  }
+});
 
 // GET /api/v1/products/:slug - Get single product by slug
 router.get('/:slug', getProductBySlug);

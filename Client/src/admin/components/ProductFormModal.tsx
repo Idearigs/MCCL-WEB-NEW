@@ -33,6 +33,15 @@ interface ProductFormData {
   warranty_info: string;
   meta_title: string;
   meta_description: string;
+  // Nivoda Integration Fields
+  nivoda_enabled: boolean;
+  show_stone_type: boolean;
+  show_carat: boolean;
+  show_clarity: boolean;
+  show_colour: boolean;
+  show_cut: boolean;
+  show_certificate: boolean;
+  certificate: string;
   images: Array<{ file: File | null; url: string; alt_text: string }>;
   videos: Array<{ file: File | null; url: string; title: string }>;
   variants: Array<{
@@ -108,6 +117,15 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     warranty_info: '',
     meta_title: '',
     meta_description: '',
+    // Nivoda Integration Fields
+    nivoda_enabled: false,
+    show_stone_type: false,
+    show_carat: false,
+    show_clarity: false,
+    show_colour: false,
+    show_cut: false,
+    show_certificate: false,
+    certificate: '',
     images: [],
     videos: [],
     variants: []
@@ -291,6 +309,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     { id: 'media', label: 'Media' },
     { id: 'variants', label: 'Variants' },
     { id: 'details', label: 'Details' },
+    { id: 'nivoda', label: 'Nivoda Integration' },
     { id: 'seo', label: 'SEO' }
   ];
 
@@ -1124,6 +1143,177 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   placeholder="Warranty details and coverage"
                 />
               </div>
+            </div>
+          )}
+
+          {/* Nivoda Integration Tab */}
+          {activeTab === 'nivoda' && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start space-x-3">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-900 font-satoshi mb-1">Nivoda Integration</h4>
+                    <p className="text-xs text-blue-700 font-satoshi">
+                      Enable Nivoda integration to show dynamic diamond specifications and pricing on the product detail page.
+                      Prices will update automatically based on Nivoda API data.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Enable Nivoda Integration */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 font-satoshi">
+                    Enable Nivoda Integration
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1 font-satoshi">
+                    Allow this product to use Nivoda diamond specifications
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.nivoda_enabled}
+                    onChange={(e) => handleInputChange('nivoda_enabled', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              {formData.nivoda_enabled && (
+                <>
+                  <div className="border-t border-gray-200 pt-6">
+                    <h4 className="text-sm font-medium text-gray-900 font-satoshi mb-4">
+                      Stone Specification Display Options
+                    </h4>
+                    <p className="text-xs text-gray-500 mb-4 font-satoshi">
+                      Choose which diamond specifications to display on the product detail page
+                    </p>
+
+                    <div className="space-y-3">
+                      {/* Stone Type Toggle */}
+                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 font-satoshi">
+                          Show Stone Type (Natural/Lab-Grown)
+                        </label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.show_stone_type}
+                            onChange={(e) => handleInputChange('show_stone_type', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+
+                      {/* Carat Toggle */}
+                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 font-satoshi">
+                          Show Carat Weight Options
+                        </label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.show_carat}
+                            onChange={(e) => handleInputChange('show_carat', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+
+                      {/* Clarity Toggle */}
+                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 font-satoshi">
+                          Show Clarity Options
+                        </label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.show_clarity}
+                            onChange={(e) => handleInputChange('show_clarity', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+
+                      {/* Colour Toggle */}
+                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 font-satoshi">
+                          Show Colour Options
+                        </label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.show_colour}
+                            onChange={(e) => handleInputChange('show_colour', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+
+                      {/* Cut Toggle */}
+                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 font-satoshi">
+                          Show Cut Quality Options
+                        </label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.show_cut}
+                            onChange={(e) => handleInputChange('show_cut', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+
+                      {/* Certificate Toggle */}
+                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <label className="text-sm font-medium text-gray-700 font-satoshi">
+                          Show Certificate Information
+                        </label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.show_certificate}
+                            onChange={(e) => handleInputChange('show_certificate', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Certificate Input */}
+                  {formData.show_certificate && (
+                    <div className="border-t border-gray-200 pt-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                        Certificate Information
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.certificate}
+                        onChange={(e) => handleInputChange('certificate', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-satoshi"
+                        placeholder="e.g., GIA, IGI, or certificate number"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 font-satoshi">
+                        Enter the certification authority or certificate number
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 

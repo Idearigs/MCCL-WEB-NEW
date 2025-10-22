@@ -75,7 +75,8 @@ export default {
 				sans: ['Satoshi', 'system-ui', 'sans-serif'],
 				serif: ['Cormorant Garamond', 'serif'],
 				'satoshi': ['Satoshi', 'system-ui', 'sans-serif'],
-				'cormorant': ['Cormorant Garamond', 'serif']
+				'cormorant': ['Cormorant Garamond', 'serif'],
+				'lora': ['Lora', 'serif']
 			},
 			keyframes: {
 				'accordion-down': {
