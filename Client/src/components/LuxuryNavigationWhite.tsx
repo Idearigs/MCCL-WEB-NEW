@@ -462,25 +462,32 @@ const LuxuryNavigationWhite = (): JSX.Element => {
               <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
                 {loadingNavigation ? (
                   <div className="flex items-center justify-center py-12">
-                    <p className="text-sm font-inter text-gray-500">Loading...</p>
+                    <p className="text-sm font-satoshi text-gray-500">Loading...</p>
                   </div>
                 ) : navigationData ? (
                   <div className="grid grid-cols-4 gap-8">
                     {/* Ring Types Column */}
                     {navigationData?.ring_types && navigationData.ring_types.length > 0 && (
                       <div>
-                        <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">RING TYPES</h3>
+                        <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>RING TYPES</h3>
                         <div className="space-y-1">
-                          {navigationData.ring_types.map((item) => (
+                          {navigationData.ring_types.slice(0, 9).map((item) => (
                             <Link
                               key={item.id}
                               to={`/engagement-rings?ringType=${encodeURIComponent(item.name)}`}
-                              className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                              style={{fontSize: '12.36px'}}
+                              className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                              style={{fontSize: '12px'}}
                             >
                               {item.name}
                             </Link>
                           ))}
+                          <Link
+                            to="/engagement-rings"
+                            className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            style={{fontSize: '12px'}}
+                          >
+                            All Types
+                          </Link>
                         </div>
                       </div>
                     )}
@@ -488,14 +495,14 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     {/* Gemstones Column */}
                     {navigationData?.gemstones && navigationData.gemstones.length > 0 && (
                       <div>
-                        <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">GEMSTONES</h3>
+                        <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>GEMSTONES</h3>
                         <div className="space-y-1">
                           {navigationData.gemstones.map((item) => (
                             <Link
                               key={item.id}
                               to={`/engagement-rings?gemstone=${encodeURIComponent(item.name)}`}
-                              className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                              style={{fontSize: '12.36px'}}
+                              className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                              style={{fontSize: '12px'}}
                             >
                               {item.name}
                             </Link>
@@ -507,14 +514,14 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     {/* Eternity Rings Column */}
                     {navigationData?.eternity_rings && navigationData.eternity_rings.length > 0 && (
                       <div>
-                        <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">ETERNITY RINGS</h3>
+                        <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>ETERNITY RINGS</h3>
                         <div className="space-y-1">
                           {navigationData.eternity_rings.map((item) => (
                             <Link
                               key={item.id}
                               to={`/engagement-rings?collection=${encodeURIComponent(item.name)}`}
-                              className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                              style={{fontSize: '12.36px'}}
+                              className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                              style={{fontSize: '12px'}}
                             >
                               {item.name}
                             </Link>
@@ -526,14 +533,14 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     {/* Metals Column */}
                     {navigationData?.metals && navigationData.metals.length > 0 && (
                       <div>
-                        <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">METALS</h3>
+                        <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>METALS</h3>
                         <div className="space-y-1">
                           {navigationData.metals.map((item) => (
                             <Link
                               key={item.id}
                               to={`/engagement-rings?metal=${encodeURIComponent(item.name)}`}
-                              className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                              style={{fontSize: '12.36px'}}
+                              className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                              style={{fontSize: '12px'}}
                             >
                               {item.name}
                             </Link>
@@ -544,7 +551,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-12">
-                    <p className="text-sm font-inter text-gray-500">No navigation data available</p>
+                    <p className="text-sm font-satoshi text-gray-500">No navigation data available</p>
                   </div>
                 )}
               </div>
@@ -567,63 +574,63 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 <div className="grid grid-cols-4 gap-8">
                   {/* WEDDING RINGS Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">WEDDING RINGS</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>WEDDING RINGS</h3>
                     <div className="space-y-1">
-                      <Link to="/wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Wedding Bands</Link>
-                      <Link to="/his-hers-sets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>His & Hers Sets</Link>
-                      <Link to="/womens-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Women's Wedding Rings</Link>
-                      <Link to="/mens-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Men's Wedding Rings</Link>
-                      <Link to="/diamond-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Wedding Rings</Link>
-                      <Link to="/plain-wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Plain Wedding Bands</Link>
-                      <Link to="/vintage-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Vintage Wedding Rings</Link>
-                      <Link to="/matching-wedding-sets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Matching Wedding Sets</Link>
+                      <Link to="/wedding-bands" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Wedding Bands</Link>
+                      <Link to="/his-hers-sets" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>His & Hers Sets</Link>
+                      <Link to="/womens-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Women's Wedding Rings</Link>
+                      <Link to="/mens-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Men's Wedding Rings</Link>
+                      <Link to="/diamond-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Diamond Wedding Rings</Link>
+                      <Link to="/plain-wedding-bands" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Plain Wedding Bands</Link>
+                      <Link to="/vintage-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Vintage Wedding Rings</Link>
+                      <Link to="/matching-wedding-sets" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Matching Wedding Sets</Link>
                     </div>
                   </div>
 
                   {/* STYLES Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">STYLES</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>STYLES</h3>
                     <div className="space-y-1">
-                      <Link to="/classic-wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Classic Bands</Link>
-                      <Link to="/pavé-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Pavé Setting</Link>
-                      <Link to="/channel-set-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Channel Set</Link>
-                      <Link to="/eternity-wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Eternity Style</Link>
-                      <Link to="/engraved-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Engraved</Link>
-                      <Link to="/milgrain-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Milgrain Detail</Link>
-                      <Link to="/twisted-wedding-bands" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Twisted Design</Link>
-                      <Link to="/curved-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Curved Bands</Link>
+                      <Link to="/classic-wedding-bands" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Classic Bands</Link>
+                      <Link to="/pavé-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Pavé Setting</Link>
+                      <Link to="/channel-set-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Channel Set</Link>
+                      <Link to="/eternity-wedding-bands" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Eternity Style</Link>
+                      <Link to="/engraved-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Engraved</Link>
+                      <Link to="/milgrain-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Milgrain Detail</Link>
+                      <Link to="/twisted-wedding-bands" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Twisted Design</Link>
+                      <Link to="/curved-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Curved Bands</Link>
                     </div>
                   </div>
 
                   {/* METALS Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">METALS</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>METALS</h3>
                     <div className="space-y-1">
-                      <Link to="/platinum-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Platinum</Link>
-                      <Link to="/white-gold-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>White Gold</Link>
-                      <Link to="/yellow-gold-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Yellow Gold</Link>
-                      <Link to="/rose-gold-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Rose Gold</Link>
-                      <Link to="/titanium-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Titanium</Link>
-                      <Link to="/mixed-metal-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Mixed Metals</Link>
+                      <Link to="/platinum-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Platinum</Link>
+                      <Link to="/white-gold-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>White Gold</Link>
+                      <Link to="/yellow-gold-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Yellow Gold</Link>
+                      <Link to="/rose-gold-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Rose Gold</Link>
+                      <Link to="/titanium-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Titanium</Link>
+                      <Link to="/mixed-metal-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Mixed Metals</Link>
                     </div>
                   </div>
 
                   {/* SERVICES & GUIDE Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">SERVICES & GUIDE</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>SERVICES & GUIDE</h3>
                     <div className="space-y-1">
-                      <Link to="/wedding-ring-guide" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Wedding Ring Guide</Link>
-                      <Link to="/ring-sizing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ring Sizing</Link>
-                      <Link to="/custom-wedding-rings" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Custom Design</Link>
-                      <Link to="/wedding-ring-engraving" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Engraving Services</Link>
-                      <Link to="/wedding-ring-care" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Care & Maintenance</Link>
+                      <Link to="/wedding-ring-guide" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Wedding Ring Guide</Link>
+                      <Link to="/ring-sizing" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Ring Sizing</Link>
+                      <Link to="/custom-wedding-rings" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Custom Design</Link>
+                      <Link to="/wedding-ring-engraving" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Engraving Services</Link>
+                      <Link to="/wedding-ring-care" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Care & Maintenance</Link>
                     </div>
                     
                     {/* Explore Wedding Button */}
                     <div className="mt-4">
                       <Link 
                         to="/wedding" 
-                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-satoshi font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                       >
                         EXPLORE WEDDING
                       </Link>
@@ -649,57 +656,57 @@ const LuxuryNavigationWhite = (): JSX.Element => {
               <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
                 <div className="grid grid-cols-4 gap-8">
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND TYPES</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>DIAMOND TYPES</h3>
                     <div className="space-y-1">
-                      <Link to="/natural-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Natural Diamonds</Link>
-                      <Link to="/lab-grown-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Lab Grown Diamonds</Link>
-                      <Link to="/certified-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Certified Diamonds</Link>
-                      <Link to="/loose-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Loose Diamonds</Link>
-                      <Link to="/colored-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Colored Diamonds</Link>
-                      <Link to="/vintage-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Vintage Diamonds</Link>
+                      <Link to="/natural-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Natural Diamonds</Link>
+                      <Link to="/lab-grown-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Lab Grown Diamonds</Link>
+                      <Link to="/certified-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Certified Diamonds</Link>
+                      <Link to="/loose-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Loose Diamonds</Link>
+                      <Link to="/colored-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Colored Diamonds</Link>
+                      <Link to="/vintage-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Vintage Diamonds</Link>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND SHAPES</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>DIAMOND SHAPES</h3>
                     <div className="space-y-1">
-                      <Link to="/round-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Round</Link>
-                      <Link to="/princess-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Princess</Link>
-                      <Link to="/oval-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Oval</Link>
-                      <Link to="/emerald-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Emerald</Link>
-                      <Link to="/cushion-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Cushion</Link>
-                      <Link to="/pear-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Pear</Link>
-                      <Link to="/marquise-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Marquise</Link>
-                      <Link to="/heart-diamonds" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Heart</Link>
+                      <Link to="/round-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Round</Link>
+                      <Link to="/princess-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Princess</Link>
+                      <Link to="/oval-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Oval</Link>
+                      <Link to="/emerald-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Emerald</Link>
+                      <Link to="/cushion-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Cushion</Link>
+                      <Link to="/pear-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Pear</Link>
+                      <Link to="/marquise-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Marquise</Link>
+                      <Link to="/heart-diamonds" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Heart</Link>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">DIAMOND QUALITY</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>DIAMOND QUALITY</h3>
                     <div className="space-y-1">
-                      <Link to="/diamond-cut" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Cut Quality</Link>
-                      <Link to="/diamond-color" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Color Grades</Link>
-                      <Link to="/diamond-clarity" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Clarity Grades</Link>
-                      <Link to="/diamond-carat" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Carat Weight</Link>
-                      <Link to="/diamond-certification" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Certification</Link>
-                      <Link to="/diamond-grading" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Grading Reports</Link>
+                      <Link to="/diamond-cut" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Cut Quality</Link>
+                      <Link to="/diamond-color" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Color Grades</Link>
+                      <Link to="/diamond-clarity" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Clarity Grades</Link>
+                      <Link to="/diamond-carat" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Carat Weight</Link>
+                      <Link to="/diamond-certification" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Certification</Link>
+                      <Link to="/diamond-grading" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Grading Reports</Link>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">EDUCATION & SERVICES</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>EDUCATION & SERVICES</h3>
                     <div className="space-y-1">
-                      <Link to="/diamond-education" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Education</Link>
-                      <Link to="/4cs-guide" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>The 4 C's Guide</Link>
-                      <Link to="/diamond-appraisal" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Appraisal</Link>
-                      <Link to="/diamond-upgrade" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Upgrade</Link>
-                      <Link to="/diamond-care" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Diamond Care</Link>
+                      <Link to="/diamond-education" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Diamond Education</Link>
+                      <Link to="/4cs-guide" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>The 4 C's Guide</Link>
+                      <Link to="/diamond-appraisal" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Diamond Appraisal</Link>
+                      <Link to="/diamond-upgrade" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Diamond Upgrade</Link>
+                      <Link to="/diamond-care" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Diamond Care</Link>
                     </div>
 
                     <div className="mt-4">
                       <Link
                         to="/diamonds"
-                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-satoshi font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                       >
                         EXPLORE DIAMONDS
                       </Link>
@@ -727,16 +734,16 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   {/* EARRINGS Column */}
                   <div>
                     <Link to="/earrings">
-                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">EARRINGS</h3>
+                      <h3 className="text-xs font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">EARRINGS</h3>
                     </Link>
                     <div className="space-y-1">
-                      <Link to="/earrings" className="block font-inter font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12.36px'}}>Shop All Earrings</Link>
+                      <Link to="/earrings" className="block font-satoshi font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12px'}}>Shop All Earrings</Link>
                       {earringTypes.map((type) => (
                         <Link
                           key={type.id}
                           to={`/earrings?type=${encodeURIComponent(type.name)}`}
-                          className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                          style={{fontSize: '12.36px'}}
+                          className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12px'}}
                         >
                           {type.name}
                         </Link>
@@ -747,16 +754,16 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   {/* NECKLACES Column */}
                   <div>
                     <Link to="/necklaces">
-                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">NECKLACES</h3>
+                      <h3 className="text-xs font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">NECKLACES</h3>
                     </Link>
                     <div className="space-y-1">
-                      <Link to="/necklaces" className="block font-inter font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12.36px'}}>Shop All Necklaces</Link>
+                      <Link to="/necklaces" className="block font-satoshi font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12px'}}>Shop All Necklaces</Link>
                       {necklaceTypes.map((type) => (
                         <Link
                           key={type.id}
                           to={`/necklaces?type=${encodeURIComponent(type.name)}`}
-                          className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                          style={{fontSize: '12.36px'}}
+                          className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12px'}}
                         >
                           {type.name}
                         </Link>
@@ -767,16 +774,16 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   {/* BRACELETS Column */}
                   <div>
                     <Link to="/bracelets">
-                      <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">BRACELETS</h3>
+                      <h3 className="text-xs font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3 hover:text-gray-700 cursor-pointer transition-colors">BRACELETS</h3>
                     </Link>
                     <div className="space-y-1">
-                      <Link to="/bracelets" className="block font-inter font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12.36px'}}>Shop All Bracelets</Link>
+                      <Link to="/bracelets" className="block font-satoshi font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200 ease-out leading-relaxed py-0.5 mb-1" style={{fontSize: '12px'}}>Shop All Bracelets</Link>
                       {braceletTypes.map((type) => (
                         <Link
                           key={type.id}
                           to={`/bracelets?type=${encodeURIComponent(type.name)}`}
-                          className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                          style={{fontSize: '12.36px'}}
+                          className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12px'}}
                         >
                           {type.name}
                         </Link>
@@ -786,21 +793,21 @@ const LuxuryNavigationWhite = (): JSX.Element => {
 
                   {/* GIFTS & OCCASIONS Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">GIFTS & OCCASIONS</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>GIFTS & OCCASIONS</h3>
                     <div className="space-y-1">
-                      <Link to="/birthday-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Birthday Gifts</Link>
-                      <Link to="/anniversary-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Anniversary Gifts</Link>
-                      <Link to="/mothers-day-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Mother's Day</Link>
-                      <Link to="/valentine-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Valentine's Day</Link>
-                      <Link to="/graduation-gifts" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Graduation Gifts</Link>
-                      <Link to="/gift-sets" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Gift Sets</Link>
+                      <Link to="/birthday-gifts" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Birthday Gifts</Link>
+                      <Link to="/anniversary-gifts" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Anniversary Gifts</Link>
+                      <Link to="/mothers-day-gifts" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Mother's Day</Link>
+                      <Link to="/valentine-gifts" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Valentine's Day</Link>
+                      <Link to="/graduation-gifts" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Graduation Gifts</Link>
+                      <Link to="/gift-sets" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Gift Sets</Link>
                     </div>
                     
                     {/* Explore Jewellery Button */}
                     <div className="mt-4">
                       <Link 
                         to="/jewellery" 
-                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-satoshi font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                       >
                         EXPLORE JEWELLERY
                       </Link>
@@ -826,7 +833,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
               <div className="max-w-7xl mx-auto px-12 pt-8 pb-10">
                 {loadingWatches ? (
                   <div className="flex items-center justify-center py-12">
-                    <p className="text-sm font-inter text-gray-500">Loading collections...</p>
+                    <p className="text-sm font-satoshi text-gray-500">Loading collections...</p>
                   </div>
                 ) : watchBrands.length > 0 ? (
                   <div className="grid grid-cols-3 gap-12">
@@ -865,19 +872,19 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                                     </div>
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-inter font-medium text-gray-900 group-hover:text-gray-600 transition-colors leading-snug">
+                                    <p className="text-sm font-satoshi font-medium text-gray-900 group-hover:text-gray-600 transition-colors leading-snug">
                                       {collection.name}
                                       {collection.is_featured && (
                                         <span className="ml-1.5 inline-block w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
                                       )}
                                     </p>
                                     {collection.launch_year && (
-                                      <p className="text-xs font-inter text-gray-500 mt-0.5">
+                                      <p className="text-xs font-satoshi text-gray-500 mt-0.5">
                                         Est. {collection.launch_year}
                                       </p>
                                     )}
                                     {collection.watches_count > 0 && (
-                                      <p className="text-xs font-inter text-gray-400 mt-0.5">
+                                      <p className="text-xs font-satoshi text-gray-400 mt-0.5">
                                         {collection.watches_count} {collection.watches_count === 1 ? 'watch' : 'watches'}
                                       </p>
                                     )}
@@ -886,13 +893,13 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                               </Link>
                             ))
                           ) : (
-                            <p className="text-xs font-inter text-gray-400 italic">No collections available</p>
+                            <p className="text-xs font-satoshi text-gray-400 italic">No collections available</p>
                           )}
 
                           {/* View All Link */}
                           <Link
                             to={`/${brand.slug}`}
-                            className="inline-flex items-center text-xs font-inter font-medium text-gray-600 hover:text-gray-900 transition-colors mt-2"
+                            className="inline-flex items-center text-xs font-satoshi font-medium text-gray-600 hover:text-gray-900 transition-colors mt-2"
                           >
                             View all {brand.name}
                             <ChevronDown className="w-3 h-3 ml-1 transform rotate-[-90deg]" />
@@ -903,7 +910,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-12">
-                    <p className="text-sm font-inter text-gray-500">No watch collections available</p>
+                    <p className="text-sm font-satoshi text-gray-500">No watch collections available</p>
                   </div>
                 )}
 
@@ -911,7 +918,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 <div className="mt-8 pt-6 border-t border-gray-200 flex justify-center">
                   <Link
                     to="/watches"
-                    className="inline-flex items-center justify-center px-8 py-3 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wider hover:bg-gray-800 hover:shadow-lg hover:scale-105 transition-all duration-200 ease-out rounded-sm"
+                    className="inline-flex items-center justify-center px-8 py-3 bg-gray-900 text-white text-xs font-satoshi font-semibold uppercase tracking-wider hover:bg-gray-800 hover:shadow-lg hover:scale-105 transition-all duration-200 ease-out rounded-sm"
                   >
                     EXPLORE ALL WATCHES
                   </Link>
@@ -936,60 +943,60 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 <div className="grid grid-cols-4 gap-8">
                   {/* OUR STORY Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">OUR STORY</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>OUR STORY</h3>
                     <div className="space-y-1">
-                      <Link to="/our-story#about-us" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>About Us</Link>
-                      <Link to="/our-story#our-history" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our History</Link>
-                      <Link to="/our-story#our-craftsmen" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Craftsmen</Link>
-                      <Link to="/our-story#our-philosophy" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Philosophy</Link>
-                      <Link to="/our-story#awards-recognition" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Awards & Recognition</Link>
-                      <Link to="/our-story#customer-stories" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Customer Stories</Link>
+                      <Link to="/our-story#about-us" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>About Us</Link>
+                      <Link to="/our-story#our-history" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Our History</Link>
+                      <Link to="/our-story#our-craftsmen" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Our Craftsmen</Link>
+                      <Link to="/our-story#our-philosophy" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Our Philosophy</Link>
+                      <Link to="/our-story#awards-recognition" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Awards & Recognition</Link>
+                      <Link to="/our-story#customer-stories" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Customer Stories</Link>
                     </div>
                   </div>
 
                   {/* SERVICES Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">CUSTOMER SERVICE</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>CUSTOMER SERVICE</h3>
                     <div className="space-y-1">
-                      <Link to="/customer-service#bespoke-design" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Bespoke Design</Link>
-                      <Link to="/customer-service#jewellery-repair" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Jewellery Repair</Link>
-                      <Link to="/customer-service#ring-resizing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ring Resizing</Link>
-                      <Link to="/customer-service#valuations" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Valuations</Link>
-                      <Link to="/customer-service#cleaning-care" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Cleaning & Care</Link>
-                      <Link to="/customer-service#engraving-services" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Engraving Services</Link>
-                      <Link to="/customer-service#gift-wrapping" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Gift Wrapping</Link>
+                      <Link to="/customer-service#bespoke-design" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Bespoke Design</Link>
+                      <Link to="/customer-service#jewellery-repair" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Jewellery Repair</Link>
+                      <Link to="/customer-service#ring-resizing" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Ring Resizing</Link>
+                      <Link to="/customer-service#valuations" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Valuations</Link>
+                      <Link to="/customer-service#cleaning-care" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Cleaning & Care</Link>
+                      <Link to="/customer-service#engraving-services" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Engraving Services</Link>
+                      <Link to="/customer-service#gift-wrapping" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Gift Wrapping</Link>
                     </div>
                   </div>
 
                   {/* LOCATION & CONTACT Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">VISIT US</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>VISIT US</h3>
                     <div className="space-y-1">
-                      <Link to="/visit-us#our-showroom" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Our Showroom</Link>
-                      <Link to="/visit-us#book-appointment" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Book Appointment</Link>
-                      <Link to="/visit-us#private-viewing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Private Viewing</Link>
-                      <Link to="/visit-us#directions" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Directions</Link>
-                      <Link to="/visit-us#opening-hours" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Opening Hours</Link>
-                      <Link to="/visit-us#parking-information" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Parking Information</Link>
+                      <Link to="/visit-us#our-showroom" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Our Showroom</Link>
+                      <Link to="/visit-us#book-appointment" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Book Appointment</Link>
+                      <Link to="/visit-us#private-viewing" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Private Viewing</Link>
+                      <Link to="/visit-us#directions" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Directions</Link>
+                      <Link to="/visit-us#opening-hours" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Opening Hours</Link>
+                      <Link to="/visit-us#parking-information" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Parking Information</Link>
                     </div>
                   </div>
 
                   {/* TRUST & GUARANTEES Column */}
                   <div>
-                    <h3 className="text-xs font-inter font-bold text-gray-950 uppercase tracking-wide mb-3">TRUST & GUARANTEES</h3>
+                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>TRUST & GUARANTEES</h3>
                     <div className="space-y-1">
-                      <Link to="/trust-guarantees#lifetime-warranty" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Lifetime Warranty</Link>
-                      <Link to="/trust-guarantees#money-back-guarantee" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Money Back Guarantee</Link>
-                      <Link to="/trust-guarantees#certified-quality" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Certified Quality</Link>
-                      <Link to="/trust-guarantees#ethical-sourcing" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Ethical Sourcing</Link>
-                      <Link to="/trust-guarantees#secure-shopping" className="block font-inter font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12.36px'}}>Secure Shopping</Link>
+                      <Link to="/trust-guarantees#lifetime-warranty" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Lifetime Warranty</Link>
+                      <Link to="/trust-guarantees#money-back-guarantee" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Money Back Guarantee</Link>
+                      <Link to="/trust-guarantees#certified-quality" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Certified Quality</Link>
+                      <Link to="/trust-guarantees#ethical-sourcing" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Ethical Sourcing</Link>
+                      <Link to="/trust-guarantees#secure-shopping" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Secure Shopping</Link>
                     </div>
                     
                     {/* Learn More Button */}
                     <div className="mt-4">
                       <Link 
                         to="/trust-guarantees#learn-more" 
-                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-inter font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-satoshi font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                       >
                         LEARN MORE
                       </Link>
@@ -1120,7 +1127,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'engagement' ? null : 'engagement')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
                   >
-                    <span className="text-sm font-inter font-normal text-gray-800 uppercase tracking-wide">ENGAGEMENT</span>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">ENGAGEMENT</span>
                     {expandedSection === 'engagement' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -1135,13 +1142,13 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                       {/* Diamond Engagement Rings Subsection */}
                       <div className="px-6 py-4">
                         <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-inter font-medium text-gray-800 uppercase tracking-wide">DIAMOND ENGAGEMENT RINGS</span>
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">DIAMOND ENGAGEMENT RINGS</span>
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-1 ml-4">
                           <Link
                             to="/engagement/all"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1149,7 +1156,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/quickship"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1157,7 +1164,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/inspiration"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1165,7 +1172,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/reviews"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1177,13 +1184,13 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                       {/* Shop by Styles Subsection */}
                       <div className="px-6 py-4 border-t border-gray-200/30">
                         <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-inter font-medium text-gray-800 uppercase tracking-wide">SHOP BY STYLES</span>
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">SHOP BY STYLES</span>
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-1 ml-4">
                           <Link
                             to="/engagement/solitaire"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1191,7 +1198,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/trilogy"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1199,7 +1206,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/diamond-band"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Layers className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1207,7 +1214,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/halo"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Crown className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1215,7 +1222,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/platinum"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1223,7 +1230,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/rose-gold"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Heart className="w-4 h-4 text-rose-400 mr-3" />
@@ -1231,7 +1238,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/engagement/yellow-gold"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Circle className="w-4 h-4 text-yellow-400 mr-3" />
@@ -1249,7 +1256,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'wedding' ? null : 'wedding')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
                   >
-                    <span className="text-sm font-inter font-normal text-gray-800 uppercase tracking-wide">WEDDING</span>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">WEDDING</span>
                     {expandedSection === 'wedding' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -1263,14 +1270,14 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     <div className="bg-gray-50/30">
                       <div className="px-6 py-4">
                         <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-inter font-medium text-gray-800 uppercase tracking-wide">WEDDING COLLECTIONS</span>
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">WEDDING COLLECTIONS</span>
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-1 ml-4">
                           <Link
                             to="/wedding/all"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1278,8 +1285,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/wedding/his"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1287,8 +1294,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/wedding/hers"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
@@ -1296,8 +1303,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/wedding/matching-sets"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Layers className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1315,7 +1322,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'diamonds' ? null : 'diamonds')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
                   >
-                    <span className="text-sm font-inter font-normal text-gray-800 uppercase tracking-wide">DIAMONDS</span>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">DIAMONDS</span>
                     {expandedSection === 'diamonds' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -1329,14 +1336,14 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     <div className="bg-gray-50/30">
                       <div className="px-6 py-4">
                         <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-inter font-medium text-gray-800 uppercase tracking-wide">DIAMOND COLLECTIONS</span>
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">DIAMOND COLLECTIONS</span>
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-1 ml-4">
                           <Link
                             to="/diamonds/engagement"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1344,8 +1351,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/diamonds/loose"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1353,8 +1360,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           </Link>
                           <Link
                             to="/diamonds/lab-grown"
-                            className="flex items-center font-inter font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12.36px'}}
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
                             <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
@@ -1372,7 +1379,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'jewellery' ? null : 'jewellery')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
                   >
-                    <span className="text-sm font-inter font-normal text-gray-800 uppercase tracking-wide">JEWELLERY</span>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">JEWELLERY</span>
                     {expandedSection === 'jewellery' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -1387,7 +1394,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'guides' ? null : 'guides')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
                   >
-                    <span className="text-sm font-inter font-normal text-gray-800 uppercase tracking-wide">GUIDES</span>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">GUIDES</span>
                     {expandedSection === 'guides' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -1402,7 +1409,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     onClick={() => setExpandedSection(expandedSection === 'about' ? null : 'about')}
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
                   >
-                    <span className="text-sm font-inter font-normal text-gray-800 uppercase tracking-wide">ABOUT US</span>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">ABOUT US</span>
                     {expandedSection === 'about' ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
@@ -1424,8 +1431,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     <Calendar className="w-5 h-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-inter font-normal text-gray-800">Book Appointment</div>
-                    <div className="text-xs font-inter font-light text-gray-700">Schedule your free consultation</div>
+                    <div className="text-sm font-satoshi font-normal text-gray-800">Book Appointment</div>
+                    <div className="text-xs font-satoshi font-light text-gray-700">Schedule your free consultation</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>
@@ -1440,8 +1447,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     <Phone className="w-5 h-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-inter font-normal text-gray-800">Phone</div>
-                    <div className="text-xs font-inter font-light text-gray-700">Call on +44 207 831 1901</div>
+                    <div className="text-sm font-satoshi font-normal text-gray-800">Phone</div>
+                    <div className="text-xs font-satoshi font-light text-gray-700">Call on +44 207 831 1901</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>
@@ -1456,8 +1463,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     <Mail className="w-5 h-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-inter font-normal text-gray-800">Email</div>
-                    <div className="text-xs font-inter font-light text-gray-700">Got any questions about rings? Send us an email</div>
+                    <div className="text-sm font-satoshi font-normal text-gray-800">Email</div>
+                    <div className="text-xs font-satoshi font-light text-gray-700">Got any questions about rings? Send us an email</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>
@@ -1472,8 +1479,8 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     <HelpCircle className="w-5 h-5 text-gray-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-inter font-normal text-gray-800">Help & FAQs</div>
-                    <div className="text-xs font-inter font-light text-gray-700">Phone lines available Mon-Fri 9:30am - 6pm</div>
+                    <div className="text-sm font-satoshi font-normal text-gray-800">Help & FAQs</div>
+                    <div className="text-xs font-satoshi font-light text-gray-700">Phone lines available Mon-Fri 9:30am - 6pm</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>

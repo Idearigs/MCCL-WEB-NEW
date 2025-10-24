@@ -260,17 +260,33 @@ export default function MainContentSection(): JSX.Element {
     <main className="w-full">
       {/* Hero Section */}
       <section className="relative h-screen overflow-hidden">
-        {/* Video Background */}
-        <video
-          className="absolute inset-0 w-full h-full object-cover object-center md:object-[center_30%]"
-          autoPlay
-          loop
-          muted
-          playsInline
-        >
-          <source src="/no-grade.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        {/* YouTube Video Background */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
+          <div className="absolute inset-0 w-full h-full" style={{
+            paddingBottom: '56.25%',
+            position: 'relative',
+            height: 0,
+            overflow: 'hidden'
+          }}>
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/m9K10HyJIe4?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=m9K10HyJIe4&rel=0&iv_load_policy=3&vq=hd1080"
+              title="McCulloch Jewelry Collection Video"
+              allow="autoplay"
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                pointerEvents: 'none',
+                transform: 'scale(1.3)',
+                transformOrigin: 'center'
+              }}
+            />
+          </div>
+        </div>
         <div className="absolute inset-0 bg-black bg-opacity-40" />
         <div className="relative flex flex-col items-center justify-center h-full text-center text-white px-4 max-w-none w-full pt-16">
           <h1

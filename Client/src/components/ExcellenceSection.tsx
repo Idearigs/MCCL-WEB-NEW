@@ -43,16 +43,34 @@ export default function ExcellenceSection(): JSX.Element {
     <section className="w-full bg-white">
       {/* Hero Banner Section with Video Background */}
       <div className="w-full h-[80vh] relative overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute top-0 left-0 w-full h-full object-cover"
-        >
-          <source src="/videos/heritage-bg.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            overflow: 'hidden'
+          }}>
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/qqKF96afmVs?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=qqKF96afmVs&rel=0&iv_load_policy=3&vq=hd1080"
+              title="McCulloch Heritage Video"
+              allow="autoplay"
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                pointerEvents: 'none',
+                transform: 'scale(1.3)',
+                transformOrigin: 'center'
+              }}
+            />
+          </div>
+        </div>
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}

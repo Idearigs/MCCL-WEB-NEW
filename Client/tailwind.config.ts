@@ -73,8 +73,9 @@ export default {
 			},
 			fontFamily: {
 				sans: ['Satoshi', 'system-ui', 'sans-serif'],
+			'satoshi': ['Satoshi', 'system-ui', 'sans-serif'],
 				serif: ['Cormorant Garamond', 'serif'],
-				'satoshi': ['Satoshi', 'system-ui', 'sans-serif'],
+			'futura-pt': ['Futura PT', 'sans-serif'],
 				'cormorant': ['Cormorant Garamond', 'serif'],
 				'lora': ['Lora', 'serif']
 			},

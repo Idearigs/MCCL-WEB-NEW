@@ -8,7 +8,8 @@ interface WatchBrand {
   title: string;
   description: string;
   location: string;
-  video: string;
+  video?: string;
+  youtubeId?: string;
   route: string;
   color: string;
 }
@@ -20,7 +21,7 @@ const watchBrands: WatchBrand[] = [
     title: "Festina",
     description: "Two independent family businesses; shared values, shared passion. For thirty-two years, McCulloch Jewellers and Festina have enjoyed a long-standing partnership in the watch industry; unparalleled design and craftsmanship have formed the cornerstone of their shared philosophy.",
     location: "SPAIN",
-    video: "/videos/festina.mp4",
+    youtubeId: "Y5HEmlMkVVY",
     route: "/festina",
     color: "#003A63"
   },
@@ -71,20 +72,55 @@ const WatchBrandsShowcase = (): JSX.Element => {
       <div className="absolute inset-0">
         {/* Render all videos and show/hide with opacity */}
         {watchBrands.map((brand, index) => (
-          <video
+          <div
             key={brand.id}
-            className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-800 ease-in-out ${
+            className={`absolute inset-0 transition-opacity duration-800 ease-in-out ${
               index === currentBrandIndex ? 'opacity-100' : 'opacity-0'
             }`}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
           >
-            <source src={brand.video} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+            {brand.youtubeId ? (
+              <div className="absolute inset-0 w-full h-full overflow-hidden">
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  overflow: 'hidden'
+                }}>
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${brand.youtubeId}?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=${brand.youtubeId}&rel=0&iv_load_policy=3&vq=hd1080`}
+                    title={brand.title}
+                    allow="autoplay"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      pointerEvents: 'none',
+                      transform: 'scale(1.3)',
+                      transformOrigin: 'center'
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <video
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+              >
+                <source src={brand.video} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            )}
+          </div>
         ))}
       </div>
       

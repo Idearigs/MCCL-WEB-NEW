@@ -17,7 +17,8 @@
       "WebFetch(domain:www.transpacific-software.com)",
       "WebFetch(domain:engineering.nivoda.net)",
       "Read(//c/Users/minuk/Downloads/Documents/**)",
-      "Bash(node run-nivoda-migration.js)"
+      "Bash(node run-nivoda-migration.js)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": [],

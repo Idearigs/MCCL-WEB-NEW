@@ -1,5 +1,6 @@
 
-@import url('https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,301,701,300,501,401,901,400&display=swap');
+@import url('https://fonts.cdnfonts.com/css/satoshi');
+@import url('https://fonts.cdnfonts.com/css/futura-pt');
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
@@ -92,9 +93,9 @@
     all: unset;
   }
 
-  /* Satoshi for modern, clean UI */
-  .font-satoshi {
-    font-family: 'Satoshi', system-ui, sans-serif;
+  /* Futura PT for modern, clean UI */
+  .font-futura-pt {
+    font-family: 'Futura PT', system-ui, sans-serif;
   }
 
   /* Cormorant Garamond for elegant headings */
