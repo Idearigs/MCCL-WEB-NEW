@@ -349,7 +349,8 @@ const createProduct = async (req, res) => {
       meta_description,
       images = [],
       videos = [],
-      variants = []
+      variants = [],
+      nivoda_options_config
     } = req.body;
 
     // Validation
@@ -400,7 +401,8 @@ const createProduct = async (req, res) => {
       care_instructions,
       warranty_info,
       meta_title: meta_title || name,
-      meta_description: meta_description || short_description
+      meta_description: meta_description || short_description,
+      nivoda_options_config: processedNivodaConfig
     });
 
     // Create product images if provided
@@ -552,6 +554,7 @@ const updateProduct = async (req, res) => {
       ring_type_ids = [],
       stone_shape_ids = [],
       metal_ids = [],
+      nivoda_options_config,
       ...productData
     } = req.body;
 
@@ -576,6 +579,13 @@ const updateProduct = async (req, res) => {
     }
     if (updateData.collection_id === '') {
       updateData.collection_id = null;
+    }
+
+    // Handle Nivoda options configuration - convert to JSON if provided
+    if (nivoda_options_config) {
+      updateData.nivoda_options_config = typeof nivoda_options_config === 'string'
+        ? JSON.parse(nivoda_options_config)
+        : nivoda_options_config;
     }
 
     await product.update(updateData);
@@ -776,7 +786,8 @@ const updateProductWithMedia = async (req, res) => {
       care_instructions,
       warranty_info,
       meta_title,
-      meta_description
+      meta_description,
+      nivoda_options_config
     } = req.body;
 
     // Update slug if name changed
@@ -800,6 +811,13 @@ const updateProductWithMedia = async (req, res) => {
     }
     if (updateData.collection_id === '') {
       updateData.collection_id = null;
+    }
+
+    // Handle Nivoda options configuration - convert to JSON if provided
+    if (nivoda_options_config) {
+      updateData.nivoda_options_config = typeof nivoda_options_config === 'string'
+        ? JSON.parse(nivoda_options_config)
+        : nivoda_options_config;
     }
 
     // Update basic product info
@@ -1157,7 +1175,8 @@ const createProductWithMedia = async (req, res) => {
       care_instructions,
       warranty_info,
       meta_title,
-      meta_description
+      meta_description,
+      nivoda_options_config
     } = req.body;
 
     // Convert empty strings to null for numeric fields
@@ -1266,6 +1285,14 @@ const createProductWithMedia = async (req, res) => {
     const slug = await generateUniqueSlug(name, Product);
     const sku = providedSku && providedSku.trim() !== '' ? providedSku.trim() : generateSKU(name, category.slug);
 
+    // Prepare Nivoda options configuration if provided
+    let processedNivodaConfig = null;
+    if (nivoda_options_config) {
+      processedNivodaConfig = typeof nivoda_options_config === 'string'
+        ? JSON.parse(nivoda_options_config)
+        : nivoda_options_config;
+    }
+
     // Create product
     const product = await Product.create({
       name,
@@ -1293,7 +1320,8 @@ const createProductWithMedia = async (req, res) => {
       care_instructions,
       warranty_info,
       meta_title: meta_title || name,
-      meta_description: meta_description || short_description
+      meta_description: meta_description || short_description,
+      nivoda_options_config: processedNivodaConfig
     });
 
     // Process uploaded files
