@@ -259,33 +259,26 @@ export default function MainContentSection(): JSX.Element {
   return (
     <main className="w-full">
       {/* Hero Section */}
-      <section className="relative h-screen overflow-hidden">
+      <section className="relative overflow-hidden" style={{ height: '100vh', minHeight: '100vh' }}>
         {/* YouTube Video Background */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <div className="absolute inset-0 w-full h-full" style={{
-            paddingBottom: '56.25%',
-            position: 'relative',
-            height: 0,
-            overflow: 'hidden'
-          }}>
-            <iframe
-              src="https://www.youtube-nocookie.com/embed/m9K10HyJIe4?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=m9K10HyJIe4&rel=0&iv_load_policy=3&vq=hd1080"
-              title="McCulloch Jewelry Collection Video"
-              allow="autoplay"
-              referrerPolicy="strict-origin-when-cross-origin"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                pointerEvents: 'none',
-                transform: 'scale(1.3)',
-                transformOrigin: 'center'
-              }}
-            />
-          </div>
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/m9K10HyJIe4?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=m9K10HyJIe4&rel=0&iv_load_policy=3&vq=hd1080"
+            title="McCulloch Jewelry Collection Video"
+            allow="autoplay"
+            referrerPolicy="strict-origin-when-cross-origin"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              pointerEvents: 'none',
+              transform: 'translate(-50%, -50%) scale(1.3)',
+              transformOrigin: 'center'
+            }}
+          />
         </div>
         <div className="absolute inset-0 bg-black bg-opacity-40" />
         <div className="relative flex flex-col items-center justify-center h-full text-center text-white px-4 max-w-none w-full pt-16">
