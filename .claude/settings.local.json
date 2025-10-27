@@ -18,7 +18,15 @@
       "WebFetch(domain:engineering.nivoda.net)",
       "Read(//c/Users/minuk/Downloads/Documents/**)",
       "Bash(node run-nivoda-migration.js)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(node test-nivoda-api.js:*)",
+      "Bash(node test-nivoda-direct.js:*)",
+      "Bash(node test-nivoda-schema.js:*)",
+      "Bash(node test-nivoda-items.js:*)",
+      "Bash(node test-nivoda-inclusions.js:*)",
+      "WebFetch(domain:)",
+      "Read(//c/Users/minuk/Downloads/**)",
+      "Bash(nivoda \")"
     ],
     "deny": [],
     "ask": [],

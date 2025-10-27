@@ -68,23 +68,16 @@ class NivodaService {
               diamond {
                 id
                 image
-                carat
-                clarity
-                color
-                cut
-                fluorescence
-                lab
-                polish
-                symmetry
-                table
-                depth
-                measurements
+                video
+                mine_of_origin
+                certificate {
+                  id
+                  lab
+                  shape
+                  certNumber
+                }
               }
               price
-              certification {
-                lab
-                number
-              }
             }
             total_count
           }
@@ -120,23 +113,16 @@ class NivodaService {
             diamond {
               id
               image
-              carat
-              clarity
-              color
-              cut
-              fluorescence
-              lab
-              polish
-              symmetry
-              table
-              depth
-              measurements
+              video
+              mine_of_origin
+              certificate {
+                id
+                lab
+                shape
+                certNumber
+              }
             }
             price
-            certification {
-              lab
-              number
-            }
           }
         }
       }`;

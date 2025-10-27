@@ -43,13 +43,13 @@ interface ProductFormData {
   show_cut: boolean;
   show_certificate: boolean;
   certificate: string;
-  // Nivoda Options Configuration
+  // Nivoda Options Configuration - CUSTOMER-SELECTABLE RANGES & OPTIONS
   nivoda_options_config?: {
-    selectedCarats: Array<{ value: string; priceAdjustment: string }>;
-    selectedClarities: Array<{ value: string; priceAdjustment: string }>;
-    selectedColours: Array<{ value: string; priceAdjustment: string }>;
-    selectedCuts: Array<{ value: string; priceAdjustment: string }>;
-    selectedStoneTypes: Array<{ value: string; priceAdjustment: string }>;
+    stoneType?: 'natural' | 'lab-grown'; // Single selection for customer
+    caratRange?: { min: number; max: number }; // Range slider for customer
+    clarityOptions?: string[]; // Available clarity grades for customer to choose from
+    colourOptions?: string[]; // Available colors for customer to choose from
+    cutOptions?: string[]; // Available cuts for customer to choose from
   };
   images: Array<{ file: File | null; url: string; alt_text: string }>;
   videos: Array<{ file: File | null; url: string; title: string }>;
@@ -137,11 +137,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     certificate: '',
     // Nivoda Options Configuration
     nivoda_options_config: {
-      selectedCarats: [],
-      selectedClarities: [],
-      selectedColours: [],
-      selectedCuts: [],
-      selectedStoneTypes: []
+      stoneType: 'natural',
+      caratRange: { min: 0.5, max: 2.0 },
+      clarityOptions: [],
+      colourOptions: [],
+      cutOptions: []
     },
     images: [],
     videos: [],
@@ -205,13 +205,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         images: initialData.images || [],
         videos: initialData.videos || [],
         variants: initialData.variants || [],
-        // Ensure nivoda_options_config always has all required arrays initialized
+        // Load Nivoda configuration with proper defaults
         nivoda_options_config: {
-          selectedCarats: initialData.nivoda_options_config?.selectedCarats || [],
-          selectedClarities: initialData.nivoda_options_config?.selectedClarities || [],
-          selectedColours: initialData.nivoda_options_config?.selectedColours || [],
-          selectedCuts: initialData.nivoda_options_config?.selectedCuts || [],
-          selectedStoneTypes: initialData.nivoda_options_config?.selectedStoneTypes || []
+          stoneType: initialData.nivoda_options_config?.stoneType || 'natural',
+          caratRange: initialData.nivoda_options_config?.caratRange || { min: 0.5, max: 2.0 },
+          clarityOptions: initialData.nivoda_options_config?.clarityOptions || [],
+          colourOptions: initialData.nivoda_options_config?.colourOptions || [],
+          cutOptions: initialData.nivoda_options_config?.cutOptions || []
         }
       });
     } else {
@@ -255,11 +255,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         show_certificate: false,
         certificate: '',
         nivoda_options_config: {
-          selectedCarats: [],
-          selectedClarities: [],
-          selectedColours: [],
-          selectedCuts: [],
-          selectedStoneTypes: []
+          stoneType: 'natural',
+          caratRange: { min: 0.5, max: 2.0 },
+          clarityOptions: [],
+          colourOptions: [],
+          cutOptions: []
         },
         images: [],
         videos: [],
@@ -1751,28 +1751,28 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Removed separate "Select Diamond Options from Nivoda" section as options now appear directly below toggles */}
-                  <div className="hidden border-t border-gray-200 pt-6">
-                    <h4 className="text-sm font-medium text-gray-900 font-satoshi mb-4">
-                      Select Diamond Options from Nivoda
+                  {/* Nivoda Diamond Specifications Configuration */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <h4 className="text-sm font-medium text-gray-900 font-satoshi mb-2">
+                      Configure Diamond Specifications
                     </h4>
-                    <p className="text-xs text-gray-500 mb-4 font-satoshi">
-                      Choose available diamond specifications and set price adjustments for each option
+                    <p className="text-xs text-gray-500 mb-6 font-satoshi">
+                      Set the carat range and available options that customers can choose from. Prices are calculated automatically from the Nivoda API based on selected specifications.
                     </p>
 
                     {/* Loading State */}
                     {nivodaLoading && (
-                      <div className="flex items-center space-x-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center space-x-2 p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6">
                         <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-                        <p className="text-sm text-blue-700 font-satoshi">Loading Nivoda options...</p>
+                        <p className="text-sm text-blue-700 font-satoshi">Loading available options...</p>
                       </div>
                     )}
 
                     {/* Error State */}
                     {nivodaError && (
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-6">
                         <p className="text-sm text-red-700 font-satoshi">
-                          Error loading Nivoda options: {nivodaError}
+                          Error loading options: {nivodaError}
                         </p>
                         <button
                           onClick={fetchNivodaOptions}
@@ -1783,321 +1783,262 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       </div>
                     )}
 
-                    {/* Options Selection */}
+                    {/* Configuration Form */}
                     {!nivodaLoading && nivodaAvailableOptions && (
-                      <div className="space-y-6">
-                        {/* Carat Weights */}
-                        {formData.show_carat && nivodaAvailableOptions.carats.length > 0 && (
-                          <div className="border border-gray-200 rounded-lg p-4">
-                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Carat Weights</h5>
-                            <div className="space-y-3">
-                              {nivodaAvailableOptions.carats.map((carat) => {
-                                const isSelected = formData.nivoda_options_config?.selectedCarats.some(c => c.value === carat) || false;
-                                return (
-                                  <div key={carat} className="flex items-center space-x-3">
-                                    <input
-                                      type="checkbox"
-                                      id={`carat-${carat}`}
-                                      checked={isSelected}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedCarats: [...(formData.nivoda_options_config?.selectedCarats || []), { value: carat, priceAdjustment: '0' }]
-                                            }
-                                          });
-                                        } else {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedCarats: (formData.nivoda_options_config?.selectedCarats || []).filter(c => c.value !== carat)
-                                            }
-                                          });
+                      <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
+                        {/* Stone Type Selection */}
+                        <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                          <label className="text-sm font-medium text-gray-900 mb-3 block font-satoshi">
+                            Stone Type
+                          </label>
+                          <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="stoneType"
+                                value="natural"
+                                checked={formData.nivoda_options_config?.stoneType === 'natural'}
+                                onChange={() => {
+                                  setFormData({
+                                    ...formData,
+                                    nivoda_options_config: {
+                                      ...formData.nivoda_options_config!,
+                                      stoneType: 'natural'
+                                    }
+                                  });
+                                }}
+                                className="rounded"
+                              />
+                              <span className="text-sm text-gray-700 font-satoshi">Natural</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="stoneType"
+                                value="lab-grown"
+                                checked={formData.nivoda_options_config?.stoneType === 'lab-grown'}
+                                onChange={() => {
+                                  setFormData({
+                                    ...formData,
+                                    nivoda_options_config: {
+                                      ...formData.nivoda_options_config!,
+                                      stoneType: 'lab-grown'
+                                    }
+                                  });
+                                }}
+                                className="rounded"
+                              />
+                              <span className="text-sm text-gray-700 font-satoshi">Lab-Grown</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Carat Range */}
+                        {formData.show_carat && (
+                          <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                            <label className="text-sm font-medium text-gray-900 mb-4 block font-satoshi">
+                              Carat Weight Range
+                            </label>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-xs text-gray-600 font-satoshi">Minimum</label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={formData.nivoda_options_config?.caratRange?.min || 0.5}
+                                  onChange={(e) => {
+                                    setFormData({
+                                      ...formData,
+                                      nivoda_options_config: {
+                                        ...formData.nivoda_options_config!,
+                                        caratRange: {
+                                          ...formData.nivoda_options_config?.caratRange!,
+                                          min: parseFloat(e.target.value)
                                         }
-                                      }}
-                                      className="rounded"
-                                    />
-                                    <label htmlFor={`carat-${carat}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
-                                      {carat} ct
-                                    </label>
-                                    {isSelected && (
-                                      <input
-                                        type="number"
-                                        placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedCarats?.find(c => c.value === carat)?.priceAdjustment) || '0'}
-                                        onChange={(e) => {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedCarats: (formData.nivoda_options_config?.selectedCarats || []).map(c =>
-                                                c.value === carat ? { ...c, priceAdjustment: e.target.value } : c
-                                              )
-                                            }
-                                          });
-                                        }}
-                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      />
-                                    )}
-                                  </div>
-                                );
-                              })}
+                                      }
+                                    });
+                                  }}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-600 font-satoshi">Maximum</label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={formData.nivoda_options_config?.caratRange?.max || 2.0}
+                                  onChange={(e) => {
+                                    setFormData({
+                                      ...formData,
+                                      nivoda_options_config: {
+                                        ...formData.nivoda_options_config!,
+                                        caratRange: {
+                                          ...formData.nivoda_options_config?.caratRange!,
+                                          max: parseFloat(e.target.value)
+                                        }
+                                      }
+                                    });
+                                  }}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
+                                />
+                              </div>
                             </div>
+                            <p className="text-xs text-gray-500 mt-2 font-satoshi">
+                              Customers can select carat weight between {formData.nivoda_options_config?.caratRange?.min || 0.5} and {formData.nivoda_options_config?.caratRange?.max || 2.0} carats
+                            </p>
                           </div>
                         )}
 
                         {/* Clarities */}
                         {formData.show_clarity && nivodaAvailableOptions.clarities.length > 0 && (
-                          <div className="border border-gray-200 rounded-lg p-4">
-                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Clarity Grades</h5>
-                            <div className="space-y-3">
+                          <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                            <label className="text-sm font-medium text-gray-900 mb-4 block font-satoshi">
+                              Available Clarity Grades
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                               {nivodaAvailableOptions.clarities.map((clarity) => {
-                                const isSelected = formData.nivoda_options_config?.selectedClarities.some(c => c.value === clarity) || false;
+                                const isSelected = (formData.nivoda_options_config?.clarityOptions || []).includes(clarity);
                                 return (
-                                  <div key={clarity} className="flex items-center space-x-3">
+                                  <label key={clarity} className="flex items-center gap-2 cursor-pointer">
                                     <input
                                       type="checkbox"
-                                      id={`clarity-${clarity}`}
                                       checked={isSelected}
                                       onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedClarities: [...(formData.nivoda_options_config?.selectedClarities || []), { value: clarity, priceAdjustment: '0' }]
-                                            }
-                                          });
-                                        } else {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedClarities: (formData.nivoda_options_config?.selectedClarities || []).filter(c => c.value !== clarity)
-                                            }
-                                          });
-                                        }
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            clarityOptions: e.target.checked
+                                              ? [...(formData.nivoda_options_config?.clarityOptions || []), clarity]
+                                              : (formData.nivoda_options_config?.clarityOptions || []).filter(c => c !== clarity)
+                                          }
+                                        });
                                       }}
                                       className="rounded"
                                     />
-                                    <label htmlFor={`clarity-${clarity}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
-                                      {clarity}
-                                    </label>
-                                    {isSelected && (
-                                      <input
-                                        type="number"
-                                        placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedClarities?.find(c => c.value === clarity)?.priceAdjustment) || '0'}
-                                        onChange={(e) => {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedClarities: (formData.nivoda_options_config?.selectedClarities || []).map(c =>
-                                                c.value === clarity ? { ...c, priceAdjustment: e.target.value } : c
-                                              )
-                                            }
-                                          });
-                                        }}
-                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      />
-                                    )}
-                                  </div>
+                                    <span className="text-sm text-gray-700 font-satoshi">{clarity}</span>
+                                  </label>
                                 );
                               })}
                             </div>
+                            <p className="text-xs text-gray-500 mt-3 font-satoshi">
+                              Customers can choose from the clarity grades you select above
+                            </p>
                           </div>
                         )}
 
                         {/* Colours */}
                         {formData.show_colour && nivodaAvailableOptions.colours.length > 0 && (
-                          <div className="border border-gray-200 rounded-lg p-4">
-                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Colours</h5>
-                            <div className="space-y-3">
+                          <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                            <label className="text-sm font-medium text-gray-900 mb-4 block font-satoshi">
+                              Available Colours
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                               {nivodaAvailableOptions.colours.map((colour) => {
-                                const isSelected = formData.nivoda_options_config?.selectedColours.some(c => c.value === colour) || false;
+                                const isSelected = (formData.nivoda_options_config?.colourOptions || []).includes(colour);
                                 return (
-                                  <div key={colour} className="flex items-center space-x-3">
+                                  <label key={colour} className="flex items-center gap-2 cursor-pointer">
                                     <input
                                       type="checkbox"
-                                      id={`colour-${colour}`}
                                       checked={isSelected}
                                       onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedColours: [...(formData.nivoda_options_config?.selectedColours || []), { value: colour, priceAdjustment: '0' }]
-                                            }
-                                          });
-                                        } else {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedColours: (formData.nivoda_options_config?.selectedColours || []).filter(c => c.value !== colour)
-                                            }
-                                          });
-                                        }
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            colourOptions: e.target.checked
+                                              ? [...(formData.nivoda_options_config?.colourOptions || []), colour]
+                                              : (formData.nivoda_options_config?.colourOptions || []).filter(c => c !== colour)
+                                          }
+                                        });
                                       }}
                                       className="rounded"
                                     />
-                                    <label htmlFor={`colour-${colour}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
-                                      {colour}
-                                    </label>
-                                    {isSelected && (
-                                      <input
-                                        type="number"
-                                        placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedColours?.find(c => c.value === colour)?.priceAdjustment) || '0'}
-                                        onChange={(e) => {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedColours: (formData.nivoda_options_config?.selectedColours || []).map(c =>
-                                                c.value === colour ? { ...c, priceAdjustment: e.target.value } : c
-                                              )
-                                            }
-                                          });
-                                        }}
-                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      />
-                                    )}
-                                  </div>
+                                    <span className="text-sm text-gray-700 font-satoshi">{colour}</span>
+                                  </label>
                                 );
                               })}
                             </div>
+                            <p className="text-xs text-gray-500 mt-3 font-satoshi">
+                              Customers can choose from the colours you select above
+                            </p>
                           </div>
                         )}
 
                         {/* Cuts */}
                         {formData.show_cut && nivodaAvailableOptions.cuts.length > 0 && (
-                          <div className="border border-gray-200 rounded-lg p-4">
-                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Cut Quality</h5>
-                            <div className="space-y-3">
+                          <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                            <label className="text-sm font-medium text-gray-900 mb-4 block font-satoshi">
+                              Available Cut Grades
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                               {nivodaAvailableOptions.cuts.map((cut) => {
-                                const isSelected = formData.nivoda_options_config?.selectedCuts.some(c => c.value === cut) || false;
+                                const isSelected = (formData.nivoda_options_config?.cutOptions || []).includes(cut);
                                 return (
-                                  <div key={cut} className="flex items-center space-x-3">
+                                  <label key={cut} className="flex items-center gap-2 cursor-pointer">
                                     <input
                                       type="checkbox"
-                                      id={`cut-${cut}`}
                                       checked={isSelected}
                                       onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedCuts: [...(formData.nivoda_options_config?.selectedCuts || []), { value: cut, priceAdjustment: '0' }]
-                                            }
-                                          });
-                                        } else {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedCuts: (formData.nivoda_options_config?.selectedCuts || []).filter(c => c.value !== cut)
-                                            }
-                                          });
-                                        }
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            cutOptions: e.target.checked
+                                              ? [...(formData.nivoda_options_config?.cutOptions || []), cut]
+                                              : (formData.nivoda_options_config?.cutOptions || []).filter(c => c !== cut)
+                                          }
+                                        });
                                       }}
                                       className="rounded"
                                     />
-                                    <label htmlFor={`cut-${cut}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
-                                      {cut}
-                                    </label>
-                                    {isSelected && (
-                                      <input
-                                        type="number"
-                                        placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedCuts?.find(c => c.value === cut)?.priceAdjustment) || '0'}
-                                        onChange={(e) => {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedCuts: (formData.nivoda_options_config?.selectedCuts || []).map(c =>
-                                                c.value === cut ? { ...c, priceAdjustment: e.target.value } : c
-                                              )
-                                            }
-                                          });
-                                        }}
-                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      />
-                                    )}
-                                  </div>
+                                    <span className="text-sm text-gray-700 font-satoshi">{cut}</span>
+                                  </label>
                                 );
                               })}
                             </div>
+                            <p className="text-xs text-gray-500 mt-3 font-satoshi">
+                              Customers can choose from the cut grades you select above
+                            </p>
                           </div>
                         )}
 
-                        {/* Stone Types */}
+                        {/* Stone Types - Single Selection */}
                         {formData.show_stone_type && nivodaAvailableOptions.stoneTypes.length > 0 && (
-                          <div className="border border-gray-200 rounded-lg p-4">
-                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Stone Type</h5>
+                          <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                            <label className="text-sm font-medium text-gray-900 mb-4 block font-satoshi">
+                              Stone Type (Select One)
+                            </label>
                             <div className="space-y-3">
                               {nivodaAvailableOptions.stoneTypes.map((stoneType) => {
-                                const isSelected = formData.nivoda_options_config?.selectedStoneTypes.some(s => s.value === stoneType) || false;
+                                const stoneValue = stoneType === 'Natural' ? 'natural' : 'lab-grown';
+                                const isSelected = formData.nivoda_options_config?.stoneType === stoneValue;
                                 return (
-                                  <div key={stoneType} className="flex items-center space-x-3">
+                                  <label key={stoneType} className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
                                     <input
-                                      type="checkbox"
-                                      id={`stonetype-${stoneType}`}
+                                      type="radio"
+                                      name="stoneType"
+                                      value={stoneValue}
                                       checked={isSelected}
                                       onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedStoneTypes: [...(formData.nivoda_options_config?.selectedStoneTypes || []), { value: stoneType, priceAdjustment: '0' }]
-                                            }
-                                          });
-                                        } else {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedStoneTypes: (formData.nivoda_options_config?.selectedStoneTypes || []).filter(s => s.value !== stoneType)
-                                            }
-                                          });
-                                        }
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            stoneType: e.target.value as 'natural' | 'lab-grown'
+                                          }
+                                        });
                                       }}
-                                      className="rounded"
+                                      className="rounded-full"
                                     />
-                                    <label htmlFor={`stonetype-${stoneType}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
-                                      {stoneType}
-                                    </label>
-                                    {isSelected && (
-                                      <input
-                                        type="number"
-                                        placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedStoneTypes.find(s => s.value === stoneType)?.priceAdjustment) || '0'}
-                                        onChange={(e) => {
-                                          setFormData({
-                                            ...formData,
-                                            nivoda_options_config: {
-                                              ...formData.nivoda_options_config!,
-                                              selectedStoneTypes: (formData.nivoda_options_config?.selectedStoneTypes || []).map(s =>
-                                                s.value === stoneType ? { ...s, priceAdjustment: e.target.value } : s
-                                              )
-                                            }
-                                          });
-                                        }}
-                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      />
-                                    )}
-                                  </div>
+                                    <span className="text-sm text-gray-700 font-satoshi">{stoneType}</span>
+                                  </label>
                                 );
                               })}
                             </div>
+                            <p className="text-xs text-gray-500 mt-3 font-satoshi">
+                              Customers will see this stone type option for this product
+                            </p>
                           </div>
                         )}
 

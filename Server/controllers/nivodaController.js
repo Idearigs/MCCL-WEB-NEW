@@ -6,55 +6,43 @@
 const nivodaService = require('../services/nivodaService');
 
 /**
- * Get available Nivoda diamond options (from actual API data)
- * Returns available carat weights, clarities, colors, cuts extracted from Nivoda API
+ * Get available Nivoda diamond options
+ * Returns available carat weights, clarities, colors, cuts based on Nivoda API documentation
+ * Note: The Nivoda API doesn't return spec values in the response, so we use documented filter values
  */
 async function getAvailableOptions(req, res) {
   try {
-    // Fetch a broad search to extract all available options
-    const diamonds = await nivodaService.searchDiamonds({
+    // Test API connectivity by making a simple query
+    await nivodaService.searchDiamonds({
       minCarat: 0.5,
-      maxCarat: 10,
-      minPrice: 0,
-      maxPrice: 500000,
-      limit: 100,  // Get more diamonds to extract all available options
+      maxCarat: 1,
+      limit: 1,
       offset: 0
     });
 
-    // Extract unique values from the diamonds
-    const uniqueCarats = new Set();
-    const uniqueClarities = new Set();
-    const uniqueColours = new Set();
-    const uniqueCuts = new Set();
-
-    if (diamonds.items && Array.isArray(diamonds.items)) {
-      diamonds.items.forEach(item => {
-        if (item.diamond) {
-          if (item.diamond.carat) uniqueCarats.add(item.diamond.carat.toString());
-          if (item.diamond.clarity) uniqueClarities.add(item.diamond.clarity);
-          if (item.diamond.color) uniqueColours.add(item.diamond.color);
-          if (item.diamond.cut) uniqueCuts.add(item.diamond.cut);
-        }
-      });
-    }
-
-    // Sort and format the options
+    // Return available options based on Nivoda API documentation
     const availableOptions = {
-      carats: Array.from(uniqueCarats)
-        .map(c => parseFloat(c))
-        .sort((a, b) => a - b)
-        .map(c => c.toString()),
-      clarities: Array.from(uniqueClarities).sort(),
-      colours: Array.from(uniqueColours).sort(),
-      cuts: Array.from(uniqueCuts).sort(),
-      stoneTypes: ['Natural', 'Lab-Grown']  // Standard stone types
+      // Carat weights - common options
+      carats: ['0.5', '0.75', '1.0', '1.25', '1.5', '1.75', '2.0', '2.5', '3.0', '5.0', '10.0'],
+
+      // Diamond Clarity grades (from GIA scale)
+      clarities: ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'SI3', 'I1', 'I2', 'I3'],
+
+      // Diamond Color grades (from GIA scale)
+      colours: ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'],
+
+      // Diamond Cut grades
+      cuts: ['P', 'F', 'G', 'VG', 'EX', 'ID', '8X'],
+
+      // Stone type
+      stoneTypes: ['Natural', 'Lab-Grown']
     };
 
     return res.json({
       success: true,
       data: availableOptions,
-      message: 'Available Nivoda diamond options retrieved from API',
-      source: 'nivoda_api'
+      message: 'Available Nivoda diamond options (based on API documentation)',
+      source: 'nivoda_documentation'
     });
   } catch (error) {
     console.error('Error fetching available options from Nivoda API:', error);

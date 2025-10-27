@@ -27,12 +27,10 @@ const ProductDetail = () => {
   const [selectedColour, setSelectedColour] = useState('');
   const [selectedCut, setSelectedCut] = useState('');
 
-  // Price adjustments for selected options
-  const [caratAdjustment, setCaratAdjustment] = useState(0);
-  const [clarityAdjustment, setClarityAdjustment] = useState(0);
-  const [colourAdjustment, setColourAdjustment] = useState(0);
-  const [cutAdjustment, setCutAdjustment] = useState(0);
-  const [stoneTypeAdjustment, setStoneTypeAdjustment] = useState(0);
+  // Nivoda API price calculation
+  const [nivodaPrice, setNivodaPrice] = useState<{ min: number; avg: number; max: number } | null>(null);
+  const [nivodaPriceLoading, setNivodaPriceLoading] = useState(false);
+  const [nivodaPriceError, setNivodaPriceError] = useState<string | null>(null);
 
   const [expandedStoneOptions, setExpandedStoneOptions] = useState<{ [key: string]: boolean }>({
     stoneType: true,
@@ -111,14 +109,15 @@ const ProductDetail = () => {
   }, [sizeDropdownOpen]);
 
   // Helper function to build stone options from nivoda_options_config
+  // Now using ranges and available options instead of individual selections with adjustments
   const buildStoneOptions = () => {
-    if (!productData?.nivoda_options_config) {
+    if (!productData?.nivoda_enabled || !productData?.nivoda_options_config) {
       return {
         stoneType: [
           { value: 'natural', label: 'Natural' },
           { value: 'lab-grown', label: 'Lab-Grown' }
         ],
-        carat: [],
+        caratRange: { min: 0.5, max: 2.0 },
         clarity: [],
         colour: [],
         cut: []
@@ -131,40 +130,69 @@ const ProductDetail = () => {
         { value: 'natural', label: 'Natural' },
         { value: 'lab-grown', label: 'Lab-Grown' }
       ],
-      carat: config.selectedCarats?.map(c => ({
-        value: c.value,
-        label: c.value,
-        adjustment: parseFloat(c.priceAdjustment) || 0
-      })) || [],
-      clarity: config.selectedClarities?.map(c => ({
-        value: c.value,
-        label: c.value,
-        adjustment: parseFloat(c.priceAdjustment) || 0
-      })) || [],
-      colour: config.selectedColours?.map(c => ({
-        value: c.value,
-        label: c.value,
-        adjustment: parseFloat(c.priceAdjustment) || 0
-      })) || [],
-      cut: config.selectedCuts?.map(c => ({
-        value: c.value,
-        label: c.value,
-        adjustment: parseFloat(c.priceAdjustment) || 0
-      })) || []
+      caratRange: config.caratRange || { min: 0.5, max: 2.0 },
+      clarity: (config.clarityOptions || []).map(c => ({
+        value: c,
+        label: c
+      })),
+      colour: (config.colourOptions || []).map(c => ({
+        value: c,
+        label: c
+      })),
+      cut: (config.cutOptions || []).map(c => ({
+        value: c,
+        label: c
+      }))
     };
   };
 
   const stoneOptions = buildStoneOptions();
 
-  // Calculate total price with adjustments
-  const calculateTotalPrice = () => {
-    // Extract base price from productData.price string (e.g., "£1,234.00" -> 1234.00)
-    if (!productData?.price) return 0;
-    const priceString = productData.price.replace(/[^\d.,]/g, '').replace(/,/g, '');
-    const basePrice = parseFloat(priceString) || 0;
+  // Fetch price from Nivoda API based on selected specs
+  const fetchNivodaPrice = async (carat?: string, clarity?: string, colour?: string, cut?: string) => {
+    if (!productData?.nivoda_enabled) return;
 
-    const totalAdjustment = caratAdjustment + clarityAdjustment + colourAdjustment + cutAdjustment + stoneTypeAdjustment;
-    return basePrice + totalAdjustment;
+    // Only fetch if we have the key specs selected
+    if (!carat || !clarity || !colour || !cut) return;
+
+    setNivodaPriceLoading(true);
+    setNivodaPriceError(null);
+
+    try {
+      const params = new URLSearchParams({
+        carat,
+        clarity,
+        color: colour,
+        cut
+      });
+
+      const response = await fetch(`${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params}`);
+      const data = await response.json();
+
+      if (data.success && data.data?.prices) {
+        setNivodaPrice(data.data.prices);
+      } else {
+        setNivodaPriceError('Could not fetch price for this specification');
+      }
+    } catch (error) {
+      console.error('Error fetching Nivoda price:', error);
+      setNivodaPriceError('Error fetching price data');
+    } finally {
+      setNivodaPriceLoading(false);
+    }
+  };
+
+  // Calculate total price - use Nivoda API price if available, otherwise use base price
+  const calculateTotalPrice = () => {
+    if (!productData?.price) return 0;
+
+    if (productData.nivoda_enabled && nivodaPrice) {
+      return nivodaPrice.avg; // Use average price from Nivoda
+    }
+
+    // Fallback to base price
+    const priceString = productData.price.replace(/[^\d.,]/g, '').replace(/,/g, '');
+    return parseFloat(priceString) || 0;
   };
 
   // Fetch user's country based on IP
@@ -229,40 +257,43 @@ const ProductDetail = () => {
 
   // Initialize stone options with default selections when product loads
   useEffect(() => {
-    if (!productData?.nivoda_options_config) return;
+    if (!productData?.nivoda_enabled || !productData?.nivoda_options_config) return;
 
     const config = productData.nivoda_options_config;
 
-    // Set default carat and its adjustment
-    if (config.selectedCarats && config.selectedCarats.length > 0) {
-      setSelectedCarat(config.selectedCarats[0].value);
-      setCaratAdjustment(parseFloat(config.selectedCarats[0].priceAdjustment) || 0);
+    // Set stone type default
+    if (config.stoneType) {
+      setSelectedStoneType(config.stoneType);
     }
 
-    // Set default clarity and its adjustment
-    if (config.selectedClarities && config.selectedClarities.length > 0) {
-      setSelectedClarity(config.selectedClarities[0].value);
-      setClarityAdjustment(parseFloat(config.selectedClarities[0].priceAdjustment) || 0);
+    // Set default carat (middle of range)
+    if (config.caratRange) {
+      const midCarat = ((config.caratRange.min + config.caratRange.max) / 2).toFixed(2);
+      setSelectedCarat(midCarat);
     }
 
-    // Set default colour and its adjustment
-    if (config.selectedColours && config.selectedColours.length > 0) {
-      setSelectedColour(config.selectedColours[0].value);
-      setColourAdjustment(parseFloat(config.selectedColours[0].priceAdjustment) || 0);
+    // Set default clarity (first available option)
+    if (config.clarityOptions && config.clarityOptions.length > 0) {
+      setSelectedClarity(config.clarityOptions[0]);
     }
 
-    // Set default cut and its adjustment
-    if (config.selectedCuts && config.selectedCuts.length > 0) {
-      setSelectedCut(config.selectedCuts[0].value);
-      setCutAdjustment(parseFloat(config.selectedCuts[0].priceAdjustment) || 0);
+    // Set default colour (first available option)
+    if (config.colourOptions && config.colourOptions.length > 0) {
+      setSelectedColour(config.colourOptions[0]);
     }
 
-    // Set default stone type and its adjustment
-    if (config.selectedStoneTypes && config.selectedStoneTypes.length > 0) {
-      setSelectedStoneType(config.selectedStoneTypes[0].value as 'natural' | 'lab-grown');
-      setStoneTypeAdjustment(parseFloat(config.selectedStoneTypes[0].priceAdjustment) || 0);
+    // Set default cut (first available option)
+    if (config.cutOptions && config.cutOptions.length > 0) {
+      setSelectedCut(config.cutOptions[0]);
     }
-  }, [productData?.nivoda_options_config]);
+  }, [productData?.nivoda_enabled, productData?.nivoda_options_config]);
+
+  // Fetch price when any selection changes
+  useEffect(() => {
+    if (productData?.nivoda_enabled && selectedCarat && selectedClarity && selectedColour && selectedCut) {
+      fetchNivodaPrice(selectedCarat, selectedClarity, selectedColour, selectedCut);
+    }
+  }, [selectedCarat, selectedClarity, selectedColour, selectedCut, productData?.nivoda_enabled]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -343,14 +374,9 @@ const ProductDetail = () => {
           colour: selectedColour,
           cut: selectedCut
         };
-        newItem.nivodaPriceAdjustments = {
-          carat: caratAdjustment,
-          clarity: clarityAdjustment,
-          colour: colourAdjustment,
-          cut: cutAdjustment,
-          stoneType: stoneTypeAdjustment
-        };
-        newItem.totalPrice = calculateTotalPrice();
+        // Price is calculated from Nivoda API based on selected specs
+        newItem.nivodaPrice = nivodaPrice; // { min, avg, max }
+        newItem.totalPrice = calculateTotalPrice(); // Uses Nivoda API price (avg) when available
       }
 
       addToCart(newItem);
