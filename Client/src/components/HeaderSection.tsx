@@ -1,6 +1,7 @@
 import { Menu, X, ChevronDown, User, Plus, Minus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import React, { useState, useEffect } from "react";
+import API_BASE_URL from '../config/api';
 
 // Map categories to their corresponding images
 const categoryImages = {
@@ -25,7 +26,47 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
   const [isCartVisible, setIsCartVisible] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [navigationData, setNavigationData] = useState<any>(null);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [allPages, setAllPages] = useState<string[]>([]);
   const location = useLocation();
+
+  // Fetch navigation data for search
+  useEffect(() => {
+    const fetchSearchData = async () => {
+      try {
+        // Fetch navigation data
+        const navResponse = await fetch(`${API_BASE_URL}/api/navigation/data`);
+        if (navResponse.ok) {
+          const navData = await navResponse.json();
+          setNavigationData(navData);
+        }
+
+        // Fetch products for search
+        const productsResponse = await fetch(`${API_BASE_URL}/api/products?limit=50`);
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json();
+          setAllProducts(productsData.products || []);
+        }
+
+        // Set common pages
+        setAllPages([
+          'Engagement Rings',
+          'Wedding Rings',
+          'Eternity Rings',
+          'Diamond Rings',
+          'Ring & Jewellery Resizing',
+          'Guides',
+          'About Us',
+          'Contact Us'
+        ]);
+      } catch (error) {
+        console.error('Error fetching search data:', error);
+      }
+    };
+
+    fetchSearchData();
+  }, []);
 
   // Add scroll listener for transparent mode
   useEffect(() => {
@@ -55,43 +96,23 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
     "UK HANDCRAFTED"
   ];
 
-  // Sample search data
-  const searchSuggestions = [
-    'eternity rings',
-    'rings',
-    'ruby rings',
-    'Womens Rings',
-    'Heart Rings',
+  // Generate search suggestions from navigation data
+  const searchSuggestions = navigationData ? [
+    ...(navigationData.ring_types?.map((item: any) => item.name) || []),
+    ...(navigationData.gemstones?.map((item: any) => item.name) || []),
+    ...(navigationData.metals?.map((item: any) => item.name) || []),
+    ...(navigationData.eternity_rings?.map((item: any) => item.name) || []),
     'engagement rings',
     'wedding rings',
-    'diamond rings'
-  ];
+    'diamond rings',
+    'eternity rings'
+  ] : [];
 
-  const searchProducts = [
-    {
-      id: 1,
-      name: 'Aquamarine 0.70CT And Diamond 9K White Gold Ring £5731',
-      price: 'Rs 145,300',
-      image: '/images/product1.jpg'
-    },
-    {
-      id: 2,
-      name: 'Lab Diamond Half Eternity Wave Ring 0.05ct in 925 Silver',
-      price: 'Rs 45,400',
-      image: '/images/product2.jpg'
-    },
-    {
-      id: 3,
-      name: 'Lab Diamond Heritage Half Eternity Ring 0.15ct H/SI in 925 Silver',
-      price: 'Rs 62,100',
-      image: '/images/product3.jpg'
-    }
-  ];
+  // Use real products for search
+  const searchProducts = allProducts;
 
-  const searchPages = [
-    'Eternity Rings',
-    'Ring & Jewellery Resizing'
-  ];
+  // Use real pages for search
+  const searchPages = allPages;
 
   // Full-width engagement dropdown menu items
   const engagementDropdownData = {
@@ -878,24 +899,30 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
                     <ul className="space-y-4">
                       {filteredProducts.slice(0, 3).map((product) => (
                         <li key={product.id}>
-                          <button
-                            className="text-left hover:opacity-70 transition-opacity w-full"
+                          <Link
+                            to={`/product/${product.id}`}
+                            className="text-left hover:opacity-70 transition-opacity w-full block"
                             onClick={handleSearchClose}
                           >
                             <div className="flex space-x-3">
                               <div className="w-16 h-16 bg-gray-100 rounded flex-shrink-0 overflow-hidden">
                                 <img
-                                  src="/images/0406900pdcc_550x.webp"
+                                  src={product.image_url || product.featured_image || '/images/placeholder.webp'}
                                   alt={product.name}
                                   className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = '/images/placeholder.webp';
+                                  }}
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm text-gray-800 leading-tight">{product.name}</p>
-                                <p className="text-xs text-blue-600 font-medium mt-1">{product.price}</p>
+                                <p className="text-xs text-blue-600 font-medium mt-1">
+                                  {product.price ? `${product.currency_symbol || '£'}${product.price}` : 'Contact for price'}
+                                </p>
                               </div>
                             </div>
-                          </button>
+                          </Link>
                         </li>
                       ))}
                     </ul>
@@ -905,16 +932,30 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
                   <div>
                     <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">Pages</h3>
                     <ul className="space-y-2">
-                      {filteredPages.map((page, index) => (
-                        <li key={index}>
-                          <button
-                            className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors"
-                            onClick={handleSearchClose}
-                          >
-                            {page}
-                          </button>
-                        </li>
-                      ))}
+                      {filteredPages.map((page, index) => {
+                        const pageUrlMap: { [key: string]: string } = {
+                          'Engagement Rings': '/engagement',
+                          'Wedding Rings': '/wedding',
+                          'Eternity Rings': '/eternity-rings',
+                          'Diamond Rings': '/diamonds',
+                          'Ring & Jewellery Resizing': '/resizing',
+                          'Guides': '/guides',
+                          'About Us': '/heritage',
+                          'Contact Us': '/contact'
+                        };
+                        const pageUrl = pageUrlMap[page] || '#';
+                        return (
+                          <li key={index}>
+                            <Link
+                              to={pageUrl}
+                              className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors block"
+                              onClick={handleSearchClose}
+                            >
+                              {page}
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 </div>
