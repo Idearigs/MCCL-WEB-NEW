@@ -804,59 +804,56 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
 
       {/* Full-Screen Search Overlay */}
       {searchOpen && (
-        <div 
-          className={`fixed inset-0 z-50 bg-black bg-opacity-60 backdrop-blur-sm ${
+        <div
+          className={`fixed inset-0 z-50 bg-white ${
             searchClosing ? 'animate-search-overlay-out' : 'animate-search-overlay-in'
           }`}
           onClick={handleSearchClose}
         >
-          <div 
-            className={`flex flex-col items-center pt-16 pb-8 ${
+          <div
+            className={`flex flex-col h-full ${
               searchClosing ? 'animate-search-window-out' : 'animate-search-window-in'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Search Header */}
-            <div className="text-center mb-6">
-              <div className="text-sm text-gray-300 uppercase tracking-wider font-light">
-                WHAT ARE YOU LOOKING FOR?
+            {/* Header and Search Input */}
+            <div className="px-16 py-8 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm text-gray-600 uppercase tracking-wider font-light">
+                  WHAT ARE YOU LOOKING FOR?
+                </h2>
+                <button
+                  onClick={handleSearchClose}
+                  className="p-2 text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
+                </button>
               </div>
-            </div>
-
-            {/* Search Input */}
-            <div className="relative w-full max-w-2xl px-8 mb-8">
               <input
                 type="text"
-                placeholder="Search for rings, necklaces, earrings..."
+                placeholder={searchQuery || "Rings"}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-6 py-3 text-base border-0 rounded-full focus:outline-none shadow-lg bg-white transition-all duration-300 focus:shadow-xl"
+                className="w-full text-lg font-light bg-transparent border-0 border-b-2 border-gray-300 focus:border-gray-900 focus:outline-none pb-2 transition-colors"
                 autoFocus
               />
-              <button className="absolute right-12 top-1/2 transform -translate-y-1/2 transition-all duration-200 hover:scale-110">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.35-4.35"/>
-                </svg>
-              </button>
             </div>
 
-            {/* Search Results */}
+            {/* Three Column Results */}
             {searchQuery && (
-              <div className={`w-full max-w-5xl bg-white shadow-2xl mx-8 rounded-lg ${
-                searchClosing ? 'animate-search-results-out' : 'animate-search-results-in'
-              }`}>
-                <div className="grid grid-cols-3 min-h-[300px]">
+              <div className="flex-1 overflow-y-auto">
+                <div className="grid grid-cols-3 gap-12 px-16 py-8">
                   {/* Suggestions Column */}
-                  <div className="p-6 border-r border-gray-200">
-                    <h4 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-4">
-                      SUGGESTIONS
-                    </h4>
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">Suggestions</h3>
                     <ul className="space-y-2">
-                      {filteredSuggestions.map((suggestion, index) => (
-                        <li key={index} style={{ animationDelay: `${index * 50}ms` }} className="opacity-0 animate-fade-in">
-                          <button 
-                            className="text-sm text-blue-600 hover:text-blue-800 text-left block transition-all duration-200 hover:translate-x-1"
+                      {filteredSuggestions.slice(0, 5).map((suggestion, index) => (
+                        <li key={index}>
+                          <button
+                            className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors"
                             onClick={() => {
                               setSearchQuery(suggestion);
                               handleSearchClose();
@@ -867,8 +864,8 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
                         </li>
                       ))}
                     </ul>
-                    <button 
-                      className="text-sm text-gray-600 underline hover:text-gray-800 mt-4 block transition-colors duration-200"
+                    <button
+                      className="text-sm text-gray-600 underline hover:text-gray-800 mt-4 block transition-colors"
                       onClick={handleSearchClose}
                     >
                       Search for "{searchQuery}"
@@ -876,48 +873,42 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
                   </div>
 
                   {/* Products Column */}
-                  <div className="p-6 border-r border-gray-200">
-                    <h4 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-4">
-                      PRODUCTS
-                    </h4>
-                    <ul className="space-y-3">
-                      {filteredProducts.map((product, index) => (
-                        <li key={product.id} style={{ animationDelay: `${(index + 5) * 50}ms` }} className="opacity-0 animate-fade-in">
-                          <div className="flex items-start space-x-3 group">
-                            <div className="w-12 h-12 bg-gray-100 rounded flex-shrink-0 overflow-hidden transition-transform duration-300 group-hover:scale-105">
-                              <img 
-                                src="/images/0406900pdcc_550x.webp" 
-                                alt="Product" 
-                                className="w-full h-full object-cover"
-                              />
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">Products</h3>
+                    <ul className="space-y-4">
+                      {filteredProducts.slice(0, 3).map((product) => (
+                        <li key={product.id}>
+                          <button
+                            className="text-left hover:opacity-70 transition-opacity w-full"
+                            onClick={handleSearchClose}
+                          >
+                            <div className="flex space-x-3">
+                              <div className="w-16 h-16 bg-gray-100 rounded flex-shrink-0 overflow-hidden">
+                                <img
+                                  src="/images/0406900pdcc_550x.webp"
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-800 leading-tight">{product.name}</p>
+                                <p className="text-xs text-blue-600 font-medium mt-1">{product.price}</p>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <button 
-                                className="text-xs text-gray-800 text-left hover:text-blue-600 leading-tight block transition-colors duration-200"
-                                onClick={handleSearchClose}
-                              >
-                                {product.name}
-                              </button>
-                              <p className="text-xs font-medium text-gray-700 mt-1">
-                                {product.price}
-                              </p>
-                            </div>
-                          </div>
+                          </button>
                         </li>
                       ))}
                     </ul>
                   </div>
 
                   {/* Pages Column */}
-                  <div className="p-6">
-                    <h4 className="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-4">
-                      PAGES
-                    </h4>
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">Pages</h3>
                     <ul className="space-y-2">
                       {filteredPages.map((page, index) => (
-                        <li key={index} style={{ animationDelay: `${(index + 8) * 50}ms` }} className="opacity-0 animate-fade-in">
-                          <button 
-                            className="text-sm text-gray-700 hover:text-gray-900 text-left block transition-all duration-200 hover:translate-x-1"
+                        <li key={index}>
+                          <button
+                            className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors"
                             onClick={handleSearchClose}
                           >
                             {page}
@@ -929,16 +920,6 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
                 </div>
               </div>
             )}
-
-            {/* Close Button */}
-            <button
-              onClick={handleSearchClose}
-              className="absolute top-6 right-6 p-2 text-white hover:text-gray-300 transition-all duration-200 hover:scale-110 hover:rotate-90"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </div>
       )}

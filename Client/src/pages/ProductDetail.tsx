@@ -351,17 +351,17 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-white">
       <LuxuryNavigationWhite />
-      
-      {/* Mobile Breadcrumb */}
-      <nav className="block lg:hidden px-4 py-3 mb-4 pt-24">
-        <div className="flex items-center text-xs text-gray-500 font-light">
-          <Link to="/" className="hover:text-gray-700">Home</Link>
+
+      {/* Mobile Breadcrumb - Above Image */}
+      <nav className="block lg:hidden px-4 py-3 bg-white border-b border-gray-100 relative z-10 mt-20">
+        <div className="flex items-center text-sm text-gray-700 font-futura-pt">
+          <Link to="/" className="hover:text-gray-900">Home</Link>
           {productData.breadcrumbs && productData.breadcrumbs.map((crumb, index) => (
             <React.Fragment key={index}>
-              <span className="mx-2">→</span>
+              <span className="mx-2 text-gray-400">›</span>
               <Link
                 to={crumb.href}
-                className={`hover:text-gray-700 ${index === productData.breadcrumbs.length - 1 ? 'text-gray-900' : ''}`}
+                className={`hover:text-gray-900 ${index === productData.breadcrumbs.length - 1 ? 'text-gray-900 font-semibold' : ''}`}
               >
                 {crumb.name}
               </Link>
@@ -370,10 +370,11 @@ const ProductDetail = () => {
         </div>
       </nav>
 
-      {/* Mobile Image Carousel - Full Width */}
-      <div className="block lg:hidden w-full">
+      {/* Mobile Image Carousel - Full Width, Large & Clean */}
+      <div className="block lg:hidden w-full bg-white">
         <div
-          className="relative w-full h-[50vh] bg-gray-50 cursor-pointer"
+          className="relative w-full cursor-pointer flex items-center justify-center"
+          style={{ height: '550px' }}
           onClick={() => openLightbox(currentImageIndex)}
         >
           {isVideoFile(productData.images[currentImageIndex]?.url) ? (
@@ -382,17 +383,17 @@ const ProductDetail = () => {
               controls
               autoPlay
               muted
-              className="w-full h-full object-contain p-4"
+              className="max-w-full max-h-full object-contain"
             />
           ) : (
             <img
               src={productData.images[currentImageIndex]?.url}
               alt={productData.images[currentImageIndex]?.alt || productData.name}
-              className="w-full h-full object-contain p-4"
+              className="max-w-full max-h-full object-contain"
             />
           )}
 
-          {/* Navigation Arrows */}
+          {/* Navigation Arrows - Subtle */}
           {productData.images.length > 1 && (
             <>
               <button
@@ -400,7 +401,7 @@ const ProductDetail = () => {
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg z-10"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-amber-300/70 hover:bg-amber-400 rounded-full flex items-center justify-center transition-colors z-10"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-700" />
               </button>
@@ -409,7 +410,7 @@ const ProductDetail = () => {
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg z-10"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-amber-300/70 hover:bg-amber-400 rounded-full flex items-center justify-center transition-colors z-10"
               >
                 <ChevronRight className="w-5 h-5 text-gray-700" />
               </button>
@@ -417,15 +418,15 @@ const ProductDetail = () => {
           )}
 
           {/* Dots Pagination */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1.5 z-10">
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-1.5 z-10">
             {productData.images.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToImage(index)}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                className={`w-2 h-2 rounded-full transition-all ${
                   index === currentImageIndex
                     ? 'bg-gray-900'
-                    : 'bg-gray-400 hover:bg-gray-600'
+                    : 'bg-gray-300 hover:bg-gray-500'
                 }`}
               />
             ))}
@@ -433,9 +434,200 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      {/* Mobile Product Details */}
-      <div className="block lg:hidden px-6 py-4 bg-white">
-        {/* Mobile content will be added here if needed */}
+      {/* Mobile Product Details Section */}
+      <div className="block lg:hidden px-4 py-6 bg-white border-t border-gray-200">
+        <h1 className="text-2xl font-cormorant font-light text-gray-900 mb-2 leading-tight">
+          {productData.name}
+        </h1>
+        <div className="text-lg font-futura-pt font-light text-gray-900 mb-6">
+          {productData.price}
+        </div>
+
+        {/* Mobile Metal Selection */}
+        {productData.available_metals && productData.available_metals.length > 0 && (
+          <div className="mb-4">
+            <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2">
+              Metal: {productData.available_metals.find(metal => metal.id === selectedMetal)?.name || productData.available_metals[0]?.name}
+            </h3>
+            <div className="flex space-x-2">
+              {productData.available_metals.map((metal) => (
+                <button
+                  key={metal.id}
+                  onClick={() => setSelectedMetal(metal.id)}
+                  className={`w-10 h-10 rounded-full border-2 transition-all ${
+                    selectedMetal === metal.id ? 'border-gray-800' : 'border-gray-300'
+                  }`}
+                  style={{ backgroundColor: metal.color }}
+                  title={metal.name}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Size Selection */}
+        <div className="mb-4">
+          <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2">Size</h3>
+          <select
+            value={selectedSize}
+            onChange={(e) => setSelectedSize(e.target.value)}
+            className="w-full border border-gray-300 px-3 py-2 font-futura-pt text-gray-900 text-xs bg-white"
+          >
+            {ringSizes.map((size) => (
+              <option key={size.value} value={size.value}>
+                {size.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Mobile YOUR STONE Section */}
+        {productData?.nivoda_enabled && (
+          <div className="mb-4 border-t pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider">
+                YOUR STONE
+              </h2>
+              <button
+                onClick={() => setExpandedSections({...expandedSections, yourStone: !expandedSections.yourStone})}
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                {expandedSections.yourStone ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {expandedSections.yourStone && (
+              <div className="space-y-3">
+                {/* Stone Type */}
+                {productData?.show_stone_type && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Stone Type:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {stoneOptions.stoneType.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => setSelectedStoneType(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
+                            selectedStoneType === option.value
+                              ? 'bg-amber-50 border-amber-200'
+                              : 'bg-white border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Carat */}
+                {productData?.show_carat && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Carat:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {stoneOptions.carat.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => setSelectedCarat(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
+                            selectedCarat === option.value
+                              ? 'bg-amber-50 border-amber-200'
+                              : 'bg-white border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Clarity */}
+                {productData?.show_clarity && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Clarity:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {stoneOptions.clarity.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => setSelectedClarity(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
+                            selectedClarity === option.value
+                              ? 'bg-amber-50 border-amber-200'
+                              : 'bg-white border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Colour */}
+                {productData?.show_colour && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Colour:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {stoneOptions.colour.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => setSelectedColour(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
+                            selectedColour === option.value
+                              ? 'bg-amber-50 border-amber-200'
+                              : 'bg-white border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cut */}
+                {productData?.show_cut && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Cut:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {stoneOptions.cut.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => setSelectedCut(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
+                            selectedCut === option.value
+                              ? 'bg-amber-50 border-amber-200'
+                              : 'bg-white border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mobile Action Buttons */}
+        <div className="space-y-2 mb-4">
+          <Button
+            onClick={handleAddToCart}
+            disabled={isLoading}
+            className="w-full bg-amber-100 hover:bg-amber-200 text-gray-900 py-3 font-futura-pt font-light"
+          >
+            {isLoading ? 'Adding...' : 'ADD TO BAG'}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full border border-gray-900 text-gray-900 hover:bg-gray-50 py-3 font-futura-pt font-light"
+          >
+            ENQUIRE
+          </Button>
+        </div>
       </div>
 
       <main className="max-w-full mx-auto px-0 pt-0 lg:pt-44 pb-8">
