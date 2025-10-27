@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import MultiSelect from './MultiSelect';
 import { Package, Upload, Plus, X, Loader2 } from 'lucide-react';
+import API_BASE_URL from '../../config/api';
 
 interface ProductFormData {
   name: string;
@@ -42,6 +43,14 @@ interface ProductFormData {
   show_cut: boolean;
   show_certificate: boolean;
   certificate: string;
+  // Nivoda Options Configuration
+  nivoda_options_config?: {
+    selectedCarats: Array<{ value: string; priceAdjustment: string }>;
+    selectedClarities: Array<{ value: string; priceAdjustment: string }>;
+    selectedColours: Array<{ value: string; priceAdjustment: string }>;
+    selectedCuts: Array<{ value: string; priceAdjustment: string }>;
+    selectedStoneTypes: Array<{ value: string; priceAdjustment: string }>;
+  };
   images: Array<{ file: File | null; url: string; alt_text: string }>;
   videos: Array<{ file: File | null; url: string; title: string }>;
   variants: Array<{
@@ -126,6 +135,14 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     show_cut: false,
     show_certificate: false,
     certificate: '',
+    // Nivoda Options Configuration
+    nivoda_options_config: {
+      selectedCarats: [],
+      selectedClarities: [],
+      selectedColours: [],
+      selectedCuts: [],
+      selectedStoneTypes: []
+    },
     images: [],
     videos: [],
     variants: []
@@ -133,6 +150,48 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('basic');
+
+  // Nivoda Integration State
+  const [nivodaAvailableOptions, setNivodaAvailableOptions] = useState<{
+    carats: string[];
+    clarities: string[];
+    colours: string[];
+    cuts: string[];
+    stoneTypes: string[];
+  } | null>(null);
+  const [nivodaLoading, setNivodaLoading] = useState(false);
+  const [nivodaError, setNivodaError] = useState<string | null>(null);
+
+  // Function to fetch available Nivoda options
+  const fetchNivodaOptions = async () => {
+    setNivodaLoading(true);
+    setNivodaError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/nivoda/available-options`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Nivoda options');
+      }
+
+      const data = await response.json();
+      setNivodaAvailableOptions({
+        carats: data.data?.carats || [],
+        clarities: data.data?.clarities || [],
+        colours: data.data?.colours || [],
+        cuts: data.data?.cuts || [],
+        stoneTypes: data.data?.stoneTypes || []
+      });
+    } catch (error: any) {
+      setNivodaError(error.message || 'Failed to load Nivoda options');
+    } finally {
+      setNivodaLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -187,6 +246,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     setErrors({});
     setActiveTab('basic');
   }, [initialData, isOpen]);
+
+  // Fetch Nivoda options when Nivoda is enabled
+  useEffect(() => {
+    if (formData.nivoda_enabled && !nivodaAvailableOptions) {
+      fetchNivodaOptions();
+    }
+  }, [formData.nivoda_enabled]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
