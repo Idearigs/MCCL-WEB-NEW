@@ -261,32 +261,28 @@ export default function MainContentSection(): JSX.Element {
       {/* Hero Section */}
       <section className="relative w-full overflow-hidden" style={{ height: '100vh', minHeight: '100vh' }}>
         {/* YouTube Video Background - Fullscreen */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden bg-black">
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: '100%',
-            height: '100%',
-            transform: 'translate(-50%, -50%) scale(1.8)',
-            overflow: 'hidden'
-          }}>
-            <iframe
-              src="https://www.youtube-nocookie.com/embed/m9K10HyJIe4?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=m9K10HyJIe4&rel=0&iv_load_policy=3&vq=hd1080"
-              title="McCulloch Jewelry Collection Video"
-              allow="autoplay"
-              referrerPolicy="strict-origin-when-cross-origin"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                pointerEvents: 'none'
-              }}
-            />
-          </div>
+        <div className="absolute inset-0 w-full h-full overflow-hidden bg-black" style={{
+          paddingTop: 'max(0px, (100vh - 100vw * 9/16) / 2)'
+        }}>
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/m9K10HyJIe4?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=m9K10HyJIe4&rel=0&iv_load_policy=3&vq=hd1080"
+            title="McCulloch Jewelry Collection Video"
+            allow="autoplay"
+            referrerPolicy="strict-origin-when-cross-origin"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '120vw',
+              height: '120vh',
+              minWidth: '120vw',
+              minHeight: '120vh',
+              transform: 'translate(-50%, -50%)',
+              border: 'none',
+              pointerEvents: 'none',
+              objectFit: 'cover'
+            }}
+          />
         </div>
         {/* Dark Overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-40 z-10" />
