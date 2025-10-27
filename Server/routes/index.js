@@ -9,6 +9,7 @@ const watchRoutes = require('./watchRoutes');
 const userRoutes = require('./users');
 const favoritesRoutes = require('./favorites');
 const authRoutes = require('./auth');
+const nivodaRoutes = require('./nivoda');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -29,6 +30,7 @@ router.use('/watches', watchRoutes);
 router.use('/users', userRoutes);
 router.use('/favorites', favoritesRoutes);
 router.use('/auth', authRoutes);
+router.use('/nivoda', nivodaRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {
