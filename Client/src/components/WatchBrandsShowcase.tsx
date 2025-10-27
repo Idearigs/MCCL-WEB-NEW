@@ -79,33 +79,23 @@ const WatchBrandsShowcase = (): JSX.Element => {
             }`}
           >
             {brand.youtubeId ? (
-              <div className="absolute inset-0 w-full h-full overflow-hidden">
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  overflow: 'hidden'
-                }}>
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${brand.youtubeId}?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=${brand.youtubeId}&rel=0&iv_load_policy=3&vq=hd1080`}
-                    title={brand.title}
-                    allow="autoplay"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      border: 'none',
-                      pointerEvents: 'none',
-                      transform: 'scale(1.3)',
-                      transformOrigin: 'center'
-                    }}
-                  />
-                </div>
+              <div className="absolute inset-0 w-full h-full overflow-hidden bg-black">
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${brand.youtubeId}?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=${brand.youtubeId}&rel=0&iv_load_policy=3&vq=hd1080`}
+                  title={brand.title}
+                  allow="autoplay"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    width: 'max(100vw, calc(100vh * 16 / 9))',
+                    height: 'max(100vh, calc(100vw * 9 / 16))',
+                    transform: 'translate(-50%, -50%)',
+                    border: 'none',
+                    pointerEvents: 'none'
+                  }}
+                />
               </div>
             ) : (
               <video
