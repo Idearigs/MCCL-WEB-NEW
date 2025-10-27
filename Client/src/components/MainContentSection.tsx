@@ -285,7 +285,7 @@ export default function MainContentSection(): JSX.Element {
         {/* Content Container */}
         <div className="relative z-20 flex flex-col items-center justify-center h-full text-center text-white px-4 w-full">
           <h1
-            className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl leading-tight sm:leading-snug md:leading-tight lg:leading-tight mb-3 md:mb-6 max-w-full opacity-0 animate-fade-in-up font-cormorant font-semibold"
+            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl leading-tight sm:leading-snug md:leading-tight lg:leading-tight mb-4 md:mb-8 max-w-full opacity-0 animate-fade-in-up font-cormorant font-semibold"
             style={{
               animationDelay: '0.5s',
               animationFillMode: 'forwards'
@@ -294,7 +294,7 @@ export default function MainContentSection(): JSX.Element {
             THE CELESTIAL <span className="italic block sm:inline">COLLECTION</span>
           </h1>
           <p
-            className="text-xs sm:text-sm md:text-base leading-5 md:leading-6 font-normal mb-4 md:mb-8 max-w-full tracking-wide opacity-0 animate-fade-in-up px-2"
+            className="text-sm sm:text-base md:text-lg leading-6 md:leading-7 font-normal mb-6 md:mb-10 max-w-full tracking-wide opacity-0 animate-fade-in-up px-2"
             style={{
               fontFamily: 'Inter, sans-serif',
               animationDelay: '0.8s',
