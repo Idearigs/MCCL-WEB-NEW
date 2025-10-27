@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, ChevronUp, Plus, X, Minus, ZoomIn, ZoomOut } from 'lucide-react';
@@ -163,7 +163,7 @@ const ProductDetail = () => {
   const stoneOptions = buildStoneOptions();
 
   // Fetch price from Nivoda API based on selected specs
-  const fetchNivodaPrice = async (carat?: string, clarity?: string, colour?: string, cut?: string) => {
+  const fetchNivodaPrice = useCallback(async (carat?: string, clarity?: string, colour?: string, cut?: string) => {
     if (!productData?.nivoda_enabled) return;
 
     // Only fetch if we have the key specs selected
@@ -180,10 +180,13 @@ const ProductDetail = () => {
         cut
       });
 
+      console.log('API URL:', `${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params}`);
       const response = await fetch(`${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params}`);
       const data = await response.json();
 
+      console.log('API Response:', data);
       if (data.success && data.data?.prices) {
+        console.log('Price updated:', data.data.prices);
         setNivodaPrice(data.data.prices);
       } else {
         setNivodaPriceError('Could not fetch price for this specification');
@@ -194,7 +197,7 @@ const ProductDetail = () => {
     } finally {
       setNivodaPriceLoading(false);
     }
-  };
+  }, [productData?.nivoda_enabled]);
 
   // Calculate total price - use Nivoda API price if available, otherwise use base price
   const calculateTotalPrice = () => {
@@ -305,9 +308,10 @@ const ProductDetail = () => {
   // Fetch price when any selection changes
   useEffect(() => {
     if (productData?.nivoda_enabled && selectedCarat && selectedClarity && selectedColour && selectedCut) {
+      console.log('Fetching Nivoda price for:', { selectedCarat, selectedClarity, selectedColour, selectedCut });
       fetchNivodaPrice(selectedCarat, selectedClarity, selectedColour, selectedCut);
     }
-  }, [selectedCarat, selectedClarity, selectedColour, selectedCut, productData?.nivoda_enabled]);
+  }, [selectedCarat, selectedClarity, selectedColour, selectedCut, productData?.nivoda_enabled, fetchNivodaPrice]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
