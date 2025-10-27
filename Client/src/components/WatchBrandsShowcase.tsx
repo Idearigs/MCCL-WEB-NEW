@@ -89,8 +89,8 @@ const WatchBrandsShowcase = (): JSX.Element => {
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
-                    width: 'max(100vw, calc(100vh * 16 / 9))',
-                    height: 'max(100vh, calc(100vw * 9 / 16))',
+                    width: '110vw',
+                    height: '110vh',
                     transform: 'translate(-50%, -50%)',
                     border: 'none',
                     pointerEvents: 'none'
