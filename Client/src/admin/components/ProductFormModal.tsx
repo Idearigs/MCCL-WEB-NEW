@@ -1257,111 +1257,479 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     <h4 className="text-sm font-medium text-gray-900 font-satoshi mb-4">
                       Stone Specification Display Options
                     </h4>
-                    <p className="text-xs text-gray-500 mb-4 font-satoshi">
+                    <p className="text-xs text-gray-500 mb-6 font-satoshi">
                       Choose which diamond specifications to display on the product detail page
                     </p>
 
-                    <div className="space-y-3">
-                      {/* Stone Type Toggle */}
-                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 font-satoshi">
-                          Show Stone Type (Natural/Lab-Grown)
-                        </label>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.show_stone_type}
-                            onChange={(e) => handleInputChange('show_stone_type', e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
+                    <div className="space-y-4">
+                      {/* Stone Type Toggle + Options */}
+                      <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-sm font-medium text-gray-700 font-satoshi">
+                            Show Stone Type (Natural/Lab-Grown)
+                          </label>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.show_stone_type}
+                              onChange={(e) => {
+                                handleInputChange('show_stone_type', e.target.checked);
+                                if (!e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    nivoda_options_config: {
+                                      ...formData.nivoda_options_config!,
+                                      selectedStoneTypes: []
+                                    }
+                                  });
+                                }
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+                        {formData.show_stone_type && nivodaAvailableOptions?.stoneTypes && (
+                          <div className="pl-3 border-l-2 border-blue-300 space-y-2">
+                            {['Natural', 'Lab-Grown'].map((type) => {
+                              const isSelected = formData.nivoda_options_config?.selectedStoneTypes?.some(s => s.value === type) || false;
+                              return (
+                                <div key={type} className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    id={`stone-${type}`}
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedStoneTypes: [...(formData.nivoda_options_config?.selectedStoneTypes || []), { value: type, priceAdjustment: '0' }]
+                                          }
+                                        });
+                                      } else {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedStoneTypes: (formData.nivoda_options_config?.selectedStoneTypes || []).filter(s => s.value !== type)
+                                          }
+                                        });
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor={`stone-${type}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                    {type}
+                                  </label>
+                                  {isSelected && (
+                                    <input
+                                      type="number"
+                                      placeholder="Price adjustment"
+                                      defaultValue={(formData.nivoda_options_config?.selectedStoneTypes?.find(s => s.value === type)?.priceAdjustment) || '0'}
+                                      onChange={(e) => {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedStoneTypes: (formData.nivoda_options_config?.selectedStoneTypes || []).map(s =>
+                                              s.value === type ? { ...s, priceAdjustment: e.target.value } : s
+                                            )
+                                          }
+                                        });
+                                      }}
+                                      className="w-24 px-2 py-1 border border-gray-200 rounded text-sm"
+                                    />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Carat Toggle */}
-                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 font-satoshi">
-                          Show Carat Weight Options
-                        </label>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.show_carat}
-                            onChange={(e) => handleInputChange('show_carat', e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
+                      {/* Carat Toggle + Options */}
+                      <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-sm font-medium text-gray-700 font-satoshi">
+                            Show Carat Weight Options
+                          </label>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.show_carat}
+                              onChange={(e) => {
+                                handleInputChange('show_carat', e.target.checked);
+                                if (!e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    nivoda_options_config: {
+                                      ...formData.nivoda_options_config!,
+                                      selectedCarats: []
+                                    }
+                                  });
+                                }
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+                        {formData.show_carat && nivodaAvailableOptions?.carats && (
+                          <div className="pl-3 border-l-2 border-blue-300 space-y-2 max-h-64 overflow-y-auto">
+                            {nivodaAvailableOptions.carats.map((carat) => {
+                              const isSelected = formData.nivoda_options_config?.selectedCarats.some(c => c.value === carat) || false;
+                              return (
+                                <div key={carat} className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    id={`carat-${carat}`}
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedCarats: [...(formData.nivoda_options_config?.selectedCarats || []), { value: carat, priceAdjustment: '0' }]
+                                          }
+                                        });
+                                      } else {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedCarats: (formData.nivoda_options_config?.selectedCarats || []).filter(c => c.value !== carat)
+                                          }
+                                        });
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor={`carat-${carat}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                    {carat} ct
+                                  </label>
+                                  {isSelected && (
+                                    <input
+                                      type="number"
+                                      placeholder="Price adjustment"
+                                      defaultValue={(formData.nivoda_options_config?.selectedCarats.find(c => c.value === carat)?.priceAdjustment) || '0'}
+                                      onChange={(e) => {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedCarats: (formData.nivoda_options_config?.selectedCarats || []).map(c =>
+                                              c.value === carat ? { ...c, priceAdjustment: e.target.value } : c
+                                            )
+                                          }
+                                        });
+                                      }}
+                                      className="w-24 px-2 py-1 border border-gray-200 rounded text-sm"
+                                    />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Clarity Toggle */}
-                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 font-satoshi">
-                          Show Clarity Options
-                        </label>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.show_clarity}
-                            onChange={(e) => handleInputChange('show_clarity', e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
+                      {/* Clarity Toggle + Options */}
+                      <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-sm font-medium text-gray-700 font-satoshi">
+                            Show Clarity Options
+                          </label>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.show_clarity}
+                              onChange={(e) => {
+                                handleInputChange('show_clarity', e.target.checked);
+                                if (!e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    nivoda_options_config: {
+                                      ...formData.nivoda_options_config!,
+                                      selectedClarities: []
+                                    }
+                                  });
+                                }
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+                        {formData.show_clarity && nivodaAvailableOptions?.clarities && (
+                          <div className="pl-3 border-l-2 border-blue-300 space-y-2 max-h-64 overflow-y-auto">
+                            {nivodaAvailableOptions.clarities.map((clarity) => {
+                              const isSelected = formData.nivoda_options_config?.selectedClarities.some(c => c.value === clarity) || false;
+                              return (
+                                <div key={clarity} className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    id={`clarity-${clarity}`}
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedClarities: [...(formData.nivoda_options_config?.selectedClarities || []), { value: clarity, priceAdjustment: '0' }]
+                                          }
+                                        });
+                                      } else {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedClarities: (formData.nivoda_options_config?.selectedClarities || []).filter(c => c.value !== clarity)
+                                          }
+                                        });
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor={`clarity-${clarity}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                    {clarity}
+                                  </label>
+                                  {isSelected && (
+                                    <input
+                                      type="number"
+                                      placeholder="Price adjustment"
+                                      defaultValue={(formData.nivoda_options_config?.selectedClarities.find(c => c.value === clarity)?.priceAdjustment) || '0'}
+                                      onChange={(e) => {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedClarities: (formData.nivoda_options_config?.selectedClarities || []).map(c =>
+                                              c.value === clarity ? { ...c, priceAdjustment: e.target.value } : c
+                                            )
+                                          }
+                                        });
+                                      }}
+                                      className="w-24 px-2 py-1 border border-gray-200 rounded text-sm"
+                                    />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Colour Toggle */}
-                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 font-satoshi">
-                          Show Colour Options
-                        </label>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.show_colour}
-                            onChange={(e) => handleInputChange('show_colour', e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
+                      {/* Colour Toggle + Options */}
+                      <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-sm font-medium text-gray-700 font-satoshi">
+                            Show Colour Options
+                          </label>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.show_colour}
+                              onChange={(e) => {
+                                handleInputChange('show_colour', e.target.checked);
+                                if (!e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    nivoda_options_config: {
+                                      ...formData.nivoda_options_config!,
+                                      selectedColours: []
+                                    }
+                                  });
+                                }
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+                        {formData.show_colour && nivodaAvailableOptions?.colours && (
+                          <div className="pl-3 border-l-2 border-blue-300 space-y-2 max-h-64 overflow-y-auto">
+                            {nivodaAvailableOptions.colours.map((colour) => {
+                              const isSelected = formData.nivoda_options_config?.selectedColours.some(c => c.value === colour) || false;
+                              return (
+                                <div key={colour} className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    id={`colour-${colour}`}
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedColours: [...(formData.nivoda_options_config?.selectedColours || []), { value: colour, priceAdjustment: '0' }]
+                                          }
+                                        });
+                                      } else {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedColours: (formData.nivoda_options_config?.selectedColours || []).filter(c => c.value !== colour)
+                                          }
+                                        });
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor={`colour-${colour}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                    {colour}
+                                  </label>
+                                  {isSelected && (
+                                    <input
+                                      type="number"
+                                      placeholder="Price adjustment"
+                                      defaultValue={(formData.nivoda_options_config?.selectedColours.find(c => c.value === colour)?.priceAdjustment) || '0'}
+                                      onChange={(e) => {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedColours: (formData.nivoda_options_config?.selectedColours || []).map(c =>
+                                              c.value === colour ? { ...c, priceAdjustment: e.target.value } : c
+                                            )
+                                          }
+                                        });
+                                      }}
+                                      className="w-24 px-2 py-1 border border-gray-200 rounded text-sm"
+                                    />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
-                      {/* Cut Toggle */}
-                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 font-satoshi">
-                          Show Cut Quality Options
-                        </label>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.show_cut}
-                            onChange={(e) => handleInputChange('show_cut', e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
+                      {/* Cut Toggle + Options */}
+                      <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-sm font-medium text-gray-700 font-satoshi">
+                            Show Cut Quality Options
+                          </label>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.show_cut}
+                              onChange={(e) => {
+                                handleInputChange('show_cut', e.target.checked);
+                                if (!e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    nivoda_options_config: {
+                                      ...formData.nivoda_options_config!,
+                                      selectedCuts: []
+                                    }
+                                  });
+                                }
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+                        {formData.show_cut && nivodaAvailableOptions?.cuts && (
+                          <div className="pl-3 border-l-2 border-blue-300 space-y-2">
+                            {nivodaAvailableOptions.cuts.map((cut) => {
+                              const isSelected = formData.nivoda_options_config?.selectedCuts.some(c => c.value === cut) || false;
+                              return (
+                                <div key={cut} className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    id={`cut-${cut}`}
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedCuts: [...(formData.nivoda_options_config?.selectedCuts || []), { value: cut, priceAdjustment: '0' }]
+                                          }
+                                        });
+                                      } else {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedCuts: (formData.nivoda_options_config?.selectedCuts || []).filter(c => c.value !== cut)
+                                          }
+                                        });
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor={`cut-${cut}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                    {cut}
+                                  </label>
+                                  {isSelected && (
+                                    <input
+                                      type="number"
+                                      placeholder="Price adjustment"
+                                      defaultValue={(formData.nivoda_options_config?.selectedCuts.find(c => c.value === cut)?.priceAdjustment) || '0'}
+                                      onChange={(e) => {
+                                        setFormData({
+                                          ...formData,
+                                          nivoda_options_config: {
+                                            ...formData.nivoda_options_config!,
+                                            selectedCuts: (formData.nivoda_options_config?.selectedCuts || []).map(c =>
+                                              c.value === cut ? { ...c, priceAdjustment: e.target.value } : c
+                                            )
+                                          }
+                                        });
+                                      }}
+                                      className="w-24 px-2 py-1 border border-gray-200 rounded text-sm"
+                                    />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
                       {/* Certificate Toggle */}
-                      <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-                        <label className="text-sm font-medium text-gray-700 font-satoshi">
-                          Show Certificate Information
-                        </label>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.show_certificate}
-                            onChange={(e) => handleInputChange('show_certificate', e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
+                      <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-sm font-medium text-gray-700 font-satoshi">
+                            Show Certificate Information
+                          </label>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.show_certificate}
+                              onChange={(e) => handleInputChange('show_certificate', e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+                        {formData.show_certificate && (
+                          <div className="pl-3 border-l-2 border-blue-300">
+                            <input
+                              type="text"
+                              placeholder="e.g., GIA"
+                              value={formData.certificate}
+                              onChange={(e) => handleInputChange('certificate', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-200 rounded text-sm font-satoshi"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Nivoda Options Configuration */}
-                  <div className="border-t border-gray-200 pt-6">
+                  {/* Removed separate "Select Diamond Options from Nivoda" section as options now appear directly below toggles */}
+                  <div className="hidden border-t border-gray-200 pt-6">
                     <h4 className="text-sm font-medium text-gray-900 font-satoshi mb-4">
                       Select Diamond Options from Nivoda
                     </h4>
