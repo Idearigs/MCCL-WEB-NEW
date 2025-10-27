@@ -1,32 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git mv:*)",
-      "Bash(git reset:*)",
-      "Read(//c/Users/minuk/AppData/Local/Packages/Microsoft.ScreenSketch_8wekyb3d8bbwe/TempState/Snips/**)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push)",
-      "Bash(cat:*)",
-      "Bash(python:*)",
-      "Bash(pip install:*)",
-      "Bash(node run-migration.js:*)",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:bitbucket.org)",
-      "WebSearch",
-      "WebFetch(domain:www.transpacific-software.com)",
-      "WebFetch(domain:engineering.nivoda.net)",
-      "Read(//c/Users/minuk/Downloads/Documents/**)",
-      "Bash(node run-nivoda-migration.js)",
-      "Bash(git push:*)",
-      "Bash(node test-nivoda-api.js:*)",
-      "Bash(node test-nivoda-direct.js:*)",
-      "Bash(node test-nivoda-schema.js:*)",
-      "Bash(node test-nivoda-items.js:*)",
-      "Bash(node test-nivoda-inclusions.js:*)",
-      "WebFetch(domain:)",
-      "Read(//c/Users/minuk/Downloads/**)",
-      "Bash(nivoda \")"
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": [],

@@ -2042,42 +2042,47 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                           </div>
                         )}
 
-                        {/* Price Preview */}
+                        {/* Nivoda Configuration Summary */}
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-                          <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Price Summary</h5>
-                          <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Nivoda Configuration Summary</h5>
+                          <div className="space-y-3">
                             <div className="flex justify-between text-sm font-satoshi">
-                              <span className="text-gray-700">Base Price:</span>
-                              <span className="font-medium">{formData.currency} {formData.base_price}</span>
+                              <span className="text-gray-700">Stone Type:</span>
+                              <span className="font-medium capitalize">{formData.nivoda_options_config?.stoneType || 'Not set'}</span>
                             </div>
-                            {(formData.nivoda_options_config?.selectedCarats.length || 0) > 0 && (
-                              <div className="flex justify-between text-sm font-satoshi">
-                                <span className="text-gray-700">Carat Adjustments:</span>
-                                <span className="font-medium">
-                                  + {formData.currency} {(formData.nivoda_options_config?.selectedCarats.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0).toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                            {(formData.nivoda_options_config?.selectedClarities.length || 0) > 0 && (
-                              <div className="flex justify-between text-sm font-satoshi">
-                                <span className="text-gray-700">Clarity Adjustments:</span>
-                                <span className="font-medium">
-                                  + {formData.currency} {(formData.nivoda_options_config?.selectedClarities.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0).toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                            <div className="border-t border-blue-200 pt-2 flex justify-between">
-                              <span className="text-sm font-medium text-gray-900">Estimated Max Price:</span>
-                              <span className="text-lg font-bold text-blue-600">
-                                {formData.currency} {(
-                                  parseFloat(formData.base_price || '0') +
-                                  (formData.nivoda_options_config?.selectedCarats.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0) +
-                                  (formData.nivoda_options_config?.selectedClarities.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0) +
-                                  (formData.nivoda_options_config?.selectedColours.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0) +
-                                  (formData.nivoda_options_config?.selectedCuts.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0) +
-                                  (formData.nivoda_options_config?.selectedStoneTypes.reduce((acc, s) => acc + (parseFloat(s.priceAdjustment) || 0), 0) || 0)
-                                ).toFixed(2)}
+                            <div className="flex justify-between text-sm font-satoshi">
+                              <span className="text-gray-700">Carat Range:</span>
+                              <span className="font-medium">
+                                {formData.nivoda_options_config?.caratRange?.min || '0.5'} - {formData.nivoda_options_config?.caratRange?.max || '2.0'} ct
                               </span>
+                            </div>
+                            <div className="flex justify-between text-sm font-satoshi">
+                              <span className="text-gray-700">Clarity Options:</span>
+                              <span className="font-medium text-right">
+                                {(formData.nivoda_options_config?.clarityOptions?.length || 0) > 0
+                                  ? formData.nivoda_options_config?.clarityOptions?.join(', ')
+                                  : 'None selected'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm font-satoshi">
+                              <span className="text-gray-700">Colour Options:</span>
+                              <span className="font-medium text-right">
+                                {(formData.nivoda_options_config?.colourOptions?.length || 0) > 0
+                                  ? formData.nivoda_options_config?.colourOptions?.join(', ')
+                                  : 'None selected'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm font-satoshi">
+                              <span className="text-gray-700">Cut Options:</span>
+                              <span className="font-medium text-right">
+                                {(formData.nivoda_options_config?.cutOptions?.length || 0) > 0
+                                  ? formData.nivoda_options_config?.cutOptions?.join(', ')
+                                  : 'None selected'}
+                              </span>
+                            </div>
+                            <div className="border-t border-blue-200 pt-2 bg-blue-50 p-2 rounded text-xs text-gray-600 font-satoshi">
+                              <p className="font-medium text-gray-700 mb-1">Note:</p>
+                              <p>Prices will be calculated dynamically from the Nivoda API based on customer selections. No manual price adjustments are needed.</p>
                             </div>
                           </div>
                         </div>
