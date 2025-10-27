@@ -285,10 +285,11 @@ export default function MainContentSection(): JSX.Element {
         {/* Content Container */}
         <div className="relative z-20 flex flex-col items-center justify-center h-full text-center text-white px-4 w-full">
           <h1
-            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl leading-tight sm:leading-snug md:leading-tight lg:leading-tight mb-4 md:mb-8 max-w-full opacity-0 animate-fade-in-up font-cormorant font-semibold"
+            className="text-3xl sm:text-4xl md:text-6xl leading-tight sm:leading-snug md:leading-tight mb-4 md:mb-8 max-w-full opacity-0 animate-fade-in-up font-cormorant font-semibold"
             style={{
               animationDelay: '0.5s',
-              animationFillMode: 'forwards'
+              animationFillMode: 'forwards',
+              fontSize: 'clamp(2rem, 8vw, 5rem)'
             }}
           >
             THE CELESTIAL <span className="italic block sm:inline">COLLECTION</span>
@@ -298,20 +299,21 @@ export default function MainContentSection(): JSX.Element {
             style={{
               fontFamily: 'Inter, sans-serif',
               animationDelay: '0.8s',
-              animationFillMode: 'forwards'
+              animationFillMode: 'forwards',
+              fontSize: 'clamp(0.875rem, 2vw, 1.5rem)'
             }}
           >
             Forever yours.
           </p>
           <Button
             variant="outline"
-            className="h-11 sm:h-12 md:h-[50px] w-48 sm:w-56 md:w-[280px] bg-white bg-opacity-95 border-0 text-gray-900 hover:bg-white hover:bg-opacity-100 hover:scale-105 transition-all duration-300 font-normal tracking-wider uppercase opacity-0 animate-fade-in-up text-xs sm:text-sm"
+            className="h-11 sm:h-12 md:h-14 w-48 sm:w-56 md:w-80 bg-white bg-opacity-95 border-0 text-gray-900 hover:bg-white hover:bg-opacity-100 hover:scale-105 transition-all duration-300 font-normal tracking-wider uppercase opacity-0 animate-fade-in-up text-xs sm:text-sm"
             style={{
               animationDelay: '1.1s',
               animationFillMode: 'forwards'
             }}
           >
-            <span className="text-[10px] sm:text-xs md:text-[12px] font-normal tracking-[1px] md:tracking-[1.5px]" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <span className="text-[10px] sm:text-xs md:text-sm font-normal tracking-[1px] md:tracking-[1.5px]" style={{ fontFamily: 'Inter, sans-serif' }}>
               EXPLORE THE COLLECTION
             </span>
           </Button>
