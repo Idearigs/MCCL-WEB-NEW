@@ -6,78 +6,180 @@
 const nivodaService = require('../services/nivodaService');
 
 /**
- * Get available Nivoda diamond options
- * Returns all available carat weights, clarities, colors, cuts, and stone types
+ * Get available Nivoda diamond options (from actual API data)
+ * Returns available carat weights, clarities, colors, cuts extracted from Nivoda API
  */
 async function getAvailableOptions(req, res) {
   try {
-    // These are standard diamond grading scales available from Nivoda API
+    // Fetch a broad search to extract all available options
+    const diamonds = await nivodaService.searchDiamonds({
+      minCarat: 0.5,
+      maxCarat: 10,
+      minPrice: 0,
+      maxPrice: 500000,
+      limit: 100,  // Get more diamonds to extract all available options
+      offset: 0
+    });
+
+    // Extract unique values from the diamonds
+    const uniqueCarats = new Set();
+    const uniqueClarities = new Set();
+    const uniqueColours = new Set();
+    const uniqueCuts = new Set();
+
+    if (diamonds.items && Array.isArray(diamonds.items)) {
+      diamonds.items.forEach(item => {
+        if (item.diamond) {
+          if (item.diamond.carat) uniqueCarats.add(item.diamond.carat.toString());
+          if (item.diamond.clarity) uniqueClarities.add(item.diamond.clarity);
+          if (item.diamond.color) uniqueColours.add(item.diamond.color);
+          if (item.diamond.cut) uniqueCuts.add(item.diamond.cut);
+        }
+      });
+    }
+
+    // Sort and format the options
     const availableOptions = {
-      carats: [
-        '0.5', '0.75', '1.0', '1.25', '1.5', '1.75', '2.0', '2.25', '2.5',
-        '2.75', '3.0', '3.5', '4.0', '4.5', '5.0', '6.0', '7.0', '8.0',
-        '9.0', '10.0'
-      ],
-      clarities: [
-        'IF',     // Internally Flawless
-        'VVS1',   // Very Very Slightly Included 1
-        'VVS2',   // Very Very Slightly Included 2
-        'VS1',    // Very Slightly Included 1
-        'VS2',    // Very Slightly Included 2
-        'SI1',    // Slightly Included 1
-        'SI2',    // Slightly Included 2
-        'I1'      // Included 1
-      ],
-      colours: [
-        'D', 'E', 'F',  // Colorless
-        'G', 'H', 'I', 'J',  // Near Colorless
-        'K', 'L', 'M',  // Faint
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'  // Light/Fancy
-      ],
-      cuts: [
-        'EX',   // Excellent
-        'VG',   // Very Good
-        'G',    // Good
-        'F'     // Fair
-      ],
-      stoneTypes: [
-        'Natural',
-        'Lab-Grown'
-      ]
+      carats: Array.from(uniqueCarats)
+        .map(c => parseFloat(c))
+        .sort((a, b) => a - b)
+        .map(c => c.toString()),
+      clarities: Array.from(uniqueClarities).sort(),
+      colours: Array.from(uniqueColours).sort(),
+      cuts: Array.from(uniqueCuts).sort(),
+      stoneTypes: ['Natural', 'Lab-Grown']  // Standard stone types
     };
 
     return res.json({
       success: true,
       data: availableOptions,
-      message: 'Available Nivoda diamond options retrieved successfully'
+      message: 'Available Nivoda diamond options retrieved from API',
+      source: 'nivoda_api'
     });
   } catch (error) {
-    console.error('Error fetching available options:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to fetch available options'
+    console.error('Error fetching available options from Nivoda API:', error);
+    // Fallback to standard options if API fails
+    const fallbackOptions = {
+      carats: ['0.5', '0.75', '1.0', '1.25', '1.5', '1.75', '2.0', '2.5', '3.0', '5.0'],
+      clarities: ['IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'],
+      colours: ['D', 'E', 'F', 'G', 'H', 'I', 'J'],
+      cuts: ['EX', 'VG', 'G', 'F'],
+      stoneTypes: ['Natural', 'Lab-Grown']
+    };
+
+    return res.json({
+      success: true,
+      data: fallbackOptions,
+      message: 'Using fallback standard diamond options',
+      source: 'fallback',
+      error: error.message
     });
   }
 }
 
 /**
  * Search diamonds from Nivoda API
+ * Query params: minCarat, maxCarat, minPrice, maxPrice, color, clarity, cut, limit, offset
  */
 async function searchDiamonds(req, res) {
   try {
-    const filters = req.query;
+    // Build filters from query params
+    const filters = {
+      minCarat: parseFloat(req.query.minCarat) || 0.5,
+      maxCarat: parseFloat(req.query.maxCarat) || 10,
+      minPrice: parseFloat(req.query.minPrice) || 0,
+      maxPrice: parseFloat(req.query.maxPrice) || 500000,
+      color: req.query.color ? req.query.color.split(',') : undefined,
+      clarity: req.query.clarity ? req.query.clarity.split(',') : undefined,
+      cut: req.query.cut ? req.query.cut.split(',') : undefined,
+      limit: parseInt(req.query.limit) || 20,
+      offset: parseInt(req.query.offset) || 0
+    };
+
     const diamonds = await nivodaService.searchDiamonds(filters);
 
     return res.json({
       success: true,
       data: diamonds,
-      message: 'Diamonds retrieved successfully'
+      message: 'Diamonds retrieved successfully',
+      count: diamonds.items?.length || 0,
+      total: diamonds.total_count || 0
     });
   } catch (error) {
     console.error('Error searching diamonds:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to search diamonds'
+    });
+  }
+}
+
+/**
+ * Get price suggestions for diamond specs
+ * Query params: carat, clarity, color, cut
+ * Returns: matching diamonds with prices
+ */
+async function getDiamondPriceBySuggestions(req, res) {
+  try {
+    const { carat, clarity, color, cut } = req.query;
+
+    // Build filter with specific specs
+    const filters = {
+      minCarat: Math.max(0.1, (parseFloat(carat) || 1.0) - 0.25),
+      maxCarat: (parseFloat(carat) || 1.0) + 0.25,
+      minPrice: 0,
+      maxPrice: 500000,
+      clarity: clarity ? [clarity] : undefined,
+      color: color ? [color] : undefined,
+      cut: cut ? [cut] : undefined,
+      limit: 5
+    };
+
+    const diamonds = await nivodaService.searchDiamonds(filters);
+
+    if (diamonds.items && diamonds.items.length > 0) {
+      // Calculate average price from matching diamonds
+      const prices = diamonds.items.map(d => d.price);
+      const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+
+      return res.json({
+        success: true,
+        data: {
+          specs: {
+            carat: carat || 'N/A',
+            clarity: clarity || 'N/A',
+            color: color || 'N/A',
+            cut: cut || 'N/A'
+          },
+          prices: {
+            min: minPrice,
+            avg: Math.round(avgPrice),
+            max: maxPrice
+          },
+          matchingDiamonds: diamonds.items,
+          count: diamonds.items.length
+        },
+        message: 'Diamond price suggestions retrieved'
+      });
+    } else {
+      return res.json({
+        success: true,
+        data: {
+          specs: { carat, clarity, color, cut },
+          prices: { min: 0, avg: 0, max: 0 },
+          matchingDiamonds: [],
+          count: 0
+        },
+        message: 'No matching diamonds found for these specs'
+      });
+    }
+  } catch (error) {
+    console.error('Error getting diamond price suggestions:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get price suggestions'
     });
   }
 }
@@ -138,5 +240,6 @@ module.exports = {
   getAvailableOptions,
   searchDiamonds,
   getDiamondById,
+  getDiamondPriceBySuggestions,
   searchGemstones
 };

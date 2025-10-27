@@ -9,6 +9,7 @@ const {
   getAvailableOptions,
   searchDiamonds,
   getDiamondById,
+  getDiamondPriceBySuggestions,
   searchGemstones
 } = require('../controllers/nivodaController');
 
@@ -34,6 +35,18 @@ router.get('/available-options', getAvailableOptions);
  *   - offset: pagination offset (default: 0)
  */
 router.get('/diamonds/search', searchDiamonds);
+
+/**
+ * GET /api/v1/nivoda/diamonds/price-suggestions
+ * Get price suggestions based on diamond specs
+ * Query params:
+ *   - carat: carat weight
+ *   - clarity: clarity grade
+ *   - color: color grade
+ *   - cut: cut quality
+ * Returns: matching diamonds and price range
+ */
+router.get('/diamonds/price-suggestions', getDiamondPriceBySuggestions);
 
 /**
  * GET /api/v1/nivoda/diamonds/:diamondId
