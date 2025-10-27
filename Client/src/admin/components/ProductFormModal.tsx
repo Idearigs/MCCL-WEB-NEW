@@ -1379,7 +1379,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         {formData.show_carat && nivodaAvailableOptions?.carats && (
                           <div className="pl-3 border-l-2 border-blue-300 space-y-2 max-h-64 overflow-y-auto">
                             {nivodaAvailableOptions.carats.map((carat) => {
-                              const isSelected = formData.nivoda_options_config?.selectedCarats.some(c => c.value === carat) || false;
+                              const isSelected = formData.nivoda_options_config?.selectedCarats?.some(c => c.value === carat) || false;
                               return (
                                 <div key={carat} className="flex items-center space-x-3">
                                   <input
@@ -1414,7 +1414,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                     <input
                                       type="number"
                                       placeholder="Price adjustment"
-                                      defaultValue={(formData.nivoda_options_config?.selectedCarats.find(c => c.value === carat)?.priceAdjustment) || '0'}
+                                      defaultValue={(formData.nivoda_options_config?.selectedCarats?.find(c => c.value === carat)?.priceAdjustment) || '0'}
                                       onChange={(e) => {
                                         setFormData({
                                           ...formData,
@@ -1466,7 +1466,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         {formData.show_clarity && nivodaAvailableOptions?.clarities && (
                           <div className="pl-3 border-l-2 border-blue-300 space-y-2 max-h-64 overflow-y-auto">
                             {nivodaAvailableOptions.clarities.map((clarity) => {
-                              const isSelected = formData.nivoda_options_config?.selectedClarities.some(c => c.value === clarity) || false;
+                              const isSelected = formData.nivoda_options_config?.selectedClarities?.some(c => c.value === clarity) || false;
                               return (
                                 <div key={clarity} className="flex items-center space-x-3">
                                   <input
@@ -1501,7 +1501,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                     <input
                                       type="number"
                                       placeholder="Price adjustment"
-                                      defaultValue={(formData.nivoda_options_config?.selectedClarities.find(c => c.value === clarity)?.priceAdjustment) || '0'}
+                                      defaultValue={(formData.nivoda_options_config?.selectedClarities?.find(c => c.value === clarity)?.priceAdjustment) || '0'}
                                       onChange={(e) => {
                                         setFormData({
                                           ...formData,
@@ -1553,7 +1553,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         {formData.show_colour && nivodaAvailableOptions?.colours && (
                           <div className="pl-3 border-l-2 border-blue-300 space-y-2 max-h-64 overflow-y-auto">
                             {nivodaAvailableOptions.colours.map((colour) => {
-                              const isSelected = formData.nivoda_options_config?.selectedColours.some(c => c.value === colour) || false;
+                              const isSelected = formData.nivoda_options_config?.selectedColours?.some(c => c.value === colour) || false;
                               return (
                                 <div key={colour} className="flex items-center space-x-3">
                                   <input
@@ -1588,7 +1588,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                     <input
                                       type="number"
                                       placeholder="Price adjustment"
-                                      defaultValue={(formData.nivoda_options_config?.selectedColours.find(c => c.value === colour)?.priceAdjustment) || '0'}
+                                      defaultValue={(formData.nivoda_options_config?.selectedColours?.find(c => c.value === colour)?.priceAdjustment) || '0'}
                                       onChange={(e) => {
                                         setFormData({
                                           ...formData,
@@ -1640,7 +1640,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         {formData.show_cut && nivodaAvailableOptions?.cuts && (
                           <div className="pl-3 border-l-2 border-blue-300 space-y-2">
                             {nivodaAvailableOptions.cuts.map((cut) => {
-                              const isSelected = formData.nivoda_options_config?.selectedCuts.some(c => c.value === cut) || false;
+                              const isSelected = formData.nivoda_options_config?.selectedCuts?.some(c => c.value === cut) || false;
                               return (
                                 <div key={cut} className="flex items-center space-x-3">
                                   <input
@@ -1675,7 +1675,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                     <input
                                       type="number"
                                       placeholder="Price adjustment"
-                                      defaultValue={(formData.nivoda_options_config?.selectedCuts.find(c => c.value === cut)?.priceAdjustment) || '0'}
+                                      defaultValue={(formData.nivoda_options_config?.selectedCuts?.find(c => c.value === cut)?.priceAdjustment) || '0'}
                                       onChange={(e) => {
                                         setFormData({
                                           ...formData,
@@ -1804,7 +1804,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                       <input
                                         type="number"
                                         placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedCarats.find(c => c.value === carat)?.priceAdjustment) || '0'}
+                                        defaultValue={(formData.nivoda_options_config?.selectedCarats?.find(c => c.value === carat)?.priceAdjustment) || '0'}
                                         onChange={(e) => {
                                           setFormData({
                                             ...formData,
@@ -1867,7 +1867,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                       <input
                                         type="number"
                                         placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedClarities.find(c => c.value === clarity)?.priceAdjustment) || '0'}
+                                        defaultValue={(formData.nivoda_options_config?.selectedClarities?.find(c => c.value === clarity)?.priceAdjustment) || '0'}
                                         onChange={(e) => {
                                           setFormData({
                                             ...formData,
@@ -1930,7 +1930,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                       <input
                                         type="number"
                                         placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedColours.find(c => c.value === colour)?.priceAdjustment) || '0'}
+                                        defaultValue={(formData.nivoda_options_config?.selectedColours?.find(c => c.value === colour)?.priceAdjustment) || '0'}
                                         onChange={(e) => {
                                           setFormData({
                                             ...formData,
@@ -1993,7 +1993,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                       <input
                                         type="number"
                                         placeholder="Price adjustment"
-                                        defaultValue={(formData.nivoda_options_config?.selectedCuts.find(c => c.value === cut)?.priceAdjustment) || '0'}
+                                        defaultValue={(formData.nivoda_options_config?.selectedCuts?.find(c => c.value === cut)?.priceAdjustment) || '0'}
                                         onChange={(e) => {
                                           setFormData({
                                             ...formData,
