@@ -323,45 +323,26 @@ const ProductDetail = () => {
     }));
   };
 
-  // Helper functions for setting stone options with price adjustments
+  // Handler functions for setting stone options
+  // Price is calculated dynamically from Nivoda API when selections change
   const handleCaratSelect = (value: string) => {
     setSelectedCarat(value);
-    const selectedOption = stoneOptions.carat.find(c => c.value === value);
-    if (selectedOption) {
-      setCaratAdjustment(selectedOption.adjustment || 0);
-    }
   };
 
   const handleClaritySelect = (value: string) => {
     setSelectedClarity(value);
-    const selectedOption = stoneOptions.clarity.find(c => c.value === value);
-    if (selectedOption) {
-      setClarityAdjustment(selectedOption.adjustment || 0);
-    }
   };
 
   const handleColourSelect = (value: string) => {
     setSelectedColour(value);
-    const selectedOption = stoneOptions.colour.find(c => c.value === value);
-    if (selectedOption) {
-      setColourAdjustment(selectedOption.adjustment || 0);
-    }
   };
 
   const handleCutSelect = (value: string) => {
     setSelectedCut(value);
-    const selectedOption = stoneOptions.cut.find(c => c.value === value);
-    if (selectedOption) {
-      setCutAdjustment(selectedOption.adjustment || 0);
-    }
   };
 
   const handleStoneTypeSelect = (value: 'natural' | 'lab-grown') => {
     setSelectedStoneType(value);
-    const selectedOption = stoneOptions.stoneType.find(st => st.value === value);
-    if (selectedOption) {
-      setStoneTypeAdjustment(selectedOption.adjustment || 0);
-    }
   };
 
   const handleAddToCart = () => {
