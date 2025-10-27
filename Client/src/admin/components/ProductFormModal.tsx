@@ -204,7 +204,15 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         weight: initialData.weight?.toString() || '',
         images: initialData.images || [],
         videos: initialData.videos || [],
-        variants: initialData.variants || []
+        variants: initialData.variants || [],
+        // Ensure nivoda_options_config always has all required arrays initialized
+        nivoda_options_config: {
+          selectedCarats: initialData.nivoda_options_config?.selectedCarats || [],
+          selectedClarities: initialData.nivoda_options_config?.selectedClarities || [],
+          selectedColours: initialData.nivoda_options_config?.selectedColours || [],
+          selectedCuts: initialData.nivoda_options_config?.selectedCuts || [],
+          selectedStoneTypes: initialData.nivoda_options_config?.selectedStoneTypes || []
+        }
       });
     } else {
       // Reset form for create mode
@@ -238,6 +246,21 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         warranty_info: '',
         meta_title: '',
         meta_description: '',
+        nivoda_enabled: false,
+        show_stone_type: false,
+        show_carat: false,
+        show_clarity: false,
+        show_colour: false,
+        show_cut: false,
+        show_certificate: false,
+        certificate: '',
+        nivoda_options_config: {
+          selectedCarats: [],
+          selectedClarities: [],
+          selectedColours: [],
+          selectedCuts: [],
+          selectedStoneTypes: []
+        },
         images: [],
         videos: [],
         variants: []
