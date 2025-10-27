@@ -167,7 +167,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     setNivodaLoading(true);
     setNivodaError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/nivoda/available-options`, {
+      const response = await fetch(`${API_BASE_URL}/nivoda/available-options`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

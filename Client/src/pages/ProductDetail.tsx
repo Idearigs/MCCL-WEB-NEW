@@ -22,10 +22,18 @@ const ProductDetail = () => {
 
   // Nivoda Stone Selection States
   const [selectedStoneType, setSelectedStoneType] = useState<'natural' | 'lab-grown'>('natural');
-  const [selectedCarat, setSelectedCarat] = useState('0.50ct');
-  const [selectedClarity, setSelectedClarity] = useState('VS');
-  const [selectedColour, setSelectedColour] = useState('F-G');
-  const [selectedCut, setSelectedCut] = useState('Good');
+  const [selectedCarat, setSelectedCarat] = useState('');
+  const [selectedClarity, setSelectedClarity] = useState('');
+  const [selectedColour, setSelectedColour] = useState('');
+  const [selectedCut, setSelectedCut] = useState('');
+
+  // Price adjustments for selected options
+  const [caratAdjustment, setCaratAdjustment] = useState(0);
+  const [clarityAdjustment, setClarityAdjustment] = useState(0);
+  const [colourAdjustment, setColourAdjustment] = useState(0);
+  const [cutAdjustment, setCutAdjustment] = useState(0);
+  const [stoneTypeAdjustment, setStoneTypeAdjustment] = useState(0);
+
   const [expandedStoneOptions, setExpandedStoneOptions] = useState<{ [key: string]: boolean }>({
     stoneType: true,
     carat: true,
@@ -102,33 +110,61 @@ const ProductDetail = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [sizeDropdownOpen]);
 
-  // Nivoda Stone Options (will be dynamic from product data when enabled)
-  const stoneOptions = {
-    stoneType: [
-      { value: 'natural', label: 'Natural' },
-      { value: 'lab-grown', label: 'Lab-Grown' }
-    ],
-    carat: [
-      { value: '0.50ct', label: '0.50ct' },
-      { value: '0.75ct', label: '0.75ct' },
-      { value: '1.00ct', label: '1.00ct' },
-      { value: '1.50ct', label: '1.50ct' }
-    ],
-    clarity: [
-      { value: 'VS', label: 'VS' },
-      { value: 'VVS', label: 'VVS' },
-      { value: 'IF', label: 'IF' }
-    ],
-    colour: [
-      { value: 'F-G', label: 'F-G' },
-      { value: 'D-E', label: 'D-E' },
-      { value: 'H-I', label: 'H-I' }
-    ],
-    cut: [
-      { value: 'Good', label: 'Good' },
-      { value: 'Very Good', label: 'Very Good' },
-      { value: 'Excellent', label: 'Excellent' }
-    ]
+  // Helper function to build stone options from nivoda_options_config
+  const buildStoneOptions = () => {
+    if (!productData?.nivoda_options_config) {
+      return {
+        stoneType: [
+          { value: 'natural', label: 'Natural' },
+          { value: 'lab-grown', label: 'Lab-Grown' }
+        ],
+        carat: [],
+        clarity: [],
+        colour: [],
+        cut: []
+      };
+    }
+
+    const config = productData.nivoda_options_config;
+    return {
+      stoneType: [
+        { value: 'natural', label: 'Natural' },
+        { value: 'lab-grown', label: 'Lab-Grown' }
+      ],
+      carat: config.selectedCarats?.map(c => ({
+        value: c.value,
+        label: c.value,
+        adjustment: parseFloat(c.priceAdjustment) || 0
+      })) || [],
+      clarity: config.selectedClarities?.map(c => ({
+        value: c.value,
+        label: c.value,
+        adjustment: parseFloat(c.priceAdjustment) || 0
+      })) || [],
+      colour: config.selectedColours?.map(c => ({
+        value: c.value,
+        label: c.value,
+        adjustment: parseFloat(c.priceAdjustment) || 0
+      })) || [],
+      cut: config.selectedCuts?.map(c => ({
+        value: c.value,
+        label: c.value,
+        adjustment: parseFloat(c.priceAdjustment) || 0
+      })) || []
+    };
+  };
+
+  const stoneOptions = buildStoneOptions();
+
+  // Calculate total price with adjustments
+  const calculateTotalPrice = () => {
+    // Extract base price from productData.price string (e.g., "£1,234.00" -> 1234.00)
+    if (!productData?.price) return 0;
+    const priceString = productData.price.replace(/[^\d.,]/g, '').replace(/,/g, '');
+    const basePrice = parseFloat(priceString) || 0;
+
+    const totalAdjustment = caratAdjustment + clarityAdjustment + colourAdjustment + cutAdjustment + stoneTypeAdjustment;
+    return basePrice + totalAdjustment;
   };
 
   // Fetch user's country based on IP
@@ -191,6 +227,43 @@ const ProductDetail = () => {
     fetchProductData();
   }, [productId]);
 
+  // Initialize stone options with default selections when product loads
+  useEffect(() => {
+    if (!productData?.nivoda_options_config) return;
+
+    const config = productData.nivoda_options_config;
+
+    // Set default carat and its adjustment
+    if (config.selectedCarats && config.selectedCarats.length > 0) {
+      setSelectedCarat(config.selectedCarats[0].value);
+      setCaratAdjustment(parseFloat(config.selectedCarats[0].priceAdjustment) || 0);
+    }
+
+    // Set default clarity and its adjustment
+    if (config.selectedClarities && config.selectedClarities.length > 0) {
+      setSelectedClarity(config.selectedClarities[0].value);
+      setClarityAdjustment(parseFloat(config.selectedClarities[0].priceAdjustment) || 0);
+    }
+
+    // Set default colour and its adjustment
+    if (config.selectedColours && config.selectedColours.length > 0) {
+      setSelectedColour(config.selectedColours[0].value);
+      setColourAdjustment(parseFloat(config.selectedColours[0].priceAdjustment) || 0);
+    }
+
+    // Set default cut and its adjustment
+    if (config.selectedCuts && config.selectedCuts.length > 0) {
+      setSelectedCut(config.selectedCuts[0].value);
+      setCutAdjustment(parseFloat(config.selectedCuts[0].priceAdjustment) || 0);
+    }
+
+    // Set default stone type and its adjustment
+    if (config.selectedStoneTypes && config.selectedStoneTypes.length > 0) {
+      setSelectedStoneType(config.selectedStoneTypes[0].value as 'natural' | 'lab-grown');
+      setStoneTypeAdjustment(parseFloat(config.selectedStoneTypes[0].priceAdjustment) || 0);
+    }
+  }, [productData?.nivoda_options_config]);
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -205,13 +278,54 @@ const ProductDetail = () => {
     }));
   };
 
+  // Helper functions for setting stone options with price adjustments
+  const handleCaratSelect = (value: string) => {
+    setSelectedCarat(value);
+    const selectedOption = stoneOptions.carat.find(c => c.value === value);
+    if (selectedOption) {
+      setCaratAdjustment(selectedOption.adjustment || 0);
+    }
+  };
+
+  const handleClaritySelect = (value: string) => {
+    setSelectedClarity(value);
+    const selectedOption = stoneOptions.clarity.find(c => c.value === value);
+    if (selectedOption) {
+      setClarityAdjustment(selectedOption.adjustment || 0);
+    }
+  };
+
+  const handleColourSelect = (value: string) => {
+    setSelectedColour(value);
+    const selectedOption = stoneOptions.colour.find(c => c.value === value);
+    if (selectedOption) {
+      setColourAdjustment(selectedOption.adjustment || 0);
+    }
+  };
+
+  const handleCutSelect = (value: string) => {
+    setSelectedCut(value);
+    const selectedOption = stoneOptions.cut.find(c => c.value === value);
+    if (selectedOption) {
+      setCutAdjustment(selectedOption.adjustment || 0);
+    }
+  };
+
+  const handleStoneTypeSelect = (value: 'natural' | 'lab-grown') => {
+    setSelectedStoneType(value);
+    const selectedOption = stoneOptions.stoneType.find(st => st.value === value);
+    if (selectedOption) {
+      setStoneTypeAdjustment(selectedOption.adjustment || 0);
+    }
+  };
+
   const handleAddToCart = () => {
     // Start loading animation
     setIsLoading(true);
-    
+
     // Simulate adding to cart process
     setTimeout(() => {
-      const newItem = {
+      const newItem: any = {
         id: productData.id,
         name: productData.name,
         price: productData.price,
@@ -219,7 +333,26 @@ const ProductDetail = () => {
         size: selectedSize,
         image: productData.images[0]?.url
       };
-      
+
+      // Include Nivoda stone options if enabled
+      if (productData?.nivoda_enabled) {
+        newItem.nivodaOptions = {
+          stoneType: selectedStoneType,
+          carat: selectedCarat,
+          clarity: selectedClarity,
+          colour: selectedColour,
+          cut: selectedCut
+        };
+        newItem.nivodaPriceAdjustments = {
+          carat: caratAdjustment,
+          clarity: clarityAdjustment,
+          colour: colourAdjustment,
+          cut: cutAdjustment,
+          stoneType: stoneTypeAdjustment
+        };
+        newItem.totalPrice = calculateTotalPrice();
+      }
+
       addToCart(newItem);
       setIsLoading(false);
     }, 1500); // 1.5 second loading animation
@@ -506,7 +639,7 @@ const ProductDetail = () => {
                       {stoneOptions.stoneType.map((option) => (
                         <button
                           key={option.value}
-                          onClick={() => setSelectedStoneType(option.value)}
+                          onClick={() => handleStoneTypeSelect(option.value as 'natural' | 'lab-grown')}
                           className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
                             selectedStoneType === option.value
                               ? 'bg-amber-50 border-amber-200'
@@ -528,7 +661,7 @@ const ProductDetail = () => {
                       {stoneOptions.carat.map((option) => (
                         <button
                           key={option.value}
-                          onClick={() => setSelectedCarat(option.value)}
+                          onClick={() => handleCaratSelect(option.value)}
                           className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
                             selectedCarat === option.value
                               ? 'bg-amber-50 border-amber-200'
@@ -550,7 +683,7 @@ const ProductDetail = () => {
                       {stoneOptions.clarity.map((option) => (
                         <button
                           key={option.value}
-                          onClick={() => setSelectedClarity(option.value)}
+                          onClick={() => handleClaritySelect(option.value)}
                           className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
                             selectedClarity === option.value
                               ? 'bg-amber-50 border-amber-200'
@@ -572,7 +705,7 @@ const ProductDetail = () => {
                       {stoneOptions.colour.map((option) => (
                         <button
                           key={option.value}
-                          onClick={() => setSelectedColour(option.value)}
+                          onClick={() => handleColourSelect(option.value)}
                           className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
                             selectedColour === option.value
                               ? 'bg-amber-50 border-amber-200'
@@ -594,7 +727,7 @@ const ProductDetail = () => {
                       {stoneOptions.cut.map((option) => (
                         <button
                           key={option.value}
-                          onClick={() => setSelectedCut(option.value)}
+                          onClick={() => handleCutSelect(option.value)}
                           className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
                             selectedCut === option.value
                               ? 'bg-amber-50 border-amber-200'
@@ -843,7 +976,7 @@ const ProductDetail = () => {
                         {stoneOptions.stoneType.map((option) => (
                           <button
                             key={option.value}
-                            onClick={() => setSelectedStoneType(option.value as 'natural' | 'lab-grown')}
+                            onClick={() => handleStoneTypeSelect(option.value as 'natural' | 'lab-grown')}
                             className={`px-3 2xl:px-4 py-1.5 2xl:py-2 text-[10px] 2xl:text-xs font-futura-pt font-light border transition-all ${
                               selectedStoneType === option.value
                                 ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
@@ -875,7 +1008,7 @@ const ProductDetail = () => {
                         {stoneOptions.carat.map((option) => (
                           <button
                             key={option.value}
-                            onClick={() => setSelectedCarat(option.value)}
+                            onClick={() => handleCaratSelect(option.value)}
                             className={`px-3 2xl:px-4 py-1.5 2xl:py-2 text-[10px] 2xl:text-xs font-futura-pt font-light border transition-all ${
                               selectedCarat === option.value
                                 ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
@@ -907,7 +1040,7 @@ const ProductDetail = () => {
                         {stoneOptions.clarity.map((option) => (
                           <button
                             key={option.value}
-                            onClick={() => setSelectedClarity(option.value)}
+                            onClick={() => handleClaritySelect(option.value)}
                             className={`px-3 2xl:px-4 py-1.5 2xl:py-2 text-[10px] 2xl:text-xs font-futura-pt font-light border transition-all ${
                               selectedClarity === option.value
                                 ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
@@ -939,7 +1072,7 @@ const ProductDetail = () => {
                         {stoneOptions.colour.map((option) => (
                           <button
                             key={option.value}
-                            onClick={() => setSelectedColour(option.value)}
+                            onClick={() => handleColourSelect(option.value)}
                             className={`px-3 2xl:px-4 py-1.5 2xl:py-2 text-[10px] 2xl:text-xs font-futura-pt font-light border transition-all ${
                               selectedColour === option.value
                                 ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
@@ -971,7 +1104,7 @@ const ProductDetail = () => {
                         {stoneOptions.cut.map((option) => (
                           <button
                             key={option.value}
-                            onClick={() => setSelectedCut(option.value)}
+                            onClick={() => handleCutSelect(option.value)}
                             className={`px-4 2xl:px-5 py-2 2xl:py-2.5 text-xs 2xl:text-sm font-futura-pt font-light border transition-all ${
                               selectedCut === option.value
                                 ? 'bg-[#F5EFE6] border-gray-400 text-gray-900'
