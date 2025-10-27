@@ -111,13 +111,19 @@ const ProductDetail = () => {
   // Helper function to build stone options from nivoda_options_config
   // Now using ranges and available options instead of individual selections with adjustments
   const buildStoneOptions = () => {
+    // Common carat weights available from Nivoda
+    const allCarats = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 5.0, 10.0];
+
     if (!productData?.nivoda_enabled || !productData?.nivoda_options_config) {
       return {
         stoneType: [
           { value: 'natural', label: 'Natural' },
           { value: 'lab-grown', label: 'Lab-Grown' }
         ],
-        caratRange: { min: 0.5, max: 2.0 },
+        carat: allCarats.map(c => ({
+          value: c.toFixed(2),
+          label: c.toFixed(2)
+        })),
         clarity: [],
         colour: [],
         cut: []
@@ -125,12 +131,20 @@ const ProductDetail = () => {
     }
 
     const config = productData.nivoda_options_config;
+    const caratRange = config.caratRange || { min: 0.5, max: 2.0 };
+
+    // Filter carats to only those within the configured range
+    const caratOptions = allCarats.filter(c => c >= caratRange.min && c <= caratRange.max);
+
     return {
       stoneType: [
         { value: 'natural', label: 'Natural' },
         { value: 'lab-grown', label: 'Lab-Grown' }
       ],
-      caratRange: config.caratRange || { min: 0.5, max: 2.0 },
+      carat: caratOptions.map(c => ({
+        value: c.toFixed(2),
+        label: c.toFixed(2)
+      })),
       clarity: (config.clarityOptions || []).map(c => ({
         value: c,
         label: c
@@ -680,7 +694,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Carat */}
-                {productData?.show_carat && (
+                {productData?.show_carat && stoneOptions.carat && stoneOptions.carat.length > 0 && (
                   <div>
                     <span className="text-xs font-futura-pt font-medium text-gray-900">Carat:</span>
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -702,7 +716,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Clarity */}
-                {productData?.show_clarity && (
+                {productData?.show_clarity && stoneOptions.clarity && stoneOptions.clarity.length > 0 && (
                   <div>
                     <span className="text-xs font-futura-pt font-medium text-gray-900">Clarity:</span>
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -724,7 +738,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Colour */}
-                {productData?.show_colour && (
+                {productData?.show_colour && stoneOptions.colour && stoneOptions.colour.length > 0 && (
                   <div>
                     <span className="text-xs font-futura-pt font-medium text-gray-900">Colour:</span>
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -746,7 +760,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Cut */}
-                {productData?.show_cut && (
+                {productData?.show_cut && stoneOptions.cut && stoneOptions.cut.length > 0 && (
                   <div>
                     <span className="text-xs font-futura-pt font-medium text-gray-900">Cut:</span>
                     <div className="flex flex-wrap gap-2 mt-2">
