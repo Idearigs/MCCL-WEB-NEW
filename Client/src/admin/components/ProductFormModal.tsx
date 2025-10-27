@@ -1360,6 +1360,399 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     </div>
                   </div>
 
+                  {/* Nivoda Options Configuration */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <h4 className="text-sm font-medium text-gray-900 font-satoshi mb-4">
+                      Select Diamond Options from Nivoda
+                    </h4>
+                    <p className="text-xs text-gray-500 mb-4 font-satoshi">
+                      Choose available diamond specifications and set price adjustments for each option
+                    </p>
+
+                    {/* Loading State */}
+                    {nivodaLoading && (
+                      <div className="flex items-center space-x-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                        <p className="text-sm text-blue-700 font-satoshi">Loading Nivoda options...</p>
+                      </div>
+                    )}
+
+                    {/* Error State */}
+                    {nivodaError && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+                        <p className="text-sm text-red-700 font-satoshi">
+                          Error loading Nivoda options: {nivodaError}
+                        </p>
+                        <button
+                          onClick={fetchNivodaOptions}
+                          className="mt-2 text-sm text-red-600 underline hover:text-red-700 font-satoshi"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Options Selection */}
+                    {!nivodaLoading && nivodaAvailableOptions && (
+                      <div className="space-y-6">
+                        {/* Carat Weights */}
+                        {formData.show_carat && nivodaAvailableOptions.carats.length > 0 && (
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Carat Weights</h5>
+                            <div className="space-y-3">
+                              {nivodaAvailableOptions.carats.map((carat) => {
+                                const isSelected = formData.nivoda_options_config?.selectedCarats.some(c => c.value === carat) || false;
+                                return (
+                                  <div key={carat} className="flex items-center space-x-3">
+                                    <input
+                                      type="checkbox"
+                                      id={`carat-${carat}`}
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedCarats: [...(formData.nivoda_options_config?.selectedCarats || []), { value: carat, priceAdjustment: '0' }]
+                                            }
+                                          });
+                                        } else {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedCarats: (formData.nivoda_options_config?.selectedCarats || []).filter(c => c.value !== carat)
+                                            }
+                                          });
+                                        }
+                                      }}
+                                      className="rounded"
+                                    />
+                                    <label htmlFor={`carat-${carat}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                      {carat} ct
+                                    </label>
+                                    {isSelected && (
+                                      <input
+                                        type="number"
+                                        placeholder="Price adjustment"
+                                        defaultValue={(formData.nivoda_options_config?.selectedCarats.find(c => c.value === carat)?.priceAdjustment) || '0'}
+                                        onChange={(e) => {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedCarats: (formData.nivoda_options_config?.selectedCarats || []).map(c =>
+                                                c.value === carat ? { ...c, priceAdjustment: e.target.value } : c
+                                              )
+                                            }
+                                          });
+                                        }}
+                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Clarities */}
+                        {formData.show_clarity && nivodaAvailableOptions.clarities.length > 0 && (
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Clarity Grades</h5>
+                            <div className="space-y-3">
+                              {nivodaAvailableOptions.clarities.map((clarity) => {
+                                const isSelected = formData.nivoda_options_config?.selectedClarities.some(c => c.value === clarity) || false;
+                                return (
+                                  <div key={clarity} className="flex items-center space-x-3">
+                                    <input
+                                      type="checkbox"
+                                      id={`clarity-${clarity}`}
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedClarities: [...(formData.nivoda_options_config?.selectedClarities || []), { value: clarity, priceAdjustment: '0' }]
+                                            }
+                                          });
+                                        } else {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedClarities: (formData.nivoda_options_config?.selectedClarities || []).filter(c => c.value !== clarity)
+                                            }
+                                          });
+                                        }
+                                      }}
+                                      className="rounded"
+                                    />
+                                    <label htmlFor={`clarity-${clarity}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                      {clarity}
+                                    </label>
+                                    {isSelected && (
+                                      <input
+                                        type="number"
+                                        placeholder="Price adjustment"
+                                        defaultValue={(formData.nivoda_options_config?.selectedClarities.find(c => c.value === clarity)?.priceAdjustment) || '0'}
+                                        onChange={(e) => {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedClarities: (formData.nivoda_options_config?.selectedClarities || []).map(c =>
+                                                c.value === clarity ? { ...c, priceAdjustment: e.target.value } : c
+                                              )
+                                            }
+                                          });
+                                        }}
+                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Colours */}
+                        {formData.show_colour && nivodaAvailableOptions.colours.length > 0 && (
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Colours</h5>
+                            <div className="space-y-3">
+                              {nivodaAvailableOptions.colours.map((colour) => {
+                                const isSelected = formData.nivoda_options_config?.selectedColours.some(c => c.value === colour) || false;
+                                return (
+                                  <div key={colour} className="flex items-center space-x-3">
+                                    <input
+                                      type="checkbox"
+                                      id={`colour-${colour}`}
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedColours: [...(formData.nivoda_options_config?.selectedColours || []), { value: colour, priceAdjustment: '0' }]
+                                            }
+                                          });
+                                        } else {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedColours: (formData.nivoda_options_config?.selectedColours || []).filter(c => c.value !== colour)
+                                            }
+                                          });
+                                        }
+                                      }}
+                                      className="rounded"
+                                    />
+                                    <label htmlFor={`colour-${colour}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                      {colour}
+                                    </label>
+                                    {isSelected && (
+                                      <input
+                                        type="number"
+                                        placeholder="Price adjustment"
+                                        defaultValue={(formData.nivoda_options_config?.selectedColours.find(c => c.value === colour)?.priceAdjustment) || '0'}
+                                        onChange={(e) => {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedColours: (formData.nivoda_options_config?.selectedColours || []).map(c =>
+                                                c.value === colour ? { ...c, priceAdjustment: e.target.value } : c
+                                              )
+                                            }
+                                          });
+                                        }}
+                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Cuts */}
+                        {formData.show_cut && nivodaAvailableOptions.cuts.length > 0 && (
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Cut Quality</h5>
+                            <div className="space-y-3">
+                              {nivodaAvailableOptions.cuts.map((cut) => {
+                                const isSelected = formData.nivoda_options_config?.selectedCuts.some(c => c.value === cut) || false;
+                                return (
+                                  <div key={cut} className="flex items-center space-x-3">
+                                    <input
+                                      type="checkbox"
+                                      id={`cut-${cut}`}
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedCuts: [...(formData.nivoda_options_config?.selectedCuts || []), { value: cut, priceAdjustment: '0' }]
+                                            }
+                                          });
+                                        } else {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedCuts: (formData.nivoda_options_config?.selectedCuts || []).filter(c => c.value !== cut)
+                                            }
+                                          });
+                                        }
+                                      }}
+                                      className="rounded"
+                                    />
+                                    <label htmlFor={`cut-${cut}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                      {cut}
+                                    </label>
+                                    {isSelected && (
+                                      <input
+                                        type="number"
+                                        placeholder="Price adjustment"
+                                        defaultValue={(formData.nivoda_options_config?.selectedCuts.find(c => c.value === cut)?.priceAdjustment) || '0'}
+                                        onChange={(e) => {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedCuts: (formData.nivoda_options_config?.selectedCuts || []).map(c =>
+                                                c.value === cut ? { ...c, priceAdjustment: e.target.value } : c
+                                              )
+                                            }
+                                          });
+                                        }}
+                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Stone Types */}
+                        {formData.show_stone_type && nivodaAvailableOptions.stoneTypes.length > 0 && (
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Stone Type</h5>
+                            <div className="space-y-3">
+                              {nivodaAvailableOptions.stoneTypes.map((stoneType) => {
+                                const isSelected = formData.nivoda_options_config?.selectedStoneTypes.some(s => s.value === stoneType) || false;
+                                return (
+                                  <div key={stoneType} className="flex items-center space-x-3">
+                                    <input
+                                      type="checkbox"
+                                      id={`stonetype-${stoneType}`}
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedStoneTypes: [...(formData.nivoda_options_config?.selectedStoneTypes || []), { value: stoneType, priceAdjustment: '0' }]
+                                            }
+                                          });
+                                        } else {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedStoneTypes: (formData.nivoda_options_config?.selectedStoneTypes || []).filter(s => s.value !== stoneType)
+                                            }
+                                          });
+                                        }
+                                      }}
+                                      className="rounded"
+                                    />
+                                    <label htmlFor={`stonetype-${stoneType}`} className="text-sm text-gray-700 flex-1 font-satoshi cursor-pointer">
+                                      {stoneType}
+                                    </label>
+                                    {isSelected && (
+                                      <input
+                                        type="number"
+                                        placeholder="Price adjustment"
+                                        defaultValue={(formData.nivoda_options_config?.selectedStoneTypes.find(s => s.value === stoneType)?.priceAdjustment) || '0'}
+                                        onChange={(e) => {
+                                          setFormData({
+                                            ...formData,
+                                            nivoda_options_config: {
+                                              ...formData.nivoda_options_config!,
+                                              selectedStoneTypes: (formData.nivoda_options_config?.selectedStoneTypes || []).map(s =>
+                                                s.value === stoneType ? { ...s, priceAdjustment: e.target.value } : s
+                                              )
+                                            }
+                                          });
+                                        }}
+                                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Price Preview */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                          <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">Price Summary</h5>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm font-satoshi">
+                              <span className="text-gray-700">Base Price:</span>
+                              <span className="font-medium">{formData.currency} {formData.base_price}</span>
+                            </div>
+                            {(formData.nivoda_options_config?.selectedCarats.length || 0) > 0 && (
+                              <div className="flex justify-between text-sm font-satoshi">
+                                <span className="text-gray-700">Carat Adjustments:</span>
+                                <span className="font-medium">
+                                  + {formData.currency} {(formData.nivoda_options_config?.selectedCarats.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0).toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            {(formData.nivoda_options_config?.selectedClarities.length || 0) > 0 && (
+                              <div className="flex justify-between text-sm font-satoshi">
+                                <span className="text-gray-700">Clarity Adjustments:</span>
+                                <span className="font-medium">
+                                  + {formData.currency} {(formData.nivoda_options_config?.selectedClarities.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0).toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="border-t border-blue-200 pt-2 flex justify-between">
+                              <span className="text-sm font-medium text-gray-900">Estimated Max Price:</span>
+                              <span className="text-lg font-bold text-blue-600">
+                                {formData.currency} {(
+                                  parseFloat(formData.base_price || '0') +
+                                  (formData.nivoda_options_config?.selectedCarats.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0) +
+                                  (formData.nivoda_options_config?.selectedClarities.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0) +
+                                  (formData.nivoda_options_config?.selectedColours.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0) +
+                                  (formData.nivoda_options_config?.selectedCuts.reduce((acc, c) => acc + (parseFloat(c.priceAdjustment) || 0), 0) || 0) +
+                                  (formData.nivoda_options_config?.selectedStoneTypes.reduce((acc, s) => acc + (parseFloat(s.priceAdjustment) || 0), 0) || 0)
+                                ).toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Certificate Input */}
                   {formData.show_certificate && (
                     <div className="border-t border-gray-200 pt-6">
