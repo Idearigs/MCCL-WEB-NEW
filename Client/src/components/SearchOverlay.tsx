@@ -161,87 +161,123 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose, isMobile
           </button>
         </div>
 
-        {/* Search Results */}
+        {/* Search Results - Three Column Grid */}
         {searchQuery.length > 0 && (
-          <div className="mt-6">
-            {/* Suggestions Section */}
-            <div className="mb-6">
-              <h3 className="text-sm font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-3">
-                SUGGESTIONS
-              </h3>
-              <div className="space-y-1">
-                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
-                  eternity <span className="font-medium text-gray-900">rings</span>
-                </div>
-                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
-                  <span className="font-medium text-gray-900">rings</span>
-                </div>
-                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
-                  oval engagement <span className="font-medium text-gray-900">rings</span>
-                </div>
-                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
-                  Women's Rings
-                </div>
-                <div className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
-                  Heart Rings
-                </div>
-              </div>
-            </div>
-
-            {/* Products Section */}
-            <div className="mb-6">
-              <h3 className="text-sm font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-3">
-                PRODUCTS
-              </h3>
-              {searchResults.length > 0 ? (
-                <div className="space-y-3">
-                  {searchResults.slice(0, 5).map((product, index) => (
-                    <Link
-                      key={product.id}
-                      to={`/${product.category?.slug || 'product'}/${product.slug}`}
-                      onClick={onClose}
-                      className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-all group"
-                    >
-                      <div className="w-16 h-16 bg-gray-50 rounded overflow-hidden flex-shrink-0">
-                        <img
-                          src={product.image?.url || '/images/placeholder.png'}
-                          alt={product.image?.alt || product.name}
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-cormorant text-gray-900 leading-tight mb-1 line-clamp-2">
-                          {product.name}
-                        </h4>
-                        <p className="text-sm font-cormorant text-blue-600 font-medium">
-                          {product.price}
-                        </p>
-                      </div>
-                    </Link>
+          <div className="mt-8">
+            <div className="grid grid-cols-3 gap-12 max-w-5xl mx-auto">
+              {/* Suggestions Column */}
+              <div>
+                <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">
+                  SUGGESTIONS
+                </h3>
+                <ul className="space-y-2">
+                  {popularSearches.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5).map((suggestion, index) => (
+                    <li key={index}>
+                      <button
+                        className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors"
+                        onClick={() => setSearchQuery(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    </li>
                   ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm font-cormorant text-gray-500">
-                    No products found for "{searchQuery}"
-                  </p>
-                </div>
-              )}
-            </div>
+                  {popularSearches.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                    <>
+                      <li><button className="text-sm text-gray-700 hover:text-gray-900 text-left">Eternity Rings</button></li>
+                      <li><button className="text-sm text-gray-700 hover:text-gray-900 text-left">Rings</button></li>
+                      <li><button className="text-sm text-gray-700 hover:text-gray-900 text-left">Oval Engagement Rings</button></li>
+                      <li><button className="text-sm text-gray-700 hover:text-gray-900 text-left">Women's Rings</button></li>
+                      <li><button className="text-sm text-gray-700 hover:text-gray-900 text-left">Heart Rings</button></li>
+                    </>
+                  )}
+                </ul>
+                <button className="text-sm text-gray-600 underline hover:text-gray-800 mt-4 block transition-colors">
+                  Search for "{searchQuery}"
+                </button>
+              </div>
 
-            {/* Pages Section */}
-            <div>
-              <h3 className="text-sm font-cormorant font-medium text-gray-900 uppercase tracking-wider mb-3">
-                PAGES
-              </h3>
-              <div className="space-y-1">
-                <Link to="/eternity-rings" className="block text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
-                  Eternity Rings
-                </Link>
-                <Link to="/ring-resizing" className="block text-sm text-gray-600 hover:text-gray-900 cursor-pointer py-1">
-                  Ring & Jewellery Resizing
-                </Link>
+              {/* Products Column */}
+              <div>
+                <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">
+                  PRODUCTS
+                </h3>
+                {searchResults.length > 0 ? (
+                  <ul className="space-y-4">
+                    {searchResults.slice(0, 3).map((product) => (
+                      <li key={product.id}>
+                        <Link
+                          to={`/${product.category?.slug || 'product'}/${product.slug}`}
+                          onClick={onClose}
+                          className="text-left hover:opacity-70 transition-opacity block"
+                        >
+                          <div className="flex space-x-3">
+                            <div className="w-16 h-16 bg-gray-100 rounded flex-shrink-0 overflow-hidden">
+                              <img
+                                src={product.image?.url || product.featured_image || '/images/placeholder.png'}
+                                alt={product.image?.alt || product.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/images/placeholder.png';
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 leading-tight">{product.name}</p>
+                              <p className="text-xs text-blue-600 font-medium mt-1">
+                                {product.price ? `£${product.price}` : 'Contact for price'}
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-gray-500">
+                      No products found
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pages Column */}
+              <div>
+                <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider mb-4">
+                  PAGES
+                </h3>
+                <ul className="space-y-2">
+                  <li>
+                    <Link to="/engagement" className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors block">
+                      Engagement Rings
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/wedding" className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors block">
+                      Wedding Rings
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/eternity-rings" className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors block">
+                      Eternity Rings
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/diamonds" className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors block">
+                      Diamonds
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/resizing" className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors block">
+                      Ring & Jewellery Resizing
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/guides" className="text-sm text-gray-700 hover:text-gray-900 text-left transition-colors block">
+                      Guides
+                    </Link>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
