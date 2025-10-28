@@ -87,7 +87,7 @@ const uploadSingle = (fieldName = 'file') => {
   };
 };
 
-// Middleware for multiple file upload
+// Middleware for multiple file upload from a single field
 const uploadMultiple = (fieldName = 'files', maxCount = 10) => {
   return (req, res, next) => {
     upload.array(fieldName, maxCount)(req, res, (err) => {
@@ -107,6 +107,43 @@ const uploadMultiple = (fieldName = 'files', maxCount = 10) => {
       } else if (err) {
         return res.status(400).json({ message: err.message });
       }
+      next();
+    });
+  };
+};
+
+// Middleware for flexible multi-field file upload (for metal-specific media)
+const uploadMultipleFields = (maxCount = 50) => {
+  return (req, res, next) => {
+    // Create a dynamic fields configuration that accepts any field starting with 'media'
+    // This handles both 'media' (general files) and 'media_metal_*' (metal-specific files)
+    const uploadMiddleware = upload.any();
+
+    uploadMiddleware(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({
+            message: 'File too large',
+            maxSize: `${(parseInt(process.env.MAX_FILE_SIZE) || 104857600) / 1024 / 1024}MB`
+          });
+        }
+        if (err.code === 'LIMIT_FILE_COUNT') {
+          return res.status(400).json({
+            message: `Too many files. Maximum ${maxCount} files allowed.`
+          });
+        }
+        return res.status(400).json({ message: err.message });
+      } else if (err) {
+        return res.status(400).json({ message: err.message });
+      }
+
+      // Filter to only accept files from fields that start with 'media'
+      if (req.files) {
+        req.files = req.files.filter(file =>
+          file.fieldname === 'media' || file.fieldname.startsWith('media_')
+        );
+      }
+
       next();
     });
   };
@@ -136,6 +173,7 @@ const deleteFile = (filePath) => {
 module.exports = {
   uploadSingle,
   uploadMultiple,
+  uploadMultipleFields,
   generateFileUrl,
   deleteFile,
   upload

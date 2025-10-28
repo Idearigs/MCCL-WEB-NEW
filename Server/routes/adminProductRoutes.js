@@ -3,7 +3,7 @@ const router = express.Router();
 const adminProductController = require('../controllers/adminProductController');
 const { authenticateAdmin } = require('../middleware/adminAuth');
 const { validateProduct } = require('../validators/productValidator');
-const { uploadMultiple } = require('../middleware/upload');
+const { uploadMultiple, uploadMultipleFields } = require('../middleware/upload');
 
 // Middleware to authenticate all admin product routes
 router.use(authenticateAdmin);
@@ -20,14 +20,14 @@ router.get('/:id', adminProductController.getProductById);
 // Create new product (JSON payload)
 router.post('/', validateProduct, adminProductController.createProduct);
 
-// Create new product with file uploads
-router.post('/with-media', uploadMultiple('media', 10), adminProductController.createProductWithMedia);
+// Create new product with file uploads (supports both general and metal-specific media)
+router.post('/with-media', uploadMultipleFields(50), adminProductController.createProductWithMedia);
 
 // Update product
 router.put('/:id', adminProductController.updateProduct);
 
-// Update product with file uploads
-router.put('/:id/with-media', uploadMultiple('media', 10), adminProductController.updateProductWithMedia);
+// Update product with file uploads (supports both general and metal-specific media)
+router.put('/:id/with-media', uploadMultipleFields(50), adminProductController.updateProductWithMedia);
 
 // Delete product
 router.delete('/:id', adminProductController.deleteProduct);

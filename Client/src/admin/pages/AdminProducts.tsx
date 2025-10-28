@@ -473,6 +473,12 @@ const AdminProducts: React.FC = () => {
           });
         }
 
+        // Log FormData contents for debugging
+        console.log('DEBUG: FormData contents:');
+        for (const [key, value] of formData.entries()) {
+          console.log(`  ${key}: ${value instanceof File ? `File(${value.name})` : value}`);
+        }
+
         response = await fetch(`${API_BASE_URL}/admin/products/with-media`, {
           method: 'POST',
           headers: {
@@ -509,7 +515,9 @@ const AdminProducts: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to create product');
+        console.error('API Error Response:', data);
+        console.error('Status:', response.status);
+        throw new Error(data.message || data.error || 'Failed to create product');
       }
 
       setShowProductForm(false);

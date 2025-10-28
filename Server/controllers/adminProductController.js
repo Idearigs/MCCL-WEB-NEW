@@ -332,6 +332,10 @@ const getProductById = async (req, res) => {
 // Create new product
 const createProduct = async (req, res) => {
   try {
+    console.log('DEBUG createProduct: Request received');
+    console.log('DEBUG: Request body keys:', Object.keys(req.body));
+    console.log('DEBUG: Files:', req.files ? req.files.length : 0);
+
     const {
       Product,
       Category,
@@ -383,11 +387,15 @@ const createProduct = async (req, res) => {
       nivoda_options_config
     } = req.body;
 
+    console.log('DEBUG: Extracted name:', name, 'category_id:', category_id, 'base_price:', base_price);
+
     // Validation
     if (!name || !base_price || !category_id) {
+      console.error('DEBUG: Validation failed - name, base_price, or category_id missing');
       return res.status(400).json({
         success: false,
-        message: 'Name, base price, and category are required'
+        message: 'Name, base price, and category are required',
+        received: { name, base_price, category_id }
       });
     }
 
@@ -888,10 +896,21 @@ const updateProductWithMedia = async (req, res) => {
         const fileUrl = generateFileUrl(req, path.join('products', file.filename));
 
         // Extract metal_id from file fieldname if it contains metal-specific data
-        // Format: image-files or image-files-[metalId] for metal-specific uploads
-        const metalId = file.fieldname && file.fieldname.includes('metal_')
-          ? file.fieldname.split('_')[1] || null
-          : null;
+        // Format: media_metal_[metalId] for metal-specific uploads
+        let metalId = null;
+        if (file.fieldname && file.fieldname.includes('media_metal_')) {
+          // Extract everything after 'media_metal_'
+          const parts = file.fieldname.split('media_metal_');
+          if (parts.length > 1) {
+            // Clean up the metalId - remove any trailing special characters
+            metalId = parts[1].trim() || null;
+            // Validate it looks like a UUID (basic check)
+            if (metalId && !metalId.match(/^[a-f0-9-]{36}$/i)) {
+              console.warn(`Invalid metal_id format: ${metalId}, treating as general media`);
+              metalId = null;
+            }
+          }
+        }
 
         if (file.mimetype.startsWith('image/')) {
           promises.push(
@@ -901,7 +920,7 @@ const updateProductWithMedia = async (req, res) => {
               alt_text: product.name,
               is_primary: false, // Don't auto-set as primary when updating
               sort_order: maxImageSort + 1 + imageIndex,
-              metal_id: metalId
+              metal_id: metalId || null
             })
           );
           imageIndex++;
@@ -912,7 +931,7 @@ const updateProductWithMedia = async (req, res) => {
               video_url: fileUrl,
               title: product.name,
               sort_order: maxVideoSort + 1 + videoIndex,
-              metal_id: metalId
+              metal_id: metalId || null
             })
           );
           videoIndex++;
@@ -1184,6 +1203,13 @@ const bulkUpdateProducts = async (req, res) => {
 // Create new product with file uploads
 const createProductWithMedia = async (req, res) => {
   try {
+    console.log('DEBUG createProductWithMedia: Request received');
+    console.log('DEBUG: Request body keys:', Object.keys(req.body));
+    console.log('DEBUG: Files count:', req.files ? req.files.length : 0);
+    console.log('DEBUG: name from body:', req.body.name);
+    console.log('DEBUG: base_price from body:', req.body.base_price);
+    console.log('DEBUG: category_id from body:', req.body.category_id);
+
     const {
       Product,
       Category,
@@ -1387,14 +1413,28 @@ const createProductWithMedia = async (req, res) => {
       let imageIndex = 0;
       let videoIndex = 0;
 
+      console.log(`DEBUG: Processing ${req.files.length} files for product ${product.id}`);
+
       req.files.forEach(file => {
         const fileUrl = generateFileUrl(req, path.join('products', file.filename));
 
         // Extract metal_id from file fieldname if it contains metal-specific data
-        // Format: image-files or image-files-[metalId] for metal-specific uploads
-        const metalId = file.fieldname && file.fieldname.includes('metal_')
-          ? file.fieldname.split('_')[1] || null
-          : null;
+        // Format: media_metal_[metalId] for metal-specific uploads
+        let metalId = null;
+        if (file.fieldname && file.fieldname.includes('media_metal_')) {
+          // Extract everything after 'media_metal_'
+          const parts = file.fieldname.split('media_metal_');
+          if (parts.length > 1) {
+            // Clean up the metalId - remove any trailing special characters
+            metalId = parts[1].trim() || null;
+            // Validate it looks like a UUID (basic check)
+            if (metalId && !metalId.match(/^[a-f0-9-]{36}$/i)) {
+              console.warn(`Invalid metal_id format: ${metalId}, treating as general media`);
+              metalId = null;
+            }
+          }
+          console.log(`DEBUG: File ${file.originalname} - fieldname: ${file.fieldname}, extracted metalId: ${metalId}`);
+        }
 
         if (file.mimetype.startsWith('image/')) {
           promises.push(
@@ -1404,7 +1444,7 @@ const createProductWithMedia = async (req, res) => {
               alt_text: name,
               is_primary: imageIndex === 0,
               sort_order: imageIndex,
-              metal_id: metalId
+              metal_id: metalId || null
             })
           );
           imageIndex++;
@@ -1415,7 +1455,7 @@ const createProductWithMedia = async (req, res) => {
               video_url: fileUrl,
               title: name,
               sort_order: videoIndex,
-              metal_id: metalId
+              metal_id: metalId || null
             })
           );
           videoIndex++;
