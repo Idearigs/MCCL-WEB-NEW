@@ -46,6 +46,36 @@ const generateSKU = (name, categorySlug) => {
   return `${prefix}-${namePart}-${timestamp}`;
 };
 
+// Helper function to validate and sanitize Nivoda options
+const validateNivodaOptions = (config) => {
+  if (!config) return null;
+
+  // Valid Nivoda grades based on API documentation
+  const VALID_CUTS = ['EX', 'VG', 'G', 'F'];
+  const VALID_CLARITIES = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'SI3', 'I1', 'I2', 'I3'];
+  const VALID_COLOURS = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
+
+  // Sanitize cut options - remove invalid ones
+  if (config.cutOptions && Array.isArray(config.cutOptions)) {
+    const validCuts = config.cutOptions.filter(cut => VALID_CUTS.includes(cut.toUpperCase()));
+    config.cutOptions = validCuts.map(cut => cut.toUpperCase());
+  }
+
+  // Sanitize clarity options - remove invalid ones
+  if (config.clarityOptions && Array.isArray(config.clarityOptions)) {
+    const validClarities = config.clarityOptions.filter(clarity => VALID_CLARITIES.includes(clarity.toUpperCase()));
+    config.clarityOptions = validClarities.map(clarity => clarity.toUpperCase());
+  }
+
+  // Sanitize colour options - remove invalid ones
+  if (config.colourOptions && Array.isArray(config.colourOptions)) {
+    const validColours = config.colourOptions.filter(colour => VALID_COLOURS.includes(colour.toUpperCase()));
+    config.colourOptions = validColours.map(colour => colour.toUpperCase());
+  }
+
+  return config;
+};
+
 // Get all products with pagination and filters for admin
 const getProducts = async (req, res) => {
   try {
@@ -202,13 +232,13 @@ const getProductById = async (req, res) => {
         {
           model: ProductImage,
           as: 'images',
-          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order'],
+          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id'],
           order: [['sort_order', 'ASC']]
         },
         {
           model: ProductVideo,
           as: 'videos',
-          attributes: ['id', 'video_url', 'title', 'description', 'sort_order'],
+          attributes: ['id', 'video_url', 'title', 'description', 'sort_order', 'metal_id'],
           order: [['sort_order', 'ASC']]
         },
         {
@@ -374,6 +404,16 @@ const createProduct = async (req, res) => {
     const slug = await generateUniqueSlug(name, Product);
     const sku = providedSku && providedSku.trim() !== '' ? providedSku.trim() : generateSKU(name, category.slug);
 
+    // Process and validate Nivoda configuration
+    let processedNivodaConfig = null;
+    if (nivoda_options_config) {
+      processedNivodaConfig = typeof nivoda_options_config === 'string'
+        ? JSON.parse(nivoda_options_config)
+        : nivoda_options_config;
+      // Sanitize invalid options
+      processedNivodaConfig = validateNivodaOptions(processedNivodaConfig);
+    }
+
     // Create product
     const product = await Product.create({
       name,
@@ -413,7 +453,8 @@ const createProduct = async (req, res) => {
           image_url: image.url,
           alt_text: image.alt_text || name,
           is_primary: index === 0,
-          sort_order: index
+          sort_order: index,
+          metal_id: image.metal_id || null
         })
       );
       await Promise.all(imagePromises);
@@ -427,7 +468,8 @@ const createProduct = async (req, res) => {
           video_url: video.url,
           title: video.title || name,
           description: video.description || '',
-          sort_order: index
+          sort_order: index,
+          metal_id: video.metal_id || null
         })
       );
       await Promise.all(videoPromises);
@@ -581,11 +623,13 @@ const updateProduct = async (req, res) => {
       updateData.collection_id = null;
     }
 
-    // Handle Nivoda options configuration - convert to JSON if provided
+    // Handle Nivoda options configuration - convert to JSON if provided and validate
     if (nivoda_options_config) {
-      updateData.nivoda_options_config = typeof nivoda_options_config === 'string'
+      let parsedConfig = typeof nivoda_options_config === 'string'
         ? JSON.parse(nivoda_options_config)
         : nivoda_options_config;
+      // Sanitize invalid options
+      updateData.nivoda_options_config = validateNivodaOptions(parsedConfig);
     }
 
     await product.update(updateData);
@@ -813,11 +857,13 @@ const updateProductWithMedia = async (req, res) => {
       updateData.collection_id = null;
     }
 
-    // Handle Nivoda options configuration - convert to JSON if provided
+    // Handle Nivoda options configuration - convert to JSON if provided and validate
     if (nivoda_options_config) {
-      updateData.nivoda_options_config = typeof nivoda_options_config === 'string'
+      let parsedConfig = typeof nivoda_options_config === 'string'
         ? JSON.parse(nivoda_options_config)
         : nivoda_options_config;
+      // Sanitize invalid options
+      updateData.nivoda_options_config = validateNivodaOptions(parsedConfig);
     }
 
     // Update basic product info
@@ -841,6 +887,12 @@ const updateProductWithMedia = async (req, res) => {
       req.files.forEach(file => {
         const fileUrl = generateFileUrl(req, path.join('products', file.filename));
 
+        // Extract metal_id from file fieldname if it contains metal-specific data
+        // Format: image-files or image-files-[metalId] for metal-specific uploads
+        const metalId = file.fieldname && file.fieldname.includes('metal_')
+          ? file.fieldname.split('_')[1] || null
+          : null;
+
         if (file.mimetype.startsWith('image/')) {
           promises.push(
             ProductImage.create({
@@ -848,7 +900,8 @@ const updateProductWithMedia = async (req, res) => {
               image_url: fileUrl,
               alt_text: product.name,
               is_primary: false, // Don't auto-set as primary when updating
-              sort_order: maxImageSort + 1 + imageIndex
+              sort_order: maxImageSort + 1 + imageIndex,
+              metal_id: metalId
             })
           );
           imageIndex++;
@@ -858,7 +911,8 @@ const updateProductWithMedia = async (req, res) => {
               product_id: product.id,
               video_url: fileUrl,
               title: product.name,
-              sort_order: maxVideoSort + 1 + videoIndex
+              sort_order: maxVideoSort + 1 + videoIndex,
+              metal_id: metalId
             })
           );
           videoIndex++;
@@ -1285,12 +1339,14 @@ const createProductWithMedia = async (req, res) => {
     const slug = await generateUniqueSlug(name, Product);
     const sku = providedSku && providedSku.trim() !== '' ? providedSku.trim() : generateSKU(name, category.slug);
 
-    // Prepare Nivoda options configuration if provided
+    // Prepare Nivoda options configuration if provided and validate
     let processedNivodaConfig = null;
     if (nivoda_options_config) {
       processedNivodaConfig = typeof nivoda_options_config === 'string'
         ? JSON.parse(nivoda_options_config)
         : nivoda_options_config;
+      // Sanitize invalid options
+      processedNivodaConfig = validateNivodaOptions(processedNivodaConfig);
     }
 
     // Create product
@@ -1334,6 +1390,12 @@ const createProductWithMedia = async (req, res) => {
       req.files.forEach(file => {
         const fileUrl = generateFileUrl(req, path.join('products', file.filename));
 
+        // Extract metal_id from file fieldname if it contains metal-specific data
+        // Format: image-files or image-files-[metalId] for metal-specific uploads
+        const metalId = file.fieldname && file.fieldname.includes('metal_')
+          ? file.fieldname.split('_')[1] || null
+          : null;
+
         if (file.mimetype.startsWith('image/')) {
           promises.push(
             ProductImage.create({
@@ -1341,7 +1403,8 @@ const createProductWithMedia = async (req, res) => {
               image_url: fileUrl,
               alt_text: name,
               is_primary: imageIndex === 0,
-              sort_order: imageIndex
+              sort_order: imageIndex,
+              metal_id: metalId
             })
           );
           imageIndex++;
@@ -1351,7 +1414,8 @@ const createProductWithMedia = async (req, res) => {
               product_id: product.id,
               video_url: fileUrl,
               title: name,
-              sort_order: videoIndex
+              sort_order: videoIndex,
+              metal_id: metalId
             })
           );
           videoIndex++;

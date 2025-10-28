@@ -398,7 +398,11 @@ const AdminProducts: React.FC = () => {
 
       // Check if there are any files to upload
       const hasFiles = (productData.images && productData.images.some((img: any) => img.file)) ||
-                      (productData.videos && productData.videos.some((vid: any) => vid.file));
+                      (productData.videos && productData.videos.some((vid: any) => vid.file)) ||
+                      (productData.metalMediaState && Object.keys(productData.metalMediaState).some(metalId =>
+                        productData.metalMediaState[metalId].images?.some((img: any) => img.file) ||
+                        productData.metalMediaState[metalId].videos?.some((vid: any) => vid.file)
+                      ));
 
       let response;
 
@@ -410,6 +414,7 @@ const AdminProducts: React.FC = () => {
         const basicData = { ...productData };
         delete basicData.images;
         delete basicData.videos;
+        delete basicData.metalMediaState;
 
         Object.keys(basicData).forEach(key => {
           if (basicData[key] !== undefined && basicData[key] !== null) {
@@ -441,6 +446,33 @@ const AdminProducts: React.FC = () => {
           });
         }
 
+        // Add metal-specific media files
+        if (productData.metalMediaState) {
+          Object.keys(productData.metalMediaState).forEach(metalId => {
+            const metalMedia = productData.metalMediaState[metalId];
+
+            // Add metal-specific images with metal_id in fieldname
+            if (metalMedia.images) {
+              metalMedia.images.forEach((image: any, index: number) => {
+                if (image.file) {
+                  formData.append(`media_metal_${metalId}`, image.file);
+                  formData.append(`image_metal_${metalId}_${index}_alt_text`, image.alt_text || '');
+                }
+              });
+            }
+
+            // Add metal-specific videos with metal_id in fieldname
+            if (metalMedia.videos) {
+              metalMedia.videos.forEach((video: any, index: number) => {
+                if (video.file) {
+                  formData.append(`media_metal_${metalId}`, video.file);
+                  formData.append(`video_metal_${metalId}_${index}_title`, video.title || '');
+                }
+              });
+            }
+          });
+        }
+
         response = await fetch(`${API_BASE_URL}/admin/products/with-media`, {
           method: 'POST',
           headers: {
@@ -451,6 +483,7 @@ const AdminProducts: React.FC = () => {
       } else {
         // Use JSON for products without files
         const cleanData = { ...productData };
+        delete cleanData.metalMediaState;
         // Remove file objects and blob URLs
         if (cleanData.images) {
           cleanData.images = cleanData.images
@@ -495,14 +528,116 @@ const AdminProducts: React.FC = () => {
     try {
       setFormLoading(true);
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/products/${editingProduct?.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(productData),
-      });
+
+      // Check if there are any new media files to upload
+      const hasNewMediaFiles = (productData.images && productData.images.some((img: any) => img.file)) ||
+                               (productData.videos && productData.videos.some((vid: any) => vid.file)) ||
+                               (productData.metalMediaState && Object.keys(productData.metalMediaState).some(metalId =>
+                                 productData.metalMediaState[metalId].images?.some((img: any) => img.file) ||
+                                 productData.metalMediaState[metalId].videos?.some((vid: any) => vid.file)
+                               ));
+
+      let response;
+
+      if (hasNewMediaFiles) {
+        // Use FormData for updates with new media files
+        const formData = new FormData();
+
+        // Add basic product data (exclude media and metalMediaState)
+        const basicData = { ...productData };
+        delete basicData.images;
+        delete basicData.videos;
+        delete basicData.metalMediaState;
+
+        Object.keys(basicData).forEach(key => {
+          if (basicData[key] !== undefined && basicData[key] !== null) {
+            if (Array.isArray(basicData[key])) {
+              formData.append(key, JSON.stringify(basicData[key]));
+            } else {
+              formData.append(key, basicData[key].toString());
+            }
+          }
+        });
+
+        // Add new image files (only files, not existing URLs)
+        if (productData.images) {
+          productData.images.forEach((image: any, index: number) => {
+            if (image.file) {
+              formData.append('media', image.file);
+              formData.append(`image_${index}_alt_text`, image.alt_text || '');
+            }
+          });
+        }
+
+        // Add new video files (only files, not existing URLs)
+        if (productData.videos) {
+          productData.videos.forEach((video: any, index: number) => {
+            if (video.file) {
+              formData.append('media', video.file);
+              formData.append(`video_${index}_title`, video.title || '');
+            }
+          });
+        }
+
+        // Add metal-specific media files
+        if (productData.metalMediaState) {
+          Object.keys(productData.metalMediaState).forEach(metalId => {
+            const metalMedia = productData.metalMediaState[metalId];
+
+            // Add metal-specific images with metal_id in fieldname
+            if (metalMedia.images) {
+              metalMedia.images.forEach((image: any, index: number) => {
+                if (image.file) {
+                  formData.append(`media_metal_${metalId}`, image.file);
+                  formData.append(`image_metal_${metalId}_${index}_alt_text`, image.alt_text || '');
+                }
+              });
+            }
+
+            // Add metal-specific videos with metal_id in fieldname
+            if (metalMedia.videos) {
+              metalMedia.videos.forEach((video: any, index: number) => {
+                if (video.file) {
+                  formData.append(`media_metal_${metalId}`, video.file);
+                  formData.append(`video_metal_${metalId}_${index}_title`, video.title || '');
+                }
+              });
+            }
+          });
+        }
+
+        response = await fetch(`${API_BASE_URL}/admin/products/${editingProduct?.id}/with-media`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+      } else {
+        // Use JSON for updates without new media files
+        const cleanData = { ...productData };
+        delete cleanData.metalMediaState;
+        // Remove file objects and blob URLs
+        if (cleanData.images) {
+          cleanData.images = cleanData.images
+            .filter((img: any) => img.url && !img.url.startsWith('blob:'))
+            .map((img: any) => ({ url: img.url, alt_text: img.alt_text }));
+        }
+        if (cleanData.videos) {
+          cleanData.videos = cleanData.videos
+            .filter((vid: any) => vid.url && !vid.url.startsWith('blob:'))
+            .map((vid: any) => ({ url: vid.url, title: vid.title }));
+        }
+
+        response = await fetch(`${API_BASE_URL}/admin/products/${editingProduct?.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(cleanData),
+        });
+      }
 
       const data = await response.json();
 

@@ -151,6 +151,12 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('basic');
 
+  // Metal-specific media state
+  const [metalMediaState, setMetalMediaState] = useState<Record<string, {
+    images: Array<{ file: File | null; url: string; alt_text: string }>;
+    videos: Array<{ file: File | null; url: string; title: string }>;
+  }>>({});
+
   // Nivoda Integration State
   const [nivodaAvailableOptions, setNivodaAvailableOptions] = useState<{
     carats: string[];
@@ -266,6 +272,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         variants: []
       });
     }
+    // Reset metal media state
+    setMetalMediaState({});
     setErrors({});
     setActiveTab('basic');
   }, [initialData, isOpen]);
@@ -294,7 +302,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      await onSubmit(formData);
+      // Include metal-specific media in the submission
+      const formDataWithMetal = {
+        ...formData,
+        metalMediaState
+      } as any;
+
+      await onSubmit(formDataWithMetal);
     }
   };
 
@@ -395,6 +409,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
     { id: 'pricing', label: 'Pricing & Stock' },
+    { id: 'metals', label: 'Metals' },
     { id: 'media', label: 'Media' },
     { id: 'variants', label: 'Variants' },
     { id: 'details', label: 'Details' },
@@ -807,11 +822,115 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
           )}
 
+          {/* Metals Tab */}
+          {activeTab === 'metals' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2 font-cormorant">
+                  Available Metals for this Product
+                </h3>
+                <p className="text-sm text-gray-600 mb-6 font-satoshi">
+                  Select which metal types/materials this product is available in. You can upload different images and videos for each metal variation.
+                </p>
+
+                {metals.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                    <p className="text-gray-500 font-satoshi">No metals available in the system</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {metals.map((metal) => (
+                      <label
+                        key={metal.id}
+                        className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-900 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.metal_ids.includes(metal.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData(prev => ({
+                                ...prev,
+                                metal_ids: [...prev.metal_ids, metal.id]
+                              }));
+                            } else {
+                              setFormData(prev => ({
+                                ...prev,
+                                metal_ids: prev.metal_ids.filter(id => id !== metal.id)
+                              }));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-900"
+                        />
+                        <div className="flex items-center space-x-2 flex-1">
+                          <div
+                            className="w-6 h-6 rounded-full border-2 border-gray-300"
+                            style={{ backgroundColor: metal.color_code || '#cccccc' }}
+                            title={metal.color_code}
+                          />
+                          <div>
+                            <span className="text-sm font-medium text-gray-900 font-satoshi">{metal.name}</span>
+                            {metal.price_multiplier && metal.price_multiplier !== 1 && (
+                              <span className="text-xs text-gray-500 block font-satoshi">
+                                ×{parseFloat(metal.price_multiplier).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {formData.metal_ids.length > 0 && (
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="text-sm font-medium text-blue-900 mb-2 font-satoshi">
+                      ✓ Selected Metals ({formData.metal_ids.length})
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.metal_ids.map((metalId) => {
+                        const metal = metals.find(m => m.id === metalId);
+                        return metal ? (
+                          <div
+                            key={metalId}
+                            className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full border border-blue-300"
+                          >
+                            <div
+                              className="w-4 h-4 rounded-full border border-gray-300"
+                              style={{ backgroundColor: metal.color_code || '#cccccc' }}
+                            />
+                            <span className="text-sm text-gray-900 font-satoshi">{metal.name}</span>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                    <p className="text-xs text-blue-700 mt-3 font-satoshi">
+                      Go to the <strong>Media</strong> tab to upload images and videos for each metal type.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Media Tab */}
           {activeTab === 'media' && (
             <div className="space-y-6">
-              {/* Images Section */}
+              {formData.metal_ids.length === 0 && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 font-satoshi">
+                    <strong>💡 Tip:</strong> To upload metal-specific images and videos, go to the <strong>Metals</strong> tab and select at least one metal type first.
+                  </p>
+                </div>
+              )}
+
+              {/* General Images Section (applicable to all metals) */}
               <div className="space-y-4">
+                <div className="bg-gray-100 rounded-lg p-3 mb-4 border border-gray-300">
+                  <h4 className="text-sm font-medium text-gray-900 font-satoshi">General Product Images</h4>
+                  <p className="text-xs text-gray-600 font-satoshi">These images apply to all metal variations</p>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900 font-cormorant">
                     Product Images ({formData.images.length}/4)
@@ -1088,6 +1207,202 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Metal-Specific Images and Videos */}
+              {formData.metal_ids.length > 0 && (
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-lg font-medium text-gray-900 font-cormorant mb-4">
+                    Metal-Specific Media
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-6 font-satoshi">
+                    Upload different images and videos for each metal type. Customers will see these when they select the metal variation.
+                  </p>
+
+                  <div className="space-y-6">
+                    {formData.metal_ids.map((metalId) => {
+                      const metal = metals.find(m => m.id === metalId);
+                      if (!metal) return null;
+
+                      return (
+                        <div
+                          key={metalId}
+                          className="border border-gray-300 rounded-lg overflow-hidden"
+                        >
+                          {/* Metal Header */}
+                          <div
+                            className="px-4 py-3 flex items-center space-x-3"
+                            style={{ backgroundColor: metal.color_code ? `${metal.color_code}15` : '#f3f4f6' }}
+                          >
+                            <div
+                              className="w-6 h-6 rounded-full border-2 border-gray-400"
+                              style={{ backgroundColor: metal.color_code || '#cccccc' }}
+                            />
+                            <h4 className="font-semibold text-gray-900 font-satoshi">{metal.name}</h4>
+                          </div>
+
+                          {/* Images for this metal */}
+                          <div className="p-4 bg-gray-50">
+                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">
+                              Images for {metal.name} ({(metalMediaState[metalId]?.images?.length || 0)}/4)
+                            </h5>
+                            <label className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg cursor-pointer w-fit mb-3 font-satoshi transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                              style={{
+                                pointerEvents: (metalMediaState[metalId]?.images?.length || 0) >= 4 ? 'none' : 'auto',
+                                opacity: (metalMediaState[metalId]?.images?.length || 0) >= 4 ? 0.6 : 1
+                              }}>
+                              <Upload className="h-4 w-4" />
+                              <span>Upload {metal.name} Images</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  const files = Array.from(e.target.files || []);
+                                  const remainingSlots = 4 - (metalMediaState[metalId]?.images?.length || 0);
+                                  const filesToAdd = files.slice(0, remainingSlots);
+
+                                  const newImages = filesToAdd.map(file => ({
+                                    file,
+                                    url: URL.createObjectURL(file),
+                                    alt_text: file.name.replace(/\.[^/.]+$/, "")
+                                  }));
+
+                                  setMetalMediaState(prev => ({
+                                    ...prev,
+                                    [metalId]: {
+                                      ...prev[metalId],
+                                      images: [...(prev[metalId]?.images || []), ...newImages]
+                                    }
+                                  }));
+
+                                  e.target.value = '';
+                                }}
+                                disabled={(metalMediaState[metalId]?.images?.length || 0) >= 4}
+                              />
+                            </label>
+                            <div className="text-xs text-gray-500 font-satoshi">
+                              You can upload up to 4 images per metal type
+                            </div>
+
+                            {/* Display uploaded metal-specific images */}
+                            {(metalMediaState[metalId]?.images?.length || 0) > 0 && (
+                              <div className="grid grid-cols-2 gap-2 mt-3">
+                                {metalMediaState[metalId]?.images?.map((img, idx) => (
+                                  <div key={idx} className="relative border border-gray-200 rounded-lg overflow-hidden">
+                                    <img
+                                      src={img.url}
+                                      alt={img.alt_text || `${metal.name} image ${idx + 1}`}
+                                      className="w-full h-24 object-cover"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setMetalMediaState(prev => ({
+                                          ...prev,
+                                          [metalId]: {
+                                            ...prev[metalId],
+                                            images: prev[metalId]?.images?.filter((_, i) => i !== idx) || []
+                                          }
+                                        }));
+                                      }}
+                                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Videos for this metal */}
+                          <div className="p-4 border-t border-gray-200">
+                            <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">
+                              Videos for {metal.name} ({(metalMediaState[metalId]?.videos?.length || 0)}/2)
+                            </h5>
+                            <label className="flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg cursor-pointer w-fit mb-3 font-satoshi transition-colors"
+                              style={{
+                                pointerEvents: (metalMediaState[metalId]?.videos?.length || 0) >= 2 ? 'none' : 'auto',
+                                opacity: (metalMediaState[metalId]?.videos?.length || 0) >= 2 ? 0.6 : 1
+                              }}>
+                              <Package className="h-4 w-4" />
+                              <span>Upload {metal.name} Videos</span>
+                              <input
+                                type="file"
+                                accept="video/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  const files = Array.from(e.target.files || []);
+                                  const remainingSlots = 2 - (metalMediaState[metalId]?.videos?.length || 0);
+                                  const filesToAdd = files.slice(0, remainingSlots);
+
+                                  const newVideos = filesToAdd.map(file => ({
+                                    file,
+                                    url: URL.createObjectURL(file),
+                                    title: file.name.replace(/\.[^/.]+$/, "")
+                                  }));
+
+                                  setMetalMediaState(prev => ({
+                                    ...prev,
+                                    [metalId]: {
+                                      ...prev[metalId],
+                                      videos: [...(prev[metalId]?.videos || []), ...newVideos]
+                                    }
+                                  }));
+
+                                  e.target.value = '';
+                                }}
+                                disabled={(metalMediaState[metalId]?.videos?.length || 0) >= 2}
+                              />
+                            </label>
+                            <div className="text-xs text-gray-500 font-satoshi">
+                              You can upload up to 2 videos per metal type
+                            </div>
+
+                            {/* Display uploaded metal-specific videos */}
+                            {(metalMediaState[metalId]?.videos?.length || 0) > 0 && (
+                              <div className="grid grid-cols-1 gap-2 mt-3">
+                                {metalMediaState[metalId]?.videos?.map((vid, idx) => (
+                                  <div key={idx} className="relative border border-gray-200 rounded-lg overflow-hidden">
+                                    <video
+                                      src={vid.url}
+                                      className="w-full h-24 object-cover bg-black"
+                                      controls
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setMetalMediaState(prev => ({
+                                          ...prev,
+                                          [metalId]: {
+                                            ...prev[metalId],
+                                            videos: prev[metalId]?.videos?.filter((_, i) => i !== idx) || []
+                                          }
+                                        }));
+                                      }}
+                                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800 font-satoshi">
+                      <strong>✓ Media Upload Ready:</strong> Metal-specific media upload will be fully functional once you save the product.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
