@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
 
 const Checkout = (): JSX.Element => {
   const [email, setEmail] = useState("");
@@ -28,6 +29,21 @@ const Checkout = (): JSX.Element => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [orderData, setOrderData] = useState<any>(null);
+  const [stripe, setStripe] = useState<any>(null);
+
+  // Initialize Stripe on mount
+  useEffect(() => {
+    const initStripe = async () => {
+      const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+      if (!publishableKey) {
+        console.error("Stripe publishable key not found");
+        return;
+      }
+      const stripeInstance = await loadStripe(publishableKey);
+      setStripe(stripeInstance);
+    };
+    initStripe();
+  }, []);
 
   const cartItem = {
     id: 1,
@@ -47,6 +63,11 @@ const Checkout = (): JSX.Element => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
+
+    if (!stripe) {
+      setErrorMessage("Stripe is not initialized. Please refresh the page.");
+      return;
+    }
 
     // Validation
     if (!email || !firstName || !lastName || !address || !city || !postalCode || !phone) {
@@ -91,7 +112,34 @@ const Checkout = (): JSX.Element => {
       const intentData = await intentResponse.json();
       const { paymentIntentId, clientSecret } = intentData.data;
 
-      // Step 2: Confirm payment with customer info
+      // Step 2: Confirm payment with Stripe using card details
+      // Parse expiry date (MM/YY format)
+      const [expMonth, expYear] = expDate.split("/").map(x => x.trim());
+
+      const confirmResult = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: {
+            number: cardNumber.replace(/\s/g, ""),
+            exp_month: parseInt(expMonth),
+            exp_year: parseInt("20" + expYear),
+            cvc: securityCode
+          },
+          billing_details: {
+            name: nameOnCard,
+            email: email
+          }
+        }
+      });
+
+      if (confirmResult.error) {
+        throw new Error(confirmResult.error.message || "Card payment failed");
+      }
+
+      if (confirmResult.paymentIntent.status !== "succeeded") {
+        throw new Error(`Payment status: ${confirmResult.paymentIntent.status}`);
+      }
+
+      // Step 3: Confirm order in backend
       const confirmResponse = await fetch(`${API_URL}/payments/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
