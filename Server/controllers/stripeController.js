@@ -95,6 +95,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
         order_id: order.id,
         product_id: item.product_id,
         product_variant_id: item.variant_id,
+        product_name: item.name || 'Product',
         quantity: item.quantity,
         unit_price: item.price,
         total_price: item.price * item.quantity
@@ -129,6 +130,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error in confirmPayment:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to confirm payment',
