@@ -91,7 +91,21 @@ const confirmPayment = asyncHandler(async (req, res) => {
 
     // Create order items
     for (const item of cartItems) {
-      await OrderItem.create({
+      console.log('Creating order item:', {
+        order_id: order.id,
+        product_id: item.product_id,
+        product_variant_id: item.variant_id,
+        product_name: item.name,
+        quantity: item.quantity,
+        unit_price: item.price,
+        total_price: item.price * item.quantity
+      });
+
+      if (!OrderItem) {
+        throw new Error('OrderItem model is undefined');
+      }
+
+      const orderItem = await OrderItem.create({
         order_id: order.id,
         product_id: item.product_id,
         product_variant_id: item.variant_id,
@@ -100,6 +114,8 @@ const confirmPayment = asyncHandler(async (req, res) => {
         unit_price: item.price,
         total_price: item.price * item.quantity
       });
+
+      console.log('Order item created:', orderItem.id);
 
       // Update inventory if applicable
       if (item.variant_id) {
@@ -130,7 +146,11 @@ const confirmPayment = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in confirmPayment:', error);
+    console.error('Error in confirmPayment:', error.message);
+    console.error('Error stack:', error.stack);
+    if (error.errors) {
+      console.error('Validation errors:', error.errors);
+    }
     res.status(500).json({
       success: false,
       message: 'Failed to confirm payment',
