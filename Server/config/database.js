@@ -42,6 +42,11 @@ const connectPostgreSQL = async () => {
     await postgresDB.authenticate();
     logger.info('PostgreSQL connected successfully');
 
+    // Initialize models BEFORE sync so all models are defined
+    const { initializeModels } = require('../models');
+    initializeModels();
+    logger.info('Database models initialized');
+
     if (process.env.NODE_ENV === 'development') {
       await postgresDB.sync({ alter: true });
       logger.info('PostgreSQL models synchronized');

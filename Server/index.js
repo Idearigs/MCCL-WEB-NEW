@@ -100,9 +100,6 @@ app.get('/health', async (req, res) => {
   });
 });
 
-// Initialize database models
-const { initializeModels } = require('./models');
-
 // API routes
 const apiRoutes = require('./routes');
 app.use(`/api/${config.API_VERSION}`, apiRoutes);
@@ -151,11 +148,8 @@ const startServer = async () => {
     // Try to connect to databases with retry logic
     const dbConnected = await connectDatabases();
 
-    // Initialize database models only if database is connected
-    if (dbConnected) {
-      initializeModels();
-      logger.info('Database models initialized');
-    } else {
+    // Models are now initialized during database connection
+    if (!dbConnected) {
       logger.warn('⚠️  Server starting without database connection');
       logger.warn('⚠️  Some API endpoints may not work until database is connected');
     }

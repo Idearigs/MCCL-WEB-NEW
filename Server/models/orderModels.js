@@ -273,16 +273,17 @@ const setupOrderAssociations = () => {
 
   // If Product model exists, add association
   try {
-    const { getModelInstance } = require('./index');
-    const { Product } = getModelInstance();
-    if (Product) {
-      OrderItem.belongsTo(Product, {
+    const { getModels } = require('./index');
+    const models = getModels();
+    if (models.Product) {
+      OrderItem.belongsTo(models.Product, {
         foreignKey: 'product_id',
         as: 'product'
       });
     }
   } catch (error) {
     // Product model might not be initialized yet
+    console.warn('Warning: Could not set Product association for OrderItem:', error.message);
   }
 };
 
