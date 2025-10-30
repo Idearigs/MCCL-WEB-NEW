@@ -1,82 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, AlertCircle, CheckCircle, Loader } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
-const Checkout = (): JSX.Element => {
-  const [email, setEmail] = useState("");
-  const [keepUpdated, setKeepUpdated] = useState(true);
-  const [country, setCountry] = useState("Sri Lanka");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [address, setAddress] = useState("");
-  const [apartment, setApartment] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [phone, setPhone] = useState("");
-  const [shippingMethod, setShippingMethod] = useState("express");
-  const [paymentMethod] = useState("credit-card");
-  const [cardType, setCardType] = useState("visa");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expDate, setExpDate] = useState("");
-  const [securityCode, setSecurityCode] = useState("");
-  const [nameOnCard, setNameOnCard] = useState("");
-  const [useSameAddress, setUseSameAddress] = useState(true);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [contactNumber, setContactNumber] = useState("");
+// Initialize Stripe promise at module level
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
+);
 
-  // Payment state
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [orderData, setOrderData] = useState<any>(null);
-  const [stripe, setStripe] = useState<any>(null);
+// Payment Form Component - uses Stripe hooks
+const PaymentForm = ({
+  email,
+  firstName,
+  lastName,
+  address,
+  apartment,
+  city,
+  postalCode,
+  country,
+  phone,
+  total,
+  cartItem,
+  onSuccess,
+  onError,
+  isProcessing,
+  setIsProcessing,
+}: any) => {
+  const stripe = useStripe();
+  const elements = useElements();
 
-  // Initialize Stripe on mount
-  useEffect(() => {
-    const initStripe = async () => {
-      const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-      if (!publishableKey) {
-        console.error("Stripe publishable key not found");
-        return;
-      }
-      const stripeInstance = await loadStripe(publishableKey);
-      setStripe(stripeInstance);
-    };
-    initStripe();
-  }, []);
-
-  const cartItem = {
-    id: 1,
-    name: "Roulette Classic White Gold Diamond Earrings",
-    price: 6500.00,
-    quantity: 2,
-    image: "/images/12045CFRDOP_450x.webp"
-  };
-
-  const subtotal = cartItem.price * cartItem.quantity;
-  const shipping = 0; // FREE
-  const duties = 0.00;
-  const taxes = 1170.00;
-  const total = subtotal + shipping + duties + taxes;
-
-  const handlePayNow = async (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage("");
-    setSuccessMessage("");
 
-    if (!stripe) {
-      setErrorMessage("Stripe is not initialized. Please refresh the page.");
+    if (!stripe || !elements) {
+      onError("Stripe is not initialized. Please refresh the page.");
       return;
     }
 
     // Validation
     if (!email || !firstName || !lastName || !address || !city || !postalCode || !phone) {
-      setErrorMessage("Please fill in all required fields.");
-      return;
-    }
-
-    if (!cardNumber || !expDate || !securityCode || !nameOnCard) {
-      setErrorMessage("Please fill in all card details.");
+      onError("Please fill in all required fields.");
       return;
     }
 
@@ -112,31 +75,33 @@ const Checkout = (): JSX.Element => {
       const intentData = await intentResponse.json();
       const { paymentIntentId, clientSecret } = intentData.data;
 
-      // Step 2: Confirm payment with Stripe using card details
-      // Parse expiry date (MM/YY format)
-      const [expMonth, expYear] = expDate.split("/").map(x => x.trim());
-
-      const confirmResult = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: {
-            number: cardNumber.replace(/\s/g, ""),
-            exp_month: parseInt(expMonth),
-            exp_year: parseInt("20" + expYear),
-            cvc: securityCode
-          },
-          billing_details: {
-            name: nameOnCard,
-            email: email
+      // Step 2: Confirm payment with Stripe using CardElement
+      const { paymentIntent, error: stripeError } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card: elements.getElement(CardElement)!,
+            billing_details: {
+              name: `${firstName} ${lastName}`,
+              email: email,
+              address: {
+                line1: address,
+                line2: apartment || undefined,
+                city: city,
+                postal_code: postalCode,
+                country: country === "United Kingdom" ? "GB" : "US"
+              }
+            }
           }
         }
-      });
+      );
 
-      if (confirmResult.error) {
-        throw new Error(confirmResult.error.message || "Card payment failed");
+      if (stripeError) {
+        throw new Error(stripeError.message || "Card payment failed");
       }
 
-      if (confirmResult.paymentIntent.status !== "succeeded") {
-        throw new Error(`Payment status: ${confirmResult.paymentIntent.status}`);
+      if (paymentIntent?.status !== "succeeded") {
+        throw new Error(`Payment status: ${paymentIntent?.status}`);
       }
 
       // Step 3: Confirm order in backend
@@ -173,30 +138,99 @@ const Checkout = (): JSX.Element => {
       }
 
       const confirmData = await confirmResponse.json();
-      setOrderData(confirmData.data);
-      setSuccessMessage(`Order confirmed! Order Number: ${confirmData.data.orderNumber}`);
-
-      // Reset form
-      setTimeout(() => {
-        setEmail("");
-        setFirstName("");
-        setLastName("");
-        setAddress("");
-        setApartment("");
-        setCity("");
-        setPostalCode("");
-        setPhone("");
-        setCardNumber("");
-        setExpDate("");
-        setSecurityCode("");
-        setNameOnCard("");
-      }, 2000);
-
+      onSuccess(confirmData.data);
     } catch (error: any) {
       console.error("Payment error:", error);
-      setErrorMessage(error.message || "Payment processing failed. Please try again.");
+      onError(error.message || "Payment processing failed. Please try again.");
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handlePayment}
+      disabled={isProcessing || !stripe || !elements}
+      className="w-full bg-black text-white py-3 px-6 rounded font-medium text-sm hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mt-6 flex items-center justify-center space-x-2"
+    >
+      {isProcessing && <Loader className="w-4 h-4 animate-spin" />}
+      <span>{isProcessing ? "Processing..." : "Pay Now"}</span>
+    </button>
+  );
+};
+
+// Main Checkout Component
+const Checkout = (): JSX.Element => {
+  const [email, setEmail] = useState("");
+  const [keepUpdated, setKeepUpdated] = useState(true);
+  const [country, setCountry] = useState("Sri Lanka");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [address, setAddress] = useState("");
+  const [apartment, setApartment] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [phone, setPhone] = useState("");
+  const [shippingMethod, setShippingMethod] = useState("express");
+  const [useSameAddress, setUseSameAddress] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [contactNumber, setContactNumber] = useState("");
+
+  // Payment state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [orderData, setOrderData] = useState<any>(null);
+
+  const cartItem = {
+    id: 1,
+    name: "Roulette Classic White Gold Diamond Earrings",
+    price: 6500.00,
+    quantity: 2,
+    image: "/images/12045CFRDOP_450x.webp"
+  };
+
+  const subtotal = cartItem.price * cartItem.quantity;
+  const shipping = 0;
+  const duties = 0.00;
+  const taxes = 1170.00;
+  const total = subtotal + shipping + duties + taxes;
+
+  const handleSuccess = (data: any) => {
+    setOrderData(data);
+    setSuccessMessage(`Order confirmed! Order Number: ${data.orderNumber}`);
+
+    // Reset form after 2 seconds
+    setTimeout(() => {
+      setEmail("");
+      setFirstName("");
+      setLastName("");
+      setAddress("");
+      setApartment("");
+      setCity("");
+      setPostalCode("");
+      setPhone("");
+    }, 2000);
+  };
+
+  const handleError = (error: string) => {
+    setErrorMessage(error);
+  };
+
+  const cardElementOptions = {
+    style: {
+      base: {
+        fontSize: "14px",
+        color: "#32325d",
+        fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "::placeholder": {
+          color: "#aab7c4",
+          fontWeight: "300"
+        }
+      },
+      invalid: {
+        color: "#fa755a"
+      }
     }
   };
 
@@ -208,9 +242,9 @@ const Checkout = (): JSX.Element => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <img 
-                src="/images/logo.png" 
-                alt="McCulloch Jewellers" 
+              <img
+                src="/images/logo.png"
+                alt="McCulloch Jewellers"
                 className="h-8 w-auto object-contain"
               />
               <div>
@@ -222,7 +256,7 @@ const Checkout = (): JSX.Element => {
                 </div>
               </div>
             </div>
-            
+
             {/* Cart Icon */}
             <div>
               <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
@@ -238,11 +272,11 @@ const Checkout = (): JSX.Element => {
       <div className="max-w-7xl mx-auto px-6 py-8 relative">
         {/* Full Height Divider */}
         <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-gray-200 transform -translate-x-1/2"></div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Left Column - Checkout Form */}
           <div className="space-y-8 lg:pr-12">
-            
+
             {/* Express Checkout */}
             <div className="text-center">
               <h2 className="text-base font-medium text-gray-800 mb-6">Express Checkout</h2>
@@ -252,13 +286,13 @@ const Checkout = (): JSX.Element => {
                   <span className="font-semibold">Shop</span>
                   <span className="font-light ml-1">Pay</span>
                 </button>
-                
+
                 {/* PayPal */}
                 <button className="flex items-center justify-center bg-[#FFC439] text-[#003087] px-5 py-2.5 rounded hover:bg-[#FFB800] transition-colors">
                   <span className="font-bold text-base">Pay</span>
                   <span className="font-bold text-base text-[#009CDE]">Pal</span>
                 </button>
-                
+
                 {/* Google Pay */}
                 <button className="flex items-center justify-center bg-black text-white px-5 py-2.5 rounded hover:bg-gray-800 transition-colors text-sm">
                   <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -270,7 +304,7 @@ const Checkout = (): JSX.Element => {
                   <span className="font-medium">Pay</span>
                 </button>
               </div>
-              
+
               <div className="text-gray-400 text-xs mb-8">OR</div>
             </div>
 
@@ -282,7 +316,7 @@ const Checkout = (): JSX.Element => {
                   Log in
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <input
                   type="email"
@@ -291,7 +325,7 @@ const Checkout = (): JSX.Element => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm placeholder:font-light"
                 />
-                
+
                 <label className="flex items-start space-x-3">
                   <input
                     type="checkbox"
@@ -309,7 +343,7 @@ const Checkout = (): JSX.Element => {
             {/* Delivery Section */}
             <div>
               <h3 className="text-base font-medium text-gray-900 mb-4">Delivery</h3>
-              
+
               <div className="space-y-4">
                 {/* Country Selection */}
                 <div className="relative">
@@ -352,7 +386,7 @@ const Checkout = (): JSX.Element => {
                   onChange={(e) => setAddress(e.target.value)}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm placeholder:font-light"
                 />
-                
+
                 <input
                   type="text"
                   placeholder="Apartment, suite, etc."
@@ -393,7 +427,7 @@ const Checkout = (): JSX.Element => {
             {/* Shipping Method Section */}
             <div>
               <h3 className="text-base font-medium text-gray-900 mb-4">Shipping method</h3>
-              
+
               <div className="space-y-3">
                 {/* Express International */}
                 <label className="flex items-center p-4 border border-gray-300 rounded cursor-pointer hover:border-gray-400">
@@ -427,7 +461,7 @@ const Checkout = (): JSX.Element => {
             <div>
               <h3 className="text-base font-medium text-gray-900 mb-2">Payment</h3>
               <p className="text-sm text-gray-500 mb-6">All transactions are secure and encrypted.</p>
-              
+
               <div className="space-y-4">
                 {/* Credit Card Section */}
                 <div className="border border-gray-300 rounded overflow-hidden">
@@ -450,57 +484,13 @@ const Checkout = (): JSX.Element => {
                       <span className="text-xs text-gray-500 font-medium">+2</span>
                     </div>
                   </div>
-                  
+
                   {/* Credit Card Fields */}
                   <div className="p-4 bg-gray-50 space-y-4">
-                    {/* Card Number */}
+                    {/* Card Element */}
                     <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Card number"
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value)}
-                        className="w-full px-3 py-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-sm bg-white placeholder:font-light"
-                      />
-                      <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <rect x="3" y="4" width="18" height="16" rx="2"/>
-                        <path d="M7 8h10"/>
-                      </svg>
+                      <CardElement options={cardElementOptions} />
                     </div>
-
-                    {/* Exp Date and Security Code */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        placeholder="Expiration date (MM / YY)"
-                        value={expDate}
-                        onChange={(e) => setExpDate(e.target.value)}
-                        className="px-3 py-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-sm bg-white placeholder:font-light"
-                      />
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Security code"
-                          value={securityCode}
-                          onChange={(e) => setSecurityCode(e.target.value)}
-                          className="w-full px-3 py-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-sm bg-white placeholder:font-light"
-                        />
-                        <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10"/>
-                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                          <path d="M12 17h.01"/>
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Name on Card */}
-                    <input
-                      type="text"
-                      placeholder="Name on card"
-                      value={nameOnCard}
-                      onChange={(e) => setNameOnCard(e.target.value)}
-                      className="w-full px-3 py-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-sm bg-white placeholder:font-light"
-                    />
 
                     {/* Use Shipping Address as Billing Address */}
                     <label className="flex items-start space-x-3">
@@ -530,7 +520,7 @@ const Checkout = (): JSX.Element => {
                 {/* Remember Me Section */}
                 <div className="mt-6">
                   <h4 className="text-sm font-medium text-gray-900 mb-4">Remember me</h4>
-                  
+
                   <div className="p-4 bg-gray-50 rounded border border-gray-200 space-y-4">
                     <label className="flex items-start space-x-3">
                       <input
@@ -600,15 +590,26 @@ const Checkout = (): JSX.Element => {
                   </div>
                 )}
 
-                {/* Pay Now Button */}
-                <button
-                  onClick={handlePayNow}
-                  disabled={isProcessing}
-                  className="w-full bg-black text-white py-3 px-6 rounded font-medium text-sm hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mt-6 flex items-center justify-center space-x-2"
-                >
-                  {isProcessing && <Loader className="w-4 h-4 animate-spin" />}
-                  <span>{isProcessing ? "Processing..." : "Pay Now"}</span>
-                </button>
+                {/* Pay Now Button with Stripe Elements wrapper */}
+                <Elements stripe={stripePromise}>
+                  <PaymentForm
+                    email={email}
+                    firstName={firstName}
+                    lastName={lastName}
+                    address={address}
+                    apartment={apartment}
+                    city={city}
+                    postalCode={postalCode}
+                    country={country}
+                    phone={phone}
+                    total={total}
+                    cartItem={cartItem}
+                    onSuccess={handleSuccess}
+                    onError={handleError}
+                    isProcessing={isProcessing}
+                    setIsProcessing={setIsProcessing}
+                  />
+                </Elements>
               </div>
             </div>
           </div>
@@ -618,8 +619,8 @@ const Checkout = (): JSX.Element => {
             {/* Product Summary */}
             <div className="flex items-start space-x-4">
               <div className="relative">
-                <img 
-                  src={cartItem.image} 
+                <img
+                  src={cartItem.image}
                   alt={cartItem.name}
                   className="w-16 h-16 object-cover rounded border border-gray-200"
                 />
@@ -646,7 +647,7 @@ const Checkout = (): JSX.Element => {
                 <span className="text-sm font-normal text-gray-700">Subtotal</span>
                 <span className="text-sm font-normal text-gray-900">£{subtotal.toLocaleString()}.00</span>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-1">
                   <span className="text-sm font-normal text-gray-700">Shipping</span>
@@ -657,19 +658,19 @@ const Checkout = (): JSX.Element => {
                 </div>
                 <span className="text-sm font-normal text-gray-900">FREE</span>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-sm font-normal text-gray-700">Duties</span>
-                <span className="text-sm font-normal text-gray-900">£{duties.toFixed(2)}</span>
+                <span className="text-sm font-normal text-gray-900">£0.00</span>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-sm font-normal text-gray-700">Taxes</span>
                 <span className="text-sm font-normal text-gray-900">£{taxes.toLocaleString()}.00</span>
               </div>
-              
+
               <hr className="border-gray-200 my-4" />
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-base font-normal text-gray-900">Total</span>
                 <div className="text-right">
