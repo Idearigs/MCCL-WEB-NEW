@@ -22,6 +22,10 @@ const initializeModels = () => {
   const { initializeJewelryModels } = require('./jewelryModels');
   initializeJewelryModels();
 
+  // Initialize order models
+  const { initializeOrderModels } = require('./orderModels');
+  const { Order, OrderItem } = initializeOrderModels();
+
   // Categories Model - Now supports hierarchical structure
   Category = sequelize.define('Category', {
     id: {
@@ -902,6 +906,9 @@ module.exports = {
     const { getJewelryModels } = require('./jewelryModels');
     const jewelryModels = getJewelryModels();
 
+    const { getOrderModels } = require('./orderModels');
+    const orderModels = getOrderModels();
+
     return {
       Category,
       Collection,
@@ -918,7 +925,8 @@ module.exports = {
       ProductStoneShapes,
       ProductMetalsJunction,
       ...watchModels,
-      ...jewelryModels
+      ...jewelryModels,
+      ...orderModels
     };
   }
 };

@@ -1,6 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const asyncHandler = require('../middleware/asyncHandler');
-const { sequelize, Order, OrderItem, Product, ProductVariant } = require('../models');
+const { getModels } = require('../models');
 
 /**
  * Create a payment intent for the cart
@@ -61,6 +61,8 @@ const confirmPayment = asyncHandler(async (req, res) => {
   }
 
   try {
+    const { Order, OrderItem, Product, ProductVariant } = getModels();
+
     // Get the payment intent from Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
@@ -143,6 +145,8 @@ const getOrder = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
 
   try {
+    const { Order, OrderItem, Product } = getModels();
+
     const order = await Order.findByPk(orderId, {
       include: [
         {
@@ -239,14 +243,20 @@ const handleWebhook = asyncHandler(async (req, res) => {
 async function handlePaymentIntentSucceeded(paymentIntent) {
   console.log('✅ Payment succeeded:', paymentIntent.id);
 
-  // Update order payment status if it exists
-  const order = await Order.findOne({
-    where: { stripe_payment_id: paymentIntent.id }
-  });
+  try {
+    const { Order } = getModels();
 
-  if (order) {
-    await order.update({ payment_status: 'paid' });
-    console.log('Order updated:', order.id);
+    // Update order payment status if it exists
+    const order = await Order.findOne({
+      where: { stripe_payment_id: paymentIntent.id }
+    });
+
+    if (order) {
+      await order.update({ payment_status: 'paid' });
+      console.log('Order updated:', order.id);
+    }
+  } catch (error) {
+    console.error('Error in handlePaymentIntentSucceeded:', error);
   }
 }
 
@@ -256,12 +266,18 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
 async function handlePaymentIntentFailed(paymentIntent) {
   console.log('❌ Payment failed:', paymentIntent.id);
 
-  const order = await Order.findOne({
-    where: { stripe_payment_id: paymentIntent.id }
-  });
+  try {
+    const { Order } = getModels();
 
-  if (order) {
-    await order.update({ payment_status: 'failed' });
+    const order = await Order.findOne({
+      where: { stripe_payment_id: paymentIntent.id }
+    });
+
+    if (order) {
+      await order.update({ payment_status: 'failed' });
+    }
+  } catch (error) {
+    console.error('Error in handlePaymentIntentFailed:', error);
   }
 }
 
@@ -271,12 +287,18 @@ async function handlePaymentIntentFailed(paymentIntent) {
 async function handlePaymentIntentCanceled(paymentIntent) {
   console.log('⚠️ Payment canceled:', paymentIntent.id);
 
-  const order = await Order.findOne({
-    where: { stripe_payment_id: paymentIntent.id }
-  });
+  try {
+    const { Order } = getModels();
 
-  if (order) {
-    await order.update({ payment_status: 'canceled' });
+    const order = await Order.findOne({
+      where: { stripe_payment_id: paymentIntent.id }
+    });
+
+    if (order) {
+      await order.update({ payment_status: 'canceled' });
+    }
+  } catch (error) {
+    console.error('Error in handlePaymentIntentCanceled:', error);
   }
 }
 
@@ -286,12 +308,18 @@ async function handlePaymentIntentCanceled(paymentIntent) {
 async function handlePaymentIntentProcessing(paymentIntent) {
   console.log('🔄 Payment processing:', paymentIntent.id);
 
-  const order = await Order.findOne({
-    where: { stripe_payment_id: paymentIntent.id }
-  });
+  try {
+    const { Order } = getModels();
 
-  if (order) {
-    await order.update({ payment_status: 'processing' });
+    const order = await Order.findOne({
+      where: { stripe_payment_id: paymentIntent.id }
+    });
+
+    if (order) {
+      await order.update({ payment_status: 'processing' });
+    }
+  } catch (error) {
+    console.error('Error in handlePaymentIntentProcessing:', error);
   }
 }
 
@@ -301,12 +329,18 @@ async function handlePaymentIntentProcessing(paymentIntent) {
 async function handlePaymentIntentRequiresAction(paymentIntent) {
   console.log('⚠️ Payment requires action (3D Secure):', paymentIntent.id);
 
-  const order = await Order.findOne({
-    where: { stripe_payment_id: paymentIntent.id }
-  });
+  try {
+    const { Order } = getModels();
 
-  if (order) {
-    await order.update({ payment_status: 'requires_action' });
+    const order = await Order.findOne({
+      where: { stripe_payment_id: paymentIntent.id }
+    });
+
+    if (order) {
+      await order.update({ payment_status: 'requires_action' });
+    }
+  } catch (error) {
+    console.error('Error in handlePaymentIntentRequiresAction:', error);
   }
 }
 
