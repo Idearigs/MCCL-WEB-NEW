@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, AlertCircle, CheckCircle, Loader } from "lucide-react";
 
 const Checkout = (): JSX.Element => {
   const [email, setEmail] = useState("");
@@ -23,6 +23,12 @@ const Checkout = (): JSX.Element => {
   const [rememberMe, setRememberMe] = useState(false);
   const [contactNumber, setContactNumber] = useState("");
 
+  // Payment state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [orderData, setOrderData] = useState<any>(null);
+
   const cartItem = {
     id: 1,
     name: "Roulette Classic White Gold Diamond Earrings",
@@ -36,6 +42,115 @@ const Checkout = (): JSX.Element => {
   const duties = 0.00;
   const taxes = 1170.00;
   const total = subtotal + shipping + duties + taxes;
+
+  const handlePayNow = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    // Validation
+    if (!email || !firstName || !lastName || !address || !city || !postalCode || !phone) {
+      setErrorMessage("Please fill in all required fields.");
+      return;
+    }
+
+    if (!cardNumber || !expDate || !securityCode || !nameOnCard) {
+      setErrorMessage("Please fill in all card details.");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
+      // Step 1: Create payment intent
+      const intentResponse = await fetch(`${API_URL}/payments/create-intent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: total,
+          currency: "gbp",
+          description: `McCulloch Jewelry Purchase - ${cartItem.name}`,
+          cartItems: [
+            {
+              product_id: cartItem.id.toString(),
+              name: cartItem.name,
+              quantity: cartItem.quantity,
+              price: cartItem.price
+            }
+          ]
+        })
+      });
+
+      if (!intentResponse.ok) {
+        const error = await intentResponse.json();
+        throw new Error(error.message || "Failed to create payment intent");
+      }
+
+      const intentData = await intentResponse.json();
+      const { paymentIntentId, clientSecret } = intentData.data;
+
+      // Step 2: Confirm payment with customer info
+      const confirmResponse = await fetch(`${API_URL}/payments/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentIntentId,
+          customerEmail: email,
+          customerName: `${firstName} ${lastName}`,
+          shippingAddress: {
+            street: address,
+            apartment: apartment || undefined,
+            city,
+            postalCode,
+            country,
+            phone
+          },
+          cartItems: [
+            {
+              product_id: cartItem.id.toString(),
+              name: cartItem.name,
+              quantity: cartItem.quantity,
+              price: cartItem.price,
+              variant_id: null
+            }
+          ]
+        })
+      });
+
+      if (!confirmResponse.ok) {
+        const error = await confirmResponse.json();
+        throw new Error(error.message || "Failed to confirm payment");
+      }
+
+      const confirmData = await confirmResponse.json();
+      setOrderData(confirmData.data);
+      setSuccessMessage(`Order confirmed! Order Number: ${confirmData.data.orderNumber}`);
+
+      // Reset form
+      setTimeout(() => {
+        setEmail("");
+        setFirstName("");
+        setLastName("");
+        setAddress("");
+        setApartment("");
+        setCity("");
+        setPostalCode("");
+        setPhone("");
+        setCardNumber("");
+        setExpDate("");
+        setSecurityCode("");
+        setNameOnCard("");
+      }, 2000);
+
+    } catch (error: any) {
+      console.error("Payment error:", error);
+      setErrorMessage(error.message || "Payment processing failed. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white" style={{fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"}}>
@@ -412,9 +527,39 @@ const Checkout = (): JSX.Element => {
                   </div>
                 </div>
 
+                {/* Error Message */}
+                {errorMessage && (
+                  <div className="flex items-start space-x-3 p-4 bg-red-50 border border-red-200 rounded mt-6">
+                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-red-700">{errorMessage}</span>
+                  </div>
+                )}
+
+                {/* Success Message */}
+                {successMessage && (
+                  <div className="flex items-start space-x-3 p-4 bg-green-50 border border-green-200 rounded mt-6">
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="text-sm text-green-700 block">{successMessage}</span>
+                      {orderData && (
+                        <div className="text-xs text-green-600 mt-2 space-y-1">
+                          <p>Order ID: {orderData.orderId}</p>
+                          <p>Total: £{orderData.totalAmount}</p>
+                          <p>Status: {orderData.status}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Pay Now Button */}
-                <button className="w-full bg-black text-white py-3 px-6 rounded font-medium text-sm hover:bg-gray-800 transition-colors mt-6">
-                  Pay Now
+                <button
+                  onClick={handlePayNow}
+                  disabled={isProcessing}
+                  className="w-full bg-black text-white py-3 px-6 rounded font-medium text-sm hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mt-6 flex items-center justify-center space-x-2"
+                >
+                  {isProcessing && <Loader className="w-4 h-4 animate-spin" />}
+                  <span>{isProcessing ? "Processing..." : "Pay Now"}</span>
                 </button>
               </div>
             </div>
