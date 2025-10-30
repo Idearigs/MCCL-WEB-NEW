@@ -25,6 +25,7 @@ const PaymentForm = ({
   onError,
   isProcessing,
   setIsProcessing,
+  cardElementOptions,
 }: any) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -148,14 +149,33 @@ const PaymentForm = ({
   };
 
   return (
-    <button
-      onClick={handlePayment}
-      disabled={isProcessing || !stripe || !elements}
-      className="w-full bg-black text-white py-3 px-6 rounded font-medium text-sm hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mt-6 flex items-center justify-center space-x-2"
-    >
-      {isProcessing && <Loader className="w-4 h-4 animate-spin" />}
-      <span>{isProcessing ? "Processing..." : "Pay Now"}</span>
-    </button>
+    <>
+      {/* Card Element */}
+      <div className="relative">
+        <CardElement options={cardElementOptions} />
+      </div>
+
+      {/* Use Shipping Address as Billing Address */}
+      <label className="flex items-start space-x-3 mt-4">
+        <input
+          type="checkbox"
+          className="mt-1 w-4 h-4 border border-gray-300 rounded bg-white checked:bg-black checked:border-black focus:ring-gray-500"
+        />
+        <span className="text-sm text-gray-700 leading-relaxed">
+          Use shipping address as billing address
+        </span>
+      </label>
+
+      {/* Pay Now Button */}
+      <button
+        onClick={handlePayment}
+        disabled={isProcessing || !stripe || !elements}
+        className="w-full bg-black text-white py-3 px-6 rounded font-medium text-sm hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors mt-6 flex items-center justify-center space-x-2"
+      >
+        {isProcessing && <Loader className="w-4 h-4 animate-spin" />}
+        <span>{isProcessing ? "Processing..." : "Pay Now"}</span>
+      </button>
+    </>
   );
 };
 
@@ -485,25 +505,28 @@ const Checkout = (): JSX.Element => {
                     </div>
                   </div>
 
-                  {/* Credit Card Fields */}
+                  {/* Credit Card Fields - Stripe Elements */}
                   <div className="p-4 bg-gray-50 space-y-4">
-                    {/* Card Element */}
-                    <div className="relative">
-                      <CardElement options={cardElementOptions} />
-                    </div>
-
-                    {/* Use Shipping Address as Billing Address */}
-                    <label className="flex items-start space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={useSameAddress}
-                        onChange={(e) => setUseSameAddress(e.target.checked)}
-                        className="mt-1 w-4 h-4 border border-gray-300 rounded bg-white checked:bg-black checked:border-black focus:ring-gray-500"
+                    <Elements stripe={stripePromise}>
+                      <PaymentForm
+                        email={email}
+                        firstName={firstName}
+                        lastName={lastName}
+                        address={address}
+                        apartment={apartment}
+                        city={city}
+                        postalCode={postalCode}
+                        country={country}
+                        phone={phone}
+                        total={total}
+                        cartItem={cartItem}
+                        onSuccess={handleSuccess}
+                        onError={handleError}
+                        isProcessing={isProcessing}
+                        setIsProcessing={setIsProcessing}
+                        cardElementOptions={cardElementOptions}
                       />
-                      <span className="text-sm text-gray-700 leading-relaxed">
-                        Use shipping address as billing address
-                      </span>
-                    </label>
+                    </Elements>
                   </div>
                 </div>
 
@@ -590,26 +613,6 @@ const Checkout = (): JSX.Element => {
                   </div>
                 )}
 
-                {/* Pay Now Button with Stripe Elements wrapper */}
-                <Elements stripe={stripePromise}>
-                  <PaymentForm
-                    email={email}
-                    firstName={firstName}
-                    lastName={lastName}
-                    address={address}
-                    apartment={apartment}
-                    city={city}
-                    postalCode={postalCode}
-                    country={country}
-                    phone={phone}
-                    total={total}
-                    cartItem={cartItem}
-                    onSuccess={handleSuccess}
-                    onError={handleError}
-                    isProcessing={isProcessing}
-                    setIsProcessing={setIsProcessing}
-                  />
-                </Elements>
               </div>
             </div>
           </div>
