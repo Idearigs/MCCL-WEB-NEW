@@ -11,6 +11,8 @@ const userRoutes = require('./users');
 const favoritesRoutes = require('./favorites');
 const authRoutes = require('./auth');
 const nivodaRoutes = require('./nivoda');
+const paymentRoutes = require('./paymentRoutes');
+const webhookRoutes = require('./webhookRoutes');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -33,6 +35,8 @@ router.use('/users', userRoutes);
 router.use('/favorites', favoritesRoutes);
 router.use('/auth', authRoutes);
 router.use('/nivoda', nivodaRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/webhooks', webhookRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {
