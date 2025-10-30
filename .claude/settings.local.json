@@ -1,8 +1,12 @@
 {
   "permissions": {
     "allow": [
+      "Bash(node check-collections.js:*)",
+      "Bash(node check-watches-collections.js:*)",
       "Bash(npm run build:*)",
-      "Bash(git checkout:*)"
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''''EOF''''\nFix collection management and watch display issues\n\n- Fix AdminWatches form to send correct field names (launch_year, target_audience) instead of (season, year)\n- Add PUT method support for collection updates in handleCreateCollection\n- Fix WatchCollection page API data extraction to properly access nested data structure\n- Make Watch interface properties optional to match API response structure\n- Add fallback to collection brand when watch brand is undefined\n- Add safety checks for optional brand object in breadcrumb navigation\n\nThese fixes resolve:\n- 400 Bad Request errors when updating collections\n- TypeError when displaying watches on collection pages\n- Proper handling of brand information in collection views\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": [],

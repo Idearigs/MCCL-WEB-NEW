@@ -58,12 +58,14 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Configure multer
+// Increased file limit to 100 to support metal-specific media uploads
+// (up to 4 images + 2 videos per metal, for multiple metals)
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE) || 100 * 1024 * 1024, // 100MB default
-    files: 10 // Maximum 10 files per upload
+    files: 100 // Maximum 100 files per upload (supports multiple metals with media)
   }
 });
 
@@ -114,13 +116,31 @@ const uploadMultiple = (fieldName = 'files', maxCount = 10) => {
 
 // Middleware for flexible multi-field file upload (for metal-specific media)
 const uploadMultipleFields = (maxCount = 50) => {
-  return (req, res, next) => {
-    // Create a dynamic fields configuration that accepts any field starting with 'media'
-    // This handles both 'media' (general files) and 'media_metal_*' (metal-specific files)
-    const uploadMiddleware = upload.any();
+  // Create a FRESH multer instance specifically for metal variations with higher limits
+  const metalUpload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+      fileSize: parseInt(process.env.MAX_FILE_SIZE) || 100 * 1024 * 1024,
+      files: 100 // Support multiple metals with multiple images/videos each
+    }
+  });
 
-    uploadMiddleware(req, res, (err) => {
+  // Return the middleware that handles any files
+  return (req, res, next) => {
+    console.log('DEBUG: uploadMultipleFields middleware called');
+    console.log('  Content-Type:', req.get('content-type'));
+
+    // Use metalUpload.any() to accept files from any field
+    metalUpload.any()(req, res, (err) => {
+      console.log('DEBUG: multer processing complete, err:', err ? err.message : 'none');
+
       if (err instanceof multer.MulterError) {
+        console.error('DEBUG: Multer error detected');
+        console.error('  Code:', err.code);
+        console.error('  Message:', err.message);
+        console.error('  Field:', err.field);
+
         if (err.code === 'LIMIT_FILE_SIZE') {
           return res.status(400).json({
             message: 'File too large',
@@ -132,9 +152,19 @@ const uploadMultipleFields = (maxCount = 50) => {
             message: `Too many files. Maximum ${maxCount} files allowed.`
           });
         }
-        return res.status(400).json({ message: err.message });
+        return res.status(400).json({ message: err.message, code: err.code });
       } else if (err) {
+        console.error('DEBUG: Non-multer error:', err.message);
         return res.status(400).json({ message: err.message });
+      }
+
+      console.log('DEBUG: Files uploaded successfully, count:', req.files ? req.files.length : 0);
+
+      if (req.files && req.files.length > 0) {
+        console.log('DEBUG: All files received by middleware:');
+        req.files.forEach((file, index) => {
+          console.log(`  [${index}] fieldname: "${file.fieldname}", originalname: "${file.originalname}"`);
+        });
       }
 
       // Filter to only accept files from fields that start with 'media'
@@ -142,6 +172,13 @@ const uploadMultipleFields = (maxCount = 50) => {
         req.files = req.files.filter(file =>
           file.fieldname === 'media' || file.fieldname.startsWith('media_')
         );
+        console.log('DEBUG: After filtering, files count:', req.files.length);
+        if (req.files.length > 0) {
+          console.log('DEBUG: Filtered files:');
+          req.files.forEach((file, index) => {
+            console.log(`  [${index}] fieldname: "${file.fieldname}"`);
+          });
+        }
       }
 
       next();

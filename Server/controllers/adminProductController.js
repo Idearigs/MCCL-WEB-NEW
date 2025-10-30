@@ -1421,19 +1421,28 @@ const createProductWithMedia = async (req, res) => {
         // Extract metal_id from file fieldname if it contains metal-specific data
         // Format: media_metal_[metalId] for metal-specific uploads
         let metalId = null;
+        console.log(`DEBUG: Processing file: ${file.originalname}, fieldname: ${file.fieldname}, mimetype: ${file.mimetype}`);
+
         if (file.fieldname && file.fieldname.includes('media_metal_')) {
           // Extract everything after 'media_metal_'
           const parts = file.fieldname.split('media_metal_');
+          console.log(`DEBUG: Split result - parts.length: ${parts.length}, parts[1]: ${parts[1]}`);
+
           if (parts.length > 1) {
             // Clean up the metalId - remove any trailing special characters
             metalId = parts[1].trim() || null;
+            console.log(`DEBUG: Extracted metalId: ${metalId}`);
+
             // Validate it looks like a UUID (basic check)
             if (metalId && !metalId.match(/^[a-f0-9-]{36}$/i)) {
               console.warn(`Invalid metal_id format: ${metalId}, treating as general media`);
               metalId = null;
+            } else if (metalId) {
+              console.log(`DEBUG: Valid metal_id format: ${metalId}`);
             }
           }
-          console.log(`DEBUG: File ${file.originalname} - fieldname: ${file.fieldname}, extracted metalId: ${metalId}`);
+        } else {
+          console.log(`DEBUG: This is a general file (no metal_id)`);
         }
 
         if (file.mimetype.startsWith('image/')) {

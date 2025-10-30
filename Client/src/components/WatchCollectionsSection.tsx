@@ -1,27 +1,51 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
 
-const watchCollections = [
-  {
-    title: "Classic Collection",
-    description: "Timeless elegance for every occasion",
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=500&h=400&fit=crop",
-  },
-  {
-    title: "Sport Collection",
-    description: "Performance meets sophistication",
-    image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=500&h=400&fit=crop",
-  },
-  {
-    title: "Limited Editions",
-    description: "Exclusive timepieces for collectors",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=400&fit=crop",
-  },
-];
+interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  is_featured: boolean;
+  brand: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
 
 export const WatchCollectionsSection = (): JSX.Element => {
+  const navigate = useNavigate();
+  const [watchCollections, setWatchCollections] = useState<Collection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/watches/featured-collections`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            // Get first 3 featured collections
+            setWatchCollections(data.data.slice(0, 3));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching collections:', error);
+        // Fall back to empty array - section will still render
+        setWatchCollections([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCollections();
+  }, []);
   return (
     <div className="w-full bg-white">
       {/* Hero Section */}
@@ -56,27 +80,32 @@ export const WatchCollectionsSection = (): JSX.Element => {
           {/* Collections Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {watchCollections.map((collection, index) => (
-              <Card
-                key={index}
-                className="h-[432px] bg-[#00000033] overflow-hidden border-none"
+              <div
+                key={collection.id}
+                onClick={() => navigate(`/collections/${collection.slug}`)}
+                className="group cursor-pointer"
               >
-                <CardContent className="p-0 h-full">
-                  <div className="relative h-[400px]">
-                    <div
-                      className="h-[276px] bg-cover bg-center"
-                      style={{ backgroundImage: `url(${collection.image})` }}
-                    />
-                    <div className="h-[124px] bg-white p-8">
-                      <h3 className="font-serif font-light text-black text-[20.4px] leading-8 mb-4">
-                        {collection.title}
-                      </h3>
-                      <p className="font-serif font-normal text-black text-[11.9px] leading-5">
-                        {collection.description}
-                      </p>
+                <Card
+                  className="h-[432px] bg-[#00000033] overflow-hidden border-none hover:shadow-lg transition-shadow duration-300"
+                >
+                  <CardContent className="p-0 h-full">
+                    <div className="relative h-[400px]">
+                      <div
+                        className="h-[276px] bg-cover bg-center group-hover:scale-105 transition-transform duration-300"
+                        style={{ backgroundImage: `url(${collection.image_url || 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=500&h=400&fit=crop'})` }}
+                      />
+                      <div className="h-[124px] bg-white p-8 group-hover:bg-gray-50 transition-colors duration-300">
+                        <h3 className="font-serif font-light text-black text-[20.4px] leading-8 mb-4">
+                          {collection.name}
+                        </h3>
+                        <p className="font-serif font-normal text-black text-[11.9px] leading-5">
+                          {collection.description || `Discover ${collection.brand.name} ${collection.name}`}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         </div>

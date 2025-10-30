@@ -225,6 +225,70 @@ const createCollection = asyncHandler(async (req, res) => {
   });
 });
 
+const updateCollection = asyncHandler(async (req, res) => {
+  const { WatchCollection } = getModelInstance();
+  const { id } = req.params;
+  const { name, description, image_url, launch_year, target_audience, is_featured } = req.body;
+
+  const collection = await WatchCollection.findByPk(id);
+  if (!collection) {
+    return res.status(404).json({
+      success: false,
+      message: 'Collection not found'
+    });
+  }
+
+  // Update slug if name changes
+  let updateData = {
+    name: name || collection.name,
+    description: description !== undefined ? description : collection.description,
+    image_url: image_url !== undefined ? image_url : collection.image_url,
+    launch_year: launch_year !== undefined ? launch_year : collection.launch_year,
+    target_audience: target_audience || collection.target_audience,
+    is_featured: is_featured !== undefined ? is_featured : collection.is_featured
+  };
+
+  if (name && name !== collection.name) {
+    updateData.slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-');
+  }
+
+  await collection.update(updateData);
+
+  res.json({
+    success: true,
+    message: 'Collection updated successfully',
+    data: collection
+  });
+});
+
+const deleteCollection = asyncHandler(async (req, res) => {
+  const { WatchCollection, Watch } = getModelInstance();
+  const { id } = req.params;
+
+  const collection = await WatchCollection.findByPk(id);
+  if (!collection) {
+    return res.status(404).json({
+      success: false,
+      message: 'Collection not found'
+    });
+  }
+
+  const watchCount = await Watch.count({ where: { collection_id: id } });
+  if (watchCount > 0) {
+    return res.status(400).json({
+      success: false,
+      message: `Cannot delete collection. ${watchCount} watches are associated with this collection.`
+    });
+  }
+
+  await collection.destroy();
+
+  res.json({
+    success: true,
+    message: 'Collection deleted successfully'
+  });
+});
+
 const getFeaturedCollections = asyncHandler(async (req, res) => {
   const { WatchBrand, WatchCollection, Watch } = getModelInstance();
 
@@ -641,6 +705,104 @@ const getWatchBySlug = asyncHandler(async (req, res) => {
   });
 });
 
+// Get watch by ID (for admin editing - no is_active filter)
+const getWatchById = asyncHandler(async (req, res) => {
+  const { WatchBrand, WatchCollection, Watch, WatchImage, WatchSpecification, WatchVariant } = getModelInstance();
+  const { id } = req.params;
+
+  const watch = await Watch.findOne({
+    where: { id },
+    include: [
+      {
+        model: WatchBrand,
+        as: 'brand',
+        attributes: ['id', 'name', 'slug']
+      },
+      {
+        model: WatchCollection,
+        as: 'collection',
+        attributes: ['id', 'name', 'slug'],
+        required: false
+      },
+      {
+        model: WatchImage,
+        as: 'images',
+        attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'image_type'],
+        order: [['sort_order', 'ASC'], ['created_at', 'ASC']]
+      },
+      {
+        model: WatchSpecification,
+        as: 'specifications',
+        required: false
+      },
+      {
+        model: WatchVariant,
+        as: 'variants',
+        required: false
+      }
+    ]
+  });
+
+  if (!watch) {
+    return res.status(404).json({
+      success: false,
+      message: 'Watch not found'
+    });
+  }
+
+  const currentPrice = watch.sale_price || watch.base_price;
+
+  const transformedWatch = {
+    id: watch.id,
+    name: watch.name,
+    slug: watch.slug,
+    model_number: watch.model_number,
+    price: `£${parseFloat(currentPrice).toLocaleString()}`,
+    base_price: parseFloat(watch.base_price),
+    sale_price: watch.sale_price ? parseFloat(watch.sale_price) : null,
+    currency: watch.currency,
+    description: watch.description,
+    short_description: watch.short_description,
+    sku: watch.sku,
+    gender: watch.gender,
+    watch_type: watch.watch_type,
+    style: watch.style,
+    warranty_years: watch.warranty_years,
+    care_instructions: watch.care_instructions,
+    brand: watch.brand,
+    collection: watch.collection,
+    is_featured: watch.is_featured,
+    in_stock: watch.in_stock,
+    stock_quantity: watch.stock_quantity,
+    availability_status: watch.availability_status,
+    images: watch.images.map(img => ({
+      id: img.id,
+      url: img.image_url,
+      alt: img.alt_text || watch.name,
+      is_primary: img.is_primary,
+      type: img.image_type,
+      sort_order: img.sort_order
+    })),
+    specifications: watch.specifications,
+    technical_specs: watch.technical_specs,
+    variants: watch.variants ? watch.variants.map(variant => ({
+      id: variant.id,
+      name: variant.variant_name,
+      price_adjustment: parseFloat(variant.price_adjustment),
+      size: variant.size,
+      strap_type: variant.strap_type,
+      strap_color: variant.strap_color,
+      dial_variant: variant.dial_variant,
+      stock_quantity: variant.stock_quantity
+    })) : []
+  };
+
+  res.json({
+    success: true,
+    data: transformedWatch
+  });
+});
+
 const createWatch = asyncHandler(async (req, res) => {
   const { Watch } = getModelInstance();
   const {
@@ -659,7 +821,8 @@ const createWatch = asyncHandler(async (req, res) => {
     style = 'casual',
     warranty_years = 2,
     care_instructions,
-    stock_quantity = 0
+    stock_quantity = 0,
+    technical_specs
   } = req.body;
 
   if (!brand_id || !name || !base_price) {
@@ -697,6 +860,7 @@ const createWatch = asyncHandler(async (req, res) => {
     warranty_years,
     care_instructions,
     stock_quantity,
+    technical_specs,
     in_stock: stock_quantity > 0,
     availability_status: stock_quantity > 0 ? 'in_stock' : 'out_of_stock'
   });
@@ -708,9 +872,12 @@ const createWatch = asyncHandler(async (req, res) => {
 });
 
 const updateWatch = asyncHandler(async (req, res) => {
-  const { Watch } = getModelInstance();
+  const { Watch, WatchImage, WatchVideo, WatchBrand, WatchCollection } = getModelInstance();
   const { id } = req.params;
   const updateData = req.body;
+
+  console.log('[updateWatch] Received update data:', updateData);
+  console.log('[updateWatch] Watch ID:', id);
 
   const watch = await Watch.findByPk(id);
   if (!watch) {
@@ -720,20 +887,166 @@ const updateWatch = asyncHandler(async (req, res) => {
     });
   }
 
-  if (updateData.name && updateData.name !== watch.name) {
-    updateData.slug = updateData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-');
+  // Extract images and videos from updateData (these are handled separately)
+  const { images, videos, ...watchData } = updateData;
+  console.log('[updateWatch] Watch data after extracting images/videos:', watchData);
+
+  // Convert empty strings to NULL for unique fields to avoid unique constraint violations
+  if (watchData.model_number === '' || watchData.model_number === null) {
+    watchData.model_number = null;
+  }
+  if (watchData.sku === '' || watchData.sku === null) {
+    watchData.sku = null;
   }
 
-  if (updateData.stock_quantity !== undefined) {
-    updateData.in_stock = updateData.stock_quantity > 0;
-    updateData.availability_status = updateData.stock_quantity > 0 ? 'in_stock' : 'out_of_stock';
+  if (watchData.name && watchData.name !== watch.name) {
+    watchData.slug = watchData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-');
   }
 
-  await watch.update(updateData);
+  if (watchData.stock_quantity !== undefined) {
+    watchData.in_stock = watchData.stock_quantity > 0;
+    watchData.availability_status = watchData.stock_quantity > 0 ? 'in_stock' : 'out_of_stock';
+  }
+
+  // Handle technical_specs merge (don't overwrite, merge with existing)
+  if (watchData.technical_specs) {
+    watchData.technical_specs = {
+      ...watch.technical_specs,
+      ...watchData.technical_specs
+    };
+  }
+
+  // Update the watch
+  try {
+    await watch.update(watchData);
+    console.log('[updateWatch] Watch updated successfully');
+  } catch (updateError) {
+    console.error('[updateWatch] Error updating watch:', updateError.message);
+    console.error('[updateWatch] Error name:', updateError.name);
+    console.error('[updateWatch] Error details:', updateError);
+
+    // Return specific error message based on validation error
+    if (updateError.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error: ' + updateError.errors?.map(e => e.message).join(', ')
+      });
+    }
+
+    // Handle unique constraint violations
+    if (updateError.name === 'SequelizeUniqueConstraintError') {
+      const field = updateError.errors?.[0]?.path || 'field';
+      return res.status(400).json({
+        success: false,
+        message: `${field} already exists. Please use a different value.`
+      });
+    }
+
+    throw updateError;
+  }
+
+  // Handle image updates if provided
+  if (images && Array.isArray(images)) {
+    // Filter out existing images that should be kept (those with IDs)
+    const existingImageIds = images
+      .filter(img => img.id && typeof img.id === 'string')
+      .map(img => img.id);
+
+    // Delete images that were removed
+    const { Op } = require('sequelize');
+    await WatchImage.destroy({
+      where: {
+        watch_id: id,
+        id: {
+          [Op.notIn]: existingImageIds.length > 0 ? existingImageIds : [null]
+        }
+      }
+    });
+
+    // Add new images (those without IDs)
+    for (const img of images) {
+      if (!img.id) {
+        // New image
+        await WatchImage.create({
+          watch_id: id,
+          image_url: img.url || img.image_url,
+          alt_text: img.alt || img.alt_text,
+          is_primary: img.is_primary || false,
+          image_type: img.image_type || 'product',
+          sort_order: img.sort_order || 0
+        });
+      }
+    }
+  }
+
+  // Handle video updates if provided
+  if (videos && Array.isArray(videos)) {
+    // Filter out existing videos that should be kept (those with IDs)
+    const existingVideoIds = videos
+      .filter(vid => vid.id && typeof vid.id === 'string')
+      .map(vid => vid.id);
+
+    // Delete videos that were removed
+    const { Op } = require('sequelize');
+    await WatchVideo.destroy({
+      where: {
+        watch_id: id,
+        id: {
+          [Op.notIn]: existingVideoIds.length > 0 ? existingVideoIds : [null]
+        }
+      }
+    });
+
+    // Add new videos (those without IDs)
+    for (const vid of videos) {
+      if (!vid.id) {
+        // New video
+        await WatchVideo.create({
+          watch_id: id,
+          video_url: vid.url || vid.video_url,
+          video_type: vid.video_type || 'youtube',
+          title: vid.title,
+          description: vid.description,
+          thumbnail_url: vid.thumbnail_url,
+          duration_seconds: vid.duration_seconds,
+          sort_order: vid.sort_order || 0
+        });
+      }
+    }
+  }
+
+  // Reload watch with all associations to return complete data
+  const updatedWatch = await Watch.findByPk(id, {
+    include: [
+      {
+        model: WatchBrand,
+        as: 'brand',
+        attributes: ['id', 'name', 'slug']
+      },
+      {
+        model: WatchCollection,
+        as: 'collection',
+        attributes: ['id', 'name', 'slug'],
+        required: false
+      },
+      {
+        model: WatchImage,
+        as: 'images',
+        attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'image_type'],
+        order: [['sort_order', 'ASC'], ['created_at', 'ASC']]
+      },
+      {
+        model: WatchVideo,
+        as: 'videos',
+        attributes: ['id', 'video_url', 'video_type', 'title', 'description', 'thumbnail_url', 'duration_seconds', 'sort_order'],
+        order: [['sort_order', 'ASC']]
+      }
+    ]
+  });
 
   res.json({
     success: true,
-    data: watch
+    data: updatedWatch
   });
 });
 
@@ -788,12 +1101,25 @@ const updateWatchSpecifications = asyncHandler(async (req, res) => {
 const addWatchImage = asyncHandler(async (req, res) => {
   const { WatchImage } = getModelInstance();
   const { watchId } = req.params;
-  const { image_url, alt_text, is_primary = false, image_type = 'product', sort_order = 0 } = req.body;
+  const path = require('path');
+  const { generateFileUrl } = require('../middleware/upload');
+
+  let image_url = req.body.image_url;
+  let alt_text = req.body.alt_text || '';
+  const is_primary = req.body.is_primary === 'true' || req.body.is_primary === true;
+  const image_type = req.body.image_type || 'product';
+  const sort_order = parseInt(req.body.sort_order) || 0;
+
+  // If file is uploaded, use the file; otherwise use the image_url from body
+  if (req.file) {
+    image_url = generateFileUrl(req, path.join('products', req.file.filename));
+    alt_text = alt_text || req.file.originalname;
+  }
 
   if (!image_url) {
     return res.status(400).json({
       success: false,
-      message: 'Image URL is required'
+      message: 'Image URL or file is required'
     });
   }
 
@@ -840,6 +1166,107 @@ const deleteWatchImage = asyncHandler(async (req, res) => {
   });
 });
 
+// VIDEO MANAGEMENT
+
+const addWatchVideo = asyncHandler(async (req, res) => {
+  const { WatchVideo } = getModelInstance();
+  const { watchId } = req.params;
+  const path = require('path');
+  const { generateFileUrl } = require('../middleware/upload');
+
+  let video_url = req.body.video_url;
+  const video_type = req.body.video_type || 'youtube';
+  const title = req.body.title || '';
+  const description = req.body.description || '';
+  const thumbnail_url = req.body.thumbnail_url || '';
+  const duration_seconds = req.body.duration_seconds || null;
+  const sort_order = parseInt(req.body.sort_order) || 0;
+
+  // If file is uploaded, use the file; otherwise use the video_url from body
+  if (req.file) {
+    video_url = generateFileUrl(req, path.join('products', req.file.filename));
+  }
+
+  if (!video_url) {
+    return res.status(400).json({
+      success: false,
+      message: 'Video URL or file is required'
+    });
+  }
+
+  const video = await WatchVideo.create({
+    watch_id: watchId,
+    video_url,
+    video_type,
+    title,
+    description,
+    thumbnail_url,
+    duration_seconds,
+    sort_order
+  });
+
+  res.status(201).json({
+    success: true,
+    data: video
+  });
+});
+
+const deleteWatchVideo = asyncHandler(async (req, res) => {
+  const { WatchVideo } = getModelInstance();
+  const { videoId } = req.params;
+
+  const video = await WatchVideo.findByPk(videoId);
+  if (!video) {
+    return res.status(404).json({
+      success: false,
+      message: 'Video not found'
+    });
+  }
+
+  await video.destroy();
+
+  res.json({
+    success: true,
+    message: 'Video deleted successfully'
+  });
+});
+
+const getWatchVideos = asyncHandler(async (req, res) => {
+  const { WatchVideo } = getModelInstance();
+  const { watchId } = req.params;
+
+  const videos = await WatchVideo.findAll({
+    where: { watch_id: watchId },
+    order: [['sort_order', 'ASC']]
+  });
+
+  res.json({
+    success: true,
+    data: videos
+  });
+});
+
+const updateWatchVideo = asyncHandler(async (req, res) => {
+  const { WatchVideo } = getModelInstance();
+  const { videoId } = req.params;
+  const updateData = req.body;
+
+  const video = await WatchVideo.findByPk(videoId);
+  if (!video) {
+    return res.status(404).json({
+      success: false,
+      message: 'Video not found'
+    });
+  }
+
+  await video.update(updateData);
+
+  res.json({
+    success: true,
+    data: video
+  });
+});
+
 module.exports = {
   getAllBrands,
   createBrand,
@@ -847,14 +1274,21 @@ module.exports = {
   deleteBrand,
   getCollectionsByBrand,
   createCollection,
+  updateCollection,
+  deleteCollection,
   getFeaturedCollections,
   getCollectionBySlug,
   getAllWatches,
   getWatchBySlug,
+  getWatchById,
   createWatch,
   updateWatch,
   deleteWatch,
   updateWatchSpecifications,
   addWatchImage,
-  deleteWatchImage
+  deleteWatchImage,
+  addWatchVideo,
+  deleteWatchVideo,
+  getWatchVideos,
+  updateWatchVideo
 };

@@ -218,13 +218,13 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       {
         model: ProductImage,
         as: 'images',
-        attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order'],
+        attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id'],
         order: [['sort_order', 'ASC'], ['created_at', 'ASC']]
       },
       {
         model: ProductVideo,
         as: 'videos',
-        attributes: ['id', 'video_url', 'title', 'description', 'sort_order'],
+        attributes: ['id', 'video_url', 'title', 'description', 'sort_order', 'metal_id'],
         order: [['sort_order', 'ASC'], ['created_at', 'ASC']]
       },
       {
@@ -332,7 +332,8 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       alt: img.alt_text || product.name,
       is_primary: img.is_primary,
       type: 'image',
-      sort_order: img.sort_order
+      sort_order: img.sort_order,
+      metal_id: img.metal_id || null
     });
   });
 
@@ -344,7 +345,8 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       alt: video.title || product.name,
       is_primary: false,
       type: 'video',
-      sort_order: video.sort_order + 1000 // Offset to place videos after images
+      sort_order: video.sort_order + 1000, // Offset to place videos after images
+      metal_id: video.metal_id || null
     });
   });
 
@@ -380,6 +382,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     show_cut: product.show_cut,
     show_certificate: product.show_certificate,
     certificate: product.certificate,
+    nivoda_options_config: product.nivoda_options_config,
     images: mediaItems,
     variants: product.variants.map(variant => ({
       id: variant.id,

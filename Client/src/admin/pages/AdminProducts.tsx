@@ -418,7 +418,7 @@ const AdminProducts: React.FC = () => {
 
         Object.keys(basicData).forEach(key => {
           if (basicData[key] !== undefined && basicData[key] !== null) {
-            if (Array.isArray(basicData[key])) {
+            if (Array.isArray(basicData[key]) || typeof basicData[key] === 'object') {
               formData.append(key, JSON.stringify(basicData[key]));
             } else {
               formData.append(key, basicData[key].toString());
@@ -559,7 +559,7 @@ const AdminProducts: React.FC = () => {
 
         Object.keys(basicData).forEach(key => {
           if (basicData[key] !== undefined && basicData[key] !== null) {
-            if (Array.isArray(basicData[key])) {
+            if (Array.isArray(basicData[key]) || typeof basicData[key] === 'object') {
               formData.append(key, JSON.stringify(basicData[key]));
             } else {
               formData.append(key, basicData[key].toString());
@@ -695,8 +695,11 @@ const AdminProducts: React.FC = () => {
 
   // Open modals
   const openCreateForm = () => {
+    console.log('DEBUG: openCreateForm called');
+    console.log('Current showProductForm state:', showProductForm);
     setEditingProduct(null);
     setShowProductForm(true);
+    console.log('DEBUG: showProductForm state updated to true');
   };
 
   const openEditForm = async (product: Product) => {

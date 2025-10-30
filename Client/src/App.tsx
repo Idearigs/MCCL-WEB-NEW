@@ -34,6 +34,7 @@ import RoamerWatches from "./pages/RoamerWatches";
 import FestinaClassicCollection from "./pages/FestinaClassicCollection";
 import BristonHeritageCollection from "./pages/BristonHeritageCollection";
 import RoamerSwissTradition from "./pages/RoamerSwissTradition";
+import WatchCollection from "./pages/WatchCollection";
 import Contact from "./pages/Contact";
 import OurStory from "./pages/OurStory";
 import CustomerService from "./pages/CustomerService";
@@ -45,6 +46,7 @@ import Orders from "./pages/Orders";
 import VerifyEmail from "./pages/VerifyEmail";
 import AuthCallback from "./pages/AuthCallback";
 import AdminApp from "./admin/AdminApp";
+import NivodaTestingPage from "./pages/NivodaTestingPage";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +85,7 @@ const App = () => (
             <Route path="/collections/festina-classic-collection" element={<FestinaClassicCollection />} />
             <Route path="/collections/briston-heritage-collection" element={<BristonHeritageCollection />} />
             <Route path="/collections/roamer-swiss-tradition" element={<RoamerSwissTradition />} />
+            <Route path="/collections/:collectionSlug" element={<WatchCollection />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/our-story" element={<OurStory />} />
             <Route path="/customer-service" element={<CustomerService />} />
@@ -112,6 +115,9 @@ const App = () => (
 
             {/* Admin Routes */}
             <Route path="/admin/*" element={<AdminApp />} />
+
+            {/* Testing Routes */}
+            <Route path="/test/nivoda" element={<NivodaTestingPage />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

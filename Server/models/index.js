@@ -235,6 +235,12 @@ const initializeModels = () => {
     certificate: {
       type: DataTypes.STRING(255)
     },
+    nivoda_options_config: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: null,
+      comment: 'Nivoda configuration: {stoneType, caratRange, clarityOptions, colourOptions, cutOptions}'
+    },
     meta_title: {
       type: DataTypes.STRING(200)
     },
@@ -343,6 +349,15 @@ const initializeModels = () => {
         key: 'id'
       }
     },
+    metal_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'product_metals',
+        key: 'id'
+      },
+      comment: 'Optional: Link image to specific metal/material type'
+    },
     image_url: {
       type: DataTypes.STRING(500),
       allowNull: false
@@ -378,6 +393,15 @@ const initializeModels = () => {
         model: 'products',
         key: 'id'
       }
+    },
+    metal_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'product_metals',
+        key: 'id'
+      },
+      comment: 'Optional: Link video to specific metal/material type'
     },
     video_url: {
       type: DataTypes.STRING(500),
@@ -762,8 +786,16 @@ const initializeModels = () => {
   Product.hasMany(ProductImage, { foreignKey: 'product_id', as: 'images' });
   ProductImage.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 
+  // Metal-specific image relationships
+  ProductMetals.hasMany(ProductImage, { foreignKey: 'metal_id', as: 'images' });
+  ProductImage.belongsTo(ProductMetals, { foreignKey: 'metal_id', as: 'metal' });
+
   Product.hasMany(ProductVideo, { foreignKey: 'product_id', as: 'videos' });
   ProductVideo.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+
+  // Metal-specific video relationships
+  ProductMetals.hasMany(ProductVideo, { foreignKey: 'metal_id', as: 'videos' });
+  ProductVideo.belongsTo(ProductMetals, { foreignKey: 'metal_id', as: 'metal' });
 
   Product.hasMany(ProductVariant, { foreignKey: 'product_id', as: 'variants' });
   ProductVariant.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });

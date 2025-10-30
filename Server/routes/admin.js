@@ -16,7 +16,6 @@ const adminJewelryCategoriesRoutes = require('./adminJewelryCategories');
 const uploadRoutes = require('./upload');
 const watchRoutes = require('./watchRoutes');
 const { validateProduct, validateBulkUpdate } = require('../validators/productValidator');
-const { uploadMultiple } = require('../middleware/upload');
 
 const { adminAuth, requireAdmin, requireSuperAdmin } = require('../middleware/adminAuth');
 const { joiValidation } = require('../middleware/validation');
@@ -58,16 +57,8 @@ router.put('/change-password', joiValidation(changePasswordSchema), changePasswo
 router.get('/dashboard/stats', getDashboardStats);
 
 // Admin Product Management Routes
-router.get('/products', adminProductController.getProducts);
-router.get('/products/options', adminProductController.getProductOptions);
-router.get('/products/:id', adminProductController.getProductById);
-router.post('/products', validateProduct, adminProductController.createProduct);
-router.post('/products/with-media', uploadMultiple('media', 10), adminProductController.createProductWithMedia);
-router.put('/products/:id', adminProductController.updateProduct);
-router.delete('/products/:id', adminProductController.deleteProduct);
-router.patch('/products/:id/toggle-status', adminProductController.toggleProductStatus);
-router.patch('/products/:id/toggle-featured', adminProductController.toggleFeaturedStatus);
-router.patch('/products/bulk/update', validateBulkUpdate, adminProductController.bulkUpdateProducts);
+// NOTE: Product routes are now handled in adminProductRoutes.js with better organization
+// See routes/adminProductRoutes.js for all product-related admin endpoints
 
 // Category Management Routes
 router.use('/categories', adminCategoriesRoutes);

@@ -31,8 +31,8 @@ async function getAvailableOptions(req, res) {
       // Diamond Color grades (from GIA scale)
       colours: ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'],
 
-      // Diamond Cut grades
-      cuts: ['P', 'F', 'G', 'VG', 'EX', 'ID', '8X'],
+      // Diamond Cut grades (VALID Nivoda values only)
+      cuts: ['EX', 'VG', 'G', 'F'],
 
       // Stone type
       stoneTypes: ['Natural', 'Lab-Grown']
@@ -67,7 +67,7 @@ async function getAvailableOptions(req, res) {
 
 /**
  * Search diamonds from Nivoda API
- * Query params: minCarat, maxCarat, minPrice, maxPrice, color, clarity, cut, limit, offset
+ * Query params: minCarat, maxCarat, minPrice, maxPrice, color, clarity, cut, certificate, limit, offset
  */
 async function searchDiamonds(req, res) {
   try {
@@ -80,17 +80,29 @@ async function searchDiamonds(req, res) {
       color: req.query.color ? req.query.color.split(',') : undefined,
       clarity: req.query.clarity ? req.query.clarity.split(',') : undefined,
       cut: req.query.cut ? req.query.cut.split(',') : undefined,
+      certificate: req.query.certificate ? req.query.certificate : undefined,
       limit: parseInt(req.query.limit) || 20,
       offset: parseInt(req.query.offset) || 0
     };
 
     const diamonds = await nivodaService.searchDiamonds(filters);
 
+    // Filter by certificate if specified (client-side filtering as backup)
+    let filteredItems = diamonds.items || [];
+    if (req.query.certificate) {
+      filteredItems = filteredItems.filter(d =>
+        d.diamond?.certificate?.lab?.toUpperCase() === req.query.certificate.toUpperCase()
+      );
+    }
+
     return res.json({
       success: true,
-      data: diamonds,
+      data: {
+        ...diamonds,
+        items: filteredItems
+      },
       message: 'Diamonds retrieved successfully',
-      count: diamonds.items?.length || 0,
+      count: filteredItems.length || 0,
       total: diamonds.total_count || 0
     });
   } catch (error) {
@@ -104,12 +116,12 @@ async function searchDiamonds(req, res) {
 
 /**
  * Get price suggestions for diamond specs
- * Query params: carat, clarity, color, cut
- * Returns: matching diamonds with prices
+ * Query params: carat, clarity, color, cut, certificate (optional)
+ * Returns: matching diamonds with prices, filtered by certificate if specified
  */
 async function getDiamondPriceBySuggestions(req, res) {
   try {
-    const { carat, clarity, color, cut } = req.query;
+    const { carat, clarity, color, cut, certificate } = req.query;
 
     // Build filter with specific specs
     const filters = {
@@ -120,14 +132,23 @@ async function getDiamondPriceBySuggestions(req, res) {
       clarity: clarity ? [clarity] : undefined,
       color: color ? [color] : undefined,
       cut: cut ? [cut] : undefined,
+      certificate: certificate ? certificate : undefined,
       limit: 5
     };
 
     const diamonds = await nivodaService.searchDiamonds(filters);
 
-    if (diamonds.items && diamonds.items.length > 0) {
+    // Filter by certificate if specified (client-side filtering as backup)
+    let filteredDiamonds = diamonds.items || [];
+    if (certificate) {
+      filteredDiamonds = filteredDiamonds.filter(d =>
+        d.diamond?.certificate?.lab?.toUpperCase() === certificate.toUpperCase()
+      );
+    }
+
+    if (filteredDiamonds.length > 0) {
       // Calculate average price from matching diamonds
-      const prices = diamonds.items.map(d => d.price);
+      const prices = filteredDiamonds.map(d => d.price);
       const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
@@ -139,15 +160,16 @@ async function getDiamondPriceBySuggestions(req, res) {
             carat: carat || 'N/A',
             clarity: clarity || 'N/A',
             color: color || 'N/A',
-            cut: cut || 'N/A'
+            cut: cut || 'N/A',
+            certificate: certificate || 'Any'
           },
           prices: {
             min: minPrice,
             avg: Math.round(avgPrice),
             max: maxPrice
           },
-          matchingDiamonds: diamonds.items,
-          count: diamonds.items.length
+          matchingDiamonds: filteredDiamonds,
+          count: filteredDiamonds.length
         },
         message: 'Diamond price suggestions retrieved'
       });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Edit,
@@ -36,6 +36,7 @@ interface WatchBrand {
 
 interface WatchCollection {
   id: string;
+  brand_id: string;
   name: string;
   slug: string;
   description: string;
@@ -51,6 +52,10 @@ interface Watch {
   id: string;
   name: string;
   slug: string;
+  model_number?: string;
+  description?: string;
+  short_description?: string;
+  sku?: string;
   brand: {
     id: string;
     name: string;
@@ -68,6 +73,8 @@ interface Watch {
   gender: string;
   watch_type: string;
   style: string;
+  warranty_years?: number;
+  care_instructions?: string;
   is_featured: boolean;
   in_stock: boolean;
   stock_quantity: number;
@@ -75,12 +82,24 @@ interface Watch {
     url: string;
     alt: string;
   };
+  images?: Array<{
+    id: string;
+    url: string;
+    alt: string;
+    is_primary?: boolean;
+  }>;
+  videos?: Array<{
+    id: string;
+    url: string;
+    title?: string;
+  }>;
   specifications?: {
     movement?: string;
     case_material?: string;
     case_diameter?: string;
     water_resistance?: string;
   };
+  technical_specs?: Record<string, any>;
   created_at: string;
 }
 
@@ -118,8 +137,8 @@ const AdminWatches: React.FC = () => {
     description: '',
     brand_id: '',
     image_url: '',
-    season: '',
-    year: ''
+    launch_year: '',
+    target_audience: ''
   });
 
   const [watchForm, setWatchForm] = useState({
@@ -137,8 +156,15 @@ const AdminWatches: React.FC = () => {
     style: 'casual',
     warranty_years: '2',
     care_instructions: '',
-    stock_quantity: '0'
+    stock_quantity: '0',
+    technical_specs: {} as any,
+    images: [] as any[],
+    videos: [] as any[]
   });
+
+  const [filteredCollections, setFilteredCollections] = useState<WatchCollection[]>([]);
+  const [bristonTab, setBristonTab] = useState<'movement' | 'case' | 'dial' | 'strap'>('movement');
+  const [festinaTab, setFestinaTab] = useState<'case' | 'dial' | 'strap' | 'movement' | 'functions' | 'features'>('case');
 
   const fetchBrands = async () => {
     try {
@@ -168,19 +194,43 @@ const AdminWatches: React.FC = () => {
       }
 
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/watches/brands/${brandId}/collections`, {
+      // Use timestamp parameter for cache-busting without problematic headers
+      const url = `${API_BASE_URL}/admin/watches/brands/${brandId}/collections?t=${Date.now()}`;
+
+      console.log(`[fetchCollections] Fetching collections for brand: ${brandId}`);
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+
+      console.log(`[fetchCollections] Response status: ${response.status}`);
+
+      if (!response.ok) {
+        console.error(`[fetchCollections] HTTP error! status: ${response.status}`);
+        setAlert({ type: 'error', message: `Failed to fetch collections: HTTP ${response.status}` });
+        setCollections([]);
+        return;
+      }
+
       const data = await response.json();
+      console.log(`[fetchCollections] Response data:`, data);
+
       if (data.success) {
-        setCollections(data.data || []);
+        const collectionsData = data.data || [];
+        setCollections(collectionsData);
+        console.log(`[fetchCollections] Successfully fetched ${collectionsData.length} collections for brand ${brandId}`);
+      } else {
+        console.error(`[fetchCollections] API returned success: false. Message:`, data.message);
+        setAlert({ type: 'error', message: data.message || 'Failed to fetch collections' });
+        setCollections([]);
       }
     } catch (error) {
-      console.error('Error fetching collections:', error);
+      console.error('[fetchCollections] Error:', error);
       setAlert({ type: 'error', message: 'Failed to fetch collections' });
+      setCollections([]);
     }
   };
 
@@ -207,6 +257,44 @@ const AdminWatches: React.FC = () => {
     }
   };
 
+  const fetchWatchDetails = async (watchId: string) => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      console.log(`[fetchWatchDetails] Fetching details for watch ID: ${watchId}`);
+
+      const response = await fetch(`${API_BASE_URL}/watches/admin/${watchId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log(`[fetchWatchDetails] Response status: ${response.status}`);
+
+      if (!response.ok) {
+        console.error(`[fetchWatchDetails] HTTP error! status: ${response.status}`);
+        setAlert({ type: 'error', message: `Failed to fetch watch details: HTTP ${response.status}` });
+        return null;
+      }
+
+      const data = await response.json();
+      console.log(`[fetchWatchDetails] Response data:`, data);
+
+      if (data.success) {
+        console.log(`[fetchWatchDetails] Successfully fetched watch details`);
+        return data.data;
+      } else {
+        console.error(`[fetchWatchDetails] API returned success: false`);
+        setAlert({ type: 'error', message: data.message || 'Failed to fetch watch details' });
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching watch details:', error);
+      setAlert({ type: 'error', message: 'Failed to fetch watch details' });
+      return null;
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -221,6 +309,36 @@ const AdminWatches: React.FC = () => {
 
     loadData();
   }, [activeTab, selectedBrand, searchTerm, selectedBrandForCollections]);
+
+  // Filter collections based on selected brand
+  useEffect(() => {
+    console.log(`[useEffect-1] watchForm.brand_id changed to: ${watchForm.brand_id}`);
+    if (watchForm.brand_id) {
+      // Fetch collections for this brand
+      console.log(`[useEffect-1] Calling fetchCollections with brand_id: ${watchForm.brand_id}`);
+      fetchCollections(watchForm.brand_id);
+    } else {
+      console.log(`[useEffect-1] No brand_id, clearing collections`);
+      setFilteredCollections([]);
+      setCollections([]);
+    }
+  }, [watchForm.brand_id]); // Only depend on brand_id to avoid infinite loops
+
+  // Update filtered collections whenever collections change
+  useEffect(() => {
+    console.log(`[useEffect-2] collections or brand_id changed. brand_id: ${watchForm.brand_id}, collections count: ${collections.length}`);
+    if (watchForm.brand_id && collections.length > 0) {
+      // API already filters by brand_id, so we can use collections directly
+      console.log(`[useEffect-2] Using ${collections.length} collections (already filtered by API)`);
+      setFilteredCollections(collections);
+    } else if (!watchForm.brand_id) {
+      console.log(`[useEffect-2] No brand_id, clearing filtered collections`);
+      setFilteredCollections([]);
+    } else {
+      console.log(`[useEffect-2] Collections empty, clearing filtered collections`);
+      setFilteredCollections([]);
+    }
+  }, [collections, watchForm.brand_id]);
 
   const handleCreateBrand = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,29 +374,36 @@ const AdminWatches: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/watches/collections`, {
-        method: 'POST',
+      const isUpdate = !!editingCollection;
+      const method = isUpdate ? 'PUT' : 'POST';
+      const url = isUpdate
+        ? `${API_BASE_URL}/admin/watches/collections/${editingCollection.id}`
+        : `${API_BASE_URL}/admin/watches/collections`;
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           ...collectionForm,
-          year: collectionForm.year ? parseInt(collectionForm.year) : null
+          launch_year: collectionForm.launch_year ? parseInt(collectionForm.launch_year) : null
         })
       });
 
       const data = await response.json();
       if (data.success) {
-        setAlert({ type: 'success', message: 'Collection created successfully' });
+        setAlert({ type: 'success', message: `Collection ${isUpdate ? 'updated' : 'created'} successfully` });
         setShowCollectionModal(false);
-        setCollectionForm({ name: '', description: '', brand_id: '', image_url: '', season: '', year: '' });
+        setCollectionForm({ name: '', description: '', brand_id: '', image_url: '', launch_year: '', target_audience: '' });
+        setEditingCollection(null);
         fetchCollections(selectedBrandForCollections?.id);
       } else {
-        setAlert({ type: 'error', message: data.message || 'Failed to create collection' });
+        setAlert({ type: 'error', message: data.message || `Failed to ${isUpdate ? 'update' : 'create'} collection` });
       }
     } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to create collection' });
+      setAlert({ type: 'error', message: `Failed to ${editingCollection ? 'update' : 'create'} collection` });
     }
   };
 
@@ -286,36 +411,190 @@ const AdminWatches: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/watches/watches`, {
-        method: 'POST',
+      const isUpdate = !!editingWatch;
+      const method = isUpdate ? 'PUT' : 'POST';
+      const url = isUpdate
+        ? `${API_BASE_URL}/admin/watches/watches/${editingWatch.id}`
+        : `${API_BASE_URL}/admin/watches/watches`;
+
+      // Validate required fields
+      if (!watchForm.brand_id || !watchForm.name || !watchForm.base_price) {
+        setAlert({ type: 'error', message: 'Please fill in all required fields: Brand, Name, and Base Price' });
+        return;
+      }
+
+      // Separate file objects from the rest of the data
+      const imagesData = watchForm.images.map(img => {
+        // Check if it's a File object or an object containing a file (from file input)
+        if (img instanceof File || img?.file instanceof File) {
+          // For File objects, we'll upload separately
+          return null;
+        }
+        // Only include images that have an ID (from API) and valid image_url
+        if (!img?.id || (!img?.image_url && !img?.url)) {
+          // Skip images without ID or URL (incomplete data)
+          return null;
+        }
+        // For existing images from API, return as-is
+        return {
+          id: img.id,
+          url: img.url || img.image_url,
+          alt: img.alt || img.alt_text,
+          is_primary: img.is_primary,
+          image_type: img.image_type
+        };
+      }).filter(Boolean);
+
+      const videosData = watchForm.videos.map(vid => {
+        // Check if it's a File object or an object containing a file
+        if (vid instanceof File || vid?.file instanceof File) {
+          // For File objects, we'll upload separately
+          return null;
+        }
+        // Only include videos that have an ID (from API) and valid URL
+        if (!vid?.id || (!vid?.video_url && !vid?.url)) {
+          // Skip videos without ID or URL (incomplete data)
+          return null;
+        }
+        // For existing videos
+        return {
+          id: vid.id,
+          url: vid.url || vid.video_url,
+          title: vid.title,
+          video_type: vid.video_type
+        };
+      }).filter(Boolean);
+
+      // Safe parsing functions with fallbacks
+      const safeParseFloat = (val: string, fallback: number = 0) => {
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? fallback : parsed;
+      };
+
+      const safeParseInt = (val: string, fallback: number = 0) => {
+        const parsed = parseInt(val);
+        return isNaN(parsed) ? fallback : parsed;
+      };
+
+      const requestBody = {
+        brand_id: watchForm.brand_id,
+        collection_id: watchForm.collection_id || null,
+        name: watchForm.name,
+        model_number: watchForm.model_number || null,
+        description: watchForm.description || null,
+        short_description: watchForm.short_description || null,
+        base_price: safeParseFloat(watchForm.base_price),
+        sale_price: watchForm.sale_price ? safeParseFloat(watchForm.sale_price) : null,
+        sku: watchForm.sku || null,
+        gender: watchForm.gender || 'unisex',
+        watch_type: watchForm.watch_type || 'analog',
+        style: watchForm.style || 'casual',
+        warranty_years: safeParseInt(watchForm.warranty_years, 2),
+        care_instructions: watchForm.care_instructions || null,
+        stock_quantity: safeParseInt(watchForm.stock_quantity, 0),
+        technical_specs: watchForm.technical_specs || {},
+        images: imagesData,
+        videos: videosData
+      };
+
+      console.log('[handleCreateWatch] Request method:', method);
+      console.log('[handleCreateWatch] Request URL:', url);
+      console.log('[handleCreateWatch] Request body:', requestBody);
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...watchForm,
-          base_price: parseFloat(watchForm.base_price),
-          sale_price: watchForm.sale_price ? parseFloat(watchForm.sale_price) : null,
-          warranty_years: parseInt(watchForm.warranty_years),
-          stock_quantity: parseInt(watchForm.stock_quantity)
-        })
+        body: JSON.stringify(requestBody)
       });
 
+      console.log('[handleCreateWatch] Response status:', response.status);
       const data = await response.json();
+      console.log('[handleCreateWatch] Response data:', data);
+
       if (data.success) {
-        setAlert({ type: 'success', message: 'Watch created successfully' });
+        const watchId = data.data.id;
+
+        // Upload new image files if any
+        const newImageFiles = watchForm.images.filter(img => {
+          // Check if it's a File object or an object containing a file
+          return img instanceof File || img?.file instanceof File;
+        });
+
+        for (const imgObj of newImageFiles) {
+          try {
+            // Handle both direct File objects and objects with file property
+            const fileToUpload = imgObj instanceof File ? imgObj : imgObj?.file;
+
+            if (!fileToUpload) continue;
+
+            const formData = new FormData();
+            formData.append('image_url', fileToUpload);
+            formData.append('alt_text', fileToUpload.name);
+            formData.append('is_primary', 'false');
+
+            await fetch(`${API_BASE_URL}/admin/watches/watches/${watchId}/images`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              body: formData
+            });
+          } catch (imgError) {
+            console.error('Error uploading image:', imgError);
+          }
+        }
+
+        // Upload new video files if any
+        const newVideoFiles = watchForm.videos.filter(vid => {
+          // Check if it's a File object or an object containing a file
+          return vid instanceof File || vid?.file instanceof File;
+        });
+
+        for (const vidObj of newVideoFiles) {
+          try {
+            // Handle both direct File objects and objects with file property
+            const fileToUpload = vidObj instanceof File ? vidObj : vidObj?.file;
+
+            if (!fileToUpload) continue;
+
+            const formData = new FormData();
+            formData.append('video_url', fileToUpload);
+            formData.append('title', fileToUpload.name);
+
+            await fetch(`${API_BASE_URL}/admin/watches/watches/${watchId}/videos`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              body: formData
+            });
+          } catch (vidError) {
+            console.error('Error uploading video:', vidError);
+          }
+        }
+
+        setAlert({
+          type: 'success',
+          message: isUpdate ? 'Watch updated successfully' : 'Watch created successfully'
+        });
         setShowWatchModal(false);
+        setEditingWatch(null);
         setWatchForm({
           brand_id: '', collection_id: '', name: '', model_number: '', description: '',
           short_description: '', base_price: '', sale_price: '', sku: '', gender: 'unisex',
-          watch_type: 'analog', style: 'casual', warranty_years: '2', care_instructions: '', stock_quantity: '0'
+          watch_type: 'analog', style: 'casual', warranty_years: '2', care_instructions: '',
+          stock_quantity: '0', technical_specs: {}, images: [], videos: []
         });
         fetchWatches();
       } else {
-        setAlert({ type: 'error', message: data.message || 'Failed to create watch' });
+        setAlert({ type: 'error', message: data.message || `Failed to ${isUpdate ? 'update' : 'create'} watch` });
       }
     } catch (error) {
-      setAlert({ type: 'error', message: 'Failed to create watch' });
+      console.error('Error:', error);
+      setAlert({ type: 'error', message: `Failed to ${editingWatch ? 'update' : 'create'} watch` });
     }
   };
 
@@ -365,7 +644,7 @@ const AdminWatches: React.FC = () => {
     brand.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredCollections = (collections || []).filter(collection =>
+  const collectionsForDisplay = (collections || []).filter(collection =>
     collection.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -426,8 +705,8 @@ const AdminWatches: React.FC = () => {
                 description: '',
                 brand_id: selectedBrandForCollections?.id || '',
                 image_url: '',
-                season: '',
-                year: ''
+                launch_year: '',
+                target_audience: ''
               });
               setShowCollectionModal(true);
             } else {
@@ -435,8 +714,11 @@ const AdminWatches: React.FC = () => {
               setWatchForm({
                 brand_id: '', collection_id: '', name: '', model_number: '', description: '',
                 short_description: '', base_price: '', sale_price: '', sku: '', gender: 'unisex',
-                watch_type: 'analog', style: 'casual', warranty_years: '2', care_instructions: '', stock_quantity: '0'
+                watch_type: 'analog', style: 'casual', warranty_years: '2', care_instructions: '',
+                stock_quantity: '0', technical_specs: {}, images: [], videos: []
               });
+              setBristonTab('movement');
+              setFestinaTab('case');
               setShowWatchModal(true);
             }
           }}
@@ -635,7 +917,7 @@ const AdminWatches: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCollections.map((collection) => (
+              {collectionsForDisplay.map((collection) => (
                 <tr key={collection.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -683,9 +965,9 @@ const AdminWatches: React.FC = () => {
                             name: collection.name,
                             description: collection.description || '',
                             brand_id: collection.brand_id,
-                            image_url: '',
-                            season: '',
-                            year: ''
+                            image_url: collection.image_url || '',
+                            launch_year: collection.launch_year?.toString() || '',
+                            target_audience: collection.target_audience || ''
                           });
                           setShowCollectionModal(true);
                         }}
@@ -839,26 +1121,35 @@ const AdminWatches: React.FC = () => {
                         </svg>
                       </button>
                       <button
-                        onClick={() => {
-                          setEditingWatch(watch);
-                          setWatchForm({
-                            brand_id: watch.brand.id,
-                            collection_id: watch.collection?.id || '',
-                            name: watch.name,
-                            model_number: '',
-                            description: '',
-                            short_description: '',
-                            base_price: watch.base_price.toString(),
-                            sale_price: watch.sale_price?.toString() || '',
-                            sku: '',
-                            gender: watch.gender,
-                            watch_type: watch.watch_type,
-                            style: watch.style,
-                            warranty_years: '2',
-                            care_instructions: '',
-                            stock_quantity: watch.stock_quantity.toString()
-                          });
-                          setShowWatchModal(true);
+                        onClick={async () => {
+                          // Fetch full watch details with all fields using the watch ID
+                          const fullWatchDetails = await fetchWatchDetails(watch.id);
+                          if (fullWatchDetails) {
+                            setEditingWatch(fullWatchDetails);
+                            setWatchForm({
+                              brand_id: fullWatchDetails.brand.id,
+                              collection_id: fullWatchDetails.collection?.id || '',
+                              name: fullWatchDetails.name,
+                              model_number: fullWatchDetails.model_number || '',
+                              description: fullWatchDetails.description || '',
+                              short_description: fullWatchDetails.short_description || '',
+                              base_price: fullWatchDetails.base_price.toString(),
+                              sale_price: fullWatchDetails.sale_price?.toString() || '',
+                              sku: fullWatchDetails.sku || '',
+                              gender: fullWatchDetails.gender,
+                              watch_type: fullWatchDetails.watch_type,
+                              style: fullWatchDetails.style,
+                              warranty_years: fullWatchDetails.warranty_years?.toString() || '2',
+                              care_instructions: fullWatchDetails.care_instructions || '',
+                              stock_quantity: fullWatchDetails.stock_quantity.toString(),
+                              technical_specs: fullWatchDetails.technical_specs || {},
+                              images: fullWatchDetails.images || [],
+                              videos: fullWatchDetails.videos || []
+                            });
+                            setBristonTab('movement');
+                            setFestinaTab('case');
+                            setShowWatchModal(true);
+                          }
                         }}
                         className="text-gray-600 hover:text-gray-900 transition-colors"
                         title="Edit"
@@ -1005,30 +1296,25 @@ const AdminWatches: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Season</label>
-              <select
-                value={collectionForm.season}
-                onChange={(e) => setCollectionForm({ ...collectionForm, season: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-              >
-                <option value="">Select Season</option>
-                <option value="spring">Spring</option>
-                <option value="summer">Summer</option>
-                <option value="autumn">Autumn</option>
-                <option value="winter">Winter</option>
-                <option value="all-season">All Season</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Year</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Launch Year</label>
               <input
                 type="number"
-                value={collectionForm.year}
-                onChange={(e) => setCollectionForm({ ...collectionForm, year: e.target.value })}
+                value={collectionForm.launch_year}
+                onChange={(e) => setCollectionForm({ ...collectionForm, launch_year: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
                 min="1900"
                 max="2030"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Target Audience</label>
+              <input
+                type="text"
+                value={collectionForm.target_audience}
+                onChange={(e) => setCollectionForm({ ...collectionForm, target_audience: e.target.value })}
+                placeholder="e.g., Professional, Sports, Casual"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
               />
             </div>
           </div>
@@ -1066,130 +1352,628 @@ const AdminWatches: React.FC = () => {
         isOpen={showWatchModal}
         onClose={() => setShowWatchModal(false)}
         title={editingWatch ? 'Edit Watch' : 'Add New Watch'}
+        size="2xl"
       >
-        <form onSubmit={handleCreateWatch} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Brand</label>
-              <select
-                value={watchForm.brand_id}
-                onChange={(e) => setWatchForm({ ...watchForm, brand_id: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-                required
-              >
-                <option value="">Select Brand</option>
-                {brands.map(brand => (
-                  <option key={brand.id} value={brand.id}>{brand.name}</option>
-                ))}
-              </select>
+        <form onSubmit={handleCreateWatch} className="space-y-6 max-h-screen overflow-y-auto">
+          {/* Basic Info Section */}
+          <div className="border-b pb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-satoshi">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Brand *</label>
+                <select
+                  value={watchForm.brand_id}
+                  onChange={(e) => {
+                    setWatchForm({ ...watchForm, brand_id: e.target.value, collection_id: '' });
+                    // useEffect will handle fetching collections
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                  required
+                >
+                  <option value="">Select Brand</option>
+                  {brands.map(brand => (
+                    <option key={brand.id} value={brand.id}>{brand.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Collection</label>
+                <select
+                  value={watchForm.collection_id}
+                  onChange={(e) => setWatchForm({ ...watchForm, collection_id: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                  disabled={!watchForm.brand_id}
+                >
+                  <option value="">Select Collection (Optional)</option>
+                  {filteredCollections.map(coll => (
+                    <option key={coll.id} value={coll.id}>{coll.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Watch Name *</label>
+                <input
+                  type="text"
+                  value={watchForm.name}
+                  onChange={(e) => setWatchForm({ ...watchForm, name: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Model Number</label>
+                <input
+                  type="text"
+                  value={watchForm.model_number}
+                  onChange={(e) => setWatchForm({ ...watchForm, model_number: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Watch Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">SKU</label>
               <input
                 type="text"
-                value={watchForm.name}
-                onChange={(e) => setWatchForm({ ...watchForm, name: e.target.value })}
+                value={watchForm.sku}
+                onChange={(e) => setWatchForm({ ...watchForm, sku: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-                required
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Base Price (£)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Short Description</label>
               <input
-                type="number"
-                step="0.01"
-                value={watchForm.base_price}
-                onChange={(e) => setWatchForm({ ...watchForm, base_price: e.target.value })}
+                type="text"
+                value={watchForm.short_description}
+                onChange={(e) => setWatchForm({ ...watchForm, short_description: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-                required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Sale Price (£)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Description</label>
+              <textarea
+                value={watchForm.description}
+                onChange={(e) => setWatchForm({ ...watchForm, description: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          {/* Pricing & Inventory Section */}
+          <div className="border-b pb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-satoshi">Pricing & Inventory</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Base Price (£) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={watchForm.base_price}
+                  onChange={(e) => setWatchForm({ ...watchForm, base_price: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Sale Price (£)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={watchForm.sale_price}
+                  onChange={(e) => setWatchForm({ ...watchForm, sale_price: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Stock Quantity *</label>
+                <input
+                  type="number"
+                  value={watchForm.stock_quantity}
+                  onChange={(e) => setWatchForm({ ...watchForm, stock_quantity: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Warranty (Years)</label>
+                <input
+                  type="number"
+                  value={watchForm.warranty_years}
+                  onChange={(e) => setWatchForm({ ...watchForm, warranty_years: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Specifications Section */}
+          <div className="border-b pb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-satoshi">Specifications</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Gender</label>
+                <select
+                  value={watchForm.gender}
+                  onChange={(e) => setWatchForm({ ...watchForm, gender: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                >
+                  <option value="unisex">Unisex</option>
+                  <option value="men">Men</option>
+                  <option value="women">Women</option>
+                  <option value="children">Children</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Type</label>
+                <select
+                  value={watchForm.watch_type}
+                  onChange={(e) => setWatchForm({ ...watchForm, watch_type: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                >
+                  <option value="analog">Analog</option>
+                  <option value="digital">Digital</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="smart">Smart</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Style</label>
+                <select
+                  value={watchForm.style}
+                  onChange={(e) => setWatchForm({ ...watchForm, style: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                >
+                  <option value="casual">Casual</option>
+                  <option value="dress">Dress</option>
+                  <option value="sport">Sport</option>
+                  <option value="luxury">Luxury</option>
+                  <option value="diving">Diving</option>
+                  <option value="aviation">Aviation</option>
+                  <option value="military">Military</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Care Instructions</label>
+              <textarea
+                value={watchForm.care_instructions}
+                onChange={(e) => setWatchForm({ ...watchForm, care_instructions: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                rows={2}
+                placeholder="Enter care instructions for this watch..."
+              />
+            </div>
+          </div>
+
+          {/* Brand-Specific Technical Specs Section */}
+          {watchForm.brand_id && (
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 font-satoshi">Technical Specifications</h3>
+              <p className="text-sm text-gray-600 mb-4 font-satoshi">
+                Add brand-specific technical details for this watch (optional)
+              </p>
+
+              {/* ROAMER Brand Specs */}
+              {brands.find(b => b.id === watchForm.brand_id)?.name.toLowerCase().includes('roamer') && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Water Resistance</label>
+                    <input
+                      type="text"
+                      value={watchForm.technical_specs?.waterResistance || ''}
+                      onChange={(e) => setWatchForm({
+                        ...watchForm,
+                        technical_specs: { ...watchForm.technical_specs, waterResistance: e.target.value }
+                      })}
+                      placeholder="e.g., 5 ATM (50m)"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                    />
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="antimagnetism"
+                      checked={watchForm.technical_specs?.antimagneticProtection || false}
+                      onChange={(e) => setWatchForm({
+                        ...watchForm,
+                        technical_specs: { ...watchForm.technical_specs, antimagneticProtection: e.target.checked }
+                      })}
+                      className="h-4 w-4 text-gray-900 border-gray-300 rounded"
+                    />
+                    <label htmlFor="antimagnetism" className="ml-2 text-sm font-medium text-gray-700 font-satoshi">
+                      Antimagnetic Protection
+                    </label>
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="shockResistance"
+                      checked={watchForm.technical_specs?.shockResistance || false}
+                      onChange={(e) => setWatchForm({
+                        ...watchForm,
+                        technical_specs: { ...watchForm.technical_specs, shockResistance: e.target.checked }
+                      })}
+                      className="h-4 w-4 text-gray-900 border-gray-300 rounded"
+                    />
+                    <label htmlFor="shockResistance" className="ml-2 text-sm font-medium text-gray-700 font-satoshi">
+                      Shock Resistance
+                    </label>
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="luminosity"
+                      checked={watchForm.technical_specs?.luminosity || false}
+                      onChange={(e) => setWatchForm({
+                        ...watchForm,
+                        technical_specs: { ...watchForm.technical_specs, luminosity: e.target.checked }
+                      })}
+                      className="h-4 w-4 text-gray-900 border-gray-300 rounded"
+                    />
+                    <label htmlFor="luminosity" className="ml-2 text-sm font-medium text-gray-700 font-satoshi">
+                      Luminosity
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Movement Accuracy</label>
+                    <input
+                      type="text"
+                      value={watchForm.technical_specs?.movementAccuracy || ''}
+                      onChange={(e) => setWatchForm({
+                        ...watchForm,
+                        technical_specs: { ...watchForm.technical_specs, movementAccuracy: e.target.value }
+                      })}
+                      placeholder="e.g., ±15 seconds/month"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                    />
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="skinCompatibility"
+                      checked={watchForm.technical_specs?.skinCompatibility || false}
+                      onChange={(e) => setWatchForm({
+                        ...watchForm,
+                        technical_specs: { ...watchForm.technical_specs, skinCompatibility: e.target.checked }
+                      })}
+                      className="h-4 w-4 text-gray-900 border-gray-300 rounded"
+                    />
+                    <label htmlFor="skinCompatibility" className="ml-2 text-sm font-medium text-gray-700 font-satoshi">
+                      Skin Compatibility
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* BRISTON Brand Specs - Tabbed */}
+              {brands.find(b => b.id === watchForm.brand_id)?.name.toLowerCase().includes('briston') && (
+                <div>
+                  <div className="flex space-x-2 mb-4 border-b border-gray-200">
+                    {(['movement', 'case', 'dial', 'strap'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setBristonTab(tab)}
+                        className={`px-4 py-2 font-satoshi capitalize ${
+                          bristonTab === tab
+                            ? 'border-b-2 border-gray-900 text-gray-900 font-semibold'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        {tab === 'dial' ? 'Dial & Hands' : tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    {bristonTab === 'movement' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Quartz Calibre</label>
+                          <input type="text" value={watchForm.technical_specs?.movement?.quartz_calibre || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, quartz_calibre: e.target.value}}})} placeholder="e.g., Miyota OS21" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Functions</label>
+                          <input type="text" value={watchForm.technical_specs?.movement?.functions || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, functions: e.target.value}}})} placeholder="e.g., 2-counter Chronograph & Date" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">60-Minute Counter Position</label>
+                          <input type="text" value={watchForm.technical_specs?.movement?.counter_60_position || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, counter_60_position: e.target.value}}})} placeholder="e.g., 9 o'clock" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">24-Hour Counter Position</label>
+                          <input type="text" value={watchForm.technical_specs?.movement?.counter_24_position || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, counter_24_position: e.target.value}}})} placeholder="e.g., 3 o'clock" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Date Position</label>
+                          <input type="text" value={watchForm.technical_specs?.movement?.date_position || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, date_position: e.target.value}}})} placeholder="e.g., 6 o'clock" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Power Reserve</label>
+                          <input type="text" value={watchForm.technical_specs?.movement?.power_reserve || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, power_reserve: e.target.value}}})} placeholder="e.g., 3-5 years" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                      </>
+                    )}
+
+                    {bristonTab === 'case' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Material</label>
+                          <input type="text" value={watchForm.technical_specs?.case?.material || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, material: e.target.value}}})} placeholder="e.g., Stainless Steel" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Thickness</label>
+                          <input type="text" value={watchForm.technical_specs?.case?.thickness || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, thickness: e.target.value}}})} placeholder="e.g., 6.65 mm" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Shape</label>
+                          <input type="text" value={watchForm.technical_specs?.case?.shape || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, shape: e.target.value}}})} placeholder="e.g., Round" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Diameter</label>
+                          <input type="text" value={watchForm.technical_specs?.case?.diameter || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, diameter: e.target.value}}})} placeholder="e.g., 26 mm" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Weight</label>
+                          <input type="text" value={watchForm.technical_specs?.case?.weight || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, weight: e.target.value}}})} placeholder="e.g., 46.32 g" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                      </>
+                    )}
+
+                    {bristonTab === 'dial' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Colour</label>
+                          <input type="text" value={watchForm.technical_specs?.dial_and_hands?.colour || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, dial_and_hands: {...watchForm.technical_specs?.dial_and_hands, colour: e.target.value}}})} placeholder="e.g., Nacre" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Crystal</label>
+                          <input type="text" value={watchForm.technical_specs?.dial_and_hands?.crystal || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, dial_and_hands: {...watchForm.technical_specs?.dial_and_hands, crystal: e.target.value}}})} placeholder="e.g., Sapphire" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Number of Hands</label>
+                          <input type="number" value={watchForm.technical_specs?.dial_and_hands?.number_of_hands || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, dial_and_hands: {...watchForm.technical_specs?.dial_and_hands, number_of_hands: e.target.value}}})} placeholder="e.g., 2" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                      </>
+                    )}
+
+                    {bristonTab === 'strap' && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Material</label>
+                          <input type="text" value={watchForm.technical_specs?.strap?.material || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, strap: {...watchForm.technical_specs?.strap, material: e.target.value}}})} placeholder="e.g., Stainless Steel" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Colour</label>
+                          <input type="text" value={watchForm.technical_specs?.strap?.colour || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, strap: {...watchForm.technical_specs?.strap, colour: e.target.value}}})} placeholder="e.g., Silver" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Width</label>
+                          <input type="text" value={watchForm.technical_specs?.strap?.width || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, strap: {...watchForm.technical_specs?.strap, width: e.target.value}}})} placeholder="e.g., 12 mm" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Clasp Type</label>
+                          <input type="text" value={watchForm.technical_specs?.strap?.clasp_type || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, strap: {...watchForm.technical_specs?.strap, clasp_type: e.target.value}}})} placeholder="e.g., Double Pusher" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* FESTINA Brand Specs - Categorized Sections */}
+              {brands.find(b => b.id === watchForm.brand_id)?.name.toLowerCase().includes('festina') && (
+                <div>
+                  <div className="flex space-x-2 mb-4 border-b border-gray-200 overflow-x-auto">
+                    {(['case', 'dial', 'strap', 'movement', 'functions', 'features'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setFestinaTab(tab)}
+                        className={`px-4 py-2 font-satoshi capitalize whitespace-nowrap ${
+                          festinaTab === tab
+                            ? 'border-b-2 border-gray-900 text-gray-900 font-semibold'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    {festinaTab === 'case' && (
+                      <>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Material</label><input type="text" value={watchForm.technical_specs?.case?.material || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, material: e.target.value}}})} placeholder="e.g., Stainless Steel" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Thickness</label><input type="text" value={watchForm.technical_specs?.case?.thickness || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, thickness: e.target.value}}})} placeholder="e.g., 6.65 mm" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Shape</label><input type="text" value={watchForm.technical_specs?.case?.shape || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, shape: e.target.value}}})} placeholder="e.g., Round" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Diameter</label><input type="text" value={watchForm.technical_specs?.case?.diameter || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, diameter: e.target.value}}})} placeholder="e.g., 26 mm" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Weight</label><input type="text" value={watchForm.technical_specs?.case?.weight || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, case: {...watchForm.technical_specs?.case, weight: e.target.value}}})} placeholder="e.g., 46.32 g" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                      </>
+                    )}
+
+                    {festinaTab === 'dial' && (
+                      <>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Colour</label><input type="text" value={watchForm.technical_specs?.dial?.colour || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, dial: {...watchForm.technical_specs?.dial, colour: e.target.value}}})} placeholder="e.g., Nacre" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Crystal</label><input type="text" value={watchForm.technical_specs?.dial?.crystal || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, dial: {...watchForm.technical_specs?.dial, crystal: e.target.value}}})} placeholder="e.g., Sapphire" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Number of Hands</label><input type="number" value={watchForm.technical_specs?.dial?.number_of_hands || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, dial: {...watchForm.technical_specs?.dial, number_of_hands: e.target.value}}})} placeholder="e.g., 2" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                      </>
+                    )}
+
+                    {festinaTab === 'strap' && (
+                      <>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Material</label><input type="text" value={watchForm.technical_specs?.strap?.material || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, strap: {...watchForm.technical_specs?.strap, material: e.target.value}}})} placeholder="e.g., Stainless Steel" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Colour</label><input type="text" value={watchForm.technical_specs?.strap?.colour || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, strap: {...watchForm.technical_specs?.strap, colour: e.target.value}}})} placeholder="e.g., Silver" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Width</label><input type="text" value={watchForm.technical_specs?.strap?.width || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, strap: {...watchForm.technical_specs?.strap, width: e.target.value}}})} placeholder="e.g., 12 mm" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Clasp Type</label><input type="text" value={watchForm.technical_specs?.strap?.clasp_type || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, strap: {...watchForm.technical_specs?.strap, clasp_type: e.target.value}}})} placeholder="e.g., Double Pusher" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                      </>
+                    )}
+
+                    {festinaTab === 'movement' && (
+                      <>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Type</label><input type="text" value={watchForm.technical_specs?.movement?.type || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, type: e.target.value}}})} placeholder="e.g., Quartz" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Name</label><input type="text" value={watchForm.technical_specs?.movement?.name || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, name: e.target.value}}})} placeholder="e.g., Miyota GI22" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Manufacturing</label><input type="text" value={watchForm.technical_specs?.movement?.manufacturing || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, manufacturing: e.target.value}}})} placeholder="e.g., Japan" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Battery Type</label><input type="text" value={watchForm.technical_specs?.movement?.battery_type || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, movement: {...watchForm.technical_specs?.movement, battery_type: e.target.value}}})} placeholder="e.g., Sr621sw" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                      </>
+                    )}
+
+                    {festinaTab === 'functions' && (
+                      <>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Main Function</label><input type="text" value={watchForm.technical_specs?.functions?.main_function || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, functions: {...watchForm.technical_specs?.functions, main_function: e.target.value}}})} placeholder="e.g., Hours And Minutes" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Calendar</label><select value={watchForm.technical_specs?.functions?.calendar || 'No'} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, functions: {...watchForm.technical_specs?.functions, calendar: e.target.value}}})} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"><option value="Yes">Yes</option><option value="No">No</option></select></div>
+                      </>
+                    )}
+
+                    {festinaTab === 'features' && (
+                      <>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Watertightness</label><input type="text" value={watchForm.technical_specs?.features?.watertightness || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, features: {...watchForm.technical_specs?.features, watertightness: e.target.value}}})} placeholder="e.g., 5 ATM" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" /></div>
+                        <div><label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Additional Features</label><textarea value={watchForm.technical_specs?.features?.additional_features || ''} onChange={(e) => setWatchForm({...watchForm, technical_specs: {...watchForm.technical_specs, features: {...watchForm.technical_specs?.features, additional_features: e.target.value}}})} placeholder="Enter additional features..." className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi" rows={2} /></div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Images Section */}
+          <div className="border-b pb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-satoshi">Images</h3>
+            <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <Image className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-600 font-satoshi mb-2">
+                Drag and drop images here or click to upload
+              </p>
               <input
-                type="number"
-                step="0.01"
-                value={watchForm.sale_price}
-                onChange={(e) => setWatchForm({ ...watchForm, sale_price: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                type="file"
+                multiple
+                accept="image/*"
+                className="w-full"
+                onChange={(e) => {
+                  // Handle image upload
+                  if (e.target.files) {
+                    const files = Array.from(e.target.files);
+                    setWatchForm({
+                      ...watchForm,
+                      images: [...watchForm.images, ...files.map(f => ({ file: f, preview: URL.createObjectURL(f) }))]
+                    });
+                  }
+                }}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Stock Quantity</label>
-              <input
-                type="number"
-                value={watchForm.stock_quantity}
-                onChange={(e) => setWatchForm({ ...watchForm, stock_quantity: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-                required
-              />
-            </div>
+            {watchForm.images.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                {watchForm.images.map((img, idx) => {
+                  // Determine image source based on what's available
+                  let imageSrc = '';
+                  if (img.preview) {
+                    imageSrc = img.preview; // New uploaded file
+                  } else if (img.image_url) {
+                    imageSrc = img.image_url; // From API
+                  } else if (img.url) {
+                    imageSrc = img.url; // Alternative property name
+                  } else if (typeof img === 'string') {
+                    imageSrc = img; // String URL
+                  }
+
+                  return (
+                    <div key={idx} className="relative bg-gray-100 rounded-lg overflow-hidden h-24">
+                      <img
+                        src={imageSrc}
+                        alt={img.alt_text || img.alt || `Image ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setWatchForm({
+                          ...watchForm,
+                          images: watchForm.images.filter((_, i) => i !== idx)
+                        })}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Gender</label>
-              <select
-                value={watchForm.gender}
-                onChange={(e) => setWatchForm({ ...watchForm, gender: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-              >
-                <option value="unisex">Unisex</option>
-                <option value="men">Men</option>
-                <option value="women">Women</option>
-                <option value="children">Children</option>
-              </select>
+          {/* Videos Section */}
+          <div className="pb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 font-satoshi">Videos</h3>
+            <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Video URL (YouTube/Vimeo)</label>
+                  <input
+                    type="url"
+                    placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Or Upload Video File (MP4/WebM)</label>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/webm"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Type</label>
-              <select
-                value={watchForm.watch_type}
-                onChange={(e) => setWatchForm({ ...watchForm, watch_type: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-              >
-                <option value="analog">Analog</option>
-                <option value="digital">Digital</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="smart">Smart</option>
-              </select>
-            </div>
+            {watchForm.videos.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {watchForm.videos.map((video, idx) => {
+                  // Determine video URL and title
+                  const videoUrl = video.url || video.video_url || '';
+                  const videoTitle = video.title || videoUrl || `Video ${idx + 1}`;
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Style</label>
-              <select
-                value={watchForm.style}
-                onChange={(e) => setWatchForm({ ...watchForm, style: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-              >
-                <option value="casual">Casual</option>
-                <option value="dress">Dress</option>
-                <option value="sport">Sport</option>
-                <option value="luxury">Luxury</option>
-                <option value="diving">Diving</option>
-                <option value="aviation">Aviation</option>
-                <option value="military">Military</option>
-              </select>
-            </div>
+                  return (
+                    <div key={idx} className="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
+                      <span className="text-sm text-gray-700 font-satoshi truncate">{videoTitle}</span>
+                      <button
+                        type="button"
+                        onClick={() => setWatchForm({
+                          ...watchForm,
+                          videos: watchForm.videos.filter((_, i) => i !== idx)
+                        })}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 font-satoshi">Description</label>
-            <textarea
-              value={watchForm.description}
-              onChange={(e) => setWatchForm({ ...watchForm, description: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
-              rows={3}
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
             <button
               type="button"
               onClick={() => setShowWatchModal(false)}

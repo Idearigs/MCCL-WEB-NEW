@@ -108,6 +108,35 @@ const ProductDetail = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [sizeDropdownOpen]);
 
+  // Helper function to filter images and videos by selected metal
+  const getMetalSpecificMedia = (allImages: any[], selectedMetalId: string) => {
+    if (!allImages || allImages.length === 0) return [];
+
+    // First, try to get metal-specific images for the selected metal
+    const metalSpecificImages = allImages.filter(img => img.metal_id === selectedMetalId);
+
+    // If metal-specific images exist, return them
+    if (metalSpecificImages.length > 0) {
+      return metalSpecificImages;
+    }
+
+    // Otherwise, return general images (those with no metal_id)
+    return allImages.filter(img => !img.metal_id);
+  };
+
+  // Helper function to get the primary image for a specific metal
+  const getMetalThumbnail = (metalId: string) => {
+    if (!productData || !productData.images) return null;
+
+    // First try to get metal-specific image
+    const metalSpecificImage = productData.images.find(img => img.metal_id === metalId);
+    if (metalSpecificImage) return metalSpecificImage;
+
+    // Fall back to general image
+    const generalImage = productData.images.find(img => !img.metal_id);
+    return generalImage || null;
+  };
+
   // Helper function to build stone options from nivoda_options_config
   // Now using ranges and available options instead of individual selections with adjustments
   const buildStoneOptions = () => {
@@ -361,7 +390,7 @@ const ProductDetail = () => {
         price: productData.price,
         metal: selectedMetal,
         size: selectedSize,
-        image: productData.images[0]?.url
+        image: displayImages[0]?.url || productData.images[0]?.url
       };
 
       // Include Nivoda stone options if enabled
@@ -385,11 +414,13 @@ const ProductDetail = () => {
 
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % productData.images.length);
+    if (!productData || !displayImages || displayImages.length === 0) return;
+    setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + productData.images.length) % productData.images.length);
+    if (!productData || !displayImages || displayImages.length === 0) return;
+    setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
   };
 
   const goToImage = (index: number) => {
@@ -506,6 +537,9 @@ const ProductDetail = () => {
     );
   }
 
+  // Get filtered images and videos based on selected metal
+  const displayImages = productData ? getMetalSpecificMedia(productData.images || [], selectedMetal) : [];
+
   return (
     <div className="min-h-screen bg-white">
       <LuxuryNavigationWhite />
@@ -535,9 +569,9 @@ const ProductDetail = () => {
           style={{ height: '550px' }}
           onClick={() => openLightbox(currentImageIndex)}
         >
-          {isVideoFile(productData.images[currentImageIndex]?.url) ? (
+          {isVideoFile(displayImages[currentImageIndex]?.url) ? (
             <video
-              src={productData.images[currentImageIndex]?.url}
+              src={displayImages[currentImageIndex]?.url}
               controls
               autoPlay
               muted
@@ -545,14 +579,14 @@ const ProductDetail = () => {
             />
           ) : (
             <img
-              src={productData.images[currentImageIndex]?.url}
-              alt={productData.images[currentImageIndex]?.alt || productData.name}
+              src={displayImages[currentImageIndex]?.url}
+              alt={displayImages[currentImageIndex]?.alt || productData.name}
               className="max-w-full max-h-full object-contain"
             />
           )}
 
           {/* Navigation Arrows - Subtle */}
-          {productData.images.length > 1 && (
+          {displayImages.length > 1 && (
             <>
               <button
                 onClick={(e) => {
@@ -577,7 +611,7 @@ const ProductDetail = () => {
 
           {/* Dots Pagination */}
           <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-1.5 z-10">
-            {productData.images.map((_, index) => (
+            {displayImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToImage(index)}
@@ -594,10 +628,10 @@ const ProductDetail = () => {
 
       {/* Mobile Product Details Section */}
       <div className="block lg:hidden px-4 py-6 bg-white border-t border-gray-200">
-        <h1 className="text-2xl font-cormorant font-light text-gray-900 mb-2 leading-tight">
+        <h1 className="text-3xl font-cormorant font-light text-gray-900 mb-2 leading-tight">
           {productData.name}
         </h1>
-        <div className="text-lg font-futura-pt font-light text-gray-900 mb-6">
+        <div className="text-xl font-futura-pt font-normal text-gray-900 mb-6">
           {productData.price}
         </div>
 
@@ -608,17 +642,33 @@ const ProductDetail = () => {
               Metal: {productData.available_metals.find(metal => metal.id === selectedMetal)?.name || productData.available_metals[0]?.name}
             </h3>
             <div className="flex space-x-2">
-              {productData.available_metals.map((metal) => (
-                <button
-                  key={metal.id}
-                  onClick={() => setSelectedMetal(metal.id)}
-                  className={`w-10 h-10 rounded-full border-2 transition-all ${
-                    selectedMetal === metal.id ? 'border-gray-800' : 'border-gray-300'
-                  }`}
-                  style={{ backgroundColor: metal.color }}
-                  title={metal.name}
-                />
-              ))}
+              {productData.available_metals.map((metal) => {
+                const metalImage = getMetalThumbnail(metal.id);
+                return (
+                  <button
+                    key={metal.id}
+                    onClick={() => setSelectedMetal(metal.id)}
+                    className={`w-12 h-12 border-2 transition-all overflow-hidden flex items-center justify-center bg-gray-100 ${
+                      selectedMetal === metal.id ? 'border-gray-800' : 'border-gray-300'
+                    }`}
+                    title={metal.name}
+                  >
+                    {metalImage && metalImage.url ? (
+                      <img
+                        src={metalImage.url}
+                        alt={metal.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ backgroundColor: metal.color }}
+                        title={metal.name}
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -811,7 +861,7 @@ const ProductDetail = () => {
           <div className="w-full px-4">
             {/* Fixed 2-Column Grid for all media */}
             <div className="grid grid-cols-2 gap-2">
-              {productData.images.map((image, index) => (
+              {displayImages.map((image, index) => (
                 <div
                   key={index}
                   className="relative bg-gray-50 overflow-hidden group cursor-pointer"
@@ -872,22 +922,27 @@ const ProductDetail = () => {
           </div>
 
           {/* Right Side - Product Information */}
-          <div className="pt-0 sticky top-0 self-start bg-white max-w-lg 2xl:max-w-xl mx-auto" style={{ paddingLeft: '2rem', paddingRight: '2rem' }}>
+          <div className="pt-0 sticky top-0 self-start bg-white max-w-md 2xl:max-w-lg mx-auto" style={{ paddingLeft: '2rem', paddingRight: '2rem' }}>
             {/* Product Title and Price */}
             <div className="mb-4 2xl:mb-5 pt-2 pb-2">
-              <h1 className="text-xl 2xl:text-2xl font-cormorant font-light text-gray-900 mb-2 2xl:mb-3 leading-tight">
+              <h1 className="text-2xl 2xl:text-3xl font-cormorant font-light text-gray-900 mb-2 2xl:mb-3 leading-tight">
                 {productData.name}
               </h1>
               <div className="mb-2 2xl:mb-2">
-                <div className="text-sm 2xl:text-base font-futura-pt font-light text-gray-900 mb-1">
-                  {productData.price}
+                <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
+                  {productData.nivoda_enabled && nivodaPrice
+                    ? `£${nivodaPrice.avg.toLocaleString()}`
+                    : productData.price}
                 </div>
+                {nivodaPriceLoading && (
+                  <div className="text-xs text-gray-500 mb-1">Calculating price...</div>
+                )}
                 {userCountry && userCountry !== 'GB' && userCountryName && (
                   <div className="flex items-start space-x-1.5 text-[11px] 2xl:text-xs text-gray-500 leading-snug">
                     <svg className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
-                    <span>We've detected you are browsing from {userCountryName}, please note the UK price for this piece is {productData.price}</span>
+                    <span>We've detected you are browsing from {userCountryName}, please note the UK price for this piece is {productData.nivoda_enabled && nivodaPrice ? `£${nivodaPrice.avg.toLocaleString()}` : productData.price}</span>
                   </div>
                 )}
               </div>
@@ -900,19 +955,35 @@ const ProductDetail = () => {
                   Metal: {productData.available_metals.find(metal => metal.id === selectedMetal)?.name || productData.available_metals[0]?.name || 'Not Selected'}
                 </h3>
                 <div className="flex space-x-2 2xl:space-x-3">
-                  {productData.available_metals.map((metal) => (
-                    <button
-                      key={metal.id}
-                      onClick={() => setSelectedMetal(metal.id)}
-                      className={`w-11 h-11 2xl:w-12 2xl:h-12 rounded-full border-2 transition-all duration-200 ${
-                        selectedMetal === metal.id
-                          ? 'border-gray-800'
-                          : 'border-gray-300 hover:border-gray-500'
-                      }`}
-                      style={{ backgroundColor: metal.color }}
-                      title={metal.name}
-                    />
-                  ))}
+                  {productData.available_metals.map((metal) => {
+                    const metalImage = getMetalThumbnail(metal.id);
+                    return (
+                      <button
+                        key={metal.id}
+                        onClick={() => setSelectedMetal(metal.id)}
+                        className={`w-14 h-14 2xl:w-16 2xl:h-16 border-2 transition-all duration-200 overflow-hidden flex items-center justify-center bg-gray-100 ${
+                          selectedMetal === metal.id
+                            ? 'border-gray-800'
+                            : 'border-gray-300 hover:border-gray-500'
+                        }`}
+                        title={metal.name}
+                      >
+                        {metalImage && metalImage.url ? (
+                          <img
+                            src={metalImage.url}
+                            alt={metal.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ backgroundColor: metal.color }}
+                            title={metal.name}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1139,6 +1210,43 @@ const ProductDetail = () => {
                             {option.label}
                           </button>
                         ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Dynamic Price Summary - Nivoda */}
+                {productData?.nivoda_enabled && (
+                  <div className="mb-4 2xl:mb-5 p-3 2xl:p-4 bg-amber-50 border border-amber-200 rounded">
+                    {nivodaPriceLoading && (
+                      <div className="text-sm 2xl:text-base font-futura-pt text-gray-700 animate-pulse">
+                        Calculating price for your selection...
+                      </div>
+                    )}
+                    {nivodaPrice && !nivodaPriceLoading && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs 2xl:text-sm font-futura-pt text-gray-700">Selected Price Range:</span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
+                            <span className="text-gray-600">Starting from:</span>
+                            <span className="font-medium text-gray-900">£{nivodaPrice.min.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
+                            <span className="text-gray-600">Average:</span>
+                            <span className="font-medium text-[#D4A574]">£{nivodaPrice.avg.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
+                            <span className="text-gray-600">Up to:</span>
+                            <span className="font-medium text-gray-900">£{nivodaPrice.max.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {nivodaPriceError && (
+                      <div className="text-xs 2xl:text-sm font-futura-pt text-red-600">
+                        {nivodaPriceError}
                       </div>
                     )}
                   </div>
@@ -1403,9 +1511,9 @@ const ProductDetail = () => {
                 transition: 'transform 0.3s ease-out'
               }}
             >
-              {isVideoFile(productData.images[lightboxImageIndex]?.url) ? (
+              {isVideoFile(displayImages[lightboxImageIndex]?.url) ? (
                 <video
-                  src={productData.images[lightboxImageIndex]?.url}
+                  src={displayImages[lightboxImageIndex]?.url}
                   controls
                   autoPlay
                   muted
@@ -1414,8 +1522,8 @@ const ProductDetail = () => {
                 />
               ) : (
                 <img
-                  src={productData.images[lightboxImageIndex]?.url}
-                  alt={productData.images[lightboxImageIndex]?.alt || productData.name}
+                  src={displayImages[lightboxImageIndex]?.url}
+                  alt={displayImages[lightboxImageIndex]?.alt || productData.name}
                   className="max-w-full max-h-full object-contain"
                   style={{ maxHeight: '80vh', maxWidth: '80vw' }}
                 />
@@ -1424,16 +1532,16 @@ const ProductDetail = () => {
           </div>
 
           {/* Navigation Arrows - Bottom Positioned */}
-          {productData.images.length > 1 && (
+          {displayImages.length > 1 && (
             <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-4 z-10">
               <button
-                onClick={() => goToLightboxImage((lightboxImageIndex - 1 + productData.images.length) % productData.images.length)}
+                onClick={() => goToLightboxImage((lightboxImageIndex - 1 + displayImages.length) % displayImages.length)}
                 className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
               >
                 <ChevronLeft className="w-6 h-6 text-gray-700" />
               </button>
               <button
-                onClick={() => goToLightboxImage((lightboxImageIndex + 1) % productData.images.length)}
+                onClick={() => goToLightboxImage((lightboxImageIndex + 1) % displayImages.length)}
                 className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
               >
                 <ChevronRight className="w-6 h-6 text-gray-700" />

@@ -230,6 +230,11 @@ const initializeWatchModels = () => {
     availability_status: {
       type: DataTypes.ENUM('in_stock', 'low_stock', 'out_of_stock', 'pre_order', 'discontinued'),
       defaultValue: 'in_stock'
+    },
+    technical_specs: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      comment: 'Brand-specific technical specifications. Structure varies by brand (Roamer, Briston, Festina)'
     }
   }, {
     tableName: 'watches',
@@ -273,6 +278,51 @@ const initializeWatchModels = () => {
     }
   }, {
     tableName: 'watch_images',
+    timestamps: true,
+    underscored: true
+  });
+
+  // Watch Videos Model
+  WatchVideo = sequelize.define('WatchVideo', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    watch_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'watches',
+        key: 'id'
+      }
+    },
+    video_url: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    video_type: {
+      type: DataTypes.ENUM('youtube', 'vimeo', 'mp4', 'webm'),
+      defaultValue: 'youtube'
+    },
+    title: {
+      type: DataTypes.STRING(255)
+    },
+    description: {
+      type: DataTypes.TEXT
+    },
+    thumbnail_url: {
+      type: DataTypes.TEXT
+    },
+    duration_seconds: {
+      type: DataTypes.INTEGER
+    },
+    sort_order: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    }
+  }, {
+    tableName: 'watch_videos',
     timestamps: true,
     underscored: true
   });
@@ -440,6 +490,16 @@ const initializeWatchModels = () => {
     as: 'watch'
   });
 
+  // Watch -> Videos (One to Many)
+  Watch.hasMany(WatchVideo, {
+    foreignKey: 'watch_id',
+    as: 'videos'
+  });
+  WatchVideo.belongsTo(Watch, {
+    foreignKey: 'watch_id',
+    as: 'watch'
+  });
+
   // Watch -> Specifications (One to One)
   Watch.hasOne(WatchSpecification, {
     foreignKey: 'watch_id',
@@ -469,6 +529,7 @@ const getWatchModels = () => {
     WatchCollection,
     Watch,
     WatchImage,
+    WatchVideo,
     WatchSpecification,
     WatchVariant
   };

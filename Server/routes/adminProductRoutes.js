@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const adminProductController = require('../controllers/adminProductController');
-const { authenticateAdmin } = require('../middleware/adminAuth');
+const { adminAuth } = require('../middleware/adminAuth');
 const { validateProduct } = require('../validators/productValidator');
 const { uploadMultiple, uploadMultipleFields } = require('../middleware/upload');
 
 // Middleware to authenticate all admin product routes
-router.use(authenticateAdmin);
+router.use(adminAuth);
 
 // Get all products with pagination and filters
 router.get('/', adminProductController.getProducts);
