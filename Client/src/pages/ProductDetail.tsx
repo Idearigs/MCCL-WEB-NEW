@@ -881,6 +881,7 @@ const ProductDetail = () => {
                         src={image?.url}
                         muted
                         loop
+                        autoPlay
                         className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
                         onLoadedData={(e) => {
                           // Hide loading skeleton when video loads
@@ -1466,6 +1467,8 @@ const ProductDetail = () => {
                       src={image.url}
                       className="w-full h-full object-cover"
                       muted
+                      autoPlay
+                      loop
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
                       <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
