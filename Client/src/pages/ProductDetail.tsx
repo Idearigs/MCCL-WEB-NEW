@@ -545,15 +545,15 @@ const ProductDetail = () => {
       <LuxuryNavigationWhite />
 
       {/* Mobile Breadcrumb - Above Image */}
-      <nav className="block lg:hidden w-full px-4 py-2 bg-gray-50 border-b border-gray-200 relative z-20 overflow-x-auto">
-        <div className="flex flex-wrap items-center gap-1 text-xs text-gray-800 font-futura-pt whitespace-nowrap">
-          <Link to="/" className="hover:text-gray-900 flex-shrink-0 font-medium">Home</Link>
+      <nav className="block lg:hidden w-full px-4 py-3 bg-white border-b border-gray-200 relative z-30 overflow-x-auto mt-20">
+        <div className="flex items-center gap-2 text-xs text-gray-900 font-futura-pt whitespace-nowrap font-medium">
+          <Link to="/" className="hover:text-gray-600 flex-shrink-0">Home</Link>
           {productData.breadcrumbs && productData.breadcrumbs.map((crumb, index) => (
             <React.Fragment key={index}>
-              <span className="text-gray-600 flex-shrink-0">›</span>
+              <span className="text-gray-400 flex-shrink-0">›</span>
               <Link
                 to={crumb.href}
-                className={`hover:text-gray-900 flex-shrink-0 ${index === productData.breadcrumbs.length - 1 ? 'text-gray-900 font-semibold' : 'text-gray-800'}`}
+                className={`hover:text-gray-600 flex-shrink-0 ${index === productData.breadcrumbs.length - 1 ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}
               >
                 {crumb.name}
               </Link>
