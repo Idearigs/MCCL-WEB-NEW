@@ -16,6 +16,7 @@ import Diamonds from "./pages/Diamonds";
 import Watches from "./pages/Watches";
 import Heritage from "./pages/Heritage";
 import ProductDetail from "./pages/ProductDetail";
+import WatchDetail from "./pages/WatchDetail";
 import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -100,7 +101,7 @@ const App = () => (
             <Route path="/necklaces/:productId" element={<ProductDetail />} />
             <Route path="/bracelets/:productId" element={<ProductDetail />} />
             <Route path="/jewellery/:productId" element={<ProductDetail />} />
-            <Route path="/watches/:productId" element={<ProductDetail />} />
+            <Route path="/watches/:productId" element={<WatchDetail />} />
             <Route path="/diamonds/:productId" element={<ProductDetail />} />
 
             {/* Legacy product URL - redirect to category-based */}
