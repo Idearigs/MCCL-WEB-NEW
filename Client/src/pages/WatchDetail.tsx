@@ -7,18 +7,25 @@ import { useCart } from '../contexts/CartContext';
 import API_BASE_URL from '../config/api';
 
 interface WatchSpecification {
-  case_material: string;
-  case_diameter: string;
-  case_thickness: string;
-  water_resistance: string;
-  movement_type: string;
-  battery_life: string;
-  glass_type: string;
-  strap_material: string;
-  buckle_type: string;
-  dial_color: string;
-  gender: string;
-  style: string;
+  case_material?: string;
+  case_diameter?: string;
+  case_thickness?: string;
+  water_resistance?: string;
+  movement_type?: string;
+  battery_life?: string;
+  glass_type?: string;
+  strap_material?: string;
+  buckle_type?: string;
+  dial_color?: string;
+  gender?: string;
+  style?: string;
+  dial?: string;
+  functions?: string;
+  features?: string;
+  antimagnetic_protection?: string;
+  shock_resistance?: string;
+  luminosity?: string;
+  movement_accuracy?: string;
 }
 
 interface Watch {
@@ -52,6 +59,128 @@ interface Watch {
   stock_quantity: number;
 }
 
+// Brand-specific specification display configuration
+const BRAND_SPEC_CONFIG: { [key: string]: { sections: { [key: string]: { label: string; fields: Array<{ key: keyof WatchSpecification; label: string }> } } } } = {
+  'Festina': {
+    sections: {
+      'case': {
+        label: 'Case',
+        fields: [
+          { key: 'case_material', label: 'Material' },
+          { key: 'case_diameter', label: 'Diameter' },
+          { key: 'case_thickness', label: 'Thickness' },
+          { key: 'glass_type', label: 'Glass' }
+        ]
+      },
+      'dial': {
+        label: 'Dial',
+        fields: [
+          { key: 'dial_color', label: 'Color' },
+          { key: 'dial', label: 'Dial Details' }
+        ]
+      },
+      'strap': {
+        label: 'Strap',
+        fields: [
+          { key: 'strap_material', label: 'Material' },
+          { key: 'buckle_type', label: 'Buckle' }
+        ]
+      },
+      'movement': {
+        label: 'Movement',
+        fields: [
+          { key: 'movement_type', label: 'Type' },
+          { key: 'battery_life', label: 'Battery Life' }
+        ]
+      },
+      'functions': {
+        label: 'Functions',
+        fields: [
+          { key: 'functions', label: 'Functions' }
+        ]
+      },
+      'features': {
+        label: 'Features',
+        fields: [
+          { key: 'features', label: 'Features' }
+        ]
+      }
+    }
+  },
+  'Briston': {
+    sections: {
+      'movement': {
+        label: 'Movement',
+        fields: [
+          { key: 'movement_type', label: 'Type' },
+          { key: 'battery_life', label: 'Battery Life' },
+          { key: 'movement_accuracy', label: 'Accuracy' }
+        ]
+      },
+      'case': {
+        label: 'Case',
+        fields: [
+          { key: 'case_material', label: 'Material' },
+          { key: 'case_diameter', label: 'Diameter' },
+          { key: 'case_thickness', label: 'Thickness' }
+        ]
+      },
+      'dial': {
+        label: 'Dial & Hands',
+        fields: [
+          { key: 'dial_color', label: 'Color' },
+          { key: 'dial', label: 'Details' },
+          { key: 'glass_type', label: 'Glass Type' }
+        ]
+      },
+      'strap': {
+        label: 'Strap',
+        fields: [
+          { key: 'strap_material', label: 'Material' },
+          { key: 'buckle_type', label: 'Buckle' },
+          { key: 'water_resistance', label: 'Water Resistance' }
+        ]
+      }
+    }
+  },
+  'Roamer': {
+    sections: {
+      'movement': {
+        label: 'Movement',
+        fields: [
+          { key: 'movement_type', label: 'Type' },
+          { key: 'battery_life', label: 'Battery Life' },
+          { key: 'movement_accuracy', label: 'Accuracy' }
+        ]
+      },
+      'water': {
+        label: 'Water Resistance',
+        fields: [
+          { key: 'water_resistance', label: 'Water Resistance' }
+        ]
+      },
+      'antimagnetic': {
+        label: 'Antimagnetic Protection',
+        fields: [
+          { key: 'antimagnetic_protection', label: 'Protection' }
+        ]
+      },
+      'shock': {
+        label: 'Shock Resistance',
+        fields: [
+          { key: 'shock_resistance', label: 'Resistance' }
+        ]
+      },
+      'luminosity': {
+        label: 'Luminosity',
+        fields: [
+          { key: 'luminosity', label: 'Luminosity' }
+        ]
+      }
+    }
+  }
+};
+
 const WatchDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -63,12 +192,7 @@ const WatchDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [expandedSpecs, setExpandedSpecs] = useState<{ [key: string]: boolean }>({
-    case: true,
-    movement: false,
-    water: false,
-    care: false
-  });
+  const [expandedSpecs, setExpandedSpecs] = useState<{ [key: string]: boolean }>({});
 
   // Fetch watch data
   useEffect(() => {
@@ -354,56 +478,114 @@ const WatchDetail = () => {
             <div className="border-t border-gray-200 pt-6 space-y-4">
               <h3 className="text-lg font-medium text-gray-900">Specifications</h3>
 
-              {/* Case & Design */}
-              <button
-                onClick={() => toggleSpecSection('case')}
-                className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
-              >
-                <span className="font-medium text-gray-900">Case & Design</span>
-                <span className="text-gray-600">{expandedSpecs.case ? '−' : '+'}</span>
-              </button>
-              {expandedSpecs.case && (
-                <div className="bg-gray-50 p-4 rounded space-y-3">
-                  {watch?.specifications?.case_material && <div className="flex justify-between text-sm"><span className="text-gray-600">Material:</span><span className="font-medium">{watch.specifications.case_material}</span></div>}
-                  {watch?.specifications?.case_diameter && <div className="flex justify-between text-sm"><span className="text-gray-600">Diameter:</span><span className="font-medium">{watch.specifications.case_diameter}</span></div>}
-                  {watch?.specifications?.case_thickness && <div className="flex justify-between text-sm"><span className="text-gray-600">Thickness:</span><span className="font-medium">{watch.specifications.case_thickness}</span></div>}
-                  {watch?.specifications?.dial_color && <div className="flex justify-between text-sm"><span className="text-gray-600">Dial Color:</span><span className="font-medium">{watch.specifications.dial_color}</span></div>}
-                  {watch?.specifications?.glass_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Glass:</span><span className="font-medium">{watch.specifications.glass_type}</span></div>}
-                </div>
-              )}
+              {(() => {
+                const brandName = watch?.brand?.name;
+                const config = brandName && BRAND_SPEC_CONFIG[brandName];
 
-              {/* Movement */}
-              <button
-                onClick={() => toggleSpecSection('movement')}
-                className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
-              >
-                <span className="font-medium text-gray-900">Movement & Power</span>
-                <span className="text-gray-600">{expandedSpecs.movement ? '−' : '+'}</span>
-              </button>
-              {expandedSpecs.movement && (
-                <div className="bg-gray-50 p-4 rounded space-y-3">
-                  {watch?.specifications?.movement_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Type:</span><span className="font-medium">{watch.specifications.movement_type}</span></div>}
-                  {watch?.specifications?.battery_life && <div className="flex justify-between text-sm"><span className="text-gray-600">Battery Life:</span><span className="font-medium">{watch.specifications.battery_life}</span></div>}
-                </div>
-              )}
+                if (!config) {
+                  // Fallback to default specifications if brand not in config
+                  return (
+                    <>
+                      {/* Case & Design */}
+                      <button
+                        onClick={() => toggleSpecSection('case')}
+                        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <span className="font-medium text-gray-900">Case & Design</span>
+                        <span className="text-gray-600">{expandedSpecs.case ? '−' : '+'}</span>
+                      </button>
+                      {expandedSpecs.case && (
+                        <div className="bg-gray-50 p-4 rounded space-y-3">
+                          {watch?.specifications?.case_material && <div className="flex justify-between text-sm"><span className="text-gray-600">Material:</span><span className="font-medium">{watch.specifications.case_material}</span></div>}
+                          {watch?.specifications?.case_diameter && <div className="flex justify-between text-sm"><span className="text-gray-600">Diameter:</span><span className="font-medium">{watch.specifications.case_diameter}</span></div>}
+                          {watch?.specifications?.case_thickness && <div className="flex justify-between text-sm"><span className="text-gray-600">Thickness:</span><span className="font-medium">{watch.specifications.case_thickness}</span></div>}
+                          {watch?.specifications?.dial_color && <div className="flex justify-between text-sm"><span className="text-gray-600">Dial Color:</span><span className="font-medium">{watch.specifications.dial_color}</span></div>}
+                          {watch?.specifications?.glass_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Glass:</span><span className="font-medium">{watch.specifications.glass_type}</span></div>}
+                        </div>
+                      )}
 
-              {/* Water Resistance */}
-              <button
-                onClick={() => toggleSpecSection('water')}
-                className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
-              >
-                <span className="font-medium text-gray-900">Water Resistance & Strap</span>
-                <span className="text-gray-600">{expandedSpecs.water ? '−' : '+'}</span>
-              </button>
-              {expandedSpecs.water && (
-                <div className="bg-gray-50 p-4 rounded space-y-3">
-                  {watch?.specifications?.water_resistance && <div className="flex justify-between text-sm"><span className="text-gray-600">Water Resistance:</span><span className="font-medium">{watch.specifications.water_resistance}</span></div>}
-                  {watch?.specifications?.strap_material && <div className="flex justify-between text-sm"><span className="text-gray-600">Strap Material:</span><span className="font-medium">{watch.specifications.strap_material}</span></div>}
-                  {watch?.specifications?.buckle_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Buckle:</span><span className="font-medium">{watch.specifications.buckle_type}</span></div>}
-                </div>
-              )}
+                      {/* Movement */}
+                      <button
+                        onClick={() => toggleSpecSection('movement')}
+                        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <span className="font-medium text-gray-900">Movement & Power</span>
+                        <span className="text-gray-600">{expandedSpecs.movement ? '−' : '+'}</span>
+                      </button>
+                      {expandedSpecs.movement && (
+                        <div className="bg-gray-50 p-4 rounded space-y-3">
+                          {watch?.specifications?.movement_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Type:</span><span className="font-medium">{watch.specifications.movement_type}</span></div>}
+                          {watch?.specifications?.battery_life && <div className="flex justify-between text-sm"><span className="text-gray-600">Battery Life:</span><span className="font-medium">{watch.specifications.battery_life}</span></div>}
+                        </div>
+                      )}
 
-              {/* Warranty & Care */}
+                      {/* Water Resistance */}
+                      <button
+                        onClick={() => toggleSpecSection('water')}
+                        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <span className="font-medium text-gray-900">Water Resistance & Strap</span>
+                        <span className="text-gray-600">{expandedSpecs.water ? '−' : '+'}</span>
+                      </button>
+                      {expandedSpecs.water && (
+                        <div className="bg-gray-50 p-4 rounded space-y-3">
+                          {watch?.specifications?.water_resistance && <div className="flex justify-between text-sm"><span className="text-gray-600">Water Resistance:</span><span className="font-medium">{watch.specifications.water_resistance}</span></div>}
+                          {watch?.specifications?.strap_material && <div className="flex justify-between text-sm"><span className="text-gray-600">Strap Material:</span><span className="font-medium">{watch.specifications.strap_material}</span></div>}
+                          {watch?.specifications?.buckle_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Buckle:</span><span className="font-medium">{watch.specifications.buckle_type}</span></div>}
+                        </div>
+                      )}
+
+                      {/* Warranty & Care */}
+                      <button
+                        onClick={() => toggleSpecSection('care')}
+                        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <span className="font-medium text-gray-900">Warranty & Care</span>
+                        <span className="text-gray-600">{expandedSpecs.care ? '−' : '+'}</span>
+                      </button>
+                      {expandedSpecs.care && (
+                        <div className="bg-gray-50 p-4 rounded space-y-3">
+                          <div className="flex justify-between text-sm"><span className="text-gray-600">Warranty:</span><span className="font-medium">{watch?.warranty_years || 'N/A'} years</span></div>
+                          {watch?.care_instructions && (
+                            <div className="text-sm">
+                              <p className="text-gray-600 mb-2">Care Instructions:</p>
+                              <p className="text-gray-700">{watch.care_instructions}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                }
+
+                // Render brand-specific specifications
+                return Object.entries(config.sections).map(([sectionKey, section]) => (
+                  <div key={sectionKey}>
+                    <button
+                      onClick={() => toggleSpecSection(sectionKey)}
+                      className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
+                    >
+                      <span className="font-medium text-gray-900">{section.label}</span>
+                      <span className="text-gray-600">{expandedSpecs[sectionKey] ? '−' : '+'}</span>
+                    </button>
+                    {expandedSpecs[sectionKey] && (
+                      <div className="bg-gray-50 p-4 rounded space-y-3">
+                        {section.fields.map(field => {
+                          const value = watch?.specifications?.[field.key];
+                          return value ? (
+                            <div key={field.key} className="flex justify-between text-sm">
+                              <span className="text-gray-600">{field.label}:</span>
+                              <span className="font-medium">{value}</span>
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ));
+              })()}
+
+              {/* Warranty & Care (shown for all brands) */}
               <button
                 onClick={() => toggleSpecSection('care')}
                 className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
