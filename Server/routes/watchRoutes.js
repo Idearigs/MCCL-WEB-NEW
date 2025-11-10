@@ -45,6 +45,9 @@ router.delete('/collections/:id', deleteCollection);
 router.get('/', getAllWatches);
 router.get('/watches', getAllWatches); // Admin endpoint for getting all watches (matches frontend /admin/watches/watches)
 router.get('/admin/:id', getWatchById);
+// Admin endpoints for watches CRUD
+router.put('/watches/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})', updateWatch); // Admin update by UUID
+router.delete('/watches/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})', deleteWatch); // Admin delete by UUID
 // UUID pattern for IDs (Frontend calls /watches/:productId with UUID) - case insensitive
 router.get('/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})', getWatchById);
 // Slug pattern for slugs (fallback)
