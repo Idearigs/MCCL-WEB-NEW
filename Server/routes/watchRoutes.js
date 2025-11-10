@@ -43,6 +43,7 @@ router.delete('/collections/:id', deleteCollection);
 
 // Watch routes
 router.get('/', getAllWatches);
+router.get('/watches', getAllWatches); // Admin endpoint for getting all watches (matches frontend /admin/watches/watches)
 router.get('/admin/:id', getWatchById);
 router.get('/:slug', getWatchBySlug);
 router.post('/', createWatch);
@@ -54,11 +55,14 @@ router.put('/:watchId/specifications', updateWatchSpecifications);
 
 // Watch image routes
 router.post('/:watchId/images', uploadSingle('image_url'), addWatchImage);
+router.post('/watches/:watchId/images', uploadSingle('image_url'), addWatchImage); // Admin endpoint for image upload
 router.delete('/images/:imageId', deleteWatchImage);
 
 // Watch video routes
 router.post('/:watchId/videos', uploadSingle('video_url'), addWatchVideo);
+router.post('/watches/:watchId/videos', uploadSingle('video_url'), addWatchVideo); // Admin endpoint for video upload
 router.get('/:watchId/videos', getWatchVideos);
+router.get('/watches/:watchId/videos', getWatchVideos); // Admin endpoint for getting videos
 router.put('/videos/:videoId', updateWatchVideo);
 router.delete('/videos/:videoId', deleteWatchVideo);
 
