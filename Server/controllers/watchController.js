@@ -669,8 +669,8 @@ const getWatchBySlug = asyncHandler(async (req, res) => {
     availability_status: watch.availability_status,
     images: watch.images.map(img => ({
       id: img.id,
-      url: img.image_url,
-      alt: img.alt_text || watch.name,
+      image_url: img.image_url,
+      alt_text: img.alt_text || watch.name,
       is_primary: img.is_primary,
       type: img.image_type,
       sort_order: img.sort_order
@@ -698,10 +698,7 @@ const getWatchBySlug = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: {
-      watch: transformedWatch,
-      recommended_watches: transformedRecommended
-    }
+    data: transformedWatch
   });
 });
 
@@ -777,8 +774,8 @@ const getWatchById = asyncHandler(async (req, res) => {
     availability_status: watch.availability_status,
     images: watch.images.map(img => ({
       id: img.id,
-      url: img.image_url,
-      alt: img.alt_text || watch.name,
+      image_url: img.image_url,
+      alt_text: img.alt_text || watch.name,
       is_primary: img.is_primary,
       type: img.image_type,
       sort_order: img.sort_order
