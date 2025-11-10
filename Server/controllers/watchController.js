@@ -869,7 +869,7 @@ const createWatch = asyncHandler(async (req, res) => {
 });
 
 const updateWatch = asyncHandler(async (req, res) => {
-  const { Watch, WatchImage, WatchVideo, WatchBrand, WatchCollection } = getModelInstance();
+  const { Watch, WatchImage, WatchVideo, WatchBrand, WatchCollection, WatchSpecification } = getModelInstance();
   const { id } = req.params;
   const updateData = req.body;
 
@@ -884,9 +884,9 @@ const updateWatch = asyncHandler(async (req, res) => {
     });
   }
 
-  // Extract images and videos from updateData (these are handled separately)
-  const { images, videos, ...watchData } = updateData;
-  console.log('[updateWatch] Watch data after extracting images/videos:', watchData);
+  // Extract images, videos, and technical_specs from updateData (these are handled separately)
+  const { images, videos, technical_specs, ...watchData } = updateData;
+  console.log('[updateWatch] Watch data after extracting images/videos/specs:', watchData);
 
   // Convert empty strings to NULL for unique fields to avoid unique constraint violations
   if (watchData.model_number === '' || watchData.model_number === null) {
@@ -903,14 +903,6 @@ const updateWatch = asyncHandler(async (req, res) => {
   if (watchData.stock_quantity !== undefined) {
     watchData.in_stock = watchData.stock_quantity > 0;
     watchData.availability_status = watchData.stock_quantity > 0 ? 'in_stock' : 'out_of_stock';
-  }
-
-  // Handle technical_specs merge (don't overwrite, merge with existing)
-  if (watchData.technical_specs) {
-    watchData.technical_specs = {
-      ...watch.technical_specs,
-      ...watchData.technical_specs
-    };
   }
 
   // Update the watch
@@ -940,6 +932,62 @@ const updateWatch = asyncHandler(async (req, res) => {
     }
 
     throw updateError;
+  }
+
+  // Handle technical_specs - flatten nested structure and save to specifications
+  if (technical_specs) {
+    console.log('[updateWatch] Processing technical_specs:', technical_specs);
+
+    // Flatten the nested technical_specs structure
+    const flattenedSpecs = {};
+
+    // Flatten movement specs
+    if (technical_specs.movement) {
+      if (technical_specs.movement.type) flattenedSpecs.movement_type = technical_specs.movement.type;
+      if (technical_specs.movement.quartz_calibre) flattenedSpecs.movement_type = technical_specs.movement.quartz_calibre;
+      if (technical_specs.movement.functions) flattenedSpecs.functions = technical_specs.movement.functions;
+      if (technical_specs.movement.counter_60_position) flattenedSpecs.movement = `60s counter at ${technical_specs.movement.counter_60_position}`;
+      if (technical_specs.movement.power_reserve) flattenedSpecs.battery_life = technical_specs.movement.power_reserve;
+    }
+
+    // Flatten case specs
+    if (technical_specs.case) {
+      if (technical_specs.case.material) flattenedSpecs.case_material = technical_specs.case.material;
+      if (technical_specs.case.diameter) flattenedSpecs.case_diameter = technical_specs.case.diameter;
+      if (technical_specs.case.thickness) flattenedSpecs.case_thickness = technical_specs.case.thickness;
+      if (technical_specs.case.shape) flattenedSpecs.case_material = technical_specs.case.shape + ' ' + (flattenedSpecs.case_material || '');
+    }
+
+    // Flatten dial specs
+    if (technical_specs.dial_and_hands) {
+      if (technical_specs.dial_and_hands.colour) flattenedSpecs.dial_color = technical_specs.dial_and_hands.colour;
+      if (technical_specs.dial_and_hands.crystal) flattenedSpecs.glass_type = technical_specs.dial_and_hands.crystal;
+      if (technical_specs.dial_and_hands.number_of_hands) flattenedSpecs.dial = `${technical_specs.dial_and_hands.number_of_hands} hands`;
+    }
+
+    // Flatten strap specs
+    if (technical_specs.strap) {
+      if (technical_specs.strap.material) flattenedSpecs.strap_material = technical_specs.strap.material;
+      if (technical_specs.strap.clasp_type) flattenedSpecs.buckle_type = technical_specs.strap.clasp_type;
+      if (technical_specs.strap.width) flattenedSpecs.strap_material = flattenedSpecs.strap_material + ` (${technical_specs.strap.width})`;
+    }
+
+    // Save or update specifications
+    try {
+      const existingSpec = await WatchSpecification.findOne({ where: { watch_id: id } });
+      if (existingSpec) {
+        await existingSpec.update(flattenedSpecs);
+        console.log('[updateWatch] Specifications updated');
+      } else {
+        await WatchSpecification.create({
+          watch_id: id,
+          ...flattenedSpecs
+        });
+        console.log('[updateWatch] Specifications created');
+      }
+    } catch (specError) {
+      console.error('[updateWatch] Error saving specifications:', specError);
+    }
   }
 
   // Handle image updates if provided
