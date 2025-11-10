@@ -383,6 +383,37 @@ const initializeWatchModels = () => {
     },
     buckle_type: {
       type: DataTypes.STRING(100) // Deployment, Pin, etc.
+    },
+    // Brand-specific fields
+    dial: {
+      type: DataTypes.TEXT // Dial details/description
+    },
+    functions: {
+      type: DataTypes.TEXT // Watch functions (Festina)
+    },
+    features: {
+      type: DataTypes.TEXT // Watch features (Festina)
+    },
+    movement_type: {
+      type: DataTypes.STRING(100) // Quartz, Automatic, etc. (alternative to movement)
+    },
+    glass_type: {
+      type: DataTypes.STRING(100) // Sapphire, Mineral, etc. (alternative to crystal_material)
+    },
+    battery_life: {
+      type: DataTypes.STRING(100) // Battery life specification
+    },
+    antimagnetic_protection: {
+      type: DataTypes.STRING(100) // Antimagnetic protection level (Roamer)
+    },
+    shock_resistance: {
+      type: DataTypes.STRING(100) // Shock resistance specification (Roamer)
+    },
+    luminosity: {
+      type: DataTypes.STRING(100) // Luminosity specification (Roamer)
+    },
+    movement_accuracy: {
+      type: DataTypes.STRING(100) // Movement accuracy specification
     }
   }, {
     tableName: 'watch_specifications',
