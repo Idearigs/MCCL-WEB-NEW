@@ -587,7 +587,7 @@ const getWatchBySlug = asyncHandler(async (req, res) => {
       {
         model: WatchBrand,
         as: 'brand',
-        attributes: ['id', 'name', 'slug']
+        attributes: ['id', 'name', 'slug', 'logo_url']
       },
       {
         model: WatchCollection,
@@ -716,7 +716,7 @@ const getWatchById = asyncHandler(async (req, res) => {
       {
         model: WatchBrand,
         as: 'brand',
-        attributes: ['id', 'name', 'slug']
+        attributes: ['id', 'name', 'slug', 'logo_url']
       },
       {
         model: WatchCollection,
