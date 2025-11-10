@@ -207,7 +207,13 @@ const WatchDetail = () => {
 
         const data = await response.json();
         if (data.success) {
-          setWatch(data.data);
+          const watchData = data.data;
+          console.log('Watch loaded:', {
+            name: watchData.name,
+            brand: watchData.brand?.name,
+            brandConfig: BRAND_SPEC_CONFIG[watchData.brand?.name || '']
+          });
+          setWatch(watchData);
         } else {
           throw new Error(data.message || 'Failed to load watch');
         }
