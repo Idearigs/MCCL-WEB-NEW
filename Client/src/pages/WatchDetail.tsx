@@ -565,30 +565,43 @@ const WatchDetail = () => {
                 }
 
                 // Render brand-specific specifications
-                return Object.entries(config.sections).map(([sectionKey, section]) => (
-                  <div key={sectionKey}>
-                    <button
-                      onClick={() => toggleSpecSection(sectionKey)}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
-                    >
-                      <span className="font-medium text-gray-900">{section.label}</span>
-                      <span className="text-gray-600">{expandedSpecs[sectionKey] ? '−' : '+'}</span>
-                    </button>
-                    {expandedSpecs[sectionKey] && (
-                      <div className="bg-gray-50 p-4 rounded space-y-3">
-                        {section.fields.map(field => {
-                          const value = watch?.specifications?.[field.key];
-                          return value ? (
-                            <div key={field.key} className="flex justify-between text-sm">
-                              <span className="text-gray-600">{field.label}:</span>
-                              <span className="font-medium">{value}</span>
+                return Object.entries(config.sections).map(([sectionKey, section]) => {
+                  // Get all fields that have values (configured + any additional fields)
+                  const sectionFieldsWithValues: Array<{ key: keyof WatchSpecification; label: string; value: string }> = [];
+
+                  // First add configured fields
+                  section.fields.forEach(field => {
+                    const value = watch?.specifications?.[field.key];
+                    if (value) {
+                      sectionFieldsWithValues.push({ ...field, value });
+                    }
+                  });
+
+                  // Show this section only if it has fields with values
+                  if (sectionFieldsWithValues.length === 0) return null;
+
+                  return (
+                    <div key={sectionKey}>
+                      <button
+                        onClick={() => toggleSpecSection(sectionKey)}
+                        className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <span className="font-medium text-gray-900">{section.label}</span>
+                        <span className="text-gray-600">{expandedSpecs[sectionKey] ? '−' : '+'}</span>
+                      </button>
+                      {expandedSpecs[sectionKey] && (
+                        <div className="bg-gray-50 p-4 rounded space-y-3">
+                          {sectionFieldsWithValues.map(fieldData => (
+                            <div key={fieldData.key} className="flex justify-between text-sm">
+                              <span className="text-gray-600">{fieldData.label}:</span>
+                              <span className="font-medium">{fieldData.value}</span>
                             </div>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ));
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
               })()}
 
               {/* Warranty & Care (shown for all brands) */}
