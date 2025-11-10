@@ -8,6 +8,7 @@
     "dev": "nodemon index.js --ignore node_modules/ --ignore uploads/",
     "dev:verbose": "nodemon index.js --verbose",
     "dev:inspect": "nodemon --inspect index.js",
+    "dev:sync": "SYNC_DATABASE=true nodemon index.js --ignore node_modules/ --ignore uploads/",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint .",
@@ -17,6 +18,8 @@
     "seed:admin": "node utils/seedAdmin.js",
     "quick-admin": "node quick-admin.js",
     "check-db": "node check-db.js",
+    "sync-db": "node sync-database.js",
+    "sync-db:force": "node sync-database.js --force",
     "setup": "npm run seed && npm run seed:admin"
   },
   "keywords": [

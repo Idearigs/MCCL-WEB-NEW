@@ -47,9 +47,14 @@ const connectPostgreSQL = async () => {
     initializeModels();
     logger.info('Database models initialized');
 
-    if (process.env.NODE_ENV === 'development') {
+    // Only sync database if explicitly enabled via environment variable
+    // This prevents the database from being modified on every server restart
+    if (process.env.SYNC_DATABASE === 'true') {
+      logger.info('Database sync enabled via SYNC_DATABASE=true');
       await postgresDB.sync({ alter: true });
       logger.info('PostgreSQL models synchronized');
+    } else if (process.env.NODE_ENV === 'development') {
+      logger.info('Database sync disabled (set SYNC_DATABASE=true to enable)');
     }
 
     return postgresDB;
