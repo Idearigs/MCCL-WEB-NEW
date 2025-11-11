@@ -363,7 +363,7 @@ const WatchDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 min-h-screen lg:min-h-auto">
 
           {/* Left Column - Image Gallery */}
-          <div className="space-y-0 lg:space-y-0 flex flex-col bg-gray-50 p-6 lg:p-12 lg:col-span-7">
+          <div className="space-y-0 lg:space-y-0 flex flex-col bg-gray-50 p-6 lg:p-8 lg:col-span-6">
             {/* Main Image */}
             <div className="relative overflow-hidden flex-1 flex items-center justify-center w-full bg-white">
               <img
@@ -423,7 +423,7 @@ const WatchDetail = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-8 lg:py-12 bg-white overflow-y-auto lg:col-span-5">
+          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-8 lg:py-12 bg-white overflow-y-auto lg:col-span-6">
 
             {/* Brand & Model */}
             <div className="space-y-2">
