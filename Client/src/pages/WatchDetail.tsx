@@ -359,11 +359,11 @@ const WatchDetail = () => {
         </div>
       </nav>
 
-      <div className="w-full px-4 lg:px-8 py-8 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 min-h-screen lg:min-h-auto">
+      <div className="w-full px-0 lg:px-0 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-screen lg:min-h-auto">
 
           {/* Left Column - Image Gallery */}
-          <div className="space-y-0 lg:space-y-0 flex flex-col bg-white lg:col-span-7 p-4 lg:p-0">
+          <div className="space-y-0 lg:space-y-0 flex flex-col bg-gray-50 p-6 lg:p-12">
             {/* Main Image */}
             <div className="relative overflow-hidden flex-1 flex items-center justify-center w-full bg-white">
               <img
@@ -406,7 +406,7 @@ const WatchDetail = () => {
 
             {/* Thumbnail Gallery */}
             {displayImages.length > 1 && (
-              <div className="grid grid-cols-5 gap-2 px-0 lg:px-0 py-4 border-t border-gray-200 bg-white">
+              <div className="grid grid-cols-5 gap-3 py-4 border-t border-gray-200 bg-gray-50">
                 {displayImages.map((img, index) => (
                   <button
                     key={img.id}
@@ -423,33 +423,33 @@ const WatchDetail = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-5 flex flex-col px-4 lg:px-0 py-6 lg:py-0 bg-white overflow-y-auto lg:col-span-5">
+          <div className="space-y-6 flex flex-col px-6 lg:px-10 py-8 lg:py-12 bg-white overflow-y-auto">
 
             {/* Brand & Model */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               {watch?.brand?.name && (
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">{watch.brand.name}</p>
               )}
-              <h1 className="text-3xl lg:text-4xl font-light text-gray-900 leading-tight">{watch?.name}</h1>
+              <h1 className="text-2xl lg:text-3xl font-light text-gray-900 leading-snug">{watch?.name}</h1>
               {watch?.model_number && (
-                <p className="text-xs text-gray-600 tracking-wide">Model {watch.model_number}</p>
+                <p className="text-xs text-gray-600 tracking-wide font-light">Ref. {watch.model_number}</p>
               )}
             </div>
 
             {/* Price Section */}
-            <div className="space-y-3 border-b border-gray-200 pb-6">
+            <div className="space-y-2 border-b border-gray-200 pb-6">
               <div className="flex items-baseline space-x-3">
-                <span className="text-3xl font-light text-gray-900">£{price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span className="text-2xl font-light text-gray-900">£{price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 {watch?.sale_price && (
                   <>
-                    <span className="text-lg text-gray-400 line-through">£{watch?.base_price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                    <span className="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1 rounded">{discount}% OFF</span>
+                    <span className="text-sm text-gray-400 line-through">£{watch?.base_price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">{discount}% OFF</span>
                   </>
                 )}
               </div>
-              <p className="text-sm text-gray-600 tracking-wide">
+              <p className="text-xs text-gray-600 tracking-wide">
                 {watch?.in_stock ? (
-                  <span className="text-green-700 font-medium">In Stock — {watch?.stock_quantity} available</span>
+                  <span className="text-green-700 font-medium">In Stock ({watch?.stock_quantity} available)</span>
                 ) : (
                   <span className="text-red-600 font-medium">Out of Stock</span>
                 )}
@@ -457,62 +457,53 @@ const WatchDetail = () => {
             </div>
 
             {/* Quick Specs */}
-            <div className="grid grid-cols-3 gap-4 border-b border-gray-200 pb-6">
-              <div className="space-y-2">
-                <Clock className="w-4 h-4 text-gray-600" />
+            <div className="hidden lg:grid grid-cols-3 gap-3 border-b border-gray-200 pb-6">
+              <div className="space-y-1">
+                <Clock className="w-3 h-3 text-gray-600 mb-2" />
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Movement</p>
-                <p className="text-xs text-gray-900 font-medium">{watch?.specifications?.movement_type || '—'}</p>
+                <p className="text-xs text-gray-900 font-light">{watch?.specifications?.movement_type || '—'}</p>
               </div>
-              <div className="space-y-2">
-                <Droplet className="w-4 h-4 text-gray-600" />
+              <div className="space-y-1">
+                <Droplet className="w-3 h-3 text-gray-600 mb-2" />
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Water Resist</p>
-                <p className="text-xs text-gray-900 font-medium">{watch?.specifications?.water_resistance || '—'}</p>
+                <p className="text-xs text-gray-900 font-light">{watch?.specifications?.water_resistance || '—'}</p>
               </div>
-              <div className="space-y-2">
-                <Maximize2 className="w-4 h-4 text-gray-600" />
+              <div className="space-y-1">
+                <Maximize2 className="w-3 h-3 text-gray-600 mb-2" />
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Case Size</p>
-                <p className="text-xs text-gray-900 font-medium">{watch?.specifications?.case_diameter || '—'}</p>
+                <p className="text-xs text-gray-900 font-light">{watch?.specifications?.case_diameter || '—'}</p>
               </div>
             </div>
 
             {/* Description */}
             {watch?.short_description && (
-              <div className="border-b border-gray-200 pb-6 space-y-0">
-                <p className="text-gray-700 leading-relaxed text-xs">{watch.short_description}</p>
+              <div className="hidden lg:block border-b border-gray-200 pb-6 space-y-0">
+                <p className="text-gray-700 leading-relaxed text-xs font-light">{watch.short_description}</p>
               </div>
             )}
 
             {/* Add to Cart Section */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center border border-gray-300 rounded-sm">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                    className="p-2 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                  >
-                    <Minus className="w-3 h-3 text-gray-700" />
-                  </button>
-                  <span className="px-4 py-2 text-center w-12 font-light text-xs text-gray-900 border-l border-r border-gray-300">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="p-2 hover:bg-gray-50 transition-colors"
-                  >
-                    <Plus className="w-3 h-3 text-gray-700" />
-                  </button>
-                </div>
+            <div className="space-y-4">
+              <button
+                onClick={handleAddToCart}
+                disabled={!watch?.in_stock}
+                className="w-full bg-gray-900 text-white py-3 px-6 rounded font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm tracking-wide"
+              >
+                Add to Cart
+              </button>
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={handleAddToCart}
-                  disabled={!watch?.in_stock}
-                  className="flex-1 bg-gray-900 text-white py-2 px-6 rounded-sm font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-xs"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                 >
-                  Add to Cart
+                  <Heart className="w-4 h-4 text-gray-600" />
+                  <span className="text-xs text-gray-700 font-medium">Wishlist</span>
                 </button>
                 <button
-                  className="w-10 h-10 border border-gray-300 rounded-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                   title="Share"
                 >
-                  <Share2 className="w-4 h-4 text-gray-700" />
+                  <Share2 className="w-4 h-4 text-gray-600" />
+                  <span className="text-xs text-gray-700 font-medium">Share</span>
                 </button>
               </div>
             </div>
@@ -520,8 +511,8 @@ const WatchDetail = () => {
             {/* Full Description */}
             {watch?.description && (
               <div className="space-y-3 border-b border-gray-200 pb-6">
-                <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">About This Watch</h3>
-                <p className="text-gray-700 leading-relaxed text-xs">{watch.description}</p>
+                <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">About This Piece</h3>
+                <p className="text-gray-700 leading-relaxed text-xs font-light line-clamp-3">{watch.description}</p>
               </div>
             )}
 
