@@ -359,17 +359,17 @@ const WatchDetail = () => {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+      <div className="max-w-full mx-auto px-3 lg:px-6 py-8 lg:py-12 lg:max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
 
           {/* Left Column - Image Gallery */}
-          <div className="space-y-6">
+          <div className="space-y-4 lg:col-span-7">
             {/* Main Image */}
-            <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden aspect-square flex items-center justify-center">
+            <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden w-full flex items-center justify-center" style={{ aspectRatio: '4/5' }}>
               <img
                 src={currentImage.image_url}
                 alt={currentImage.alt_text}
-                className="w-full h-full object-contain p-8"
+                className="w-full h-full object-contain p-4"
               />
 
               {/* Navigation Arrows */}
@@ -423,7 +423,7 @@ const WatchDetail = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-8 lg:pt-6">
+          <div className="space-y-8 lg:col-span-5 lg:pt-0">
 
             {/* Brand & Model */}
             <div className="space-y-2">
