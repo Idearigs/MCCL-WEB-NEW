@@ -423,7 +423,7 @@ const WatchDetail = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-8 lg:py-12 bg-white overflow-y-auto lg:col-span-6">
+          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-8 lg:py-12 bg-white overflow-y-auto lg:col-span-6 max-w-lg">
 
             {/* Brand & Model */}
             <div className="space-y-2">
