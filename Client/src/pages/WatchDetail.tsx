@@ -423,23 +423,23 @@ const WatchDetail = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-8 flex flex-col px-8 lg:px-12 py-12 lg:py-16 bg-white overflow-y-auto">
+          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-8 lg:py-10 bg-white overflow-y-auto">
 
             {/* Brand & Model */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {watch?.brand?.name && (
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">{watch.brand.name}</p>
               )}
-              <h1 className="text-4xl lg:text-5xl font-light text-gray-900 leading-tight">{watch?.name}</h1>
+              <h1 className="text-3xl lg:text-4xl font-light text-gray-900 leading-tight">{watch?.name}</h1>
               {watch?.model_number && (
-                <p className="text-sm text-gray-600 tracking-wide">Model {watch.model_number}</p>
+                <p className="text-xs text-gray-600 tracking-wide">Model {watch.model_number}</p>
               )}
             </div>
 
             {/* Price Section */}
-            <div className="space-y-4 border-b border-gray-200 pb-8">
-              <div className="flex items-baseline space-x-4">
-                <span className="text-4xl font-light text-gray-900">£{price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+            <div className="space-y-3 border-b border-gray-200 pb-6">
+              <div className="flex items-baseline space-x-3">
+                <span className="text-3xl font-light text-gray-900">£{price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 {watch?.sale_price && (
                   <>
                     <span className="text-lg text-gray-400 line-through">£{watch?.base_price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -457,77 +457,77 @@ const WatchDetail = () => {
             </div>
 
             {/* Quick Specs */}
-            <div className="grid grid-cols-3 gap-6 border-b border-gray-200 pb-8">
-              <div className="space-y-3">
-                <Clock className="w-5 h-5 text-gray-600" />
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Movement</p>
-                <p className="text-sm text-gray-900 font-medium">{watch?.specifications?.movement_type || '—'}</p>
+            <div className="grid grid-cols-3 gap-4 border-b border-gray-200 pb-6">
+              <div className="space-y-2">
+                <Clock className="w-4 h-4 text-gray-600" />
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Movement</p>
+                <p className="text-xs text-gray-900 font-medium">{watch?.specifications?.movement_type || '—'}</p>
               </div>
-              <div className="space-y-3">
-                <Droplet className="w-5 h-5 text-gray-600" />
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Water Resist</p>
-                <p className="text-sm text-gray-900 font-medium">{watch?.specifications?.water_resistance || '—'}</p>
+              <div className="space-y-2">
+                <Droplet className="w-4 h-4 text-gray-600" />
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Water Resist</p>
+                <p className="text-xs text-gray-900 font-medium">{watch?.specifications?.water_resistance || '—'}</p>
               </div>
-              <div className="space-y-3">
-                <Maximize2 className="w-5 h-5 text-gray-600" />
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Case Size</p>
-                <p className="text-sm text-gray-900 font-medium">{watch?.specifications?.case_diameter || '—'}</p>
+              <div className="space-y-2">
+                <Maximize2 className="w-4 h-4 text-gray-600" />
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Case Size</p>
+                <p className="text-xs text-gray-900 font-medium">{watch?.specifications?.case_diameter || '—'}</p>
               </div>
             </div>
 
             {/* Description */}
             {watch?.short_description && (
-              <div className="border-b border-gray-200 pb-8 space-y-0">
-                <p className="text-gray-700 leading-relaxed text-sm">{watch.short_description}</p>
+              <div className="border-b border-gray-200 pb-6 space-y-0">
+                <p className="text-gray-700 leading-relaxed text-xs">{watch.short_description}</p>
               </div>
             )}
 
             {/* Add to Cart Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
                 <div className="flex items-center border border-gray-300 rounded-sm">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={quantity <= 1}
-                    className="p-3 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                    className="p-2 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                   >
-                    <Minus className="w-4 h-4 text-gray-700" />
+                    <Minus className="w-3 h-3 text-gray-700" />
                   </button>
-                  <span className="px-6 py-3 text-center w-16 font-light text-gray-900 border-l border-r border-gray-300">{quantity}</span>
+                  <span className="px-4 py-2 text-center w-12 font-light text-xs text-gray-900 border-l border-r border-gray-300">{quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="p-3 hover:bg-gray-50 transition-colors"
+                    className="p-2 hover:bg-gray-50 transition-colors"
                   >
-                    <Plus className="w-4 h-4 text-gray-700" />
+                    <Plus className="w-3 h-3 text-gray-700" />
                   </button>
                 </div>
                 <button
                   onClick={handleAddToCart}
                   disabled={!watch?.in_stock}
-                  className="flex-1 bg-gray-900 text-white py-3 px-8 rounded-sm font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors tracking-wide text-sm"
+                  className="flex-1 bg-gray-900 text-white py-2 px-6 rounded-sm font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-xs"
                 >
                   Add to Cart
                 </button>
                 <button
-                  className="w-12 h-12 border border-gray-300 rounded-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  className="w-10 h-10 border border-gray-300 rounded-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
                   title="Share"
                 >
-                  <Share2 className="w-5 h-5 text-gray-700" />
+                  <Share2 className="w-4 h-4 text-gray-700" />
                 </button>
               </div>
             </div>
 
             {/* Full Description */}
             {watch?.description && (
-              <div className="space-y-4 border-b border-gray-200 pb-8">
-                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-widest">About This Watch</h3>
-                <p className="text-gray-700 leading-relaxed text-sm">{watch.description}</p>
+              <div className="space-y-3 border-b border-gray-200 pb-6">
+                <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">About This Watch</h3>
+                <p className="text-gray-700 leading-relaxed text-xs">{watch.description}</p>
               </div>
             )}
 
             {/* Expandable Specifications */}
-            <div className="space-y-4 pt-0">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-widest">Specifications</h3>
+            <div className="space-y-3 pt-0">
+              <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">Specifications</h3>
 
               {(() => {
                 const brandName = watch?.brand?.name;
@@ -540,65 +540,65 @@ const WatchDetail = () => {
                       {/* Case & Design */}
                       <button
                         onClick={() => toggleSpecSection('case')}
-                        className="w-full flex items-center justify-between py-4 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
+                        className="w-full flex items-center justify-between py-3 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
                       >
-                        <span className="text-sm font-semibold text-gray-900">Case & Design</span>
-                        <span className="text-gray-400 text-lg">{expandedSpecs.case ? '−' : '+'}</span>
+                        <span className="text-xs font-semibold text-gray-900">Case & Design</span>
+                        <span className="text-gray-400 text-base">{expandedSpecs.case ? '−' : '+'}</span>
                       </button>
                       {expandedSpecs.case && (
-                        <div className="pb-4 space-y-3 border-b border-gray-200">
-                          {watch?.specifications?.case_material && <div className="flex justify-between text-sm"><span className="text-gray-600">Material</span><span className="text-gray-900">{watch.specifications.case_material}</span></div>}
-                          {watch?.specifications?.case_diameter && <div className="flex justify-between text-sm"><span className="text-gray-600">Diameter</span><span className="text-gray-900">{watch.specifications.case_diameter}</span></div>}
-                          {watch?.specifications?.case_thickness && <div className="flex justify-between text-sm"><span className="text-gray-600">Thickness</span><span className="text-gray-900">{watch.specifications.case_thickness}</span></div>}
-                          {watch?.specifications?.dial_color && <div className="flex justify-between text-sm"><span className="text-gray-600">Dial Color</span><span className="text-gray-900">{watch.specifications.dial_color}</span></div>}
-                          {watch?.specifications?.glass_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Glass</span><span className="text-gray-900">{watch.specifications.glass_type}</span></div>}
+                        <div className="pb-3 space-y-2 border-b border-gray-200">
+                          {watch?.specifications?.case_material && <div className="flex justify-between text-xs"><span className="text-gray-600">Material</span><span className="text-gray-900">{watch.specifications.case_material}</span></div>}
+                          {watch?.specifications?.case_diameter && <div className="flex justify-between text-xs"><span className="text-gray-600">Diameter</span><span className="text-gray-900">{watch.specifications.case_diameter}</span></div>}
+                          {watch?.specifications?.case_thickness && <div className="flex justify-between text-xs"><span className="text-gray-600">Thickness</span><span className="text-gray-900">{watch.specifications.case_thickness}</span></div>}
+                          {watch?.specifications?.dial_color && <div className="flex justify-between text-xs"><span className="text-gray-600">Dial Color</span><span className="text-gray-900">{watch.specifications.dial_color}</span></div>}
+                          {watch?.specifications?.glass_type && <div className="flex justify-between text-xs"><span className="text-gray-600">Glass</span><span className="text-gray-900">{watch.specifications.glass_type}</span></div>}
                         </div>
                       )}
 
                       {/* Movement */}
                       <button
                         onClick={() => toggleSpecSection('movement')}
-                        className="w-full flex items-center justify-between py-4 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
+                        className="w-full flex items-center justify-between py-3 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
                       >
-                        <span className="text-sm font-semibold text-gray-900">Movement & Power</span>
-                        <span className="text-gray-400 text-lg">{expandedSpecs.movement ? '−' : '+'}</span>
+                        <span className="text-xs font-semibold text-gray-900">Movement & Power</span>
+                        <span className="text-gray-400 text-base">{expandedSpecs.movement ? '−' : '+'}</span>
                       </button>
                       {expandedSpecs.movement && (
-                        <div className="pb-4 space-y-3 border-b border-gray-200">
-                          {watch?.specifications?.movement_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Type</span><span className="text-gray-900">{watch.specifications.movement_type}</span></div>}
-                          {watch?.specifications?.battery_life && <div className="flex justify-between text-sm"><span className="text-gray-600">Battery Life</span><span className="text-gray-900">{watch.specifications.battery_life}</span></div>}
+                        <div className="pb-3 space-y-2 border-b border-gray-200">
+                          {watch?.specifications?.movement_type && <div className="flex justify-between text-xs"><span className="text-gray-600">Type</span><span className="text-gray-900">{watch.specifications.movement_type}</span></div>}
+                          {watch?.specifications?.battery_life && <div className="flex justify-between text-xs"><span className="text-gray-600">Battery Life</span><span className="text-gray-900">{watch.specifications.battery_life}</span></div>}
                         </div>
                       )}
 
                       {/* Water Resistance */}
                       <button
                         onClick={() => toggleSpecSection('water')}
-                        className="w-full flex items-center justify-between py-4 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
+                        className="w-full flex items-center justify-between py-3 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
                       >
-                        <span className="text-sm font-semibold text-gray-900">Water Resistance & Strap</span>
-                        <span className="text-gray-400 text-lg">{expandedSpecs.water ? '−' : '+'}</span>
+                        <span className="text-xs font-semibold text-gray-900">Water Resistance & Strap</span>
+                        <span className="text-gray-400 text-base">{expandedSpecs.water ? '−' : '+'}</span>
                       </button>
                       {expandedSpecs.water && (
-                        <div className="pb-4 space-y-3 border-b border-gray-200">
-                          {watch?.specifications?.water_resistance && <div className="flex justify-between text-sm"><span className="text-gray-600">Water Resistance</span><span className="text-gray-900">{watch.specifications.water_resistance}</span></div>}
-                          {watch?.specifications?.strap_material && <div className="flex justify-between text-sm"><span className="text-gray-600">Strap Material</span><span className="text-gray-900">{watch.specifications.strap_material}</span></div>}
-                          {watch?.specifications?.buckle_type && <div className="flex justify-between text-sm"><span className="text-gray-600">Buckle</span><span className="text-gray-900">{watch.specifications.buckle_type}</span></div>}
+                        <div className="pb-3 space-y-2 border-b border-gray-200">
+                          {watch?.specifications?.water_resistance && <div className="flex justify-between text-xs"><span className="text-gray-600">Water Resistance</span><span className="text-gray-900">{watch.specifications.water_resistance}</span></div>}
+                          {watch?.specifications?.strap_material && <div className="flex justify-between text-xs"><span className="text-gray-600">Strap Material</span><span className="text-gray-900">{watch.specifications.strap_material}</span></div>}
+                          {watch?.specifications?.buckle_type && <div className="flex justify-between text-xs"><span className="text-gray-600">Buckle</span><span className="text-gray-900">{watch.specifications.buckle_type}</span></div>}
                         </div>
                       )}
 
                       {/* Warranty & Care */}
                       <button
                         onClick={() => toggleSpecSection('care')}
-                        className="w-full flex items-center justify-between py-4 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
+                        className="w-full flex items-center justify-between py-3 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
                       >
-                        <span className="text-sm font-semibold text-gray-900">Warranty & Care</span>
-                        <span className="text-gray-400 text-lg">{expandedSpecs.care ? '−' : '+'}</span>
+                        <span className="text-xs font-semibold text-gray-900">Warranty & Care</span>
+                        <span className="text-gray-400 text-base">{expandedSpecs.care ? '−' : '+'}</span>
                       </button>
                       {expandedSpecs.care && (
-                        <div className="pb-4 space-y-3">
-                          <div className="flex justify-between text-sm"><span className="text-gray-600">Warranty</span><span className="text-gray-900">{watch?.warranty_years || 'N/A'} years</span></div>
+                        <div className="pb-3 space-y-2">
+                          <div className="flex justify-between text-xs"><span className="text-gray-600">Warranty</span><span className="text-gray-900">{watch?.warranty_years || 'N/A'} years</span></div>
                           {watch?.care_instructions && (
-                            <div className="text-sm space-y-2 pt-2 border-t border-gray-200">
+                            <div className="text-xs space-y-2 pt-2 border-t border-gray-200">
                               <p className="text-gray-600">Care Instructions</p>
                               <p className="text-gray-700 leading-relaxed">{watch.care_instructions}</p>
                             </div>
@@ -629,15 +629,15 @@ const WatchDetail = () => {
                     <div key={sectionKey}>
                       <button
                         onClick={() => toggleSpecSection(sectionKey)}
-                        className="w-full flex items-center justify-between py-4 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
+                        className="w-full flex items-center justify-between py-3 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
                       >
-                        <span className="text-sm font-semibold text-gray-900">{section.label}</span>
-                        <span className="text-gray-400 text-lg">{expandedSpecs[sectionKey] ? '−' : '+'}</span>
+                        <span className="text-xs font-semibold text-gray-900">{section.label}</span>
+                        <span className="text-gray-400 text-base">{expandedSpecs[sectionKey] ? '−' : '+'}</span>
                       </button>
                       {expandedSpecs[sectionKey] && (
-                        <div className="pb-4 space-y-3 border-b border-gray-200">
+                        <div className="pb-3 space-y-2 border-b border-gray-200">
                           {sectionFieldsWithValues.map(fieldData => (
-                            <div key={fieldData.key} className="flex justify-between text-sm">
+                            <div key={fieldData.key} className="flex justify-between text-xs">
                               <span className="text-gray-600">{fieldData.label}</span>
                               <span className="text-gray-900">{fieldData.value}</span>
                             </div>
@@ -652,16 +652,16 @@ const WatchDetail = () => {
               {/* Warranty & Care (shown for all brands) */}
               <button
                 onClick={() => toggleSpecSection('care')}
-                className="w-full flex items-center justify-between py-4 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
+                className="w-full flex items-center justify-between py-3 border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
               >
-                <span className="text-sm font-semibold text-gray-900">Warranty & Care</span>
-                <span className="text-gray-400 text-lg">{expandedSpecs.care ? '−' : '+'}</span>
+                <span className="text-xs font-semibold text-gray-900">Warranty & Care</span>
+                <span className="text-gray-400 text-base">{expandedSpecs.care ? '−' : '+'}</span>
               </button>
               {expandedSpecs.care && (
-                <div className="pb-4 space-y-3">
-                  <div className="flex justify-between text-sm"><span className="text-gray-600">Warranty</span><span className="text-gray-900">{watch?.warranty_years || 'N/A'} years</span></div>
+                <div className="pb-3 space-y-2">
+                  <div className="flex justify-between text-xs"><span className="text-gray-600">Warranty</span><span className="text-gray-900">{watch?.warranty_years || 'N/A'} years</span></div>
                   {watch?.care_instructions && (
-                    <div className="text-sm space-y-2 pt-2 border-t border-gray-200">
+                    <div className="text-xs space-y-2 pt-2 border-t border-gray-200">
                       <p className="text-gray-600">Care Instructions</p>
                       <p className="text-gray-700 leading-relaxed">{watch.care_instructions}</p>
                     </div>
@@ -672,9 +672,9 @@ const WatchDetail = () => {
 
             {/* Collection Info */}
             {watch?.collection?.name && (
-              <div className="border-t border-gray-200 pt-8 space-y-3">
+              <div className="border-t border-gray-200 pt-6 space-y-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Collection</p>
-                <p className="text-lg text-gray-900">{watch.collection.name}</p>
+                <p className="text-sm text-gray-900">{watch.collection.name}</p>
               </div>
             )}
           </div>
