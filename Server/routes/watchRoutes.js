@@ -44,6 +44,7 @@ router.delete('/collections/:id', deleteCollection);
 // Watch routes
 router.get('/', getAllWatches);
 router.get('/watches', getAllWatches); // Admin endpoint for getting all watches (matches frontend /admin/watches/watches)
+router.post('/watches', createWatch); // Admin endpoint for creating watches (matches frontend POST to /admin/watches/watches)
 router.get('/admin/:id', getWatchById);
 // Admin endpoints for watches CRUD
 router.put('/watches/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})', updateWatch); // Admin update by UUID

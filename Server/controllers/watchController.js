@@ -604,7 +604,14 @@ const getWatchBySlug = asyncHandler(async (req, res) => {
       {
         model: WatchSpecification,
         as: 'specifications',
-        required: false
+        required: false,
+        attributes: [
+          'id', 'watch_id', 'movement', 'case_material', 'case_diameter', 'case_thickness',
+          'dial_color', 'crystal_material', 'strap_material', 'strap_color', 'water_resistance',
+          'weight', 'power_reserve', 'complications', 'lug_width', 'buckle_type',
+          'dial', 'functions', 'features', 'movement_type', 'glass_type', 'battery_life',
+          'antimagnetic_protection', 'shock_resistance', 'luminosity', 'movement_accuracy'
+        ]
       },
       {
         model: WatchVariant,
@@ -730,7 +737,14 @@ const getWatchById = asyncHandler(async (req, res) => {
       {
         model: WatchSpecification,
         as: 'specifications',
-        required: false
+        required: false,
+        attributes: [
+          'id', 'watch_id', 'movement', 'case_material', 'case_diameter', 'case_thickness',
+          'dial_color', 'crystal_material', 'strap_material', 'strap_color', 'water_resistance',
+          'weight', 'power_reserve', 'complications', 'lug_width', 'buckle_type',
+          'dial', 'functions', 'features', 'movement_type', 'glass_type', 'battery_life',
+          'antimagnetic_protection', 'shock_resistance', 'luminosity', 'movement_accuracy'
+        ]
       },
       {
         model: WatchVariant,
@@ -884,9 +898,11 @@ const updateWatch = asyncHandler(async (req, res) => {
     });
   }
 
-  // Extract images, videos, and technical_specs from updateData (these are handled separately)
-  const { images, videos, technical_specs, ...watchData } = updateData;
-  console.log('[updateWatch] Watch data after extracting images/videos/specs:', watchData);
+  // Extract images and videos from updateData (these are handled separately)
+  // Keep technical_specs in watchData so it gets saved to the Watch model's JSONB field
+  const { images, videos, ...watchData } = updateData;
+  console.log('[updateWatch] Watch data after extracting images/videos:', watchData);
+  console.log('[updateWatch] Technical specs to save:', watchData.technical_specs);
 
   // Convert empty strings to NULL for unique fields to avoid unique constraint violations
   if (watchData.model_number === '' || watchData.model_number === null) {
@@ -935,58 +951,130 @@ const updateWatch = asyncHandler(async (req, res) => {
   }
 
   // Handle technical_specs - flatten nested structure and save to specifications
-  if (technical_specs) {
-    console.log('[updateWatch] Processing technical_specs:', technical_specs);
+  if (watchData.technical_specs) {
+    console.log('[updateWatch] Processing technical_specs:', watchData.technical_specs);
 
-    // Flatten the nested technical_specs structure
+    // Comprehensive flattening of nested technical_specs structure
     const flattenedSpecs = {};
+    const technical_specs = watchData.technical_specs;
 
-    // Flatten movement specs
-    if (technical_specs.movement) {
-      if (technical_specs.movement.type) flattenedSpecs.movement_type = technical_specs.movement.type;
-      if (technical_specs.movement.quartz_calibre) flattenedSpecs.movement_type = technical_specs.movement.quartz_calibre;
-      if (technical_specs.movement.functions) flattenedSpecs.functions = technical_specs.movement.functions;
-      if (technical_specs.movement.counter_60_position) flattenedSpecs.movement = `60s counter at ${technical_specs.movement.counter_60_position}`;
-      if (technical_specs.movement.power_reserve) flattenedSpecs.battery_life = technical_specs.movement.power_reserve;
-    }
-
-    // Flatten case specs
+    // ===== CASE SPECIFICATIONS =====
     if (technical_specs.case) {
-      if (technical_specs.case.material) flattenedSpecs.case_material = technical_specs.case.material;
+      if (technical_specs.case.shape) flattenedSpecs.case_shape = technical_specs.case.shape;
+      if (technical_specs.case.weight) flattenedSpecs.case_weight = technical_specs.case.weight;
       if (technical_specs.case.diameter) flattenedSpecs.case_diameter = technical_specs.case.diameter;
+      if (technical_specs.case.material) flattenedSpecs.case_material = technical_specs.case.material;
       if (technical_specs.case.thickness) flattenedSpecs.case_thickness = technical_specs.case.thickness;
-      if (technical_specs.case.shape) flattenedSpecs.case_material = technical_specs.case.shape + ' ' + (flattenedSpecs.case_material || '');
     }
 
-    // Flatten dial specs
-    if (technical_specs.dial_and_hands) {
-      if (technical_specs.dial_and_hands.colour) flattenedSpecs.dial_color = technical_specs.dial_and_hands.colour;
-      if (technical_specs.dial_and_hands.crystal) flattenedSpecs.glass_type = technical_specs.dial_and_hands.crystal;
-      if (technical_specs.dial_and_hands.number_of_hands) flattenedSpecs.dial = `${technical_specs.dial_and_hands.number_of_hands} hands`;
+    // ===== DIAL & HANDS SPECIFICATIONS =====
+    if (technical_specs.dial || technical_specs.dial_and_hands) {
+      const dialData = technical_specs.dial || technical_specs.dial_and_hands || {};
+      if (dialData.colour) flattenedSpecs.dial_colour = dialData.colour;
+      if (dialData.color) flattenedSpecs.dial_color = dialData.color; // Alternative spelling
+      if (dialData.crystal) flattenedSpecs.dial_crystal = dialData.crystal;
+      if (dialData.number_of_hands) flattenedSpecs.dial_hands_count = dialData.number_of_hands;
+      // Store dial details as text if provided
+      if (dialData.details || dialData.description) {
+        flattenedSpecs.dial = dialData.details || dialData.description;
+      }
     }
 
-    // Flatten strap specs
+    // ===== STRAP SPECIFICATIONS =====
     if (technical_specs.strap) {
       if (technical_specs.strap.material) flattenedSpecs.strap_material = technical_specs.strap.material;
-      if (technical_specs.strap.clasp_type) flattenedSpecs.buckle_type = technical_specs.strap.clasp_type;
-      if (technical_specs.strap.width) flattenedSpecs.strap_material = flattenedSpecs.strap_material + ` (${technical_specs.strap.width})`;
+      if (technical_specs.strap.width) flattenedSpecs.strap_width = technical_specs.strap.width;
+      if (technical_specs.strap.colour) flattenedSpecs.strap_color = technical_specs.strap.colour;
+      if (technical_specs.strap.color) flattenedSpecs.strap_color = technical_specs.strap.color; // Alternative spelling
+      if (technical_specs.strap.clasp_type || technical_specs.strap.buckle_type) {
+        flattenedSpecs.buckle_type = technical_specs.strap.clasp_type || technical_specs.strap.buckle_type;
+      }
     }
+
+    // ===== MOVEMENT SPECIFICATIONS =====
+    if (technical_specs.movement) {
+      if (technical_specs.movement.name) flattenedSpecs.movement_name = technical_specs.movement.name;
+      if (technical_specs.movement.type) flattenedSpecs.movement_type = technical_specs.movement.type;
+      if (technical_specs.movement.battery_type) flattenedSpecs.movement_battery_type = technical_specs.movement.battery_type;
+      if (technical_specs.movement.manufacturing) flattenedSpecs.movement_manufacturing = technical_specs.movement.manufacturing;
+      if (technical_specs.movement.power_reserve) flattenedSpecs.battery_life = technical_specs.movement.power_reserve;
+      if (technical_specs.movement.quartz_calibre) flattenedSpecs.movement_type = technical_specs.movement.quartz_calibre;
+    }
+
+    // ===== FUNCTIONS SPECIFICATIONS =====
+    if (technical_specs.functions) {
+      // Serialize functions as JSON string or concatenate all function values
+      if (typeof technical_specs.functions === 'string') {
+        flattenedSpecs.functions = technical_specs.functions;
+      } else if (typeof technical_specs.functions === 'object') {
+        const functionValues = Object.values(technical_specs.functions)
+          .filter(v => v) // Remove empty values
+          .join(', ');
+        if (functionValues) {
+          flattenedSpecs.functions = functionValues;
+        }
+      }
+    }
+
+    // ===== FEATURES SPECIFICATIONS =====
+    if (technical_specs.features) {
+      // Handle watertightness separately if provided
+      if (technical_specs.features.watertightness) {
+        flattenedSpecs.watertightness = technical_specs.features.watertightness;
+      }
+
+      // Handle additional features
+      if (technical_specs.features.additional_features) {
+        flattenedSpecs.additional_features = technical_specs.features.additional_features;
+      }
+
+      // Serialize all features for the features field
+      if (typeof technical_specs.features === 'string') {
+        flattenedSpecs.features = technical_specs.features;
+      } else if (typeof technical_specs.features === 'object') {
+        const featureValues = Object.values(technical_specs.features)
+          .filter(v => v) // Remove empty values
+          .join(', ');
+        if (featureValues) {
+          flattenedSpecs.features = featureValues;
+        }
+      }
+    }
+
+    // ===== ROAMER-SPECIFIC SPECIFICATIONS =====
+    // Handle both snake_case and camelCase field names
+    if (technical_specs.water_resistance) flattenedSpecs.water_resistance = technical_specs.water_resistance;
+    if (technical_specs.waterResistance) flattenedSpecs.water_resistance = technical_specs.waterResistance;
+
+    if (technical_specs.antimagnetic_protection) flattenedSpecs.antimagnetic_protection = technical_specs.antimagnetic_protection;
+    if (technical_specs.antimagneticProtection) flattenedSpecs.antimagnetic_protection = technical_specs.antimagneticProtection;
+
+    if (technical_specs.shock_resistance) flattenedSpecs.shock_resistance = technical_specs.shock_resistance;
+    if (technical_specs.shockResistance) flattenedSpecs.shock_resistance = technical_specs.shockResistance;
+
+    if (technical_specs.luminosity) flattenedSpecs.luminosity = technical_specs.luminosity;
+
+    if (technical_specs.movement_accuracy) flattenedSpecs.movement_accuracy = technical_specs.movement_accuracy;
+    if (technical_specs.movementAccuracy) flattenedSpecs.movement_accuracy = technical_specs.movementAccuracy;
+
+    console.log('[updateWatch] Flattened specifications:', flattenedSpecs);
 
     // Save or update specifications
     try {
       const existingSpec = await WatchSpecification.findOne({ where: { watch_id: id } });
       if (existingSpec) {
         await existingSpec.update(flattenedSpecs);
-        console.log('[updateWatch] Specifications updated');
+        console.log('[updateWatch] Specifications updated with', Object.keys(flattenedSpecs).length, 'fields');
       } else {
         await WatchSpecification.create({
           watch_id: id,
           ...flattenedSpecs
         });
-        console.log('[updateWatch] Specifications created');
+        console.log('[updateWatch] Specifications created with', Object.keys(flattenedSpecs).length, 'fields');
       }
     } catch (specError) {
-      console.error('[updateWatch] Error saving specifications:', specError);
+      console.error('[updateWatch] Error saving specifications:', specError.message);
+      console.error('[updateWatch] Attempted to save:', flattenedSpecs);
     }
   }
 

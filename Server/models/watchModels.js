@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { postgresDB } = require('../config/database');
 
-let WatchBrand, WatchCollection, Watch, WatchImage, WatchSpecification, WatchVariant, WatchBrandCollections;
+let WatchBrand, WatchCollection, Watch, WatchImage, WatchVideo, WatchSpecification, WatchVariant, WatchBrandCollections;
 
 const initializeWatchModels = () => {
   const sequelize = postgresDB();
@@ -414,6 +414,40 @@ const initializeWatchModels = () => {
     },
     movement_accuracy: {
       type: DataTypes.STRING(100) // Movement accuracy specification
+    },
+    // Additional fields for comprehensive specifications
+    case_shape: {
+      type: DataTypes.STRING(100) // Round, Square, Rectangular, etc.
+    },
+    case_weight: {
+      type: DataTypes.STRING(50) // Case weight specification
+    },
+    strap_width: {
+      type: DataTypes.STRING(50) // Strap width specification
+    },
+    dial_colour: {
+      type: DataTypes.STRING(100) // Dial colour (alternative to dial_color)
+    },
+    dial_crystal: {
+      type: DataTypes.STRING(100) // Dial crystal type (alternative to glass_type)
+    },
+    dial_hands_count: {
+      type: DataTypes.STRING(50) // Number of hands on dial
+    },
+    movement_name: {
+      type: DataTypes.STRING(100) // Specific movement name
+    },
+    movement_battery_type: {
+      type: DataTypes.STRING(100) // Battery type specification
+    },
+    movement_manufacturing: {
+      type: DataTypes.STRING(255) // Manufacturing details
+    },
+    additional_features: {
+      type: DataTypes.TEXT // Additional features beyond standard ones
+    },
+    watertightness: {
+      type: DataTypes.STRING(100) // Watertightness rating
     }
   }, {
     tableName: 'watch_specifications',

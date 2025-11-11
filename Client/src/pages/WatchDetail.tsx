@@ -7,25 +7,54 @@ import { useCart } from '../contexts/CartContext';
 import API_BASE_URL from '../config/api';
 
 interface WatchSpecification {
+  // Case specifications
   case_material?: string;
   case_diameter?: string;
   case_thickness?: string;
-  water_resistance?: string;
-  movement_type?: string;
-  battery_life?: string;
-  glass_type?: string;
-  strap_material?: string;
-  buckle_type?: string;
+  case_shape?: string;
+  case_weight?: string;
+
+  // Dial specifications
   dial_color?: string;
-  gender?: string;
-  style?: string;
+  dial_colour?: string;
   dial?: string;
+  dial_crystal?: string;
+  dial_hands_count?: string;
+
+  // Strap specifications
+  strap_material?: string;
+  strap_color?: string;
+  strap_width?: string;
+  buckle_type?: string;
+
+  // Movement specifications
+  movement_type?: string;
+  movement_name?: string;
+  movement_battery_type?: string;
+  movement_manufacturing?: string;
+  battery_life?: string;
+
+  // Glass/Crystal specifications
+  glass_type?: string;
+
+  // Water and durability
+  water_resistance?: string;
+  watertightness?: string;
+
+  // Functions and features
   functions?: string;
   features?: string;
+  additional_features?: string;
+
+  // Roamer-specific
   antimagnetic_protection?: string;
   shock_resistance?: string;
   luminosity?: string;
   movement_accuracy?: string;
+
+  // General
+  gender?: string;
+  style?: string;
 }
 
 interface Watch {
@@ -66,31 +95,39 @@ const BRAND_SPEC_CONFIG: { [key: string]: { sections: { [key: string]: { label: 
       'case': {
         label: 'Case',
         fields: [
+          { key: 'case_shape', label: 'Shape' },
           { key: 'case_material', label: 'Material' },
           { key: 'case_diameter', label: 'Diameter' },
           { key: 'case_thickness', label: 'Thickness' },
-          { key: 'glass_type', label: 'Glass' }
+          { key: 'case_weight', label: 'Weight' }
         ]
       },
       'dial': {
         label: 'Dial',
         fields: [
-          { key: 'dial_color', label: 'Color' },
-          { key: 'dial', label: 'Dial Details' }
+          { key: 'dial_colour', label: 'Colour' },
+          { key: 'dial_crystal', label: 'Crystal' },
+          { key: 'dial_hands_count', label: 'Number of Hands' },
+          { key: 'dial', label: 'Details' }
         ]
       },
       'strap': {
         label: 'Strap',
         fields: [
           { key: 'strap_material', label: 'Material' },
-          { key: 'buckle_type', label: 'Buckle' }
+          { key: 'strap_color', label: 'Colour' },
+          { key: 'strap_width', label: 'Width' },
+          { key: 'buckle_type', label: 'Clasp Type' }
         ]
       },
       'movement': {
         label: 'Movement',
         fields: [
+          { key: 'movement_name', label: 'Name' },
           { key: 'movement_type', label: 'Type' },
-          { key: 'battery_life', label: 'Battery Life' }
+          { key: 'movement_battery_type', label: 'Battery Type' },
+          { key: 'movement_manufacturing', label: 'Manufacturing' },
+          { key: 'battery_life', label: 'Power Reserve' }
         ]
       },
       'functions': {
@@ -102,7 +139,8 @@ const BRAND_SPEC_CONFIG: { [key: string]: { sections: { [key: string]: { label: 
       'features': {
         label: 'Features',
         fields: [
-          { key: 'features', label: 'Features' }
+          { key: 'features', label: 'Features' },
+          { key: 'additional_features', label: 'Additional Features' }
         ]
       }
     }
@@ -112,33 +150,38 @@ const BRAND_SPEC_CONFIG: { [key: string]: { sections: { [key: string]: { label: 
       'movement': {
         label: 'Movement',
         fields: [
+          { key: 'movement_name', label: 'Name' },
           { key: 'movement_type', label: 'Type' },
-          { key: 'battery_life', label: 'Battery Life' },
-          { key: 'movement_accuracy', label: 'Accuracy' }
+          { key: 'movement_battery_type', label: 'Battery Type' },
+          { key: 'battery_life', label: 'Power Reserve' }
         ]
       },
       'case': {
         label: 'Case',
         fields: [
+          { key: 'case_shape', label: 'Shape' },
           { key: 'case_material', label: 'Material' },
           { key: 'case_diameter', label: 'Diameter' },
-          { key: 'case_thickness', label: 'Thickness' }
+          { key: 'case_thickness', label: 'Thickness' },
+          { key: 'case_weight', label: 'Weight' }
         ]
       },
       'dial': {
         label: 'Dial & Hands',
         fields: [
-          { key: 'dial_color', label: 'Color' },
-          { key: 'dial', label: 'Details' },
-          { key: 'glass_type', label: 'Glass Type' }
+          { key: 'dial_colour', label: 'Colour' },
+          { key: 'dial_crystal', label: 'Crystal' },
+          { key: 'dial_hands_count', label: 'Number of Hands' },
+          { key: 'dial', label: 'Details' }
         ]
       },
       'strap': {
         label: 'Strap',
         fields: [
           { key: 'strap_material', label: 'Material' },
-          { key: 'buckle_type', label: 'Buckle' },
-          { key: 'water_resistance', label: 'Water Resistance' }
+          { key: 'strap_color', label: 'Colour' },
+          { key: 'strap_width', label: 'Width' },
+          { key: 'buckle_type', label: 'Clasp Type' }
         ]
       }
     }
@@ -148,33 +191,40 @@ const BRAND_SPEC_CONFIG: { [key: string]: { sections: { [key: string]: { label: 
       'movement': {
         label: 'Movement',
         fields: [
+          { key: 'movement_name', label: 'Name' },
           { key: 'movement_type', label: 'Type' },
-          { key: 'battery_life', label: 'Battery Life' },
-          { key: 'movement_accuracy', label: 'Accuracy' }
+          { key: 'battery_life', label: 'Power Reserve' }
         ]
       },
       'water': {
         label: 'Water Resistance',
         fields: [
-          { key: 'water_resistance', label: 'Water Resistance' }
+          { key: 'water_resistance', label: 'Water Resistance' },
+          { key: 'watertightness', label: 'Watertightness' }
         ]
       },
       'antimagnetic': {
         label: 'Antimagnetic Protection',
         fields: [
-          { key: 'antimagnetic_protection', label: 'Protection' }
+          { key: 'antimagnetic_protection', label: 'Protection Level' }
         ]
       },
       'shock': {
         label: 'Shock Resistance',
         fields: [
-          { key: 'shock_resistance', label: 'Resistance' }
+          { key: 'shock_resistance', label: 'Shock Resistance' }
         ]
       },
       'luminosity': {
         label: 'Luminosity',
         fields: [
-          { key: 'luminosity', label: 'Luminosity' }
+          { key: 'luminosity', label: 'Luminosity Level' }
+        ]
+      },
+      'accuracy': {
+        label: 'Movement Accuracy',
+        fields: [
+          { key: 'movement_accuracy', label: 'Accuracy' }
         ]
       }
     }

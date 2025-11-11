@@ -14,13 +14,18 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "migrate": "node utils/migrate.js",
+    "migrate:run": "node run-migrations.js up",
+    "migrate:rollback": "node run-migrations.js down",
+    "add-spec-columns": "node add-spec-columns.js",
     "seed": "node utils/seed.js",
     "seed:admin": "node utils/seedAdmin.js",
     "quick-admin": "node quick-admin.js",
     "check-db": "node check-db.js",
+    "check-watch-tables": "node check-watch-tables.js",
+    "check-watch-tables:direct": "node check-watch-tables-direct.js",
     "sync-db": "node sync-database.js",
     "sync-db:force": "node sync-database.js --force",
-    "setup": "npm run seed && npm run seed:admin"
+    "setup": "npm run migrate:run && npm run seed && npm run seed:admin"
   },
   "keywords": [
     "api",
