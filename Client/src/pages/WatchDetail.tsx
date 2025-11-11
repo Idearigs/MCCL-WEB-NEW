@@ -359,13 +359,13 @@ const WatchDetail = () => {
         </div>
       </nav>
 
-      <div className="w-full px-4 lg:px-8 py-8 lg:py-12 flex justify-center">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 min-h-screen lg:min-h-auto w-full lg:max-w-7xl">
+      <div className="w-full px-4 lg:px-6 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 min-h-screen lg:min-h-auto">
 
           {/* Left Column - Image Gallery */}
-          <div className="space-y-0 lg:space-y-0 flex flex-col bg-gray-50 lg:col-span-6 p-4 lg:p-6 rounded-lg">
+          <div className="space-y-0 lg:space-y-0 flex flex-col bg-gray-50 lg:col-span-7 p-4 lg:p-6 rounded-lg">
             {/* Main Image */}
-            <div className="relative overflow-hidden flex-1 flex items-center justify-center w-full bg-white">
+            <div className="relative overflow-hidden flex-1 flex items-center justify-center w-full bg-white rounded-lg">
               <img
                 src={currentImage.image_url}
                 alt={currentImage.alt_text}
@@ -423,7 +423,7 @@ const WatchDetail = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-6 lg:py-8 bg-white overflow-y-auto lg:col-span-4 rounded-lg">
+          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-6 lg:py-8 bg-white overflow-y-auto lg:col-span-5 rounded-lg">
 
             {/* Brand & Model */}
             <div className="space-y-3">
