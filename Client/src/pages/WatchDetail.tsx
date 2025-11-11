@@ -359,11 +359,11 @@ const WatchDetail = () => {
         </div>
       </nav>
 
-      <div className="max-w-full mx-auto px-0 lg:px-0 py-0 lg:py-0">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-0 min-h-screen lg:min-h-auto">
+      <div className="max-w-full mx-auto px-4 lg:px-8 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-0 min-h-screen lg:min-h-auto">
 
           {/* Left Column - Image Gallery */}
-          <div className="space-y-0 lg:space-y-0 flex flex-col bg-gray-50">
+          <div className="space-y-0 lg:space-y-0 flex flex-col bg-gray-50 lg:col-span-7 p-6 lg:p-8">
             {/* Main Image */}
             <div className="relative overflow-hidden flex-1 flex items-center justify-center w-full bg-white">
               <img
@@ -406,7 +406,7 @@ const WatchDetail = () => {
 
             {/* Thumbnail Gallery */}
             {displayImages.length > 1 && (
-              <div className="grid grid-cols-5 gap-2 px-6 py-4 bg-gray-50 border-t border-gray-200">
+              <div className="grid grid-cols-5 gap-2 py-4 border-t border-gray-200 bg-gray-50">
                 {displayImages.map((img, index) => (
                   <button
                     key={img.id}
@@ -423,7 +423,7 @@ const WatchDetail = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-8 lg:py-10 bg-white overflow-y-auto">
+          <div className="space-y-6 flex flex-col px-6 lg:px-8 py-8 lg:py-10 bg-white overflow-y-auto lg:col-span-5">
 
             {/* Brand & Model */}
             <div className="space-y-3">
