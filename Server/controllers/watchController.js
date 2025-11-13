@@ -389,7 +389,6 @@ const getCollectionBySlug = asyncHandler(async (req, res) => {
   }
 
   const transformedWatches = collection.watches ? collection.watches.map(watch => {
-    const primaryImage = watch.images.find(img => img.is_primary) || watch.images[0];
     const currentPrice = watch.sale_price || watch.base_price;
 
     return {
@@ -405,10 +404,12 @@ const getCollectionBySlug = asyncHandler(async (req, res) => {
       style: watch.style,
       is_featured: watch.is_featured,
       in_stock: watch.in_stock,
-      image: primaryImage ? {
-        url: primaryImage.image_url,
-        alt: primaryImage.alt_text || watch.name
-      } : null,
+      images: watch.images && watch.images.length > 0 ? watch.images.map(img => ({
+        id: img.id,
+        image_url: img.image_url,
+        alt_text: img.alt_text || watch.name,
+        is_primary: img.is_primary
+      })) : [],
       specifications: watch.specifications
     };
   }) : [];
