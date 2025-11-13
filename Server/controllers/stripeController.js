@@ -2,6 +2,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const asyncHandler = require('../middleware/asyncHandler');
 const { getModels } = require('../models');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
+const { generateOrderNumber } = require('../utils/orderUtils');
 
 /**
  * Create a payment intent for the cart
@@ -75,13 +76,9 @@ const confirmPayment = asyncHandler(async (req, res) => {
       });
     }
 
-    // Generate professional order number: MCL-YYYYMMDD-XXXXX
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const randomNum = String(Math.floor(Math.random() * 100000)).padStart(5, '0');
-    const orderNumber = `MCL-${year}${month}${day}-${randomNum}`;
+    // Generate professional order number based on product type
+    // Format: JWL-YYYYMMDD-XXXXX (jewelry), WTC-YYYYMMDD-XXXXX (watches), MXD-YYYYMMDD-XXXXX (mixed)
+    const orderNumber = generateOrderNumber(cartItems);
 
     // Create order in database
     const order = await Order.create({
