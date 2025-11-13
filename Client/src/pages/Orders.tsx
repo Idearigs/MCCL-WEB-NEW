@@ -1,12 +1,88 @@
-import React from 'react';
-import { Package, Calendar, TrendingUp, ShoppingBag, Clock, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Package, Calendar, TrendingUp, ShoppingBag, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import LuxuryNavigationWhite from '../components/LuxuryNavigationWhite';
 import { FooterSection } from '../components/FooterSection';
 import { useUserAuth } from '../contexts/UserAuthContext';
 import { Link } from 'react-router-dom';
+import { api } from '../config/api';
+
+interface OrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus: string;
+  total: number;
+  createdAt: string;
+  itemsCount: number;
+  items: OrderItem[];
+}
+
+interface OrdersData {
+  orders: Order[];
+  stats: {
+    totalOrders: number;
+    totalSpent: number;
+    pendingOrders: number;
+  };
+}
 
 const Orders: React.FC = () => {
   const { user, isAuthenticated } = useUserAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState({ totalOrders: 0, totalSpent: 0, pendingOrders: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchOrders();
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('user_access_token');
+
+      if (!token) {
+        setError('Authentication token not found');
+        return;
+      }
+
+      const response = await fetch(api('/users/orders'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch orders: ${response.statusText}`);
+      }
+
+      const data = await response.json() as { success: boolean; data: OrdersData };
+
+      if (data.success && data.data) {
+        setOrders(data.data.orders);
+        setStats(data.data.stats);
+      } else {
+        setError('Failed to load orders');
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isAuthenticated || !user) {
     return (
@@ -30,8 +106,22 @@ const Orders: React.FC = () => {
     );
   }
 
-  // TODO: Fetch orders from API when order system is implemented
-  const orders: any[] = [];
+  if (loading) {
+    return (
+      <>
+        <LuxuryNavigationWhite />
+        <div className="min-h-screen bg-gray-50 pt-48">
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 animate-spin text-amber-600 mx-auto mb-4" />
+              <p className="text-gray-600 font-light">Loading your orders...</p>
+            </div>
+          </div>
+        </div>
+        <FooterSection />
+      </>
+    );
+  }
 
   return (
     <>
@@ -44,6 +134,13 @@ const Orders: React.FC = () => {
             <p className="text-gray-600 font-light">View and track your order history</p>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-8 bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-700 font-light">{error}</p>
+            </div>
+          )}
+
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -51,7 +148,7 @@ const Orders: React.FC = () => {
                 <span className="text-sm font-light text-gray-600">Total Orders</span>
                 <Package className="w-5 h-5 text-gray-400" />
               </div>
-              <div className="text-3xl font-light text-gray-900">0</div>
+              <div className="text-3xl font-light text-gray-900">{stats.totalOrders}</div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -59,7 +156,7 @@ const Orders: React.FC = () => {
                 <span className="text-sm font-light text-gray-600">Total Spent</span>
                 <TrendingUp className="w-5 h-5 text-green-500" />
               </div>
-              <div className="text-3xl font-light text-gray-900">£0.00</div>
+              <div className="text-3xl font-light text-gray-900">£{stats.totalSpent.toFixed(2)}</div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -67,7 +164,7 @@ const Orders: React.FC = () => {
                 <span className="text-sm font-light text-gray-600">Pending Orders</span>
                 <Clock className="w-5 h-5 text-amber-500" />
               </div>
-              <div className="text-3xl font-light text-gray-900">0</div>
+              <div className="text-3xl font-light text-gray-900">{stats.pendingOrders}</div>
             </div>
           </div>
 
@@ -89,82 +186,75 @@ const Orders: React.FC = () => {
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {orders.map((order) => (
-                  <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-medium text-gray-900 mb-1">
-                          Order #{order.orderNumber}
-                        </h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 font-light">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>{new Date(order.createdAt).toLocaleDateString('en-GB')}</span>
+                {orders.map((order) => {
+                  const statusColors: Record<string, string> = {
+                    'delivered': 'bg-green-100 text-green-700',
+                    'processing': 'bg-blue-100 text-blue-700',
+                    'pending': 'bg-amber-100 text-amber-700',
+                    'shipped': 'bg-purple-100 text-purple-700',
+                    'cancelled': 'bg-red-100 text-red-700'
+                  };
+
+                  return (
+                    <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="font-medium text-gray-900 mb-1">
+                            Order #{order.orderNumber}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 font-light">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>{new Date(order.createdAt).toLocaleDateString('en-GB')}</span>
+                            </div>
+                            <span>•</span>
+                            <span>{order.itemsCount} {order.itemsCount === 1 ? 'item' : 'items'}</span>
                           </div>
-                          <span>•</span>
-                          <span>{order.itemsCount} {order.itemsCount === 1 ? 'item' : 'items'}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-light text-gray-900 mb-2">
+                            £{order.total.toFixed(2)}
+                          </div>
+                          <span
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                              statusColors[order.status] || 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {order.status === 'delivered' && <CheckCircle className="w-3 h-3" />}
+                            {order.status === 'pending' && <Clock className="w-3 h-3" />}
+                            {order.status === 'cancelled' && <XCircle className="w-3 h-3" />}
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-xl font-light text-gray-900 mb-2">
-                          £{order.total.toFixed(2)}
-                        </div>
-                        <span
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                            order.status === 'completed'
-                              ? 'bg-green-100 text-green-700'
-                              : order.status === 'pending'
-                              ? 'bg-amber-100 text-amber-700'
-                              : order.status === 'processing'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}
+
+                      {/* Order Items Preview */}
+                      <div className="space-y-2 mb-4">
+                        {order.items.slice(0, 2).map((item) => (
+                          <div key={item.id} className="flex items-center gap-3 text-sm">
+                            <span className="font-light text-gray-700">{item.name}</span>
+                            <span className="text-gray-500">×{item.quantity}</span>
+                            <span className="text-gray-500 ml-auto">£{item.totalPrice.toFixed(2)}</span>
+                          </div>
+                        ))}
+                        {order.items.length > 2 && (
+                          <p className="text-sm text-gray-500 font-light">
+                            +{order.items.length - 2} more {order.items.length - 2 === 1 ? 'item' : 'items'}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex gap-3">
+                        <Link
+                          to={`/orders/${order.id}`}
+                          className="text-sm text-gray-700 hover:text-gray-900 font-light underline"
                         >
-                          {order.status === 'completed' && <CheckCircle className="w-3 h-3" />}
-                          {order.status === 'pending' && <Clock className="w-3 h-3" />}
-                          {order.status === 'cancelled' && <XCircle className="w-3 h-3" />}
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </span>
+                          View Details
+                        </Link>
                       </div>
                     </div>
-
-                    {/* Order Items Preview */}
-                    <div className="space-y-2 mb-4">
-                      {order.items.slice(0, 2).map((item: any) => (
-                        <div key={item.id} className="flex items-center gap-3 text-sm">
-                          {item.image && (
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          )}
-                          <span className="font-light text-gray-700">{item.name}</span>
-                          <span className="text-gray-500">×{item.quantity}</span>
-                        </div>
-                      ))}
-                      {order.items.length > 2 && (
-                        <p className="text-sm text-gray-500 font-light">
-                          +{order.items.length - 2} more {order.items.length - 2 === 1 ? 'item' : 'items'}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Link
-                        to={`/orders/${order.id}`}
-                        className="text-sm text-gray-700 hover:text-gray-900 font-light underline"
-                      >
-                        View Details
-                      </Link>
-                      {order.status === 'completed' && (
-                        <button className="text-sm text-amber-700 hover:text-amber-900 font-light underline">
-                          Reorder
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

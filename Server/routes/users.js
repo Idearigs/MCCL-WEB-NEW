@@ -719,6 +719,112 @@ router.post('/resend-verification', auth, async (req, res) => {
 });
 
 /**
+ * @route   GET /api/v1/users/orders
+ * @desc    Get authenticated user's orders
+ * @access  Private
+ */
+router.get('/orders', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get user's email to match with orders
+    const userResult = await pool.query(
+      'SELECT id, email FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const userEmail = userResult.rows[0].email;
+
+    // Get user's orders
+    const ordersResult = await pool.query(
+      `SELECT
+        o.id,
+        o.order_number,
+        o.status,
+        o.payment_status,
+        o.total_amount,
+        o.created_at,
+        o.shipping_address,
+        o.tracking_number,
+        COUNT(oi.id) as items_count
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       WHERE o.customer_email = $1
+       GROUP BY o.id
+       ORDER BY o.created_at DESC`,
+      [userEmail]
+    );
+
+    // Get items for each order
+    const ordersWithItems = await Promise.all(
+      ordersResult.rows.map(async (order) => {
+        const itemsResult = await pool.query(
+          `SELECT
+            id,
+            product_name,
+            quantity,
+            unit_price,
+            total_price
+           FROM order_items
+           WHERE order_id = $1`,
+          [order.id]
+        );
+
+        return {
+          id: order.id,
+          orderNumber: order.order_number,
+          status: order.status,
+          paymentStatus: order.payment_status,
+          total: parseFloat(order.total_amount),
+          createdAt: order.created_at,
+          shippingAddress: order.shipping_address,
+          trackingNumber: order.tracking_number,
+          itemsCount: parseInt(order.items_count),
+          items: itemsResult.rows.map(item => ({
+            id: item.id,
+            name: item.product_name,
+            quantity: item.quantity,
+            unitPrice: parseFloat(item.unit_price),
+            totalPrice: parseFloat(item.total_price)
+          }))
+        };
+      })
+    );
+
+    // Calculate stats
+    const totalOrders = ordersWithItems.length;
+    const totalSpent = ordersWithItems.reduce((sum, order) => sum + order.total, 0);
+    const pendingCount = ordersWithItems.filter(o => o.status === 'pending').length;
+
+    res.json({
+      success: true,
+      data: {
+        orders: ordersWithItems,
+        stats: {
+          totalOrders,
+          totalSpent: parseFloat(totalSpent.toFixed(2)),
+          pendingOrders: pendingCount
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch orders'
+    });
+  }
+});
+
+/**
  * @route   GET /api/v1/users/admin/all
  * @desc    Get all users with their details (Admin only)
  * @access  Private (Admin)

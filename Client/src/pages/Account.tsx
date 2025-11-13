@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Calendar, Heart, Package, Settings, Shield, AlertCircle, Check, Loader2, TrendingUp } from 'lucide-react';
 import LuxuryNavigationWhite from '../components/LuxuryNavigationWhite';
 import { FooterSection } from '../components/FooterSection';
@@ -13,13 +13,54 @@ const Account: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'security'>('overview');
   const [resendingEmail, setResendingEmail] = useState(false);
   const [resendMessage, setResendMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [ordersStats, setOrdersStats] = useState({ totalOrders: 0, totalSpent: 0 });
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchOrdersStats();
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchOrdersStats = async () => {
+    try {
+      setLoadingOrders(true);
+      const token = localStorage.getItem('user_access_token');
+
+      if (!token) {
+        console.error('Authentication token not found');
+        setLoadingOrders(false);
+        return;
+      }
+
+      const response = await fetch(api('/users/orders'), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data && data.data.stats) {
+          setOrdersStats({
+            totalOrders: data.data.stats.totalOrders,
+            totalSpent: data.data.stats.totalSpent
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching orders stats:', error);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   const handleResendVerification = async () => {
     setResendingEmail(true);
     setResendMessage(null);
 
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('user_access_token');
       const response = await fetch(api('/users/resend-verification'), {
         method: 'POST',
         headers: {
@@ -190,14 +231,18 @@ const Account: React.FC = () => {
                     <Package className="w-5 h-5 text-amber-600" />
                     <span className="text-sm font-light text-gray-700">Orders</span>
                   </div>
-                  <span className="text-sm font-medium text-gray-900">0</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {loadingOrders ? <Loader2 className="w-4 h-4 animate-spin" /> : ordersStats.totalOrders}
+                  </span>
                 </Link>
                 <div className="flex items-center justify-between p-3 rounded-md bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100">
                   <div className="flex items-center gap-3">
                     <TrendingUp className="w-5 h-5 text-green-600" />
                     <span className="text-sm font-light text-gray-700">Total Spent</span>
                   </div>
-                  <span className="text-sm font-bold text-green-700">£0.00</span>
+                  <span className="text-sm font-bold text-green-700">
+                    {loadingOrders ? <Loader2 className="w-4 h-4 animate-spin" /> : `£${ordersStats.totalSpent.toFixed(2)}`}
+                  </span>
                 </div>
               </div>
             </div>
