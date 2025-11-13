@@ -10,8 +10,9 @@ const Cart = (): JSX.Element => {
   const [promoCode, setPromoCode] = useState("");
   const [isPromoApplied, setIsPromoApplied] = useState(false);
 
-  const getItemTotal = (price: string, quantity: number) => {
-    const numericPrice = parseFloat(price.replace('£', '').replace(',', ''));
+  const getItemTotal = (price: string | number, quantity: number) => {
+    const priceStr = typeof price === 'number' ? price.toString() : price;
+    const numericPrice = parseFloat(priceStr.replace('£', '').replace(',', ''));
     return numericPrice * quantity;
   };
 
@@ -145,7 +146,17 @@ const Cart = (): JSX.Element => {
                               </h3>
                               <div className="space-y-2">
                                 <p className="text-xs text-gray-500 font-inter font-light tracking-wide uppercase">
-                                  {item.metal} • {item.size}
+                                  {item.type === 'watch' ? (
+                                    <>
+                                      {item.brand && <span>{item.brand}</span>}
+                                      {item.variant_name && <span> • {item.variant_name}</span>}
+                                    </>
+                                  ) : (
+                                    <>
+                                      {item.metal && <span>{item.metal}</span>}
+                                      {item.size && <span> • {item.size}</span>}
+                                    </>
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -164,7 +175,7 @@ const Cart = (): JSX.Element => {
                         {/* Price and Controls */}
                         <div className="flex items-end justify-between">
                           <div className="text-sm font-inter text-gray-600 font-light">
-                            {item.price}
+                            {typeof item.price === 'number' ? `£${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : item.price}
                           </div>
 
                           {/* Quantity Controls - Minimal */}
