@@ -21,7 +21,7 @@ router.get('/', auth, async (req, res) => {
         p.description,
         p.base_price,
         p.sale_price,
-        p.category,
+        p.category_id,
         p.in_stock,
         p.sku,
         COALESCE(
@@ -52,7 +52,7 @@ router.get('/', auth, async (req, res) => {
         description: row.description,
         basePrice: parseFloat(row.base_price),
         salePrice: row.sale_price ? parseFloat(row.sale_price) : null,
-        category: row.category,
+        categoryId: row.category_id,
         inStock: row.in_stock,
         sku: row.sku,
         images: row.images || [],
