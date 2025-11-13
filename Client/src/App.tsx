@@ -45,6 +45,7 @@ import TrustGuarantees from "./pages/TrustGuarantees";
 import Favorites from "./pages/Favorites";
 import Account from "./pages/Account";
 import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import VerifyEmail from "./pages/VerifyEmail";
 import AuthCallback from "./pages/AuthCallback";
 import AdminApp from "./admin/AdminApp";
@@ -113,6 +114,7 @@ const App = () => (
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/account" element={<Account />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:orderId" element={<OrderDetail />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
