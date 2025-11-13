@@ -19,19 +19,19 @@ router.get('/', auth, async (req, res) => {
         p.name,
         p.slug,
         p.description,
-        p.price,
-        p.compare_at_price,
+        p.base_price,
+        p.sale_price,
         p.category,
         p.in_stock,
         p.sku,
         COALESCE(
           (SELECT json_agg(json_build_object(
-            'url', pm.url,
-            'alt', pm.alt_text,
-            'is_primary', pm.is_primary
-          ) ORDER BY pm.is_primary DESC, pm.sort_order)
-          FROM product_media pm
-          WHERE pm.product_id = p.id),
+            'url', pi.image_url,
+            'alt', pi.alt_text,
+            'is_primary', pi.is_primary
+          ) ORDER BY pi.is_primary DESC, pi.sort_order)
+          FROM product_images pi
+          WHERE pi.product_id = p.id),
           '[]'::json
         ) as images
       FROM user_favorites uf
@@ -50,8 +50,8 @@ router.get('/', auth, async (req, res) => {
         name: row.name,
         slug: row.slug,
         description: row.description,
-        price: parseFloat(row.price),
-        compareAtPrice: row.compare_at_price ? parseFloat(row.compare_at_price) : null,
+        basePrice: parseFloat(row.base_price),
+        salePrice: row.sale_price ? parseFloat(row.sale_price) : null,
         category: row.category,
         inStock: row.in_stock,
         sku: row.sku,
