@@ -386,7 +386,7 @@ const WatchDetail = () => {
           {/* Left Column - Image Gallery - Modern Minimal Design */}
           <div className="flex flex-col bg-white overflow-visible w-full lg:w-1/2">
             {/* Main Image Container */}
-            <div className="relative overflow-hidden flex items-center justify-center w-full bg-gradient-to-br from-white via-gray-50 to-gray-100 px-4 lg:px-16" style={{ height: 'calc(50vh - 8px)' }} data-section="image-main">
+            <div className="relative overflow-hidden flex items-center justify-center w-full bg-gradient-to-br from-white via-gray-50 to-gray-100 px-4 lg:px-16" style={{ height: displayImages.length > 1 ? 'auto' : '100vh', minHeight: '60vh', paddingTop: '2rem', paddingBottom: '2rem' }} data-section="image-main">
 
               <img
                 src={currentImage.image_url}
@@ -433,7 +433,7 @@ const WatchDetail = () => {
 
             {/* Related Product Images Grid - Fill the Space */}
             {displayImages.length > 1 && (
-              <div className="grid grid-cols-2 gap-1 px-0 lg:px-0 py-0 flex-1" style={{ gridAutoRows: '1fr' }}>
+              <div className="hidden md:grid grid-cols-2 gap-1 px-0 lg:px-0 py-0 flex-1" style={{ gridAutoRows: '1fr', minHeight: '250px' }}>
                 {displayImages.slice(0, 2).map((img, index) => (
                   <div
                     key={img.id}
@@ -456,7 +456,7 @@ const WatchDetail = () => {
           </div>
 
           {/* Right Column - Product Info - Modern Minimal Luxury - SCROLLABLE */}
-          <div className="flex flex-col px-8 lg:px-48 py-12 lg:py-20 bg-white space-y-8 w-full lg:flex-1" data-product-details>
+          <div className="flex flex-col px-6 md:px-8 lg:px-48 py-8 md:py-12 lg:py-20 bg-white space-y-8 w-full lg:flex-1" data-product-details>
 
             {/* Brand & Model - Elegant Header */}
             <div className="space-y-4">
