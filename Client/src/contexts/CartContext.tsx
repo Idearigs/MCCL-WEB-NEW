@@ -3,11 +3,35 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 export interface CartItem {
   id: string;
   name: string;
-  price: string;
-  metal: string;
-  size: string;
+  price: string | number;
+  metal?: string;
+  size?: string;
   image: string;
   quantity: number;
+  // Watch-specific fields
+  brand?: string;
+  type?: string;
+  variant_name?: string;
+  // Product options/customizations
+  selectedOptions?: {
+    metal?: string;
+    size?: string;
+    // Nivoda options (if applicable)
+    stoneType?: 'natural' | 'lab-grown';
+    carat?: string;
+    clarity?: string;
+    colour?: string;
+    cut?: string;
+    // Generic options storage for other customizations
+    [key: string]: any;
+  };
+  // Price information from Nivoda if applicable
+  nivodaPrice?: {
+    min: number;
+    avg: number;
+    max: number;
+  };
+  totalPrice?: number;
 }
 
 interface CartContextType {
@@ -72,11 +96,29 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const addToCart = (newItem: Omit<CartItem, 'quantity'>) => {
     setCartItems(prev => {
-      const existingItem = prev.find(item =>
-        item.id === newItem.id &&
-        item.metal === newItem.metal &&
-        item.size === newItem.size
-      );
+      // Compare items by id and all their selected options to determine if it's the same item
+      const existingItem = prev.find(item => {
+        // Must have same id
+        if (item.id !== newItem.id) return false;
+
+        // Compare basic jewelry options
+        if (item.metal !== newItem.metal || item.size !== newItem.size) return false;
+
+        // Compare watch fields
+        if (item.brand !== newItem.brand || item.variant_name !== newItem.variant_name) return false;
+
+        // Deep compare selected options
+        const existingOptions = item.selectedOptions || {};
+        const newOptions = newItem.selectedOptions || {};
+
+        // Check if all option keys and values match
+        const allKeys = new Set([...Object.keys(existingOptions), ...Object.keys(newOptions)]);
+        for (const key of allKeys) {
+          if (existingOptions[key] !== newOptions[key]) return false;
+        }
+
+        return true;
+      });
 
       if (existingItem) {
         return prev.map(item =>

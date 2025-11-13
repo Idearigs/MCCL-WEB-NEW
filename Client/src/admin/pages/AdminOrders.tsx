@@ -545,30 +545,73 @@ const AdminOrders: React.FC = () => {
                     {/* Order Items */}
                     <div className="border-t border-gray-200 pt-6">
                       <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Order Items</h3>
-                      <div className="space-y-3">
-                        {selectedOrder.items?.map((item) => (
-                          <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <div>
-                              <div className="font-medium text-gray-900">{item.product_name}</div>
-                              <div className="text-sm text-gray-600">
-                                Qty: {item.quantity}
-                                {item.product_type && (
-                                  <span className="ml-3 inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
-                                    {item.product_type}
-                                  </span>
-                                )}
+                      <div className="space-y-4">
+                        {selectedOrder.items?.map((item) => {
+                          // Format product attributes for display
+                          const renderAttributes = () => {
+                            const attributes = item.attributes || {};
+                            const attrLines = [];
+
+                            // Handle watches
+                            if (item.product_type === 'watch') {
+                              if (attributes.brand) attrLines.push(`Brand: ${attributes.brand}`);
+                              if (attributes.variant_name) attrLines.push(`Variant: ${attributes.variant_name}`);
+                            }
+
+                            // Handle jewelry
+                            if (item.product_type === 'jewelry' || !item.product_type) {
+                              if (attributes.metal) attrLines.push(`Metal: ${attributes.metal}`);
+                              if (attributes.size) attrLines.push(`Size: ${attributes.size}`);
+                            }
+
+                            // Handle Nivoda stone options
+                            if (attributes.stoneType) {
+                              attrLines.push(`Stone Type: ${attributes.stoneType}`);
+                              if (attributes.carat) attrLines.push(`Carat: ${attributes.carat}`);
+                              if (attributes.clarity) attrLines.push(`Clarity: ${attributes.clarity}`);
+                              if (attributes.colour) attrLines.push(`Colour: ${attributes.colour}`);
+                              if (attributes.cut) attrLines.push(`Cut: ${attributes.cut}`);
+                            }
+
+                            return attrLines;
+                          };
+
+                          const attributeLines = renderAttributes();
+
+                          return (
+                            <div key={item.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900 mb-1">{item.product_name}</div>
+                                  <div className="text-sm text-gray-600 mb-2">
+                                    Qty: {item.quantity}
+                                    {item.product_type && (
+                                      <span className="ml-3 inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                                        {item.product_type}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {/* Product Options/Attributes */}
+                                  {attributeLines.length > 0 && (
+                                    <div className="mt-2 space-y-1 text-xs text-gray-700 bg-white p-2 rounded border border-gray-200">
+                                      {attributeLines.map((line, idx) => (
+                                        <div key={idx}>{line}</div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="text-right ml-4">
+                                  <div className="font-medium text-gray-900">
+                                    £{item.total_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                  </div>
+                                  <div className="text-sm text-gray-600">
+                                    £{item.unit_price.toLocaleString('en-US', { minimumFractionDigits: 2 })} each
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="font-medium text-gray-900">
-                                £{item.total_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                £{item.unit_price.toLocaleString('en-US', { minimumFractionDigits: 2 })} each
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 

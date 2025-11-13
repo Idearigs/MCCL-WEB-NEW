@@ -122,19 +122,29 @@ const CartSlide: React.FC<CartSlideProps> = ({
                       </button>
                     </div>
                     
-                    <p className="text-xs text-gray-600 font-cormorant">
+                    <div className="text-xs text-gray-600 font-cormorant space-y-1">
                       {item.type === 'watch' ? (
-                        <>
+                        <div>
                           {item.brand && <span>{item.brand}</span>}
                           {item.variant_name && <span> • {item.variant_name}</span>}
-                        </>
+                        </div>
                       ) : (
-                        <>
+                        <div>
                           {item.metal && <span>{item.metal.charAt(0).toUpperCase() + item.metal.slice(1)}</span>}
                           {item.size && <span> / Size {item.size}</span>}
-                        </>
+                        </div>
                       )}
-                    </p>
+                      {/* Display Nivoda stone options if available */}
+                      {item.selectedOptions?.stoneType && (
+                        <div className="text-gray-600">
+                          Stone: {item.selectedOptions.stoneType}
+                          {item.selectedOptions.carat && `, ${item.selectedOptions.carat}`}
+                          {item.selectedOptions.clarity && `, ${item.selectedOptions.clarity}`}
+                          {item.selectedOptions.colour && `, ${item.selectedOptions.colour}`}
+                          {item.selectedOptions.cut && `, ${item.selectedOptions.cut}`}
+                        </div>
+                      )}
+                    </div>
                     
                     {/* Quantity Controls */}
                     <div className="flex items-center justify-between pt-2">

@@ -115,6 +115,17 @@ const confirmPayment = asyncHandler(async (req, res) => {
         throw new Error('OrderItem model is undefined');
       }
 
+      // Build attributes object with all product customizations
+      const attributes = {};
+      if (item.selectedOptions) {
+        Object.assign(attributes, item.selectedOptions);
+      }
+      // Also store individual fields for backwards compatibility
+      if (item.metal) attributes.metal = item.metal;
+      if (item.size) attributes.size = item.size;
+      if (item.brand) attributes.brand = item.brand;
+      if (item.variant_name) attributes.variant_name = item.variant_name;
+
       const orderItem = await OrderItem.create({
         order_id: order.id,
         product_id: item.product_id,
@@ -123,7 +134,8 @@ const confirmPayment = asyncHandler(async (req, res) => {
         product_type: item.type || null,
         quantity: item.quantity,
         unit_price: item.price,
-        total_price: item.price * item.quantity
+        total_price: item.price * item.quantity,
+        attributes: Object.keys(attributes).length > 0 ? attributes : null
       });
 
       createdItems.push(orderItem);

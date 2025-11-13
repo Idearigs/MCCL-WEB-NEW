@@ -329,16 +329,23 @@ const WatchDetail = () => {
       ? price + selectedVariantData.price_adjustment
       : price;
 
+    const selectedOptions: any = {
+      brand: watch.brand.name
+    };
+    if (selectedVariantData?.name) {
+      selectedOptions.variant_name = selectedVariantData.name;
+    }
+
     addToCart({
       id: watch.id,
       name: watch.name,
       price: cartPrice,
-      quantity: quantity,
       image: currentImage.image_url,
       brand: watch.brand.name,
       type: 'watch',
       variant_id: selectedVariant,
-      variant_name: selectedVariantData?.name
+      variant_name: selectedVariantData?.name,
+      selectedOptions: selectedOptions
     });
   };
 

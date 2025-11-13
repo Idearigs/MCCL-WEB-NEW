@@ -158,6 +158,30 @@ const Cart = (): JSX.Element => {
                                     </>
                                   )}
                                 </p>
+                                {/* Display Nivoda stone options if available */}
+                                {item.selectedOptions?.stoneType && (
+                                  <p className="text-xs text-gray-500 font-inter font-light tracking-wide">
+                                    <span className="block">
+                                      Stone: {item.selectedOptions.stoneType}
+                                      {item.selectedOptions.carat && `, ${item.selectedOptions.carat} carat`}
+                                    </span>
+                                    {item.selectedOptions.clarity && (
+                                      <span className="block">
+                                        Clarity: {item.selectedOptions.clarity}
+                                      </span>
+                                    )}
+                                    {item.selectedOptions.colour && (
+                                      <span className="block">
+                                        Colour: {item.selectedOptions.colour}
+                                      </span>
+                                    )}
+                                    {item.selectedOptions.cut && (
+                                      <span className="block">
+                                        Cut: {item.selectedOptions.cut}
+                                      </span>
+                                    )}
+                                  </p>
+                                )}
                               </div>
                             </div>
 

@@ -384,25 +384,33 @@ const ProductDetail = () => {
 
     // Simulate adding to cart process
     setTimeout(() => {
+      // Build selected options object with all customizations
+      const selectedOptions: any = {
+        metal: selectedMetal,
+        size: selectedSize
+      };
+
+      // Include Nivoda stone options if enabled
+      if (productData?.nivoda_enabled) {
+        selectedOptions.stoneType = selectedStoneType;
+        selectedOptions.carat = selectedCarat;
+        selectedOptions.clarity = selectedClarity;
+        selectedOptions.colour = selectedColour;
+        selectedOptions.cut = selectedCut;
+      }
+
       const newItem: any = {
         id: productData.id,
         name: productData.name,
         price: productData.price,
         metal: selectedMetal,
         size: selectedSize,
-        image: displayImages[0]?.url || productData.images[0]?.url
+        image: displayImages[0]?.url || productData.images[0]?.url,
+        selectedOptions: selectedOptions
       };
 
-      // Include Nivoda stone options if enabled
+      // Include Nivoda price information if available
       if (productData?.nivoda_enabled) {
-        newItem.nivodaOptions = {
-          stoneType: selectedStoneType,
-          carat: selectedCarat,
-          clarity: selectedClarity,
-          colour: selectedColour,
-          cut: selectedCut
-        };
-        // Price is calculated from Nivoda API based on selected specs
         newItem.nivodaPrice = nivodaPrice; // { min, avg, max }
         newItem.totalPrice = calculateTotalPrice(); // Uses Nivoda API price (avg) when available
       }

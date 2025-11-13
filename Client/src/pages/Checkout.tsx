@@ -184,7 +184,12 @@ const PaymentForm = ({
             quantity: item.quantity,
             price: getPriceAsNumber(item.price),
             variant_id: item.variant_id || null,
-            type: item.type || null
+            type: item.type || null,
+            selectedOptions: item.selectedOptions || null,
+            metal: item.metal || null,
+            size: item.size || null,
+            brand: item.brand || null,
+            variant_name: item.variant_name || null
           }))
         })
       });
