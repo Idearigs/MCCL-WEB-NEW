@@ -384,10 +384,20 @@ const ProductDetail = () => {
 
     // Simulate adding to cart process
     setTimeout(() => {
+      // Get the metal name from selected metal ID
+      const selectedMetalName = productData?.available_metals?.find(
+        (metal: any) => metal.id === selectedMetal
+      )?.name || 'Platinum';
+
+      // Get the size label from selected size code
+      const selectedSizeLabel = ringSizes.find(
+        (size) => size.value === selectedSize
+      )?.label || selectedSize;
+
       // Build selected options object with all customizations
       const selectedOptions: any = {
-        metal: selectedMetal,
-        size: selectedSize
+        metal: selectedMetalName,
+        size: selectedSizeLabel
       };
 
       // Include Nivoda stone options if enabled
@@ -403,8 +413,8 @@ const ProductDetail = () => {
         id: productData.id,
         name: productData.name,
         price: productData.price,
-        metal: selectedMetal,
-        size: selectedSize,
+        metal: selectedMetalName,
+        size: selectedSizeLabel,
         image: displayImages[0]?.url || productData.images[0]?.url,
         selectedOptions: selectedOptions
       };

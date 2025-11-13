@@ -303,6 +303,22 @@ const Checkout = (): JSX.Element => {
   const handleSuccess = (data: any) => {
     setOrderData(data);
     setSuccessMessage(`Order confirmed! Order Number: ${data.orderNumber}`);
+
+    // Prepare order items data with attributes for ThankYou page
+    const orderItems = cartItems.map((item: any) => ({
+      product_name: item.name,
+      product_type: item.type || null,
+      quantity: item.quantity,
+      unit_price: getPriceAsNumber(item.price),
+      total_price: getPriceAsNumber(item.price) * item.quantity,
+      attributes: item.selectedOptions || {
+        metal: item.metal,
+        size: item.size,
+        brand: item.brand,
+        variant_name: item.variant_name
+      }
+    }));
+
     clearCart(); // Clear cart after successful payment
 
     // Redirect to thank you page after 2 seconds
@@ -314,7 +330,8 @@ const Checkout = (): JSX.Element => {
           totalAmount: data.totalAmount,
           customerEmail: email,
           customerName: `${firstName} ${lastName}`,
-          status: data.status
+          status: data.status,
+          items: orderItems
         }
       });
     }, 2000);

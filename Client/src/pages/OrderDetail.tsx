@@ -12,6 +12,19 @@ interface OrderItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  product_type?: string;
+  attributes?: {
+    metal?: string;
+    size?: string;
+    brand?: string;
+    variant_name?: string;
+    stoneType?: string;
+    carat?: string;
+    clarity?: string;
+    colour?: string;
+    cut?: string;
+    [key: string]: any;
+  };
 }
 
 interface Order {
@@ -211,22 +224,70 @@ const OrderDetail: React.FC = () => {
             {/* Order Items */}
             <div className="bg-white rounded-lg shadow-sm p-8">
               <h2 className="text-xl font-light text-gray-900 mb-6">Order Items</h2>
-              <div className="space-y-4">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex items-start justify-between pb-4 border-b border-gray-100 last:border-b-0">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 mb-1">{item.name}</h3>
-                      <p className="text-sm text-gray-600 font-light">
-                        Quantity: {item.quantity} × £{item.unitPrice.toFixed(2)}
-                      </p>
+              <div className="space-y-6">
+                {order.items.map((item) => {
+                  // Format product attributes for display
+                  const renderAttributes = () => {
+                    const attributes = item.attributes || {};
+                    const attrLines = [];
+
+                    // Handle watches
+                    if (item.product_type === 'watch') {
+                      if (attributes.brand) attrLines.push(`Brand: ${attributes.brand}`);
+                      if (attributes.variant_name) attrLines.push(`Variant: ${attributes.variant_name}`);
+                    }
+
+                    // Handle jewelry
+                    if (item.product_type === 'jewelry' || !item.product_type) {
+                      if (attributes.metal) attrLines.push(`Metal: ${attributes.metal}`);
+                      if (attributes.size) attrLines.push(`Size: ${attributes.size}`);
+                    }
+
+                    // Handle Nivoda stone options
+                    if (attributes.stoneType) {
+                      attrLines.push(`Stone Type: ${attributes.stoneType}`);
+                      if (attributes.carat) attrLines.push(`Carat: ${attributes.carat}`);
+                      if (attributes.clarity) attrLines.push(`Clarity: ${attributes.clarity}`);
+                      if (attributes.colour) attrLines.push(`Colour: ${attributes.colour}`);
+                      if (attributes.cut) attrLines.push(`Cut: ${attributes.cut}`);
+                    }
+
+                    return attrLines;
+                  };
+
+                  const attributeLines = renderAttributes();
+
+                  return (
+                    <div key={item.id} className="pb-4 border-b border-gray-100 last:border-b-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900 mb-1">{item.name}</h3>
+                          {item.product_type && (
+                            <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded mb-2 mr-2">
+                              {item.product_type}
+                            </span>
+                          )}
+                          <p className="text-sm text-gray-600 font-light">
+                            Quantity: {item.quantity} × £{item.unitPrice.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="text-right ml-4">
+                          <p className="font-medium text-gray-900">
+                            £{item.totalPrice.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      {/* Product Attributes */}
+                      {attributeLines.length > 0 && (
+                        <div className="mt-3 space-y-1 text-xs text-gray-700 bg-white p-2 rounded border border-gray-200 ml-0">
+                          {attributeLines.map((line, idx) => (
+                            <div key={idx}>{line}</div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right ml-4">
-                      <p className="font-medium text-gray-900">
-                        £{item.totalPrice.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

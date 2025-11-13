@@ -3,6 +3,26 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle, Package, Truck, ArrowRight } from "lucide-react";
 import { FooterSection } from "../components/FooterSection";
 
+interface OrderItemData {
+  product_name: string;
+  product_type?: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  attributes?: {
+    metal?: string;
+    size?: string;
+    brand?: string;
+    variant_name?: string;
+    stoneType?: string;
+    carat?: string;
+    clarity?: string;
+    colour?: string;
+    cut?: string;
+    [key: string]: any;
+  };
+}
+
 interface OrderState {
   orderId?: string;
   orderNumber?: string;
@@ -10,6 +30,7 @@ interface OrderState {
   customerEmail?: string;
   customerName?: string;
   status?: string;
+  items?: OrderItemData[];
 }
 
 const ThankYou = (): JSX.Element => {
@@ -114,6 +135,91 @@ const ThankYou = (): JSX.Element => {
                 </p>
               </div>
             </div>
+
+            {/* Divider */}
+            <hr className="border-gray-200 my-8" />
+
+            {/* Order Items */}
+            {orderData.items && orderData.items.length > 0 && (
+              <div className="mb-8">
+                <p className="text-xs font-inter text-gray-500 font-light tracking-wide uppercase mb-4">
+                  Order Items
+                </p>
+                <div className="space-y-4">
+                  {orderData.items.map((item: OrderItemData, index: number) => {
+                    // Format product attributes for display
+                    const renderAttributes = () => {
+                      const attributes = item.attributes || {};
+                      const attrLines = [];
+
+                      // Handle watches
+                      if (item.product_type === 'watch') {
+                        if (attributes.brand) attrLines.push(`Brand: ${attributes.brand}`);
+                        if (attributes.variant_name) attrLines.push(`Variant: ${attributes.variant_name}`);
+                      }
+
+                      // Handle jewelry
+                      if (item.product_type === 'jewelry' || !item.product_type) {
+                        if (attributes.metal) attrLines.push(`Metal: ${attributes.metal}`);
+                        if (attributes.size) attrLines.push(`Size: ${attributes.size}`);
+                      }
+
+                      // Handle Nivoda stone options
+                      if (attributes.stoneType) {
+                        attrLines.push(`Stone Type: ${attributes.stoneType}`);
+                        if (attributes.carat) attrLines.push(`Carat: ${attributes.carat}`);
+                        if (attributes.clarity) attrLines.push(`Clarity: ${attributes.clarity}`);
+                        if (attributes.colour) attrLines.push(`Colour: ${attributes.colour}`);
+                        if (attributes.cut) attrLines.push(`Cut: ${attributes.cut}`);
+                      }
+
+                      return attrLines;
+                    };
+
+                    const attributeLines = renderAttributes();
+
+                    return (
+                      <div key={index} className="bg-gray-50 border border-gray-100 rounded p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <p className="font-cormorant font-light text-gray-900 text-lg mb-1">
+                              {item.product_name}
+                            </p>
+                            {item.product_type && (
+                              <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded mb-2 mr-2">
+                                {item.product_type}
+                              </span>
+                            )}
+                            <p className="text-xs text-gray-600 font-inter font-light">
+                              Quantity: {item.quantity} × £{item.unit_price.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right ml-4">
+                            <p className="font-cormorant font-light text-gray-900">
+                              £{item.total_price.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Product Attributes */}
+                        {attributeLines.length > 0 && (
+                          <div className="mt-3 space-y-1 text-xs text-gray-700 bg-white p-2 rounded border border-gray-100">
+                            {attributeLines.map((line: string, idx: number) => (
+                              <div key={idx}>{line}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Divider */}
             <hr className="border-gray-200 my-8" />
