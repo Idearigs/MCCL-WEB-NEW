@@ -9,6 +9,7 @@ import AdminCategories from './pages/AdminCategories';
 import AdminJewelryCategories from './pages/AdminJewelryCategories';
 import AdminWatches from './pages/AdminWatches';
 import AdminUsers from './pages/AdminUsers';
+import AdminOrders from './pages/AdminOrders';
 
 const AdminApp: React.FC = () => {
   return (
@@ -68,6 +69,15 @@ const AdminApp: React.FC = () => {
           element={
             <ProtectedRoute>
               <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <AdminOrders />
             </ProtectedRoute>
           }
         />

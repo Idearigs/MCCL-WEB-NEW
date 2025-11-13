@@ -3,70 +3,12 @@ import LuxuryNavigation from "../components/LuxuryNavigation";
 import { FooterSection } from "../components/FooterSection";
 import { Link } from "react-router-dom";
 import { Plus, Minus, X, ChevronRight, Heart, Shield, Truck, RotateCcw } from "lucide-react";
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: string;
-  metal: string;
-  size: string;
-  image: string;
-  quantity: number;
-  inStock: boolean;
-}
+import { useCart } from "../contexts/CartContext";
 
 const Cart = (): JSX.Element => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: "Raindance Classic Platinum Diamond Ring",
-      price: "£11,000",
-      metal: "Platinum",
-      size: "M",
-      image: "/images/Engagement.png",
-      quantity: 1,
-      inStock: true
-    },
-    {
-      id: 2,
-      name: "Diamond Tennis Necklace",
-      price: "£4,200",
-      metal: "White Gold",
-      size: "16 inches",
-      image: "/images/Diamonds.jpg",
-      quantity: 2,
-      inStock: true
-    },
-    {
-      id: 3,
-      name: "Pearl Drop Earrings",
-      price: "£850",
-      metal: "Yellow Gold",
-      size: "One Size",
-      image: "/images/Jewellery.jpg",
-      quantity: 1,
-      inStock: false
-    }
-  ]);
-
+  const { cartItems, updateQuantity, removeItem } = useCart();
   const [promoCode, setPromoCode] = useState("");
   const [isPromoApplied, setIsPromoApplied] = useState(false);
-
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity === 0) {
-      setCartItems(prev => prev.filter(item => item.id !== id));
-    } else {
-      setCartItems(prev => 
-        prev.map(item => 
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
-    }
-  };
-
-  const removeItem = (id: number) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
-  };
 
   const getItemTotal = (price: string, quantity: number) => {
     const numericPrice = parseFloat(price.replace('£', '').replace(',', ''));
@@ -145,13 +87,13 @@ const Cart = (): JSX.Element => {
 
       <main className="flex-1 pt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-          {/* Minimal Header */}
+          {/* Minimal Header with Luxury Wording */}
           <div className="mb-16 text-center">
             <h1 className="text-5xl lg:text-6xl font-light text-gray-900 mb-4 font-cormorant tracking-wide">
-              Shopping Bag
+              Your Collection
             </h1>
             <p className="text-sm text-gray-500 font-inter font-light tracking-widest uppercase">
-              {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+              {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} selected
             </p>
           </div>
 
@@ -166,10 +108,10 @@ const Cart = (): JSX.Element => {
                     <path d="M16 10a4 4 0 0 1-8 0"/>
                   </svg>
                 </div>
-                <h2 className="text-2xl font-light text-gray-900 mb-4 font-cormorant">Your bag is empty</h2>
+                <h2 className="text-2xl font-light text-gray-900 mb-4 font-cormorant">Your collection is empty</h2>
                 <p className="text-gray-600 font-cormorant mb-8">Discover our exquisite collection of fine jewelry</p>
               </div>
-              <Link 
+              <Link
                 to="/products"
                 className="inline-block bg-gray-900 text-white px-8 py-3 font-inter font-light uppercase tracking-wider text-sm hover:bg-gray-800 transition-colors"
               >
@@ -182,7 +124,7 @@ const Cart = (): JSX.Element => {
               {/* Cart Items - Left Column */}
               <div className="lg:col-span-7 space-y-12">
                 {cartItems.map((item, index) => (
-                  <div key={item.id} className={`pb-8 ${index !== cartItems.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                  <div key={`${item.id}-${item.metal}-${item.size}`} className={`pb-8 ${index !== cartItems.length - 1 ? 'border-b border-gray-200' : ''}`}>
                     <div className="flex gap-8">
                       {/* Product Image - Minimal */}
                       <div className="flex-shrink-0 w-40 h-40 bg-white border border-gray-200 overflow-hidden">
@@ -205,17 +147,12 @@ const Cart = (): JSX.Element => {
                                 <p className="text-xs text-gray-500 font-inter font-light tracking-wide uppercase">
                                   {item.metal} • {item.size}
                                 </p>
-                                {!item.inStock && (
-                                  <p className="text-xs text-orange-600 font-inter font-light tracking-wide uppercase">
-                                    Out of stock
-                                  </p>
-                                )}
                               </div>
                             </div>
 
                             {/* Remove Button - Minimal */}
                             <button
-                              onClick={() => removeItem(item.id)}
+                              onClick={() => removeItem(index)}
                               className="p-1 text-gray-400 hover:text-gray-900 transition-colors"
                               aria-label="Remove item"
                             >
@@ -233,9 +170,8 @@ const Cart = (): JSX.Element => {
                           {/* Quantity Controls - Minimal */}
                           <div className="flex items-center space-x-4">
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(index, item.quantity - 1)}
                               className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
-                              disabled={!item.inStock}
                             >
                               <Minus className="w-4 h-4" />
                             </button>
@@ -243,9 +179,8 @@ const Cart = (): JSX.Element => {
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(index, item.quantity + 1)}
                               className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
-                              disabled={!item.inStock}
                             >
                               <Plus className="w-4 h-4" />
                             </button>
@@ -267,7 +202,7 @@ const Cart = (): JSX.Element => {
                   <div className="space-y-6 pb-8 border-b border-gray-200">
                     <div className="flex justify-between">
                       <span className="text-xs font-inter text-gray-500 font-light tracking-wide uppercase">Subtotal</span>
-                      <span className="text-sm font-cormorant text-gray-900">£{getSubtotal().toLocaleString()}</span>
+                      <span className="text-sm font-cormorant text-gray-900">£{getSubtotal().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
 
                     <div className="flex justify-between">
@@ -282,7 +217,7 @@ const Cart = (): JSX.Element => {
                     {isPromoApplied && (
                       <div className="flex justify-between">
                         <span className="text-xs font-inter text-green-600 font-light tracking-wide uppercase">Discount</span>
-                        <span className="text-sm font-cormorant text-green-600">-£{getDiscount().toLocaleString()}</span>
+                        <span className="text-sm font-cormorant text-green-600">-£{getDiscount().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                     )}
                   </div>
@@ -291,7 +226,7 @@ const Cart = (): JSX.Element => {
                   <div className="flex justify-between items-baseline">
                     <span className="text-xs font-inter text-gray-500 font-light tracking-wide uppercase">Total</span>
                     <span className="text-3xl font-cormorant font-light text-gray-900">
-                      £{getTotal().toLocaleString()}
+                      £{getTotal().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
 
@@ -332,9 +267,7 @@ const Cart = (): JSX.Element => {
                   {/* Checkout Button */}
                   <Link
                     to="/checkout"
-                    className={`block w-full py-4 bg-gray-900 text-white font-inter font-light uppercase tracking-wider text-xs hover:bg-gray-800 transition-colors text-center ${
-                      cartItems.some(item => !item.inStock) ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
-                    }`}
+                    className="block w-full py-4 bg-gray-900 text-white font-inter font-light uppercase tracking-wider text-xs hover:bg-gray-800 transition-colors text-center"
                   >
                     Proceed to Checkout
                   </Link>
@@ -352,7 +285,7 @@ const Cart = (): JSX.Element => {
                       Secure checkout with encryption
                     </p>
                     <p className="text-xs text-gray-500 font-inter font-light">
-                      Free delivery • Easy returns
+                      Free delivery on orders over £1,000 • Easy returns
                     </p>
                   </div>
                 </div>

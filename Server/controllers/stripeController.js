@@ -1,6 +1,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const asyncHandler = require('../middleware/asyncHandler');
 const { getModels } = require('../models');
+const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 
 /**
  * Create a payment intent for the cart
@@ -74,9 +75,17 @@ const confirmPayment = asyncHandler(async (req, res) => {
       });
     }
 
+    // Generate professional order number: MCL-YYYYMMDD-XXXXX
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const randomNum = String(Math.floor(Math.random() * 100000)).padStart(5, '0');
+    const orderNumber = `MCL-${year}${month}${day}-${randomNum}`;
+
     // Create order in database
     const order = await Order.create({
-      order_number: `ORD-${Date.now()}`,
+      order_number: orderNumber,
       customer_name: customerName || 'Guest',
       customer_email: customerEmail,
       status: 'pending',
@@ -90,6 +99,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
     });
 
     // Create order items
+    const createdItems = [];
     for (const item of cartItems) {
       console.log('Creating order item:', {
         order_id: order.id,
@@ -115,6 +125,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
         total_price: item.price * item.quantity
       });
 
+      createdItems.push(orderItem);
       console.log('Order item created:', orderItem.id);
 
       // Update inventory if applicable
@@ -133,6 +144,25 @@ const confirmPayment = asyncHandler(async (req, res) => {
           });
         }
       }
+    }
+
+    // Send order confirmation email
+    try {
+      await sendOrderConfirmationEmail({
+        id: order.id,
+        customerEmail,
+        customerName,
+        orderNumber: order.order_number,
+        totalAmount: order.total_amount,
+        currency: order.currency,
+        items: createdItems,
+        shippingAddress: order.shipping_address,
+        createdAt: order.createdAt
+      });
+      console.log(`Order confirmation email sent to ${customerEmail}`);
+    } catch (emailError) {
+      console.error(`Failed to send confirmation email: ${emailError.message}`);
+      // Don't fail the order creation if email fails
     }
 
     res.json({
@@ -167,20 +197,15 @@ const getOrder = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
 
   try {
-    const { Order, OrderItem, Product } = getModels();
+    const { Order, OrderItem } = getModels();
 
+    // Get order with items (simplified to avoid relationship issues)
     const order = await Order.findByPk(orderId, {
       include: [
         {
           model: OrderItem,
           as: 'items',
-          include: [
-            {
-              model: Product,
-              as: 'product',
-              attributes: ['id', 'name', 'slug', 'price']
-            }
-          ]
+          attributes: ['id', 'product_id', 'product_name', 'quantity', 'unit_price', 'total_price']
         }
       ]
     });
@@ -197,6 +222,7 @@ const getOrder = asyncHandler(async (req, res) => {
       data: order
     });
   } catch (error) {
+    console.error('Error in getOrder:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to retrieve order',
@@ -366,9 +392,137 @@ async function handlePaymentIntentRequiresAction(paymentIntent) {
   }
 }
 
+/**
+ * Get all orders with optional filtering (admin)
+ * GET /api/v1/payments/orders
+ */
+const getAllOrders = asyncHandler(async (req, res) => {
+  try {
+    const { Order, OrderItem } = getModels();
+
+    const orders = await Order.findAll({
+      include: [
+        {
+          model: OrderItem,
+          as: 'items',
+          attributes: ['id', 'product_id', 'product_name', 'quantity', 'unit_price', 'total_price'],
+          required: false // Use LEFT JOIN instead of INNER JOIN
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      attributes: [
+        'id',
+        'order_number',
+        'customer_name',
+        'customer_email',
+        'status',
+        'payment_status',
+        'payment_method',
+        'total_amount',
+        'currency',
+        'shipping_address',
+        'notes',
+        'createdAt',
+        'updatedAt'
+      ],
+      subQuery: false, // Prevent subquery issues with includes
+      raw: false
+    });
+
+    res.json({
+      success: true,
+      data: {
+        orders: orders || []
+      }
+    });
+  } catch (error) {
+    console.error('Error in getAllOrders:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve orders',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Update order status (admin)
+ * PATCH /api/v1/payments/order/:orderId/status
+ */
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({
+      success: false,
+      message: 'Status is required'
+    });
+  }
+
+  const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid status. Must be one of: ' + validStatuses.join(', ')
+    });
+  }
+
+  try {
+    const { Order } = getModels();
+
+    const order = await Order.findByPk(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    const oldStatus = order.status;
+    await order.update({ status });
+
+    // Send status update email
+    try {
+      await sendOrderStatusUpdateEmail({
+        id: order.id,
+        customerEmail: order.customer_email,
+        customerName: order.customer_name,
+        orderNumber: order.order_number,
+        trackingNumber: order.tracking_number
+      }, status);
+      console.log(`Order status update email sent to ${order.customer_email}`);
+    } catch (emailError) {
+      console.error(`Failed to send status update email: ${emailError.message}`);
+      // Don't fail the status update if email fails
+    }
+
+    res.json({
+      success: true,
+      data: {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        status: order.status,
+        message: 'Order status updated successfully'
+      }
+    });
+  } catch (error) {
+    console.error('Error in updateOrderStatus:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update order status',
+      error: error.message
+    });
+  }
+});
+
 module.exports = {
   createPaymentIntent,
   confirmPayment,
   getOrder,
-  handleWebhook
+  handleWebhook,
+  getAllOrders,
+  updateOrderStatus
 };

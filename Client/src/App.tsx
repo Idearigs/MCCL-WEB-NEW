@@ -20,6 +20,7 @@ import WatchDetail from "./pages/WatchDetail";
 import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import ThankYou from "./pages/ThankYou";
 import Roamer from "./pages/Roamer";
 import Briston from "./pages/Briston";
 import Festina from "./pages/Festina";
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/products" element={<Products />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/thank-you" element={<ThankYou />} />
             <Route path="/jewellery" element={<Jewellery />} />
             <Route path="/diamonds" element={<Diamonds />} />
             <Route path="/watches" element={<Watches />} />

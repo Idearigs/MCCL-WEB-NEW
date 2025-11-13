@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const stripeController = require('../controllers/stripeController');
+const { authMiddleware } = require('../middleware/auth');
 
 /**
  * Payment Routes
@@ -15,5 +16,11 @@ router.post('/confirm', stripeController.confirmPayment);
 
 // Get order details
 router.get('/order/:orderId', stripeController.getOrder);
+
+// Get all orders (admin only)
+router.get('/orders', authMiddleware, stripeController.getAllOrders);
+
+// Update order status (admin only)
+router.patch('/order/:orderId/status', authMiddleware, stripeController.updateOrderStatus);
 
 module.exports = router;

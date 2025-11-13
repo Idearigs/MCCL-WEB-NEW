@@ -43,15 +43,60 @@ const apiRateLimit = createRateLimit({
 const helmetConfig = helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://js.stripe.com", "https://m.stripe.network"],
-      scriptSrc: ["'self'", "https://js.stripe.com", "https://m.stripe.network", "blob:"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://api.stripe.com", "https://m.stripe.network", "blob:"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      defaultSrc: ["'self'", "https:"],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https:",
+        "data:"
+      ],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-eval'",
+        "'unsafe-inline'",
+        "https:",
+        "blob:",
+        "data:"
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "https:",
+        "blob:"
+      ],
+      connectSrc: [
+        "'self'",
+        "https:",
+        "blob:",
+        "data:"
+      ],
+      fontSrc: [
+        "'self'",
+        "https:",
+        "data:"
+      ],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'", "https:"],
-      frameSrc: ["'self'", "https://js.stripe.com", "https://m.stripe.network"]
+      mediaSrc: [
+        "'self'",
+        "https:",
+        "data:",
+        "blob:"
+      ],
+      frameSrc: [
+        "'self'",
+        "https:",
+        "blob:"
+      ],
+      childSrc: [
+        "'self'",
+        "https:",
+        "blob:"
+      ],
+      workerSrc: [
+        "'self'",
+        "https:",
+        "blob:"
+      ]
     }
   },
   crossOriginEmbedderPolicy: false,

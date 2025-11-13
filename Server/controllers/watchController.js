@@ -1080,35 +1080,58 @@ const updateWatch = asyncHandler(async (req, res) => {
 
   // Handle image updates if provided
   if (images && Array.isArray(images)) {
+    console.log('[updateWatch] Processing images:', images);
+
     // Filter out existing images that should be kept (those with IDs)
     const existingImageIds = images
       .filter(img => img.id && typeof img.id === 'string')
       .map(img => img.id);
 
-    // Delete images that were removed
-    const { Op } = require('sequelize');
-    await WatchImage.destroy({
-      where: {
-        watch_id: id,
-        id: {
-          [Op.notIn]: existingImageIds.length > 0 ? existingImageIds : [null]
+    console.log('[updateWatch] Existing image IDs to keep:', existingImageIds);
+
+    // Delete images that were removed - only if images array was explicitly provided
+    try {
+      const deletedCount = await WatchImage.destroy({
+        where: {
+          watch_id: id,
+          id: {
+            [Op.notIn]: existingImageIds.length > 0 ? existingImageIds : [null]
+          }
         }
-      }
-    });
+      });
+      console.log('[updateWatch] Deleted', deletedCount, 'images');
+    } catch (imgDeleteError) {
+      console.error('[updateWatch] Error deleting images:', imgDeleteError.message);
+    }
 
     // Add new images (those without IDs)
     for (const img of images) {
-      if (!img.id) {
-        // New image
-        await WatchImage.create({
-          watch_id: id,
-          image_url: img.url || img.image_url,
-          alt_text: img.alt || img.alt_text,
-          is_primary: img.is_primary || false,
-          image_type: img.image_type || 'product',
-          sort_order: img.sort_order || 0
-        });
+      if (!img.id && (img.url || img.image_url)) {
+        try {
+          await WatchImage.create({
+            watch_id: id,
+            image_url: img.url || img.image_url,
+            alt_text: img.alt || img.alt_text || '',
+            is_primary: img.is_primary || false,
+            image_type: img.image_type || 'product',
+            sort_order: img.sort_order || 0
+          });
+          console.log('[updateWatch] Created new image');
+        } catch (imgCreateError) {
+          console.error('[updateWatch] Error creating image:', imgCreateError.message);
+        }
       }
+    }
+  } else if (updateData.images !== undefined && (!images || images.length === 0)) {
+    // If images array is explicitly empty, delete all images
+    console.log('[updateWatch] Images array is empty, deleting all existing images');
+    try {
+      const deletedCount = await WatchImage.destroy({
+        where: { watch_id: id }
+      });
+      console.log('[updateWatch] Deleted all', deletedCount, 'images');
+    } catch (imgDeleteError) {
+      console.error('[updateWatch] Error deleting all images:', imgDeleteError.message);
     }
   }
 

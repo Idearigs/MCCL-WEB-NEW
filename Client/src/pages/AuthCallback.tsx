@@ -14,6 +14,9 @@ const AuthCallback: React.FC = () => {
     const refreshToken = searchParams.get('refreshToken');
     const error = searchParams.get('error');
 
+    // Check if user came from checkout
+    const checkoutRedirect = localStorage.getItem('checkout_redirect') === 'true';
+
     if (error) {
       console.error('OAuth error:', error);
       navigate('/?auth_error=' + error);
@@ -40,17 +43,41 @@ const AuthCallback: React.FC = () => {
           if (data.success && setUser) {
             setUser(data.data);
           }
-          navigate('/');
+          // Redirect to checkout if user came from there
+          if (checkoutRedirect) {
+            localStorage.removeItem('checkout_redirect');
+            navigate('/checkout');
+          } else {
+            navigate('/');
+          }
         })
         .catch(() => {
-          navigate('/');
+          // Redirect to checkout if user came from there
+          if (checkoutRedirect) {
+            localStorage.removeItem('checkout_redirect');
+            navigate('/checkout');
+          } else {
+            navigate('/');
+          }
         });
       } catch (error) {
         console.error('Failed to process auth:', error);
-        navigate('/');
+        // Redirect to checkout if user came from there
+        if (checkoutRedirect) {
+          localStorage.removeItem('checkout_redirect');
+          navigate('/checkout');
+        } else {
+          navigate('/');
+        }
       }
     } else {
-      navigate('/');
+      // Redirect to checkout if user came from there
+      if (checkoutRedirect) {
+        localStorage.removeItem('checkout_redirect');
+        navigate('/checkout');
+      } else {
+        navigate('/');
+      }
     }
   }, [searchParams, navigate, setUser]);
 
