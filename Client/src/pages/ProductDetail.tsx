@@ -416,6 +416,7 @@ const ProductDetail = () => {
         metal: selectedMetalName,
         size: selectedSizeLabel,
         image: displayImages[0]?.url || productData.images[0]?.url,
+        type: 'jewelry',  // Mark as jewelry product for order ID system
         selectedOptions: selectedOptions
       };
 
