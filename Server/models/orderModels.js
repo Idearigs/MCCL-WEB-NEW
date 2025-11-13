@@ -200,6 +200,11 @@ const initializeOrderModels = () => {
       type: DataTypes.STRING(100),
       allowNull: true
     },
+    product_type: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: 'Product type (watch, ring, jewelry, etc.)'
+    },
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,

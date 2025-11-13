@@ -28,6 +28,7 @@ interface OrderItem {
   order_id: string;
   product_id: string;
   product_name: string;
+  product_type?: string;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -60,6 +61,7 @@ const AdminOrders: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'>('all');
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'pending' | 'failed'>('all');
+  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'watch' | 'jewelry'>('all');
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -75,7 +77,7 @@ const AdminOrders: React.FC = () => {
 
   useEffect(() => {
     filterOrders();
-  }, [orders, searchQuery, statusFilter, paymentFilter, page]);
+  }, [orders, searchQuery, statusFilter, paymentFilter, productTypeFilter, page]);
 
   const fetchOrders = async () => {
     try {
@@ -162,7 +164,13 @@ const AdminOrders: React.FC = () => {
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
       const matchesPayment = paymentFilter === 'all' || order.payment_status === paymentFilter;
 
-      return matchesSearch && matchesStatus && matchesPayment;
+      // Filter by product type: check if any items in the order match the selected type
+      let matchesProductType = true;
+      if (productTypeFilter !== 'all' && order.items) {
+        matchesProductType = order.items.some(item => item.product_type === productTypeFilter);
+      }
+
+      return matchesSearch && matchesStatus && matchesPayment && matchesProductType;
     });
 
     setFilteredOrders(filtered);
@@ -234,9 +242,9 @@ const AdminOrders: React.FC = () => {
 
         {/* Filters */}
         <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
-            <div className="relative">
+            <div className="relative md:col-span-1">
               <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <input
                 type="text"
@@ -283,6 +291,22 @@ const AdminOrders: React.FC = () => {
                 <option value="paid">Paid</option>
                 <option value="pending">Pending</option>
                 <option value="failed">Failed</option>
+              </select>
+            </div>
+
+            {/* Product Type Filter */}
+            <div>
+              <select
+                value={productTypeFilter}
+                onChange={(e) => {
+                  setProductTypeFilter(e.target.value as any);
+                  setPage(1);
+                }}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Products</option>
+                <option value="watch">Watch Orders</option>
+                <option value="jewelry">Jewelry Orders</option>
               </select>
             </div>
           </div>
@@ -526,7 +550,14 @@ const AdminOrders: React.FC = () => {
                           <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                             <div>
                               <div className="font-medium text-gray-900">{item.product_name}</div>
-                              <div className="text-sm text-gray-600">Qty: {item.quantity}</div>
+                              <div className="text-sm text-gray-600">
+                                Qty: {item.quantity}
+                                {item.product_type && (
+                                  <span className="ml-3 inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                                    {item.product_type}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <div className="text-right">
                               <div className="font-medium text-gray-900">

@@ -120,6 +120,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
         product_id: item.product_id,
         product_variant_id: item.variant_id,
         product_name: item.name || 'Product',
+        product_type: item.type || null,
         quantity: item.quantity,
         unit_price: item.price,
         total_price: item.price * item.quantity
@@ -205,7 +206,7 @@ const getOrder = asyncHandler(async (req, res) => {
         {
           model: OrderItem,
           as: 'items',
-          attributes: ['id', 'product_id', 'product_name', 'quantity', 'unit_price', 'total_price']
+          attributes: ['id', 'product_id', 'product_name', 'product_type', 'quantity', 'unit_price', 'total_price']
         }
       ]
     });
@@ -405,7 +406,7 @@ const getAllOrders = asyncHandler(async (req, res) => {
         {
           model: OrderItem,
           as: 'items',
-          attributes: ['id', 'product_id', 'product_name', 'quantity', 'unit_price', 'total_price'],
+          attributes: ['id', 'product_id', 'product_name', 'product_type', 'quantity', 'unit_price', 'total_price'],
           required: false // Use LEFT JOIN instead of INNER JOIN
         }
       ],
