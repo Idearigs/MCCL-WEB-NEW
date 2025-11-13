@@ -119,7 +119,8 @@ const PaymentForm = ({
             product_id: item.id.toString(),
             name: item.name,
             quantity: item.quantity,
-            price: getPriceAsNumber(item.price)
+            price: getPriceAsNumber(item.price),
+            type: item.type || null
           }))
         })
       });
@@ -182,7 +183,8 @@ const PaymentForm = ({
             name: item.name,
             quantity: item.quantity,
             price: getPriceAsNumber(item.price),
-            variant_id: null
+            variant_id: item.variant_id || null,
+            type: item.type || null
           }))
         })
       });
