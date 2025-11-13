@@ -12,6 +12,14 @@ const stripePromise = loadStripe(
   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
 );
 
+// Helper function to parse price from string or number
+const getPriceAsNumber = (price: string | number): number => {
+  if (typeof price === 'number') {
+    return price;
+  }
+  return parseFloat(price.replace('£', '').replace(',', ''));
+};
+
 // Payment Form Component - uses Stripe hooks
 const PaymentForm = ({
   email,
@@ -111,7 +119,7 @@ const PaymentForm = ({
             product_id: item.id.toString(),
             name: item.name,
             quantity: item.quantity,
-            price: parseFloat(item.price.replace('£', '').replace(',', ''))
+            price: getPriceAsNumber(item.price)
           }))
         })
       });
@@ -173,7 +181,7 @@ const PaymentForm = ({
             product_id: item.id.toString(),
             name: item.name,
             quantity: item.quantity,
-            price: parseFloat(item.price.replace('£', '').replace(',', '')),
+            price: getPriceAsNumber(item.price),
             variant_id: null
           }))
         })
@@ -274,7 +282,7 @@ const Checkout = (): JSX.Element => {
   // Calculate totals from cart
   const getSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.price.replace('£', '').replace(',', ''));
+      const price = getPriceAsNumber(item.price);
       return total + (price * item.quantity);
     }, 0);
   };
@@ -623,10 +631,22 @@ const Checkout = (): JSX.Element => {
                     <h3 className="text-sm font-normal text-gray-900 mb-1">
                       {item.name}
                     </h3>
-                    <p className="text-xs text-gray-500">{item.metal} • {item.size}</p>
+                    <p className="text-xs text-gray-500">
+                      {item.type === 'watch' ? (
+                        <>
+                          {item.brand && <span>{item.brand}</span>}
+                          {item.variant_name && <span> • {item.variant_name}</span>}
+                        </>
+                      ) : (
+                        <>
+                          {item.metal && <span>{item.metal}</span>}
+                          {item.size && <span> • {item.size}</span>}
+                        </>
+                      )}
+                    </p>
                   </div>
                   <div className="text-sm font-normal text-gray-900">
-                    £{(parseFloat(item.price.replace('£', '').replace(',', '')) * item.quantity).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    £{(getPriceAsNumber(item.price) * item.quantity).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
               ))}
