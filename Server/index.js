@@ -5,8 +5,7 @@ const compression = require('compression');
 const path = require('path');
 const config = require('./config');
 const { connectDatabases, logger } = require('./config/database');
-// Temporarily disabled passport to fix deployment - re-enable when passport package is installed
-// const passport = require('./config/passport');
+const passport = require('./config/passport');
 
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { helmetConfig, securityLogger, generalRateLimit } = require('./middleware/security');
@@ -60,8 +59,8 @@ app.use(compression());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
-// Initialize Passport - temporarily disabled
-// app.use(passport.initialize());
+// Initialize Passport
+app.use(passport.initialize());
 
 // Logging middleware
 if (config.NODE_ENV !== 'test') {
