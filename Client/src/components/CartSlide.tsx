@@ -6,11 +6,14 @@ import { Link } from 'react-router-dom';
 interface CartItem {
   id: string;
   name: string;
-  price: string;
-  metal: string;
-  size: string;
+  price: string | number;
+  metal?: string;
+  size?: string;
   image: string;
   quantity: number;
+  brand?: string;
+  type?: string;
+  variant_name?: string;
 }
 
 interface CartSlideProps {
@@ -32,7 +35,8 @@ const CartSlide: React.FC<CartSlideProps> = ({
 }) => {
   const getSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.price.replace('£', '').replace(',', ''));
+      const priceStr = typeof item.price === 'number' ? item.price.toString() : item.price;
+      const price = parseFloat(priceStr.replace('£', '').replace(',', ''));
       return total + (price * item.quantity);
     }, 0);
   };
@@ -119,7 +123,17 @@ const CartSlide: React.FC<CartSlideProps> = ({
                     </div>
                     
                     <p className="text-xs text-gray-600 font-cormorant">
-                      {item.metal.charAt(0).toUpperCase() + item.metal.slice(1)} / Size {item.size}
+                      {item.type === 'watch' ? (
+                        <>
+                          {item.brand && <span>{item.brand}</span>}
+                          {item.variant_name && <span> • {item.variant_name}</span>}
+                        </>
+                      ) : (
+                        <>
+                          {item.metal && <span>{item.metal.charAt(0).toUpperCase() + item.metal.slice(1)}</span>}
+                          {item.size && <span> / Size {item.size}</span>}
+                        </>
+                      )}
                     </p>
                     
                     {/* Quantity Controls */}
