@@ -232,7 +232,7 @@ const getProductById = async (req, res) => {
         {
           model: ProductImage,
           as: 'images',
-          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id'],
+          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview'],
           order: [['sort_order', 'ASC']]
         },
         {
