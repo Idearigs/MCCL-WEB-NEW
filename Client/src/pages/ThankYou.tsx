@@ -37,9 +37,14 @@ const ThankYou = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const orderData = (location.state as OrderState) || {};
+  const [continueShoppingUrl, setContinueShoppingUrl] = React.useState('/rings');
 
   // Redirect to home if no order data after 10 seconds of inactivity
   useEffect(() => {
+    // Get the shopping category from localStorage or use default
+    const lastCategory = localStorage.getItem('lastShoppingCategory') || 'rings';
+    setContinueShoppingUrl(`/${lastCategory}`);
+
     const timer = setTimeout(() => {
       if (!orderData.orderId) {
         navigate("/");
@@ -328,7 +333,7 @@ const ThankYou = (): JSX.Element => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/products"
+              to={continueShoppingUrl}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gray-900 text-white font-inter font-light uppercase tracking-wider text-sm hover:bg-gray-800 transition-colors"
             >
               Continue Shopping

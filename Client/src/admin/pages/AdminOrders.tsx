@@ -326,8 +326,8 @@ const AdminOrders: React.FC = () => {
         )}
 
         {/* Orders Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-visible">
+          <div className="overflow-x-auto overflow-y-visible">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -376,7 +376,7 @@ const AdminOrders: React.FC = () => {
 
                           {/* Dropdown Menu */}
                           {openStatusDropdown === order.id && updatingOrderId !== order.id && (
-                            <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                            <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                               {validStatuses.map(status => (
                                 <button
                                   key={status}

@@ -82,6 +82,11 @@ const Rings = (): JSX.Element => {
   const [gemstones, setGemstones] = useState<Array<{id: string, name: string, slug: string, color?: string}>>([]);
   const [metals, setMetals] = useState<Array<{id: string, name: string, color_code: string}>>([]);
 
+  // Save shopping category for post-purchase redirect
+  useEffect(() => {
+    localStorage.setItem('lastShoppingCategory', 'rings');
+  }, []);
+
   // Fetch ring products and collections from API
   useEffect(() => {
     const fetchData = async () => {
