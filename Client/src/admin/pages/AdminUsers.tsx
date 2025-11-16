@@ -159,10 +159,10 @@ const AdminUsers: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <Users className="w-8 h-8 text-blue-600" />
-              User Management
+              Customer Management
             </h1>
             <p className="text-gray-600 mt-1">
-              {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}
+              {filteredUsers.length} customer{filteredUsers.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -228,7 +228,7 @@ const AdminUsers: React.FC = () => {
           </div>
         )}
 
-        {/* Users Table */}
+        {/* Customers Table */}
         <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -336,12 +336,12 @@ const AdminUsers: React.FC = () => {
           {filteredUsers.length === 0 && (
             <div className="text-center py-12">
               <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No users found</p>
+              <p className="text-gray-500 text-lg">No customers found</p>
             </div>
           )}
         </div>
 
-        {/* User Details Modal */}
+        {/* Customer Details Modal */}
         {selectedUser && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -353,7 +353,7 @@ const AdminUsers: React.FC = () => {
                 <>
                   {/* Header */}
                   <div className="px-6 py-4 border-b flex justify-between items-center sticky top-0 bg-white">
-                    <h2 className="text-xl font-bold text-gray-900">User Details</h2>
+                    <h2 className="text-xl font-bold text-gray-900">Customer Details</h2>
                     <button
                       onClick={() => setSelectedUser(null)}
                       className="text-gray-400 hover:text-gray-600"
@@ -495,6 +495,68 @@ const AdminUsers: React.FC = () => {
                             </div>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Orders List */}
+                    {selectedUser.orders && selectedUser.orders.length > 0 && (
+                      <div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-3">Customer Orders</h4>
+                        <div className="space-y-3">
+                          {selectedUser.orders.map((order) => (
+                            <div key={order.id} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h5 className="font-medium text-gray-900">Order #{order.order_number}</h5>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                    order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {order.status}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600 mb-2">{new Date(order.createdAt).toLocaleDateString('en-US')}</p>
+                                {order.items && order.items.length > 0 && (
+                                  <div className="text-sm text-gray-600 mb-2">
+                                    <p className="font-medium text-gray-900">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
+                                    <ul className="mt-1 space-y-1">
+                                      {order.items.map((item: any, idx: number) => (
+                                        <li key={idx} className="text-xs text-gray-600">
+                                          {item.product_name} x{item.quantity}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right ml-4">
+                                <p className="font-bold text-gray-900">£{parseFloat(order.total_amount).toFixed(2)}</p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  {order.payment_status === 'paid' ? (
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      ✓ Paid
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      {order.payment_status}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No Orders Message */}
+                    {selectedUser.orders && selectedUser.orders.length === 0 && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                        <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-600">No orders yet</p>
                       </div>
                     )}
                   </div>
