@@ -457,6 +457,7 @@ const AdminProducts: React.FC = () => {
                 if (image.file) {
                   formData.append(`media_metal_${metalId}`, image.file);
                   formData.append(`image_metal_${metalId}_${index}_alt_text`, image.alt_text || '');
+                  formData.append(`image_metal_${metalId}_${index}_is_metal_preview`, image.is_metal_preview ? 'true' : 'false');
                 }
               });
             }
@@ -598,6 +599,7 @@ const AdminProducts: React.FC = () => {
                 if (image.file) {
                   formData.append(`media_metal_${metalId}`, image.file);
                   formData.append(`image_metal_${metalId}_${index}_alt_text`, image.alt_text || '');
+                  formData.append(`image_metal_${metalId}_${index}_is_metal_preview`, image.is_metal_preview ? 'true' : 'false');
                 }
               });
             }

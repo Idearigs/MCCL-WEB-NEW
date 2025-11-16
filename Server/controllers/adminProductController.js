@@ -1412,6 +1412,7 @@ const createProductWithMedia = async (req, res) => {
     if (req.files && req.files.length > 0) {
       let imageIndex = 0;
       let videoIndex = 0;
+      const metalImageIndices = {}; // Track image indices for each metal
 
       console.log(`DEBUG: Processing ${req.files.length} files for product ${product.id}`);
 
@@ -1446,6 +1447,21 @@ const createProductWithMedia = async (req, res) => {
         }
 
         if (file.mimetype.startsWith('image/')) {
+          // Initialize metal image index tracker if needed
+          if (metalId && !metalImageIndices[metalId]) {
+            metalImageIndices[metalId] = 0;
+          }
+
+          // Look for is_metal_preview flag in request body
+          let isMetalPreview = false;
+          if (metalId) {
+            const currentMetalImageIndex = metalImageIndices[metalId];
+            const previewFlagKey = `image_metal_${metalId}_${currentMetalImageIndex}_is_metal_preview`;
+            isMetalPreview = req.body[previewFlagKey] === 'true' || req.body[previewFlagKey] === true;
+            console.log(`DEBUG: Checking for ${previewFlagKey} = ${req.body[previewFlagKey]} => ${isMetalPreview}`);
+            metalImageIndices[metalId]++;
+          }
+
           promises.push(
             ProductImage.create({
               product_id: product.id,
@@ -1453,7 +1469,8 @@ const createProductWithMedia = async (req, res) => {
               alt_text: name,
               is_primary: imageIndex === 0,
               sort_order: imageIndex,
-              metal_id: metalId || null
+              metal_id: metalId || null,
+              is_metal_preview: isMetalPreview
             })
           );
           imageIndex++;

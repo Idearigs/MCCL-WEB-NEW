@@ -1287,31 +1287,62 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
                             {/* Display uploaded metal-specific images */}
                             {(metalMediaState[metalId]?.images?.length || 0) > 0 && (
-                              <div className="grid grid-cols-2 gap-2 mt-3">
-                                {metalMediaState[metalId]?.images?.map((img, idx) => (
-                                  <div key={idx} className="relative border border-gray-200 rounded-lg overflow-hidden">
-                                    <img
-                                      src={img.url}
-                                      alt={img.alt_text || `${metal.name} image ${idx + 1}`}
-                                      className="w-full h-24 object-cover"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setMetalMediaState(prev => ({
-                                          ...prev,
-                                          [metalId]: {
-                                            ...prev[metalId],
-                                            images: prev[metalId]?.images?.filter((_, i) => i !== idx) || []
-                                          }
-                                        }));
-                                      }}
-                                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </div>
-                                ))}
+                              <div className="space-y-3 mt-3">
+                                <p className="text-xs text-gray-500 font-satoshi">Check the checkbox to mark this image as the preview for metal selection</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                  {metalMediaState[metalId]?.images?.map((img, idx) => (
+                                    <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
+                                      <div className="relative bg-gray-100">
+                                        <img
+                                          src={img.url}
+                                          alt={img.alt_text || `${metal.name} image ${idx + 1}`}
+                                          className="w-full h-24 object-cover"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setMetalMediaState(prev => ({
+                                              ...prev,
+                                              [metalId]: {
+                                                ...prev[metalId],
+                                                images: prev[metalId]?.images?.filter((_, i) => i !== idx) || []
+                                              }
+                                            }));
+                                          }}
+                                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </button>
+                                      </div>
+                                      {/* Metal Preview Checkbox */}
+                                      <div className="p-2 border-t border-gray-200">
+                                        <label className="flex items-center space-x-2 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={img.is_metal_preview || false}
+                                            onChange={(e) => {
+                                              setMetalMediaState(prev => ({
+                                                ...prev,
+                                                [metalId]: {
+                                                  ...prev[metalId],
+                                                  images: prev[metalId]?.images?.map((image, i) =>
+                                                    i === idx
+                                                      ? { ...image, is_metal_preview: e.target.checked }
+                                                      : { ...image, is_metal_preview: false } // Only one preview per metal
+                                                  ) || []
+                                                }
+                                              }));
+                                            }}
+                                            className="w-4 h-4 rounded"
+                                          />
+                                          <span className="text-xs text-gray-700 font-satoshi">
+                                            {img.is_metal_preview ? '✓ Preview Image' : 'Set as Preview'}
+                                          </span>
+                                        </label>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>

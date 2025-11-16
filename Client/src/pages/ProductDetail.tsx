@@ -128,7 +128,11 @@ const ProductDetail = () => {
   const getMetalThumbnail = (metalId: string) => {
     if (!productData || !productData.images) return null;
 
-    // First try to get metal-specific image
+    // First try to get metal-specific image marked as preview
+    const metalPreviewImage = productData.images.find(img => img.metal_id === metalId && img.is_metal_preview);
+    if (metalPreviewImage) return metalPreviewImage;
+
+    // Fall back to first metal-specific image for this metal
     const metalSpecificImage = productData.images.find(img => img.metal_id === metalId);
     if (metalSpecificImage) return metalSpecificImage;
 
