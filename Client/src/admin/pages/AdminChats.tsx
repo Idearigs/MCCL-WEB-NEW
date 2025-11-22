@@ -37,9 +37,46 @@ export default function AdminChats(): JSX.Element {
   const [customerTyping, setCustomerTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<any>(null);
+  const listSocketRef = useRef<any>(null);
   const typingTimeoutRef = useRef<any>(null);
 
   const token = localStorage.getItem('admin_token');
+
+  // Global WebSocket for chat list updates
+  useEffect(() => {
+    const socket = io(API_BASE_URL.replace('/api/v1', ''), {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
+    });
+
+    listSocketRef.current = socket;
+
+    // Listen for new messages across all chats
+    socket.on('receive_message', (message: Message) => {
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === message.chat_id
+            ? {
+                ...chat,
+                last_message_at: new Date().toISOString(),
+                messages: [...(chat.messages || []), message]
+              }
+            : chat
+        )
+      );
+    });
+
+    // Listen for new chats
+    socket.on('new_chat', (chat: Chat) => {
+      setChats((prevChats) => [chat, ...prevChats]);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     fetchChats();

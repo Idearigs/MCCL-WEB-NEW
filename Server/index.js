@@ -147,6 +147,14 @@ io.on('connection', (socket) => {
       created_at: message.created_at
     });
 
+    // Also broadcast to admin panel for chat list updates
+    io.emit('receive_message', {
+      ...message,
+      chat_id: chat_id,
+      id: message.id,
+      created_at: message.created_at
+    });
+
     logger.info(`Message in chat ${chat_id}`);
   });
 
@@ -193,6 +201,12 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     logger.info(`Chat disconnected: ${socket.id}`);
   });
+});
+
+// Middleware to attach io instance to request
+app.use((req, res, next) => {
+  req.io = io;
+  next();
 });
 
 // API routes

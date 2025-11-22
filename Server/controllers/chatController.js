@@ -31,6 +31,20 @@ exports.createChat = async (req, res) => {
       last_message_at: new Date()
     });
 
+    // Emit new chat event via WebSocket to admin panel
+    if (req.io) {
+      req.io.emit('new_chat', {
+        id: chat.id,
+        customer_name: chat.customer_name,
+        customer_email: chat.customer_email,
+        status: chat.status,
+        last_message_at: chat.last_message_at,
+        is_archived: chat.is_archived,
+        assigned_admin_id: chat.assigned_admin_id,
+        messages: []
+      });
+    }
+
     return res.status(201).json({
       success: true,
       data: { chat },
