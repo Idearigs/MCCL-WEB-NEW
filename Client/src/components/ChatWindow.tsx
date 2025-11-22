@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Loader, CheckCircle } from 'lucide-react';
+import { io } from 'socket.io-client';
 import API_BASE_URL from '../config/api';
 
 interface User {
@@ -52,6 +53,11 @@ export default function ChatWindow({
     message: ''
   });
   const [messageInput, setMessageInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [typingUser, setTypingUser] = useState('');
+  const socketRef = useRef<any>(null);
+  const typingTimeoutRef = useRef<any>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -60,31 +66,64 @@ export default function ChatWindow({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Fetch chat messages if chat exists
+  // WebSocket connection and chat setup
   useEffect(() => {
-    if (chatId) {
-      fetchChatMessages();
-      // Poll for new messages every 2 seconds
-      const interval = setInterval(fetchChatMessages, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [chatId]);
-
-  const fetchChatMessages = async () => {
     if (!chatId) return;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/chats/view/${chatId}`);
-      const data = await response.json();
+    // Connect to WebSocket
+    const socket = io(API_BASE_URL.replace('/api/v1', ''), {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
+    });
 
-      if (data.success) {
-        setMessages(data.data.chat.messages || []);
-        setError(null);
+    socketRef.current = socket;
+
+    // Fetch initial messages
+    const fetchInitialMessages = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/chats/view/${chatId}`);
+        const data = await response.json();
+        if (data.success) {
+          setMessages(data.data.chat.messages || []);
+          setError(null);
+        }
+      } catch (error) {
+        console.error('Error fetching messages:', error);
       }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    }
-  };
+    };
+
+    fetchInitialMessages();
+
+    // Join chat room
+    socket.emit('join_chat', {
+      chat_id: chatId,
+      user_type: 'customer',
+      user_id: user?.id || null
+    });
+
+    // Listen for new messages
+    socket.on('receive_message', (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    // Listen for typing status
+    socket.on('typing_status', (data: any) => {
+      if (data.is_typing && data.user_type !== 'customer') {
+        setOtherUserTyping(true);
+        setTypingUser(data.user_type === 'admin' ? 'Admin' : 'Agent');
+      } else if (!data.is_typing && data.user_type !== 'customer') {
+        setOtherUserTyping(false);
+        setTypingUser('');
+      }
+    });
+
+    return () => {
+      socket.emit('leave_chat', { chat_id: chatId });
+      socket.disconnect();
+    };
+  }, [chatId, user?.id]);
 
   const handleCreateChat = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +174,7 @@ export default function ChatWindow({
 
     setSending(true);
     setError(null);
+    setIsTyping(false);
 
     try {
       const response = await fetch(`${API_BASE_URL}/chats/message/send`, {
@@ -152,9 +192,24 @@ export default function ChatWindow({
 
       if (data.success) {
         setMessageInput('');
-        // Fetch updated messages
-        await new Promise(resolve => setTimeout(resolve, 500));
-        fetchChatMessages();
+
+        // Emit message via WebSocket for real-time delivery
+        if (socketRef.current) {
+          socketRef.current.emit('send_message', {
+            chat_id: targetChatId,
+            message: data.data.message
+          });
+        }
+
+        // Stop typing
+        if (socketRef.current) {
+          socketRef.current.emit('user_typing', {
+            chat_id: targetChatId,
+            user_type: 'customer',
+            user_id: user?.id || null,
+            is_typing: false
+          });
+        }
       } else {
         setError(data.message || 'Failed to send message');
       }
@@ -164,6 +219,40 @@ export default function ChatWindow({
     } finally {
       setSending(false);
     }
+  };
+
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessageInput(e.target.value);
+
+    if (!isTyping && e.target.value.trim()) {
+      setIsTyping(true);
+      if (socketRef.current && chatId) {
+        socketRef.current.emit('user_typing', {
+          chat_id: chatId,
+          user_type: 'customer',
+          user_id: user?.id || null,
+          is_typing: true
+        });
+      }
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to stop typing after 1 second of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      if (socketRef.current && chatId) {
+        socketRef.current.emit('user_typing', {
+          chat_id: chatId,
+          user_type: 'customer',
+          user_id: user?.id || null,
+          is_typing: false
+        });
+      }
+    }, 1000);
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -301,6 +390,16 @@ export default function ChatWindow({
                 </div>
               ))
             )}
+            {otherUserTyping && (
+              <div className="flex gap-2 items-center">
+                <span className="text-xs text-gray-500">{typingUser} is typing</span>
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         ) : null}
@@ -315,7 +414,7 @@ export default function ChatWindow({
           <input
             type="text"
             value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
+            onChange={handleTyping}
             placeholder="Type your message..."
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
             disabled={sending}

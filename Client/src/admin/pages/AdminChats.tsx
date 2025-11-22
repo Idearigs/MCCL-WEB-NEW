@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Loader, MessageSquare, Clock, MapPin, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { io } from 'socket.io-client';
 import API_BASE_URL from '../../config/api';
 import AdminLayout from '../components/AdminLayout';
 
@@ -32,16 +33,66 @@ export default function AdminChats(): JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [customerTyping, setCustomerTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<any>(null);
+  const typingTimeoutRef = useRef<any>(null);
 
   const token = localStorage.getItem('admin_token');
 
   useEffect(() => {
     fetchChats();
-    // Poll for new chats every 3 seconds
-    const interval = setInterval(fetchChats, 3000);
-    return () => clearInterval(interval);
+    // Initial chat list fetch
   }, [statusFilter, searchTerm]);
+
+  // WebSocket connection for selected chat
+  useEffect(() => {
+    if (!selectedChat) return;
+
+    const socket = io(API_BASE_URL.replace('/api/v1', ''), {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
+    });
+
+    socketRef.current = socket;
+
+    // Join chat room
+    socket.emit('join_chat', {
+      chat_id: selectedChat.id,
+      user_type: 'admin',
+      user_id: localStorage.getItem('admin_id')
+    });
+
+    // Listen for new messages
+    socket.on('receive_message', (message: Message) => {
+      setSelectedChat((prev) => {
+        if (prev) {
+          return {
+            ...prev,
+            messages: [...(prev.messages || []), message]
+          };
+        }
+        return prev;
+      });
+    });
+
+    // Listen for typing status
+    socket.on('typing_status', (data: any) => {
+      if (data.user_type === 'customer' && data.is_typing) {
+        setCustomerTyping(true);
+      } else if (data.user_type === 'customer' && !data.is_typing) {
+        setCustomerTyping(false);
+      }
+    });
+
+    return () => {
+      socket.emit('leave_chat', { chat_id: selectedChat.id });
+      socket.disconnect();
+    };
+  }, [selectedChat?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -104,6 +155,7 @@ export default function AdminChats(): JSX.Element {
     if (!selectedChat || !messageInput.trim()) return;
 
     setSending(true);
+    setIsTyping(false);
 
     try {
       const response = await fetch(`${API_BASE_URL}/chats/message/send`, {
@@ -124,8 +176,25 @@ export default function AdminChats(): JSX.Element {
 
       if (data.success) {
         setMessageInput('');
-        // Refresh chat detail
-        await fetchChatDetail(selectedChat.id);
+
+        // Emit message via WebSocket for real-time delivery
+        if (socketRef.current) {
+          socketRef.current.emit('send_message', {
+            chat_id: selectedChat.id,
+            message: data.data.message
+          });
+        }
+
+        // Stop typing
+        if (socketRef.current) {
+          socketRef.current.emit('user_typing', {
+            chat_id: selectedChat.id,
+            user_type: 'admin',
+            user_id: localStorage.getItem('admin_id'),
+            is_typing: false
+          });
+        }
+
         setAlert({ type: 'success', message: 'Message sent' });
         setTimeout(() => setAlert(null), 2000);
       } else {
@@ -137,6 +206,40 @@ export default function AdminChats(): JSX.Element {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessageInput(e.target.value);
+
+    if (!isTyping && e.target.value.trim()) {
+      setIsTyping(true);
+      if (socketRef.current && selectedChat) {
+        socketRef.current.emit('user_typing', {
+          chat_id: selectedChat.id,
+          user_type: 'admin',
+          user_id: localStorage.getItem('admin_id'),
+          is_typing: true
+        });
+      }
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to stop typing after 1 second of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      if (socketRef.current && selectedChat) {
+        socketRef.current.emit('user_typing', {
+          chat_id: selectedChat.id,
+          user_type: 'admin',
+          user_id: localStorage.getItem('admin_id'),
+          is_typing: false
+        });
+      }
+    }, 1000);
   };
 
   const handleUpdateChatStatus = async (chatId: string, newStatus: 'active' | 'closed' | 'waiting') => {
@@ -379,6 +482,16 @@ export default function AdminChats(): JSX.Element {
                 ) : (
                   <div className="text-center text-gray-500 py-8">No messages yet</div>
                 )}
+                {customerTyping && (
+                  <div className="flex gap-2 items-center">
+                    <span className="text-xs text-gray-500">Customer is typing</span>
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -391,7 +504,7 @@ export default function AdminChats(): JSX.Element {
                   <input
                     type="text"
                     value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
+                    onChange={handleTyping}
                     placeholder="Type your response..."
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
                     disabled={sending}

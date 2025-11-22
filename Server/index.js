@@ -3,6 +3,8 @@ const cors = require('cors');
 const morgan = require('morgan');
 const compression = require('compression');
 const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 const config = require('./config');
 const { connectDatabases, logger } = require('./config/database');
 const passport = require('./config/passport');
@@ -11,6 +13,14 @@ const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { helmetConfig, securityLogger, generalRateLimit } = require('./middleware/security');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082', 'http://127.0.0.1:8080', 'http://127.0.0.1:8081', 'http://127.0.0.1:8082'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
@@ -99,6 +109,92 @@ app.get('/health', async (req, res) => {
   });
 });
 
+// Socket.io Chat Events
+const typingUsers = new Map(); // Track typing users by chat_id
+
+io.on('connection', (socket) => {
+  logger.info(`Chat connection established: ${socket.id}`);
+
+  // Join a chat room
+  socket.on('join_chat', (data) => {
+    const { chat_id, user_type, user_id } = data;
+    const roomName = `chat_${chat_id}`;
+    socket.join(roomName);
+
+    if (!typingUsers.has(chat_id)) {
+      typingUsers.set(chat_id, []);
+    }
+
+    // Notify others that someone joined
+    socket.to(roomName).emit('user_joined', {
+      user_type,
+      user_id,
+      timestamp: new Date()
+    });
+
+    logger.info(`User joined chat ${chat_id}: ${user_type}`);
+  });
+
+  // Send message in real-time
+  socket.on('send_message', (data) => {
+    const { chat_id, message } = data;
+    const roomName = `chat_${chat_id}`;
+
+    // Broadcast message to all users in this chat
+    io.to(roomName).emit('receive_message', {
+      ...message,
+      id: message.id,
+      created_at: message.created_at
+    });
+
+    logger.info(`Message in chat ${chat_id}`);
+  });
+
+  // Typing indicator
+  socket.on('user_typing', (data) => {
+    const { chat_id, user_type, user_id, is_typing } = data;
+    const roomName = `chat_${chat_id}`;
+
+    if (is_typing) {
+      const typingKey = `${user_type}_${user_id}`;
+      if (!typingUsers.get(chat_id).includes(typingKey)) {
+        typingUsers.get(chat_id).push(typingKey);
+      }
+    } else {
+      const typingKey = `${user_type}_${user_id}`;
+      const users = typingUsers.get(chat_id) || [];
+      typingUsers.set(chat_id, users.filter(u => u !== typingKey));
+    }
+
+    // Broadcast typing status
+    socket.to(roomName).emit('typing_status', {
+      chat_id,
+      user_type,
+      user_id,
+      is_typing,
+      typing_users: typingUsers.get(chat_id) || []
+    });
+  });
+
+  // Leave chat
+  socket.on('leave_chat', (data) => {
+    const { chat_id } = data;
+    const roomName = `chat_${chat_id}`;
+    socket.leave(roomName);
+
+    // Clean up typing users
+    if (typingUsers.has(chat_id)) {
+      typingUsers.delete(chat_id);
+    }
+
+    logger.info(`User left chat ${chat_id}`);
+  });
+
+  socket.on('disconnect', () => {
+    logger.info(`Chat disconnected: ${socket.id}`);
+  });
+});
+
 // API routes
 const apiRoutes = require('./routes');
 app.use(`/api/${config.API_VERSION}`, apiRoutes);
@@ -154,9 +250,10 @@ const startServer = async () => {
     }
 
     // Start HTTP server regardless of database status
-    const server = app.listen(config.PORT, () => {
+    server.listen(config.PORT, () => {
       logger.info(`🚀 Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);
       logger.info(`📚 API Documentation: http://localhost:${config.PORT}/api/${config.API_VERSION}`);
+      logger.info(`💬 WebSocket Chat Server ready`);
 
       if (!dbConnected) {
         logger.warn('⚠️  Database connection failed - check environment variables:');
