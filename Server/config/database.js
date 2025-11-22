@@ -47,6 +47,101 @@ const connectPostgreSQL = async () => {
     initializeModels();
     logger.info('Database models initialized');
 
+    // Create promotions table if it doesn't exist
+    try {
+      await postgresDB.query(`
+        CREATE TABLE IF NOT EXISTS "promotions" (
+          "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          "title" VARCHAR(255) NOT NULL,
+          "description" TEXT,
+          "product_id" UUID REFERENCES "products"("id") ON DELETE SET NULL,
+          "discount_percentage" INTEGER,
+          "banner_text" VARCHAR(500),
+          "banner_text_1" VARCHAR(500),
+          "banner_text_2" VARCHAR(500),
+          "banner_text_3" VARCHAR(500),
+          "banner_text_4" VARCHAR(500),
+          "banner_text_5" VARCHAR(500),
+          "image_url" VARCHAR(500),
+          "is_active" BOOLEAN DEFAULT true,
+          "show_popup" BOOLEAN DEFAULT true,
+          "show_banner" BOOLEAN DEFAULT true,
+          "sort_order" INTEGER DEFAULT 0,
+          "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      logger.info('Promotions table created/verified');
+
+      // Add new banner_text columns if they don't exist
+      try {
+        await postgresDB.query(`ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "banner_text_1" VARCHAR(500);`);
+        await postgresDB.query(`ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "banner_text_2" VARCHAR(500);`);
+        await postgresDB.query(`ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "banner_text_3" VARCHAR(500);`);
+        await postgresDB.query(`ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "banner_text_4" VARCHAR(500);`);
+        await postgresDB.query(`ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "banner_text_5" VARCHAR(500);`);
+        logger.info('Promotions columns updated');
+      } catch (error) {
+        logger.warn('Could not add promotion columns:', error.message);
+      }
+
+      // Create indexes
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_promotions_is_active" ON "promotions"("is_active");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_promotions_show_popup" ON "promotions"("show_popup");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_promotions_show_banner" ON "promotions"("show_banner");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_promotions_sort_order" ON "promotions"("sort_order");`);
+      logger.info('Promotions indexes created/verified');
+    } catch (error) {
+      logger.warn('Could not create promotions table:', error.message);
+    }
+
+    // Create chats table if it doesn't exist
+    try {
+      await postgresDB.query(`
+        CREATE TABLE IF NOT EXISTS "chats" (
+          "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          "customer_name" VARCHAR(100) NOT NULL,
+          "customer_email" VARCHAR(255) NOT NULL,
+          "customer_user_id" UUID,
+          "assigned_admin_id" UUID REFERENCES "admin_users"("id") ON DELETE SET NULL,
+          "status" VARCHAR(50) DEFAULT 'waiting',
+          "subject" VARCHAR(255),
+          "last_message_at" TIMESTAMP,
+          "is_archived" BOOLEAN DEFAULT false,
+          "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      logger.info('Chats table created/verified');
+
+      // Create chat_messages table
+      await postgresDB.query(`
+        CREATE TABLE IF NOT EXISTS "chat_messages" (
+          "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          "chat_id" UUID NOT NULL REFERENCES "chats"("id") ON DELETE CASCADE,
+          "sender_type" VARCHAR(50) NOT NULL,
+          "sender_id" UUID,
+          "message" TEXT NOT NULL,
+          "attachment_url" VARCHAR(500),
+          "is_read" BOOLEAN DEFAULT false,
+          "read_at" TIMESTAMP,
+          "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      logger.info('Chat messages table created/verified');
+
+      // Create indexes for chat tables
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_chats_customer_email" ON "chats"("customer_email");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_chats_status" ON "chats"("status");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_chats_assigned_admin" ON "chats"("assigned_admin_id");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_chat_messages_chat_id" ON "chat_messages"("chat_id");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_chat_messages_is_read" ON "chat_messages"("is_read");`);
+      logger.info('Chat indexes created/verified');
+    } catch (error) {
+      logger.warn('Could not create chat tables:', error.message);
+    }
+
     // Only sync database if explicitly enabled via environment variable
     // This prevents the database from being modified on every server restart
     if (process.env.SYNC_DATABASE === 'true') {

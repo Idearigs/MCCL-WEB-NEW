@@ -11,6 +11,20 @@ const getModelInstance = () => {
   return models;
 };
 
+// Get Gemstones - map to StoneTypes (gemstones are stone types in the system)
+const getGemstones = async (req, res) => {
+  try {
+    const { StoneTypes } = getModelInstance();
+    const gemstones = await StoneTypes.findAll({
+      order: [['sort_order', 'ASC'], ['name', 'ASC']]
+    });
+    res.json(gemstones);
+  } catch (error) {
+    console.error('Error fetching gemstones:', error);
+    res.status(500).json({ message: 'Failed to fetch gemstones' });
+  }
+};
+
 // Categories Controllers
 const getCategories = async (req, res) => {
   try {
@@ -241,24 +255,11 @@ const deleteRingType = async (req, res) => {
   }
 };
 
-// Gemstones Controllers
-const getGemstones = async (req, res) => {
-  try {
-    const { Gemstones } = getModelInstance();
-    const gemstones = await Gemstones.findAll({
-      order: [['sort_order', 'ASC'], ['name', 'ASC']]
-    });
-    res.json(gemstones);
-  } catch (error) {
-    console.error('Error fetching gemstones:', error);
-    res.status(500).json({ message: 'Failed to fetch gemstones' });
-  }
-};
-
+// Gemstones Controllers (getGemstones moved to top, now uses StoneTypes)
 const getGemstoneById = async (req, res) => {
   try {
-    const { Gemstones } = getModelInstance();
-    const gemstone = await Gemstones.findByPk(req.params.id);
+    const { StoneTypes } = getModelInstance();
+    const gemstone = await StoneTypes.findByPk(req.params.id);
 
     if (!gemstone) {
       return res.status(404).json({ message: 'Gemstone not found' });
@@ -273,8 +274,8 @@ const getGemstoneById = async (req, res) => {
 
 const createGemstone = async (req, res) => {
   try {
-    const { Gemstones } = getModelInstance();
-    const gemstone = await Gemstones.create(req.body);
+    const { StoneTypes } = getModelInstance();
+    const gemstone = await StoneTypes.create(req.body);
     res.status(201).json(gemstone);
   } catch (error) {
     console.error('Error creating gemstone:', error);
@@ -287,8 +288,8 @@ const createGemstone = async (req, res) => {
 
 const updateGemstone = async (req, res) => {
   try {
-    const { Gemstones } = getModelInstance();
-    const [updatedRowsCount] = await Gemstones.update(req.body, {
+    const { StoneTypes } = getModelInstance();
+    const [updatedRowsCount] = await StoneTypes.update(req.body, {
       where: { id: req.params.id }
     });
 
@@ -296,7 +297,7 @@ const updateGemstone = async (req, res) => {
       return res.status(404).json({ message: 'Gemstone not found' });
     }
 
-    const updatedGemstone = await Gemstones.findByPk(req.params.id);
+    const updatedGemstone = await StoneTypes.findByPk(req.params.id);
     res.json(updatedGemstone);
   } catch (error) {
     console.error('Error updating gemstone:', error);
@@ -309,8 +310,8 @@ const updateGemstone = async (req, res) => {
 
 const deleteGemstone = async (req, res) => {
   try {
-    const { Gemstones } = getModelInstance();
-    const deletedRowsCount = await Gemstones.destroy({
+    const { StoneTypes } = getModelInstance();
+    const deletedRowsCount = await StoneTypes.destroy({
       where: { id: req.params.id }
     });
 

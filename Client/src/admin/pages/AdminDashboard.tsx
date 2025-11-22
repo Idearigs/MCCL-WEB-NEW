@@ -13,7 +13,10 @@ import {
   ArrowDownRight,
   Eye,
   Edit,
-  MoreHorizontal
+  MoreHorizontal,
+  ShoppingCart,
+  DollarSign,
+  Clock
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -22,6 +25,15 @@ interface DashboardStats {
   total_categories: number;
   total_collections: number;
   featured_products: number;
+  total_orders: number;
+  pending_orders: number;
+  processing_orders: number;
+  delivered_orders: number;
+  total_revenue: number;
+  today_revenue: number;
+  today_orders: number;
+  month_revenue: number;
+  month_orders: number;
 }
 
 interface RecentProduct {
@@ -33,9 +45,22 @@ interface RecentProduct {
   created_at: string;
 }
 
+interface RecentOrder {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_status: string;
+  total_amount: number;
+  customer_email: string;
+  customer_name: string;
+  items_count: number;
+  created_at: string;
+}
+
 interface DashboardData {
   stats: DashboardStats;
   recent_products: RecentProduct[];
+  recent_orders: RecentOrder[];
 }
 
 const AdminDashboard: React.FC = () => {
@@ -107,6 +132,7 @@ const AdminDashboard: React.FC = () => {
 
   const stats = dashboardData?.stats;
   const recentProducts = dashboardData?.recent_products || [];
+  const recentOrders = dashboardData?.recent_orders || [];
 
   const statCards = [
     {
@@ -119,21 +145,21 @@ const AdminDashboard: React.FC = () => {
       changeType: 'increase'
     },
     {
-      title: 'Categories',
-      value: stats?.total_categories || 0,
-      subtitle: 'Product categories',
-      icon: FolderOpen,
-      color: 'bg-green-500',
-      change: '+2%',
+      title: 'Total Orders',
+      value: stats?.total_orders || 0,
+      subtitle: `${stats?.pending_orders || 0} pending`,
+      icon: ShoppingCart,
+      color: 'bg-amber-500',
+      change: `${stats?.today_orders || 0} today`,
       changeType: 'increase'
     },
     {
-      title: 'Collections',
-      value: stats?.total_collections || 0,
-      subtitle: 'Active collections',
-      icon: TrendingUp,
-      color: 'bg-purple-500',
-      change: '+5%',
+      title: 'Total Revenue',
+      value: `£${(stats?.total_revenue || 0).toFixed(2)}`,
+      subtitle: `£${(stats?.today_revenue || 0).toFixed(2)} today`,
+      icon: DollarSign,
+      color: 'bg-green-500',
+      change: `+£${(stats?.month_revenue || 0).toFixed(2)} this month`,
       changeType: 'increase'
     },
     {
@@ -267,6 +293,161 @@ const AdminDashboard: React.FC = () => {
                 <p className="font-satoshi">No recent products found</p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Recent Orders */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium text-gray-900 font-cormorant">Recent Orders</h2>
+              <button className="text-sm text-gray-600 hover:text-gray-900 font-satoshi">
+                View all
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-hidden">
+            {recentOrders.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
+                        Order Number
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
+                        Customer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
+                        Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
+                        Payment
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
+                        Date
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {recentOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-gray-900 font-satoshi">
+                            {order.order_number}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 font-satoshi">
+                              {order.customer_name}
+                            </p>
+                            <p className="text-xs text-gray-500 font-satoshi">
+                              {order.customer_email}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-gray-900 font-satoshi">
+                            £{order.total_amount.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                            order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            order.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                            order.payment_status === 'pending' ? 'bg-gray-100 text-gray-800' :
+                            order.payment_status === 'failed' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {order.payment_status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-satoshi">
+                          {formatDate(order.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="px-6 py-8 text-center text-gray-500">
+                <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p className="font-satoshi">No recent orders found</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Income Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900 font-cormorant">Today's Income</h3>
+              <Clock className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 font-satoshi">Total Revenue</p>
+                <p className="text-3xl font-light text-gray-900 font-cormorant">
+                  £{(stats?.today_revenue || 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div>
+                  <p className="text-sm text-gray-600 font-satoshi">Orders</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stats?.today_orders || 0}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-600 font-satoshi">Average Order</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    £{stats?.today_orders ? (stats.today_revenue / stats.today_orders).toFixed(2) : '0.00'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900 font-cormorant">This Month's Income</h3>
+              <DollarSign className="h-5 w-5 text-green-500" />
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 font-satoshi">Total Revenue</p>
+                <p className="text-3xl font-light text-gray-900 font-cormorant">
+                  £{(stats?.month_revenue || 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div>
+                  <p className="text-sm text-gray-600 font-satoshi">Orders</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stats?.month_orders || 0}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-600 font-satoshi">Average Order</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    £{stats?.month_orders ? (stats.month_revenue / stats.month_orders).toFixed(2) : '0.00'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

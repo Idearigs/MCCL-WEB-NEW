@@ -16,7 +16,10 @@ import {
   Diamond,
   Watch,
   Layers,
-  ShoppingCart
+  ShoppingCart,
+  Megaphone,
+  Zap,
+  MessageCircle
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -25,9 +28,10 @@ interface AdminLayoutProps {
 
 interface NavItem {
   name: string;
-  href: string;
+  href?: string;
   icon: React.ComponentType<any>;
   current?: boolean;
+  submenu?: NavItem[];
 }
 
 const navigation: NavItem[] = [
@@ -37,6 +41,15 @@ const navigation: NavItem[] = [
   // { name: 'Categories', href: '/admin/categories', icon: FolderOpen }, // Hidden - use Jewelry Categories instead
   { name: 'Jewelry Categories', href: '/admin/jewelry-categories', icon: Layers },
   { name: 'Collections', href: '/admin/collections', icon: Diamond },
+  {
+    name: 'Marketing',
+    icon: Megaphone,
+    submenu: [
+      { name: 'Content', href: '/admin/marketing', icon: Megaphone },
+      { name: 'Promotions', href: '/admin/promotions', icon: Zap },
+    ]
+  },
+  { name: 'Chats', href: '/admin/chats', icon: MessageCircle },
   { name: 'Watches', href: '/admin/watches', icon: Watch },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
@@ -45,6 +58,7 @@ const navigation: NavItem[] = [
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const { admin, logout } = useAdminAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -56,7 +70,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const currentNavigation = navigation.map((item) => ({
     ...item,
-    current: location.pathname === item.href,
+    current: item.href ? location.pathname === item.href : item.submenu?.some(sub => location.pathname === sub.href),
+    submenu: item.submenu?.map(sub => ({
+      ...sub,
+      current: location.pathname === sub.href,
+    }))
   }));
 
   return (
@@ -94,10 +112,57 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         <nav className="mt-8 px-4 space-y-2">
           {currentNavigation.map((item) => {
             const Icon = item.icon;
+            const isExpanded = expandedMenu === item.name;
+            const hasSubmenu = item.submenu && item.submenu.length > 0;
+
+            if (hasSubmenu) {
+              return (
+                <div key={item.name}>
+                  <button
+                    onClick={() => setExpandedMenu(isExpanded ? null : item.name)}
+                    className={`w-full group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors duration-200 font-satoshi ${
+                      item.current
+                        ? 'bg-gray-100 text-gray-900'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon
+                      className={`mr-3 h-5 w-5 transition-colors duration-200 ${
+                        item.current ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-900'
+                      }`}
+                    />
+                    {item.name}
+                    <ChevronDown
+                      className={`ml-auto h-4 w-4 transition-transform duration-200 ${
+                        isExpanded ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                  {isExpanded && (
+                    <div className="mt-1 space-y-1 pl-4">
+                      {item.submenu.map((subitem) => (
+                        <Link
+                          key={subitem.name}
+                          to={subitem.href || ''}
+                          className={`block px-3 py-2 text-sm rounded-lg transition-colors duration-200 font-satoshi ${
+                            subitem.current
+                              ? 'bg-gray-100 text-gray-900 font-medium'
+                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                          }`}
+                        >
+                          {subitem.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.name}
-                to={item.href}
+                to={item.href || ''}
                 className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors duration-200 font-satoshi ${
                   item.current
                     ? 'bg-gray-100 text-gray-900'

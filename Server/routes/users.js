@@ -937,9 +937,46 @@ router.get('/admin/:userId', adminAuth, async (req, res) => {
       [userId]
     );
 
-    // TODO: Get user's orders when order system is implemented
-    // For now, return empty array
-    const orders = [];
+    // Get user's orders with items
+    const ordersResult = await pool.query(
+      `SELECT
+        o.id,
+        o.order_number,
+        o.status,
+        o.payment_status,
+        o.total_amount,
+        o.currency,
+        o.created_at,
+        o.updated_at,
+        json_agg(json_build_object(
+          'id', oi.id,
+          'product_id', oi.product_id,
+          'product_name', oi.product_name,
+          'product_type', oi.product_type,
+          'quantity', oi.quantity,
+          'unit_price', oi.unit_price,
+          'total_price', oi.total_price,
+          'attributes', oi.attributes
+        )) FILTER (WHERE oi.id IS NOT NULL) as items
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       WHERE o.customer_email = $1
+       GROUP BY o.id, o.order_number, o.status, o.payment_status, o.total_amount, o.currency, o.created_at, o.updated_at
+       ORDER BY o.created_at DESC`,
+      [user.email]
+    );
+
+    const orders = ordersResult.rows.map(order => ({
+      id: order.id,
+      order_number: order.order_number,
+      status: order.status,
+      payment_status: order.payment_status,
+      total_amount: order.total_amount,
+      currency: order.currency,
+      items: order.items || [],
+      createdAt: order.created_at,
+      updatedAt: order.updated_at
+    }));
 
     res.json({
       success: true,
@@ -975,7 +1012,7 @@ router.get('/admin/:userId', adminAuth, async (req, res) => {
         stats: {
           favoritesCount: favoritesResult.rows.length,
           ordersCount: orders.length,
-          totalSpent: 0 // TODO: Calculate from orders when implemented
+          totalSpent: orders.reduce((sum, order) => sum + (parseFloat(order.total_amount) || 0), 0)
         }
       }
     });

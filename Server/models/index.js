@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { postgresDB } = require('../config/database');
 
-let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductMetalsJunction;
+let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage;
 
 const initializeModels = () => {
   const sequelize = postgresDB();
@@ -373,6 +373,11 @@ const initializeModels = () => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    is_metal_preview: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Flag to mark image as the preview image for a specific metal'
+    },
     sort_order: {
       type: DataTypes.INTEGER,
       defaultValue: 0
@@ -519,6 +524,245 @@ const initializeModels = () => {
     }
   }, {
     tableName: 'product_metals',
+    underscored: true,
+    timestamps: true
+  });
+
+  // Marketing Content Model (for special product/design releases)
+  MarketingContent = sequelize.define('MarketingContent', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    title: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    product_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'products',
+        key: 'id'
+      },
+      comment: 'Link to featured product (optional)'
+    },
+    video_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'YouTube or video URL'
+    },
+    thumbnail_image: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Thumbnail/background image for the section'
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
+    is_featured: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Featured on home page'
+    },
+    sort_order: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    }
+  }, {
+    tableName: 'marketing_content',
+    underscored: true,
+    timestamps: true
+  });
+
+  // Promotion/Special Deals Model
+  Promotion = sequelize.define('Promotion', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    title: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    product_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'products',
+        key: 'id'
+      },
+      comment: 'Featured product in popup'
+    },
+    discount_percentage: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Discount percentage for banner'
+    },
+    banner_text: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Text to display in marquee banner'
+    },
+    banner_text_1: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'First banner text item'
+    },
+    banner_text_2: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Second banner text item'
+    },
+    banner_text_3: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Third banner text item'
+    },
+    banner_text_4: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Fourth banner text item'
+    },
+    banner_text_5: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Fifth banner text item'
+    },
+    image_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Image for popup'
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
+    show_popup: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      comment: 'Show in popup modal'
+    },
+    show_banner: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      comment: 'Show in marquee banner'
+    },
+    sort_order: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    }
+  }, {
+    tableName: 'promotions',
+    underscored: true,
+    timestamps: true
+  });
+
+  // Chat Model - for storing chat sessions
+  Chat = sequelize.define('Chat', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    customer_name: {
+      type: DataTypes.STRING(100),
+      allowNull: false
+    },
+    customer_email: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+    customer_user_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      comment: 'Null for anonymous, UUID for logged-in users'
+    },
+    assigned_admin_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'admin_users',
+        key: 'id'
+      },
+      comment: 'Admin user assigned to handle this chat'
+    },
+    status: {
+      type: DataTypes.ENUM('active', 'closed', 'waiting'),
+      defaultValue: 'waiting',
+      comment: 'active=being handled, closed=ended, waiting=waiting for admin'
+    },
+    subject: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    last_message_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    is_archived: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }
+  }, {
+    tableName: 'chats',
+    underscored: true,
+    timestamps: true
+  });
+
+  // ChatMessage Model - for storing individual chat messages
+  ChatMessage = sequelize.define('ChatMessage', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    chat_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'chats',
+        key: 'id'
+      }
+    },
+    sender_type: {
+      type: DataTypes.ENUM('customer', 'admin'),
+      allowNull: false
+    },
+    sender_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      comment: 'Can be customer user ID or admin user ID'
+    },
+    message: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    attachment_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
+    is_read: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    read_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }
+  }, {
+    tableName: 'chat_messages',
     underscored: true,
     timestamps: true
   });
@@ -869,6 +1113,26 @@ const initializeModels = () => {
     as: 'metalProducts'
   });
 
+  // Marketing Content associations
+  MarketingContent.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+  Product.hasMany(MarketingContent, { foreignKey: 'product_id', as: 'marketingContent' });
+
+  // Promotion associations
+  Promotion.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+  Product.hasMany(Promotion, { foreignKey: 'product_id', as: 'promotions' });
+
+  // Chat associations
+  Chat.hasMany(ChatMessage, { foreignKey: 'chat_id', as: 'messages', onDelete: 'CASCADE' });
+  ChatMessage.belongsTo(Chat, { foreignKey: 'chat_id', as: 'chat' });
+
+  // Get admin models to establish Chat-AdminUser relationship
+  const { getAdminModels } = require('./adminModels');
+  const adminModels = getAdminModels();
+  if (adminModels.AdminUser) {
+    Chat.belongsTo(adminModels.AdminUser, { foreignKey: 'assigned_admin_id', as: 'assignedAdmin' });
+    adminModels.AdminUser.hasMany(Chat, { foreignKey: 'assigned_admin_id', as: 'assignedChats' });
+  }
+
   // Get watch models
   const { getWatchModels } = require('./watchModels');
   const watchModels = getWatchModels();
@@ -892,6 +1156,7 @@ const initializeModels = () => {
     ProductRingTypes,
     ProductStoneShapes,
     ProductMetalsJunction,
+    MarketingContent,
     ...watchModels,
     ...jewelryModels
   };
@@ -924,6 +1189,10 @@ module.exports = {
       ProductRingTypes,
       ProductStoneShapes,
       ProductMetalsJunction,
+      MarketingContent,
+      Promotion,
+      Chat,
+      ChatMessage,
       ...watchModels,
       ...jewelryModels,
       ...orderModels

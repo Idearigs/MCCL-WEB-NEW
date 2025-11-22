@@ -25,7 +25,12 @@
       "Bash(npm run check-watch-tables:*)",
       "Bash(npm run check-watch-tables:direct:*)",
       "Bash(npm run add-spec-columns:*)",
-      "Bash(timeout 10 npm run check-watch-tables:direct:*)"
+      "Bash(timeout 10 npm run check-watch-tables:direct:*)",
+      "Bash(npm run:*)",
+      "Bash(psql:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(timeout 30 npm run dev:*)"
     ],
     "deny": [],
     "ask": [],

@@ -626,7 +626,41 @@ const AdminProducts: React.FC = () => {
       } else {
         // Use JSON for updates without new media files
         const cleanData = { ...productData };
+
+        // Extract metal-specific preview updates
+        const metalPreviewUpdates: Record<string, any> = {};
+        if (productData.metalMediaState) {
+          console.log('metalMediaState:', productData.metalMediaState);
+          Object.keys(productData.metalMediaState).forEach(metalId => {
+            const metalMedia = productData.metalMediaState[metalId];
+            if (metalMedia.images && metalMedia.images.length > 0) {
+              console.log(`Processing metal ${metalId}, images:`, metalMedia.images.map((img: any) => ({
+                id: img.id,
+                is_metal_preview: img.is_metal_preview,
+                has_file: !!img.file
+              })));
+
+              const updates = metalMedia.images
+                .filter((img: any) => !img.file) // Only existing images
+                .map((img: any) => ({
+                  id: img.id,
+                  is_metal_preview: img.is_metal_preview === true
+                }));
+              if (updates.length > 0) {
+                metalPreviewUpdates[metalId] = updates;
+                const previewCount = updates.filter((u: any) => u.is_metal_preview).length;
+                console.log(`Metal ${metalId} final updates to send (${previewCount} marked as preview):`, updates);
+              }
+            }
+          });
+        }
+
+        console.log('Final metalPreviewUpdates to send:', metalPreviewUpdates);
+
         delete cleanData.metalMediaState;
+        delete cleanData.allImages;
+        delete cleanData.allVideos;
+
         // Remove file objects and blob URLs
         if (cleanData.images) {
           cleanData.images = cleanData.images
@@ -637,6 +671,11 @@ const AdminProducts: React.FC = () => {
           cleanData.videos = cleanData.videos
             .filter((vid: any) => vid.url && !vid.url.startsWith('blob:'))
             .map((vid: any) => ({ url: vid.url, title: vid.title }));
+        }
+
+        // Add metal preview updates to cleanData
+        if (Object.keys(metalPreviewUpdates).length > 0) {
+          cleanData.metalPreviewUpdates = metalPreviewUpdates;
         }
 
         response = await fetch(`${API_BASE_URL}/admin/products/${editingProduct?.id}`, {
@@ -736,16 +775,41 @@ const AdminProducts: React.FC = () => {
         ring_style_4_ids: data.data.ringStyle4?.id ? [data.data.ringStyle4.id] : [],
         ring_style_5_ids: data.data.ringStyle5?.id ? [data.data.ringStyle5.id] : [],
         // Transform images to include both url and alt_text with proper structure
-        images: data.data.images?.map((img: any) => ({
+        // Only include general product images (without metal_id) in the images array
+        images: data.data.images
+          ?.filter((img: any) => !img.metal_id) // Only general images without metal_id
+          ?.map((img: any) => ({
+            file: null,
+            url: img.image_url,
+            alt_text: img.alt_text || '',
+            id: img.id
+          })) || [],
+        // Keep all images (including metal-specific) for the metal media state initialization
+        allImages: data.data.images?.map((img: any) => ({
           file: null,
           url: img.image_url,
-          alt_text: img.alt_text || ''
+          alt_text: img.alt_text || '',
+          metal_id: img.metal_id || null,
+          is_metal_preview: img.is_metal_preview || false,
+          id: img.id
         })) || [],
         // Transform videos to include proper structure
-        videos: data.data.videos?.map((vid: any) => ({
+        // Only include general product videos (without metal_id) in the videos array
+        videos: data.data.videos
+          ?.filter((vid: any) => !vid.metal_id) // Only general videos without metal_id
+          ?.map((vid: any) => ({
+            file: null,
+            url: vid.video_url,
+            title: vid.title || '',
+            id: vid.id
+          })) || [],
+        // Keep all videos (including metal-specific) for the metal media state initialization
+        allVideos: data.data.videos?.map((vid: any) => ({
           file: null,
           url: vid.video_url,
-          title: vid.title || ''
+          title: vid.title || '',
+          metal_id: vid.metal_id || null,
+          id: vid.id
         })) || [],
         // Ensure collection_id is string or empty string
         collection_id: data.data.collection?.id || ''

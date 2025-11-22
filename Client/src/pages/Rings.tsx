@@ -40,6 +40,11 @@ interface RingProduct {
     name: string;
     slug: string;
   }>;
+  available_metals?: Array<{
+    id: string;
+    name: string;
+    color_code: string;
+  }>;
   image?: {
     url: string;
     alt: string;
@@ -49,6 +54,8 @@ interface RingProduct {
     url: string;
     alt: string;
     is_primary: boolean;
+    is_metal_preview?: boolean;
+    metal_id?: string;
   }>;
   is_featured: boolean;
   in_stock: boolean;
@@ -61,6 +68,8 @@ const Rings = (): JSX.Element => {
   const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('rings');
+  const [displayCount, setDisplayCount] = useState<number>(30);
+  const [selectedMetals, setSelectedMetals] = useState<{[productId: string]: string}>({});
   const [selectedFilters, setSelectedFilters] = useState<{
     price: string[];
     ringType: string[];
@@ -198,6 +207,11 @@ const Rings = (): JSX.Element => {
     }
   }, [isAuthenticated, user]);
 
+  // Reset display count when filters change
+  useEffect(() => {
+    setDisplayCount(30);
+  }, [selectedFilters]);
+
   const toggleLike = async (productId: string) => {
     // Check if user is authenticated
     if (!isAuthenticated || !user) {
@@ -251,6 +265,25 @@ const Rings = (): JSX.Element => {
 
   const toggleFilter = (filterName: string) => {
     setActiveFilter(activeFilter === filterName ? null : filterName);
+  };
+
+  // Get image for selected metal or fallback to primary
+  const getImageForMetal = (product: RingProduct, selectedMetalId?: string): {url: string; alt: string} => {
+    if (selectedMetalId && product.images) {
+      // Find image marked as metal preview for this metal
+      const metalImage = product.images.find(
+        img => img.is_metal_preview === true && img.metal_id === selectedMetalId
+      );
+      if (metalImage) {
+        console.log(`Found metal preview image for metal ${selectedMetalId}:`, metalImage);
+        return { url: metalImage.url, alt: metalImage.alt };
+      } else {
+        console.log(`No metal preview found for metal ${selectedMetalId}. Available images:`, product.images);
+      }
+    }
+    // Fallback to primary image
+    const primaryImage = product.images?.find(img => img.is_primary === true) || product.images?.[0];
+    return primaryImage ? { url: primaryImage.url, alt: primaryImage.alt } : { url: "/images/Rings.png", alt: product.name };
   };
 
   // Filter handlers
@@ -751,125 +784,185 @@ const Rings = (): JSX.Element => {
           </div>
           
           {/* Ring Product Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
-            {loading ? (
-              // Loading skeleton
-              Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="bg-white">
-                  <div className="bg-gray-200 animate-pulse mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}></div>
-                  <div className="p-4">
-                    <div className="h-4 bg-gray-200 animate-pulse rounded mb-3"></div>
-                    <div className="h-4 bg-gray-200 animate-pulse rounded w-20"></div>
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="bg-white">
+                    <div className="bg-gray-200 animate-pulse mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}></div>
+                    <div className="p-4">
+                      <div className="h-4 bg-gray-200 animate-pulse rounded mb-3"></div>
+                      <div className="h-4 bg-gray-200 animate-pulse rounded w-20"></div>
+                    </div>
+                  </div>
+                ))
+              ) : error ? (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  {error}
+                </div>
+              ) : filteredProducts.length === 0 && ringProducts.length > 0 ? (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                  <h3 className="text-xl font-cormorant font-normal text-gray-700 mb-4">
+                    No products match your filters
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Try adjusting your filter selections to see more rings.
+                  </p>
+                  <button
+                    onClick={clearFilters}
+                    className="bg-gray-900 text-white px-6 py-2 hover:bg-gray-800 transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              ) : ringProducts.length === 0 ? (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                  <h3 className="text-xl font-cormorant font-normal text-gray-700 mb-4">
+                    Ring Products Coming Soon
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    We're currently setting up our ring collection database. Please check back soon to see our beautiful selection of rings.
+                  </p>
+                  <div className="text-sm text-gray-500">
+                    In the meantime, you can browse our other collections or contact us for assistance.
                   </div>
                 </div>
-              ))
-            ) : error ? (
-              <div className="col-span-full text-center py-8 text-gray-500">
-                {error}
-              </div>
-            ) : filteredProducts.length === 0 && ringProducts.length > 0 ? (
-              <div className="col-span-full text-center py-12 text-gray-500">
-                <h3 className="text-xl font-cormorant font-normal text-gray-700 mb-4">
-                  No products match your filters
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Try adjusting your filter selections to see more rings.
-                </p>
-                <button
-                  onClick={clearFilters}
-                  className="bg-gray-900 text-white px-6 py-2 hover:bg-gray-800 transition-colors"
-                >
-                  Clear All Filters
-                </button>
-              </div>
-            ) : ringProducts.length === 0 ? (
-              <div className="col-span-full text-center py-12 text-gray-500">
-                <h3 className="text-xl font-cormorant font-normal text-gray-700 mb-4">
-                  Ring Products Coming Soon
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  We're currently setting up our ring collection database. Please check back soon to see our beautiful selection of rings.
-                </p>
-                <div className="text-sm text-gray-500">
-                  In the meantime, you can browse our other collections or contact us for assistance.
-                </div>
-              </div>
-            ) : (
-              filteredProducts.map((product) => {
-                const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
-                const hoverImage = product.images?.[1] || primaryImage;
+              ) : (
+                filteredProducts.slice(0, displayCount).map((product) => {
+                  const selectedMetalId = selectedMetals[product.id];
+                  const displayImage = getImageForMetal(product, selectedMetalId);
+                  const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
+                  const hoverImage = product.images?.[1] || primaryImage;
 
-                return (
-                  <Link
-                    key={product.id}
-                    to={`/${product.category.slug}/${product.slug}`}
-                    className="group cursor-pointer bg-white transition-all duration-300 block"
-                  >
-                    <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleLike(product.id);
-                        }}
-                        disabled={togglingFavorite === product.id}
-                        className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center transition-colors disabled:opacity-50"
+                  return (
+                    <div key={product.id} className="cursor-pointer bg-white transition-all duration-300">
+                      <Link
+                        to={`/${product.category.slug}/${product.slug}`}
+                        className="block group"
                       >
-                        <svg className={`w-4 h-4 transition-colors duration-200 ${
-                          likedProducts.has(product.id) ? 'text-gray-700 fill-gray-700' : 'text-gray-400 group-hover:text-white fill-none'
-                        }`} stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                      </button>
+                        <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleLike(product.id);
+                            }}
+                            disabled={togglingFavorite === product.id}
+                            className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center transition-colors disabled:opacity-50"
+                          >
+                            <svg className={`w-4 h-4 transition-colors duration-200 ${
+                              likedProducts.has(product.id) ? 'text-gray-700 fill-gray-700' : 'text-gray-400 group-hover:text-white fill-none'
+                            }`} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                          </button>
 
-                      {/* Default Image */}
-                      <img
-                        src={primaryImage?.url || "/images/Rings.png"}
-                        alt={primaryImage?.alt || product.name}
-                        className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
-                      />
+                          {/* Default Image */}
+                          <img
+                            src={displayImage.url}
+                            alt={displayImage.alt}
+                            className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
+                          />
 
-                      {/* Hover Image */}
-                      <img
-                        src={hoverImage?.url || primaryImage?.url || "/images/Rings.png"}
-                        alt={hoverImage?.alt || `${product.name} - Alternative View`}
-                        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
-                      />
+                          {/* Hover Image */}
+                          <img
+                            src={hoverImage?.url || displayImage.url}
+                            alt={hoverImage?.alt || `${product.name} - Alternative View`}
+                            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                          />
 
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                        {/* Arrow Icon */}
-                        <div className="absolute top-1/2 right-4 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0 translate-x-4">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
-                          </svg>
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                            {/* Arrow Icon */}
+                            <div className="absolute top-1/2 right-4 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0 translate-x-4">
+                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
+                              </svg>
+                            </div>
+
+                            {/* Add to Bag Button */}
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // Add to bag logic here
+                              }}
+                              className="w-full bg-white/95 backdrop-blur-sm text-gray-700 hover:text-white hover:bg-black py-3 px-4 font-inter font-light text-sm tracking-wider uppercase transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75"
+                            >
+                              ADD TO BAG
+                            </button>
+                          </div>
                         </div>
+                      </Link>
 
-                        {/* Add to Bag Button */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Add to bag logic here
-                          }}
-                          className="w-full bg-white/95 backdrop-blur-sm text-gray-700 hover:text-white hover:bg-black py-3 px-4 font-inter font-light text-sm tracking-wider uppercase transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75"
-                        >
-                          ADD TO BAG
-                        </button>
+                      {/* Product Info Card */}
+                      <div className="p-4">
+                        {/* Product Name */}
+                        <h3 className="text-base font-cormorant font-normal text-gray-700 mb-3 leading-tight">{product.name}</h3>
+
+                        {/* Metal Options - Colored Circles */}
+                        {product.available_metals && product.available_metals.length > 0 && (
+                          <div className="flex items-center gap-2 mb-3">
+                            {product.available_metals.map((metal) => (
+                              <button
+                                key={metal.id}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setSelectedMetals(prev => ({
+                                    ...prev,
+                                    [product.id]: metal.id
+                                  }));
+                                }}
+                                title={metal.name}
+                                className={`w-6 h-6 rounded-full transition-all ${
+                                  selectedMetals[product.id] === metal.id
+                                    ? 'ring-2 ring-gray-700 ring-offset-1'
+                                    : 'border border-gray-300'
+                                }`}
+                                style={{
+                                  backgroundColor: metal.color_code || '#cccccc'
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Price */}
+                        <p className="text-lg font-cormorant font-medium text-gray-600">{product.price}</p>
                       </div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="text-base font-cormorant font-normal text-gray-700 mb-3 leading-tight">{product.name}</h3>
-                      <p className="text-lg font-cormorant font-medium text-gray-600">{product.price}</p>
-                      <p className="text-sm text-gray-500 font-cormorant">{product.description || 'Exquisite Ring'}</p>
-                    </div>
-                  </Link>
-                );
-              })
-            )}
+                  );
+                })
+              )}
+            </div>
 
-            {/* COMMENTED OUT - Original Dummy Ring Products as requested */}
-            {/*
+            {/* Load More Section */}
+            {!loading && !error && filteredProducts.length > 0 && (
+              <div className="flex flex-col items-center gap-4 mb-16">
+                {displayCount < filteredProducts.length ? (
+                  <>
+                    <button
+                      onClick={() => setDisplayCount(prev => prev + 30)}
+                      className="bg-gray-900 text-white px-8 py-3 hover:bg-gray-800 transition-colors font-medium"
+                    >
+                      Load More
+                    </button>
+                    <p className="text-sm text-gray-600 font-inter">
+                      {Math.min(displayCount, filteredProducts.length)} / {filteredProducts.length} results
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-600 font-inter">
+                    All {filteredProducts.length} results loaded
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* COMMENTED OUT - Original Dummy Ring Products as requested */}
+          {/*
             <div className="group cursor-pointer bg-white transition-all duration-300">
               <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
                 <button
@@ -990,25 +1083,7 @@ const Rings = (): JSX.Element => {
               </div>
             </div>
             */}
-          </div>
 
-          {/* Call to Action */}
-          <div className="text-center bg-gray-50 rounded-lg p-12">
-            <h2 className="text-3xl font-light text-gray-900 mb-4 font-cormorant">
-              Find Your Perfect Ring
-            </h2>
-            <p className="text-lg text-gray-600 mb-8 font-cormorant">
-              Our expert jewellers are here to help you discover the ring of your dreams, whether it's for an engagement, wedding, or special occasion.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gray-900 text-white px-8 py-3 hover:bg-gray-800 transition-colors font-medium">
-                Book Consultation
-              </button>
-              <button className="border border-gray-300 text-gray-700 px-8 py-3 hover:border-gray-400 hover:text-gray-900 transition-colors font-medium">
-                Contact Us
-              </button>
-            </div>
-          </div>
         </div>
       </main>
 

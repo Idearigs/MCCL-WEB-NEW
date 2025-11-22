@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
 import WatchBrandsShowcase from "./WatchBrandsShowcase";
+import MarketingSection from "./MarketingSection";
+import PromotionBanner from "./PromotionBanner";
 import AddToCartButton from "./AddToCartButton";
 import API_BASE_URL from '../config/api';
 
@@ -121,12 +123,23 @@ export default function MainContentSection(): JSX.Element {
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [ringProducts, setRingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const desktopScrollRef = useRef<HTMLDivElement>(null);
 
   // Get current products based on active filter
   const currentProducts = activeFilter === 'Rings' ? ringProducts : allProductsData[activeFilter as keyof typeof allProductsData] || ringProducts;
+
+  // Handle window resize for mobile/desktop detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch ring products from API
   useEffect(() => {
@@ -271,8 +284,8 @@ export default function MainContentSection(): JSX.Element {
               position: 'absolute',
               top: '50%',
               left: '50%',
-              width: '200vw',
-              height: '200vh',
+              width: isMobile ? '500vw' : '120vw',
+              height: isMobile ? '500vh' : '120vh',
               transform: 'translate(-50%, -50%)',
               border: 'none',
               pointerEvents: 'none'
@@ -285,7 +298,7 @@ export default function MainContentSection(): JSX.Element {
         {/* Content Container */}
         <div className="relative z-20 flex flex-col items-center justify-center h-full text-center text-white px-4 w-full">
           <h1
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight sm:leading-snug md:leading-tight lg:leading-tight mb-4 md:mb-8 max-w-full opacity-0 animate-fade-in-up font-cormorant font-semibold"
+            className="text-4xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight sm:leading-snug md:leading-tight lg:leading-tight mb-4 md:mb-8 max-w-full opacity-0 animate-fade-in-up font-cormorant font-semibold"
             style={{
               animationDelay: '0.5s',
               animationFillMode: 'forwards'
@@ -318,6 +331,9 @@ export default function MainContentSection(): JSX.Element {
         </div>
       </section>
 
+      {/* Promotion Banner - Below Hero */}
+      <PromotionBanner />
+
       {/* Jewelry Categories Section */}
       <section className="bg-white py-20 lg:py-24">
         {/* Desktop Grid Layout */}
@@ -329,7 +345,7 @@ export default function MainContentSection(): JSX.Element {
                 to={category.href}
                 className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500"
                 style={{
-                  height: '400px'
+                  height: '430px'
                 }}
               >
                 <img
@@ -361,7 +377,7 @@ export default function MainContentSection(): JSX.Element {
                 className="group relative flex-shrink-0 overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500"
                 style={{
                   width: '280px',
-                  height: '350px'
+                  height: '375px'
                 }}
               >
                 <img
@@ -397,6 +413,9 @@ export default function MainContentSection(): JSX.Element {
           </div>
         </div>
       </section>
+
+      {/* Marketing Section - Bespoke Collection */}
+      <MarketingSection />
 
       {/* Latest Designs & Engagement Rings Showcase */}
       <section className="bg-gray-50 py-20 lg:py-24">
@@ -760,8 +779,8 @@ export default function MainContentSection(): JSX.Element {
 
       {/* Watch Brands Showcase Section */}
       <WatchBrandsShowcase />
-      
-       
+
+
     </main>
 
     

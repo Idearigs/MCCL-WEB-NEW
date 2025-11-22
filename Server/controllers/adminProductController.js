@@ -707,13 +707,69 @@ const updateProduct = async (req, res) => {
       await Promise.all(relationshipPromises);
     }
 
+    // Handle metal preview updates for existing images
+    if (req.body.metalPreviewUpdates) {
+      const metalPreviewUpdates = req.body.metalPreviewUpdates;
+      console.log('[DEBUG] Received metalPreviewUpdates:', JSON.stringify(metalPreviewUpdates, null, 2));
+
+      for (const metalId of Object.keys(metalPreviewUpdates)) {
+        const imagesToUpdate = metalPreviewUpdates[metalId];
+        console.log(`[DEBUG] Processing metal ${metalId} with ${imagesToUpdate.length} images`);
+
+        // First, reset ALL images for this metal to not be preview
+        await ProductImage.update(
+          { is_metal_preview: false },
+          {
+            where: {
+              product_id: id,
+              metal_id: metalId
+            }
+          }
+        );
+
+        // Then set the selected one as preview
+        for (const imageUpdate of imagesToUpdate) {
+          console.log(`[DEBUG] Image ${imageUpdate.id}: is_metal_preview=${imageUpdate.is_metal_preview}`);
+          if (imageUpdate.is_metal_preview === true && imageUpdate.id) {
+            // First verify the image exists
+            const existingImage = await ProductImage.findByPk(imageUpdate.id);
+            console.log(`[DEBUG] Image ${imageUpdate.id} exists in DB:`, !!existingImage);
+
+            if (existingImage) {
+              const updateResult = await ProductImage.update(
+                { is_metal_preview: true },
+                {
+                  where: {
+                    id: imageUpdate.id
+                  }
+                }
+              );
+              console.log(`[DEBUG] Updated image ${imageUpdate.id} to preview. Rows affected: ${updateResult[0]}`);
+            } else {
+              console.log(`[DEBUG] ERROR: Image ${imageUpdate.id} NOT FOUND in database!`);
+            }
+          }
+        }
+      }
+    }
+
     // Fetch updated product with relationships
     const updatedProduct = await Product.findByPk(id, {
       include: [
         { model: Category, as: 'category' },
         { model: Collection, as: 'collection', required: false },
-        { model: ProductImage, as: 'images' },
-        { model: ProductVideo, as: 'videos' },
+        {
+          model: ProductImage,
+          as: 'images',
+          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview'],
+          order: [['sort_order', 'ASC']]
+        },
+        {
+          model: ProductVideo,
+          as: 'videos',
+          attributes: ['id', 'video_url', 'title', 'description', 'sort_order', 'metal_id'],
+          order: [['sort_order', 'ASC']]
+        },
         { model: ProductVariant, as: 'variants' },
         {
           model: RingTypes,

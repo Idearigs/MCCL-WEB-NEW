@@ -10,6 +10,9 @@ import AdminJewelryCategories from './pages/AdminJewelryCategories';
 import AdminWatches from './pages/AdminWatches';
 import AdminUsers from './pages/AdminUsers';
 import AdminOrders from './pages/AdminOrders';
+import AdminMarketing from './pages/AdminMarketing';
+import AdminPromotions from './pages/AdminPromotions';
+import AdminChats from './pages/AdminChats';
 
 const AdminApp: React.FC = () => {
   return (
@@ -78,6 +81,33 @@ const AdminApp: React.FC = () => {
           element={
             <ProtectedRoute>
               <AdminOrders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/marketing"
+          element={
+            <ProtectedRoute>
+              <AdminMarketing />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/promotions"
+          element={
+            <ProtectedRoute>
+              <AdminPromotions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/chats"
+          element={
+            <ProtectedRoute>
+              <AdminChats />
             </ProtectedRoute>
           }
         />

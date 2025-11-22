@@ -272,11 +272,77 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         variants: []
       });
     }
-    // Reset metal media state
-    setMetalMediaState({});
+
+    // Load existing metal-specific images and videos during edit mode
+    if (initialData && mode === 'edit') {
+      const newMetalMediaState: Record<string, any> = {};
+
+      // Use allImages if available (contains metal_id info), otherwise fallback to images
+      const imagesToProcess = (initialData as any).allImages || initialData.images || [];
+
+      if (imagesToProcess && Array.isArray(imagesToProcess)) {
+        // Group images by metal_id
+        const imagesByMetal = imagesToProcess.reduce((acc: any, img: any) => {
+          if (img.metal_id) {
+            if (!acc[img.metal_id]) {
+              acc[img.metal_id] = [];
+            }
+            acc[img.metal_id].push({
+              file: null,
+              url: img.url,
+              alt_text: img.alt_text || img.alt || '',
+              is_metal_preview: img.is_metal_preview || false,
+              id: img.id
+            });
+          }
+          return acc;
+        }, {});
+
+        Object.keys(imagesByMetal).forEach(metalId => {
+          newMetalMediaState[metalId] = {
+            ...newMetalMediaState[metalId],
+            images: imagesByMetal[metalId]
+          };
+        });
+      }
+
+      // Use allVideos if available (contains metal_id info), otherwise fallback to videos
+      const videosToProcess = (initialData as any).allVideos || initialData.videos || [];
+
+      if (videosToProcess && Array.isArray(videosToProcess)) {
+        // Group videos by metal_id
+        const videosByMetal = videosToProcess.reduce((acc: any, vid: any) => {
+          if (vid.metal_id) {
+            if (!acc[vid.metal_id]) {
+              acc[vid.metal_id] = [];
+            }
+            acc[vid.metal_id].push({
+              file: null,
+              url: vid.url,
+              title: vid.title || '',
+              id: vid.id
+            });
+          }
+          return acc;
+        }, {});
+
+        Object.keys(videosByMetal).forEach(metalId => {
+          newMetalMediaState[metalId] = {
+            ...newMetalMediaState[metalId],
+            videos: videosByMetal[metalId]
+          };
+        });
+      }
+
+      setMetalMediaState(newMetalMediaState);
+    } else {
+      // Reset metal media state for create mode
+      setMetalMediaState({});
+    }
+
     setErrors({});
     setActiveTab('basic');
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, mode]);
 
   // Fetch Nivoda options when Nivoda is enabled
   useEffect(() => {

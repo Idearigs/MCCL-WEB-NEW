@@ -27,7 +27,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     sort = 'created_at',
     order = 'desc',
     page = 1,
-    limit = 12
+    limit = 1000
   } = req.query;
 
   const offset = (page - 1) * limit;
@@ -152,6 +152,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
       collection: product.collection || null,
       ringTypes: product.ringTypes || [],
       primary_metal: product.metals && product.metals.length > 0 ? product.metals[0] : null,
+      available_metals: product.metals && product.metals.length > 0 ? product.metals : [],
       gemstones: product.gemstones || [],
       is_featured: product.is_featured || false,
       in_stock: product.in_stock || false,
@@ -163,7 +164,9 @@ const getAllProducts = asyncHandler(async (req, res) => {
         id: img.id || '',
         url: img.image_url || '',
         alt: img.alt_text || '',
-        is_primary: img.is_primary || false
+        is_primary: img.is_primary || false,
+        is_metal_preview: img.is_metal_preview || false,
+        metal_id: img.metal_id || null
       })),
       variants: product.variants || [],
       created_at: product.created_at

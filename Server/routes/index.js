@@ -13,6 +13,9 @@ const authRoutes = require('./auth');
 const nivodaRoutes = require('./nivoda');
 const paymentRoutes = require('./paymentRoutes');
 const webhookRoutes = require('./webhookRoutes');
+const marketingRoutes = require('./marketing');
+const promotionRoutes = require('./promotions');
+const chatRoutes = require('./chats');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -37,6 +40,9 @@ router.use('/auth', authRoutes);
 router.use('/nivoda', nivodaRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/webhooks', webhookRoutes);
+router.use('/marketing', marketingRoutes);
+router.use('/promotions', promotionRoutes);
+router.use('/chats', chatRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {

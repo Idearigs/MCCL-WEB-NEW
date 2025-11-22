@@ -220,8 +220,10 @@ const changePassword = asyncHandler(async (req, res) => {
 
 // Admin Dashboard Stats
 const getDashboardStats = asyncHandler(async (req, res) => {
-  const { Product, Category, Collection } = require('../models').getModels();
+  const { Product, Category, Collection, Order, OrderItem } = require('../models').getModels();
+  const { Sequelize } = require('sequelize');
 
+  // Product stats
   const [
     totalProducts,
     activeProducts,
@@ -235,6 +237,13 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     Collection.count({ where: { is_active: true } }),
     Product.count({ where: { is_featured: true, is_active: true } })
   ]);
+
+  // Order stats - simple counts
+  const totalOrders = Order ? await Order.count() : 0;
+  const pendingOrders = Order ? await Order.count({ where: { status: 'pending' } }) : 0;
+  const processingOrders = Order ? await Order.count({ where: { status: 'processing' } }) : 0;
+  const deliveredOrders = Order ? await Order.count({ where: { status: 'delivered' } }) : 0;
+  const totalRevenueResult = Order ? await Order.sum('total_amount') : 0;
 
   // Recent products
   const recentProducts = await Product.findAll({
@@ -252,6 +261,66 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     ]
   });
 
+  // Get recent orders
+  let recentOrders = [];
+  if (Order) {
+    recentOrders = await Order.findAll({
+      limit: 10,
+      order: [['created_at', 'DESC']],
+      attributes: ['id', 'order_number', 'status', 'payment_status', 'total_amount', 'customer_email', 'customer_name', 'created_at'],
+      raw: true
+    });
+  }
+
+  // Get today's and month's income with simple approach
+  let todayRevenue = 0;
+  let todayOrderCount = 0;
+  let monthRevenue = 0;
+  let monthOrderCount = 0;
+
+  if (Order) {
+    try {
+      // Get today's orders
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const todayOrders = await Order.findAll({
+        where: {
+          payment_status: 'paid',
+          created_at: {
+            [Sequelize.Op.gte]: todayStart
+          }
+        },
+        attributes: ['total_amount'],
+        raw: true
+      });
+
+      todayOrderCount = todayOrders.length;
+      todayRevenue = todayOrders.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0);
+
+      // Get this month's orders
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+
+      const monthOrders = await Order.findAll({
+        where: {
+          payment_status: 'paid',
+          created_at: {
+            [Sequelize.Op.gte]: monthStart
+          }
+        },
+        attributes: ['total_amount'],
+        raw: true
+      });
+
+      monthOrderCount = monthOrders.length;
+      monthRevenue = monthOrders.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0);
+    } catch (error) {
+      logger.warn('Error calculating income stats:', error.message);
+    }
+  }
+
   res.json({
     success: true,
     data: {
@@ -260,7 +329,16 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         active_products: activeProducts,
         total_categories: totalCategories,
         total_collections: totalCollections,
-        featured_products: featuredProducts
+        featured_products: featuredProducts,
+        total_orders: totalOrders,
+        pending_orders: pendingOrders,
+        processing_orders: processingOrders,
+        delivered_orders: deliveredOrders,
+        total_revenue: totalRevenueResult || 0,
+        today_revenue: todayRevenue,
+        today_orders: todayOrderCount,
+        month_revenue: monthRevenue,
+        month_orders: monthOrderCount
       },
       recent_products: recentProducts.map(product => ({
         id: product.id,
@@ -269,6 +347,17 @@ const getDashboardStats = asyncHandler(async (req, res) => {
         price: `£${parseFloat(product.base_price).toLocaleString()}`,
         image: product.images[0]?.image_url || null,
         created_at: product.created_at
+      })),
+      recent_orders: recentOrders.map(order => ({
+        id: order.id,
+        order_number: order.order_number,
+        status: order.status,
+        payment_status: order.payment_status,
+        total_amount: parseFloat(order.total_amount),
+        customer_email: order.customer_email,
+        customer_name: order.customer_name,
+        items_count: 0,
+        created_at: order.created_at
       }))
     }
   });
