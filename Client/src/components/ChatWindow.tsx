@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Loader, CheckCircle } from 'lucide-react';
+import { X, Send, Loader, CheckCircle, Image as ImageIcon } from 'lucide-react';
 import { io } from 'socket.io-client';
 import API_BASE_URL from '../config/api';
 
@@ -46,7 +46,9 @@ export default function ChatWindow({
   const [success, setSuccess] = useState(false);
 
   // Form state for new chat
-  const [showForm, setShowForm] = useState(!chatId);
+  // If user is logged in (has name and email), skip the form
+  const isUserLoggedIn = !!(user?.name && user?.email);
+  const [showForm, setShowForm] = useState(!chatId && !isUserLoggedIn);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -56,10 +58,44 @@ export default function ChatWindow({
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [typingUser, setTypingUser] = useState('');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const socketRef = useRef<any>(null);
   const typingTimeoutRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-create chat for logged-in users
+  useEffect(() => {
+    if (isUserLoggedIn && !chatId && user?.name && user?.email) {
+      const createAutoChat = async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/chats`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_name: user.name,
+              customer_email: user.email,
+              customer_user_id: user.id || null,
+              subject: 'Customer Inquiry'
+            })
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            setChatId(data.data.chat.id);
+            setShowForm(false);
+            onChatCreated(data.data.chat.id);
+          }
+        } catch (error) {
+          console.error('Error creating auto-chat:', error);
+        }
+      };
+
+      createAutoChat();
+    }
+  }, [isUserLoggedIn, user?.id, user?.name, user?.email, chatId, onChatCreated]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -169,29 +205,60 @@ export default function ChatWindow({
     }
   };
 
+  // Handle image file selection
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setError('Please select a valid image file');
+    }
+  };
+
+  // Clear selected image
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const sendMessage = async (targetChatId: string = chatId!, messageText: string = messageInput) => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim() && !selectedImage) return;
 
     setSending(true);
     setError(null);
     setIsTyping(false);
 
     try {
+      // Use FormData if there's an image, otherwise use JSON
+      const messageBody = new FormData();
+      messageBody.append('chat_id', targetChatId);
+      messageBody.append('sender_type', 'customer');
+      messageBody.append('sender_id', user?.id || '');
+      messageBody.append('message', messageText || '');
+
+      if (selectedImage) {
+        messageBody.append('attachment', selectedImage);
+      }
+
       const response = await fetch(`${API_BASE_URL}/chats/message/send`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: targetChatId,
-          sender_type: 'customer',
-          sender_id: user?.id || null,
-          message: messageText
-        })
+        body: messageBody
       });
 
       const data = await response.json();
 
       if (data.success) {
         setMessageInput('');
+        clearImage();
 
         // Emit message via WebSocket for real-time delivery
         if (socketRef.current) {
@@ -263,15 +330,21 @@ export default function ChatWindow({
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-96 max-h-96 bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden border border-gray-200">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-4 flex justify-between items-center">
-        <h3 className="font-semibold">McCulloch Support</h3>
+    <div className="fixed bottom-8 right-8 z-50 w-96 max-h-[600px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      {/* Header - Luxury Minimal */}
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 flex justify-between items-center border-b border-gray-700 relative overflow-hidden">
+        {/* Background Accent */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-gray-700 to-transparent opacity-30 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+
+        <div className="relative z-10">
+          <h3 className="font-light text-lg tracking-wide">McCulloch</h3>
+          <p className="text-xs text-gray-400 font-light">Jewelry & Support</p>
+        </div>
         <button
           onClick={onClose}
-          className="hover:bg-gray-700 p-1 rounded transition-colors"
+          className="relative z-10 text-gray-400 hover:text-white transition-colors duration-200 p-2 hover:bg-white/10 rounded-lg"
         >
-          <X size={20} />
+          <X size={20} strokeWidth={1.5} />
         </button>
       </div>
 
@@ -281,7 +354,7 @@ export default function ChatWindow({
         {showForm && !chatId ? (
           <form onSubmit={handleCreateChat} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-semibold text-gray-700 mb-2 tracking-wide">
                 Your Name
               </label>
               <input
@@ -291,13 +364,13 @@ export default function ChatWindow({
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-900/20 bg-white hover:border-gray-300 transition-all duration-200"
                 placeholder="John Doe"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-semibold text-gray-700 mb-2 tracking-wide">
                 Email Address
               </label>
               <input
@@ -307,13 +380,13 @@ export default function ChatWindow({
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-900/20 bg-white hover:border-gray-300 transition-all duration-200"
                 placeholder="john@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-semibold text-gray-700 mb-2 tracking-wide">
                 Message
               </label>
               <textarea
@@ -321,21 +394,21 @@ export default function ChatWindow({
                 onChange={(e) =>
                   setFormData({ ...formData, message: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-900/20 bg-white hover:border-gray-300 transition-all duration-200 resize-none"
                 rows={4}
                 placeholder="How can we help you?"
               />
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
+              <div className="text-red-700 text-sm bg-red-50 p-3 rounded-lg border border-red-200 animate-in fade-in duration-300">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="text-green-600 text-sm bg-green-50 p-2 rounded flex items-center gap-2">
-                <CheckCircle size={16} />
+              <div className="text-green-700 text-sm bg-green-50 p-3 rounded-lg flex items-center gap-2 border border-green-200 animate-in fade-in duration-300">
+                <CheckCircle size={16} className="flex-shrink-0" />
                 Chat connected successfully!
               </div>
             )}
@@ -343,7 +416,7 @@ export default function ChatWindow({
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-900 text-white py-2 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 font-medium tracking-wide hover:shadow-lg"
             >
               {loading ? (
                 <>
@@ -359,40 +432,75 @@ export default function ChatWindow({
 
         {/* Messages */}
         {chatId && !showForm ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {messages.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
-                <p>No messages yet. Start typing to begin!</p>
+              <div className="text-center text-gray-400 py-12">
+                <p className="text-sm font-light">No messages yet</p>
+                <p className="text-xs text-gray-500 mt-1 font-light">Start typing to begin</p>
               </div>
             ) : (
-              messages.map((msg) => (
+              messages.map((msg, index) => (
                 <div
-                  key={msg.id}
+                  key={`${msg.id}-${index}`}
                   className={`flex ${
                     msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'
-                  }`}
+                  } animate-in fade-in slide-in-from-bottom-2 duration-300`}
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div
-                    className={`max-w-xs px-4 py-2 rounded-lg ${
+                    className={`max-w-xs px-4 py-2.5 rounded-2xl transition-all duration-300 backdrop-blur-sm ${
                       msg.sender_type === 'customer'
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-white border border-gray-300 text-gray-900'
+                        ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-lg hover:shadow-xl border border-gray-700/50'
+                        : 'bg-white/80 border border-gray-200 text-gray-900 shadow-md hover:shadow-lg'
                     }`}
                   >
-                    <p className="text-sm">{msg.message}</p>
-                    <p className="text-xs mt-1 opacity-70">
-                      {new Date(msg.created_at).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                    {/* Display image if attachment exists */}
+                    {msg.attachment_url && (
+                      <div className="mb-2">
+                        <img
+                          src={`${API_BASE_URL.replace('/api/v1', '')}${msg.attachment_url}`}
+                          alt="Attachment"
+                          className="max-w-xs rounded-lg border border-gray-400/30 shadow-sm"
+                        />
+                      </div>
+                    )}
+
+                    {/* Display message text if it exists */}
+                    {msg.message && (
+                      <p className="text-sm leading-relaxed font-light">{msg.message}</p>
+                    )}
+
+                    <p className={`text-xs mt-2 font-light opacity-70 ${
+                      msg.sender_type === 'customer' ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      {(() => {
+                        try {
+                          const date = new Date(msg.created_at);
+                          const timestamp = date.getTime();
+
+                          // Check if date is valid
+                          if (isNaN(timestamp)) {
+                            return 'just now';
+                          }
+
+                          // Show time for all valid dates
+                          return date.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          });
+                        } catch (e) {
+                          return 'just now';
+                        }
+                      })()}
                     </p>
                   </div>
                 </div>
               ))
             )}
             {otherUserTyping && (
-              <div className="flex gap-2 items-center">
-                <span className="text-xs text-gray-500">{typingUser} is typing</span>
+              <div className="flex gap-2 items-center animate-in fade-in duration-300">
+                <span className="text-xs text-gray-500 font-light">{typingUser} is typing</span>
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
@@ -407,30 +515,75 @@ export default function ChatWindow({
 
       {/* Message Input */}
       {chatId && !showForm ? (
-        <form
-          onSubmit={handleSendMessage}
-          className="border-t border-gray-200 p-4 bg-white flex gap-2"
-        >
-          <input
-            type="text"
-            value={messageInput}
-            onChange={handleTyping}
-            placeholder="Type your message..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
-            disabled={sending}
-          />
-          <button
-            type="submit"
-            disabled={sending || !messageInput.trim()}
-            className="bg-gray-900 text-white p-2 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50"
+        <div className="border-t border-gray-200 p-4 bg-gradient-to-br from-white to-gray-50 shadow-inner rounded-b-2xl">
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="mb-3 relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-h-20 rounded-lg border border-gray-200 shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={clearImage}
+                className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          <form
+            onSubmit={handleSendMessage}
+            className="flex gap-3"
           >
-            {sending ? (
-              <Loader size={20} className="animate-spin" />
-            ) : (
-              <Send size={20} />
-            )}
-          </button>
-        </form>
+            <input
+              type="text"
+              value={messageInput}
+              onChange={handleTyping}
+              placeholder="Type your message..."
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-900/10 bg-white hover:bg-white/95 transition-all duration-200 text-sm font-light shadow-sm hover:shadow-md"
+              disabled={sending}
+            />
+
+            {/* Image Upload Button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover:shadow-lg active:scale-95 flex items-center justify-center"
+              title="Upload image"
+              disabled={sending}
+            >
+              <ImageIcon size={18} strokeWidth={1.5} />
+            </button>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+
+            {/* Send Button */}
+            <button
+              type="submit"
+              disabled={sending || (!messageInput.trim() && !selectedImage)}
+              className="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-4 py-3 rounded-xl hover:from-gray-800 hover:to-gray-700 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg active:scale-95 flex items-center justify-center gap-2 font-medium"
+            >
+              {sending ? (
+                <Loader size={18} className="animate-spin" />
+              ) : (
+                <>
+                  <Send size={18} strokeWidth={1.5} />
+                  <span className="text-xs font-light">Send</span>
+                </>
+              )}
+            </button>
+          </form>
+        </div>
       ) : null}
     </div>
   );

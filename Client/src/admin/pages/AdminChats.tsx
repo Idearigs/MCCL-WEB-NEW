@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Loader, MessageSquare, Clock, MapPin, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { Send, Loader, MessageSquare, Clock, MapPin, AlertCircle, CheckCircle, Trash2, Image as ImageIcon, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 import API_BASE_URL from '../../config/api';
 import AdminLayout from '../components/AdminLayout';
@@ -10,6 +10,7 @@ interface Message {
   sender_type: 'customer' | 'admin';
   sender_id?: string;
   message: string;
+  attachment_url?: string;
   created_at: string;
 }
 
@@ -35,10 +36,13 @@ export default function AdminChats(): JSX.Element {
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [customerTyping, setCustomerTyping] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<any>(null);
   const listSocketRef = useRef<any>(null);
   const typingTimeoutRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const token = localStorage.getItem('admin_token');
 
@@ -53,8 +57,8 @@ export default function AdminChats(): JSX.Element {
 
     listSocketRef.current = socket;
 
-    // Listen for new messages across all chats
-    socket.on('receive_message', (message: Message) => {
+    // Listen for new messages across all chats (admin panel update)
+    socket.on('admin_chat_update', (message: Message) => {
       setChats((prevChats) =>
         prevChats.map((chat) =>
           chat.id === message.chat_id
@@ -187,32 +191,60 @@ export default function AdminChats(): JSX.Element {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setAlert({ type: 'error', message: 'Please select a valid image file' });
+    }
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedChat || !messageInput.trim()) return;
+    if (!selectedChat || (!messageInput.trim() && !selectedImage)) return;
 
     setSending(true);
     setIsTyping(false);
 
     try {
+      // Use FormData if there's an image, otherwise use JSON
+      const messageBody = new FormData();
+      messageBody.append('chat_id', selectedChat.id);
+      messageBody.append('sender_type', 'admin');
+      messageBody.append('sender_id', localStorage.getItem('admin_id') || '');
+      messageBody.append('message', messageInput || '');
+
+      if (selectedImage) {
+        messageBody.append('attachment', selectedImage);
+      }
+
       const response = await fetch(`${API_BASE_URL}/chats/message/send`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           ...(token && { Authorization: `Bearer ${token}` })
         },
-        body: JSON.stringify({
-          chat_id: selectedChat.id,
-          sender_type: 'admin',
-          sender_id: localStorage.getItem('admin_id'),
-          message: messageInput
-        })
+        body: messageBody
       });
 
       const data = await response.json();
 
       if (data.success) {
         setMessageInput('');
+        clearImage();
 
         // Emit message via WebSocket for real-time delivery
         if (socketRef.current) {
@@ -506,12 +538,40 @@ export default function AdminChats(): JSX.Element {
                             : 'bg-white border border-gray-300 text-gray-900 rounded-bl-none'
                         }`}
                       >
-                        <p className="text-sm">{msg.message}</p>
+                        {/* Display image if attachment exists */}
+                        {msg.attachment_url && (
+                          <div className="mb-2">
+                            <img
+                              src={`${API_BASE_URL.replace('/api/v1', '')}${msg.attachment_url}`}
+                              alt="Attachment"
+                              className="max-w-xs rounded-lg border border-gray-400/30 shadow-sm"
+                            />
+                          </div>
+                        )}
+
+                        {/* Display message text if it exists */}
+                        {msg.message && (
+                          <p className="text-sm">{msg.message}</p>
+                        )}
+
                         <p className="text-xs mt-2 opacity-70">
-                          {new Date(msg.created_at).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {(() => {
+                            try {
+                              const date = new Date(msg.created_at);
+                              const time = date.getTime();
+
+                              if (isNaN(time)) {
+                                return 'just now';
+                              }
+
+                              return date.toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              });
+                            } catch (e) {
+                              return 'just now';
+                            }
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -536,30 +596,69 @@ export default function AdminChats(): JSX.Element {
               {selectedChat.status !== 'closed' ? (
                 <form
                   onSubmit={handleSendMessage}
-                  className="border-t border-gray-200 p-4 bg-white flex gap-2"
+                  className="border-t border-gray-200 p-4 bg-white space-y-3"
                 >
+                  {/* Image Preview */}
+                  {imagePreview && (
+                    <div className="relative inline-block">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="max-h-20 rounded-lg border border-gray-200 shadow-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={clearImage}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Input and Buttons */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={messageInput}
+                      onChange={handleTyping}
+                      placeholder="Type your response..."
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      disabled={sending}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                      disabled={sending}
+                      title="Upload image"
+                    >
+                      <ImageIcon size={18} />
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={sending || (!messageInput.trim() && !selectedImage)}
+                      className="bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {sending ? (
+                        <Loader size={18} className="animate-spin" />
+                      ) : (
+                        <>
+                          <Send size={18} />
+                          Send
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Hidden file input */}
                   <input
-                    type="text"
-                    value={messageInput}
-                    onChange={handleTyping}
-                    placeholder="Type your response..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
-                    disabled={sending}
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
                   />
-                  <button
-                    type="submit"
-                    disabled={sending || !messageInput.trim()}
-                    className="bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {sending ? (
-                      <Loader size={18} className="animate-spin" />
-                    ) : (
-                      <>
-                        <Send size={18} />
-                        Send
-                      </>
-                    )}
-                  </button>
                 </form>
               ) : (
                 <div className="p-4 bg-gray-50 text-center text-gray-500 text-sm border-t border-gray-200">

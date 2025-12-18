@@ -208,6 +208,12 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         sale_price: initialData.sale_price?.toString() || '',
         stock_quantity: initialData.stock_quantity?.toString() || '0',
         weight: initialData.weight?.toString() || '',
+        // Convert null to empty string for textarea fields to prevent React warnings
+        description: initialData.description || '',
+        short_description: initialData.short_description || '',
+        care_instructions: initialData.care_instructions || '',
+        warranty_info: initialData.warranty_info || '',
+        meta_description: initialData.meta_description || '',
         images: initialData.images || [],
         videos: initialData.videos || [],
         variants: initialData.variants || [],

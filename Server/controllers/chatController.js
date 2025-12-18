@@ -148,12 +148,20 @@ exports.getChatById = async (req, res) => {
 exports.sendMessage = async (req, res) => {
   try {
     const { ChatMessage, Chat } = getModelInstance();
-    const { chat_id, sender_type, sender_id, message, attachment_url } = req.body;
+    const { chat_id, sender_type, sender_id, message } = req.body;
 
-    if (!chat_id || !sender_type || !message) {
+    if (!chat_id || !sender_type) {
       return res.status(400).json({
         success: false,
-        message: 'chat_id, sender_type, and message are required'
+        message: 'chat_id and sender_type are required'
+      });
+    }
+
+    // Either message text or attachment is required
+    if (!message && !req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Either message text or image is required'
       });
     }
 
@@ -166,12 +174,18 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
+    // Handle file upload
+    let attachment_url = null;
+    if (req.file) {
+      attachment_url = `/uploads/${req.file.filename}`;
+    }
+
     const chatMessage = await ChatMessage.create({
       chat_id,
       sender_type,
       sender_id: sender_id || null,
-      message,
-      attachment_url: attachment_url || null,
+      message: message || '',
+      attachment_url: attachment_url,
       is_read: false
     });
 

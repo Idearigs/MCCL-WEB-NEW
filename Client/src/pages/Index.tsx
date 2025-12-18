@@ -8,10 +8,16 @@ import BespokeDesignSection from "../components/BespokeDesignSection";
 import ServiceFeaturesSection from "../components/ServiceFeaturesSection";
 import PromotionPopup from "../components/PromotionPopup";
 import ChatWidget from "../components/ChatWidget";
+import { useUserAuth } from "../contexts/UserAuthContext";
 
 const Index = (): JSX.Element => {
-  // TODO: Get user from auth context/store when authentication is implemented
-  const user = null;
+  // Get user from auth context
+  const { user: authUser } = useUserAuth();
+  const user = authUser ? {
+    id: authUser.id,
+    email: authUser.email,
+    name: authUser.fullName || `${authUser.firstName || ''} ${authUser.lastName || ''}`.trim()
+  } : null;
 
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">

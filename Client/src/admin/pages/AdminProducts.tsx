@@ -1089,7 +1089,9 @@ const AdminProducts: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900 font-satoshi">{product.category.name}</span>
+                      <span className="text-sm text-gray-900 font-satoshi">
+                        {product.category?.name || 'No Category'}
+                      </span>
                       {product.collection && (
                         <span className="block text-xs text-gray-500 font-satoshi">
                           {product.collection.name}

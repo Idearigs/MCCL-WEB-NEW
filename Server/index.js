@@ -140,15 +140,16 @@ io.on('connection', (socket) => {
     const { chat_id, message } = data;
     const roomName = `chat_${chat_id}`;
 
-    // Broadcast message to all users in this chat
+    // Broadcast message to all users in this chat room
     io.to(roomName).emit('receive_message', {
       ...message,
       id: message.id,
       created_at: message.created_at
     });
 
-    // Also broadcast to admin panel for chat list updates
-    io.emit('receive_message', {
+    // Broadcast to admin panel for chat list updates (admin_chat_list room)
+    // This is a separate broadcast to avoid duplication on client side
+    io.emit('admin_chat_update', {
       ...message,
       chat_id: chat_id,
       id: message.id,
