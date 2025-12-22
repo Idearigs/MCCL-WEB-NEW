@@ -13,7 +13,8 @@ WORKDIR /app
 COPY Client/package*.json ./
 
 # Install all dependencies (including devDependencies needed for build)
-RUN npm ci && npm cache clean --force
+# Use --include=dev to ensure devDependencies are installed even if NODE_ENV=production
+RUN npm ci --include=dev && npm cache clean --force
 
 # Copy source code
 COPY Client/ .
