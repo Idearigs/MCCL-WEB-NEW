@@ -1,4 +1,6 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? require('stripe')(process.env.STRIPE_SECRET_KEY)
+  : null;
 const asyncHandler = require('../middleware/asyncHandler');
 const { getModels } = require('../models');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
@@ -9,6 +11,13 @@ const { generateOrderNumber } = require('../utils/orderUtils');
  * POST /api/v1/payments/create-intent
  */
 const createPaymentIntent = asyncHandler(async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({
+      success: false,
+      message: 'Payment service is not configured'
+    });
+  }
+
   const { amount, currency = 'gbp', description, cartItems, customerId } = req.body;
 
   if (!amount || amount <= 0) {
@@ -53,6 +62,13 @@ const createPaymentIntent = asyncHandler(async (req, res) => {
  * POST /api/v1/payments/confirm
  */
 const confirmPayment = asyncHandler(async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({
+      success: false,
+      message: 'Payment service is not configured'
+    });
+  }
+
   const { paymentIntentId, customerEmail, customerName, shippingAddress, cartItems } = req.body;
 
   if (!paymentIntentId || !cartItems || cartItems.length === 0) {
