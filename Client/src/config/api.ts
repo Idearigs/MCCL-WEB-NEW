@@ -20,5 +20,21 @@ export const api = (path: string): string => {
   return `${API_BASE_URL}/${cleanPath}`;
 };
 
+// Helper function to build media URLs (excludes /api/v1 prefix - for static files)
+export const getMediaUrl = (path: string): string => {
+  // If path already starts with http, return as-is (for absolute URLs)
+  if (path.startsWith('http')) {
+    return path;
+  }
+
+  // Get base URL without /api/v1
+  const baseUrl = API_BASE_URL.replace('/api/v1', '');
+
+  // If path already starts with /, use it as-is, otherwise add /
+  const fullPath = path.startsWith('/') ? path : `/${path}`;
+
+  return `${baseUrl}${fullPath}`;
+};
+
 // Export for convenience
 export default API_BASE_URL;

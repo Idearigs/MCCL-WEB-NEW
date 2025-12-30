@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import MultiSelect from './MultiSelect';
 import { Package, Upload, Plus, X, Loader2 } from 'lucide-react';
-import API_BASE_URL from '../../config/api';
+import API_BASE_URL, { getMediaUrl } from '../../config/api';
 
 interface ProductFormData {
   name: string;
@@ -1094,7 +1094,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             {image.url ? (
                               <div className="relative">
                                 <img
-                                  src={image.url}
+                                  src={getMediaUrl(image.url)}
                                   alt={image.alt_text || `Product image ${index + 1}`}
                                   className="w-full h-32 object-cover rounded-lg border"
                                 />
@@ -1232,7 +1232,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             {video.url ? (
                               <div className="relative">
                                 <video
-                                  src={video.url}
+                                  src={getMediaUrl(video.url)}
                                   className="w-full h-32 object-cover rounded-lg border"
                                   controls
                                 />
@@ -1366,7 +1366,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                     <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
                                       <div className="relative bg-gray-100">
                                         <img
-                                          src={img.url}
+                                          src={getMediaUrl(img.url)}
                                           alt={img.alt_text || `${metal.name} image ${idx + 1}`}
                                           className="w-full h-24 object-cover"
                                         />
@@ -1470,7 +1470,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                 {metalMediaState[metalId]?.videos?.map((vid, idx) => (
                                   <div key={idx} className="relative border border-gray-200 rounded-lg overflow-hidden">
                                     <video
-                                      src={vid.url}
+                                      src={getMediaUrl(vid.url)}
                                       className="w-full h-24 object-cover bg-black"
                                       controls
                                     />
