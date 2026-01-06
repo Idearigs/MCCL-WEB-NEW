@@ -1308,36 +1308,86 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                       <ChevronDown className="w-4 h-4 text-gray-500" />
                     )}
                   </button>
+
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    expandedSection === 'jewellery' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="bg-gray-50/30">
+                      <div className="px-6 py-4">
+                        <div className="space-y-1 ml-4">
+                          <Link
+                            to="/earrings"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Earrings
+                          </Link>
+                          <Link
+                            to="/necklaces"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Necklaces
+                          </Link>
+                          <Link
+                            to="/bracelets"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Bracelets
+                          </Link>
+                          <Link
+                            to="/birthday-gifts"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Birthday Gifts
+                          </Link>
+                          <Link
+                            to="/anniversary-gifts"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
+                            Anniversary Gifts
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Guides Section */}
+                {/* Bespoke Design Section */}
                 <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'guides' ? null : 'guides')}
+                  <Link
+                    to="/bespoke-design"
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
+                    onClick={closeMobileMenu}
                   >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">GUIDES</span>
-                    {expandedSection === 'guides' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">BESPOKE DESIGN</span>
+                    <ChevronDown className="w-4 h-4 text-gray-500 transform rotate-[-90deg]" />
+                  </Link>
                 </div>
 
-                {/* About Us Section */}
+                {/* Our Story Section */}
                 <div>
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'about' ? null : 'about')}
+                  <Link
+                    to="/our-story"
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
+                    onClick={closeMobileMenu}
                   >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">ABOUT US</span>
-                    {expandedSection === 'about' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">OUR STORY</span>
+                    <ChevronDown className="w-4 h-4 text-gray-500 transform rotate-[-90deg]" />
+                  </Link>
                 </div>
               </div>
 
