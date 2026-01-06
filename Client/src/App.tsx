@@ -50,6 +50,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import AuthCallback from "./pages/AuthCallback";
 import AdminApp from "./admin/AdminApp";
 import NivodaTestingPage from "./pages/NivodaTestingPage";
+import BespokeDesign from "./pages/BespokeDesign";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="/rings" element={<Rings />} />
             <Route path="/engagement-rings" element={<EngagementRings />} />
             <Route path="/wedding-rings" element={<WeddingRings />} />
+            <Route path="/wedding" element={<WeddingRings />} />
             <Route path="/earrings" element={<Earrings />} />
             <Route path="/necklaces" element={<Necklaces />} />
             <Route path="/bracelets" element={<Bracelets />} />
@@ -92,6 +94,7 @@ const App = () => (
             <Route path="/collections/:collectionSlug" element={<WatchCollection />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/our-story" element={<OurStory />} />
+            <Route path="/bespoke-design" element={<BespokeDesign />} />
             <Route path="/customer-service" element={<CustomerService />} />
             <Route path="/visit-us" element={<VisitUs />} />
             <Route path="/trust-guarantees" element={<TrustGuarantees />} />
@@ -99,6 +102,7 @@ const App = () => (
             {/* Category-based product URLs */}
             <Route path="/engagement-rings/:productId" element={<ProductDetail />} />
             <Route path="/wedding-rings/:productId" element={<ProductDetail />} />
+            <Route path="/wedding/:productId" element={<ProductDetail />} />
             <Route path="/rings/:productId" element={<ProductDetail />} />
             <Route path="/earrings/:productId" element={<ProductDetail />} />
             <Route path="/necklaces/:productId" element={<ProductDetail />} />

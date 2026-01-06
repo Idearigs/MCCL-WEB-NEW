@@ -398,7 +398,7 @@ const EngagementRings = (): JSX.Element => {
                   )}
                 </div>
 
-                {/* Ring Type Filter */}
+                {/* Ring Styles Filter */}
                 <div className="relative">
                   <button
                     onClick={() => toggleFilter('ringType')}
@@ -406,7 +406,7 @@ const EngagementRings = (): JSX.Element => {
                       activeFilter === 'ringType' ? 'text-gray-900' : ''
                     }`}
                   >
-                    Ring Type
+                    Ring Styles
                     <svg className={`w-3 h-3 transition-transform ${activeFilter === 'ringType' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
                     </svg>
@@ -414,7 +414,7 @@ const EngagementRings = (): JSX.Element => {
                   {activeFilter === 'ringType' && (
                     <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-gray-200 shadow-xl rounded-none z-50 animate-fade-in">
                       <div className="p-6">
-                        <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">Ring Type</h3>
+                        <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">Ring Styles</h3>
                         <div className="space-y-3">
                           {filterOptions.ringType.map((option, index) => (
                             <label key={index} className="flex items-center group cursor-pointer">

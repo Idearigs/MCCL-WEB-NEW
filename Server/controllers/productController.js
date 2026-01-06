@@ -14,7 +14,16 @@ const getModelInstance = () => {
 
 const getAllProducts = asyncHandler(async (req, res) => {
   try {
-    const { Category, Collection, Product, ProductImage, ProductVariant, RingTypes, ProductMetals } = getModelInstance();
+    const models = getModelInstance();
+    const { Category, Collection, Product, ProductImage, ProductVariant, RingTypes, ProductMetals, StoneTypes, JewelrySubType } = models;
+
+    // Debug logging
+    if (!JewelrySubType) {
+      logger.warn('JewelrySubType model not available');
+    }
+    if (!StoneTypes) {
+      logger.warn('StoneTypes model not available');
+    }
   const {
     category,
     collection,
@@ -24,6 +33,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     gemstone,
     featured,
     in_stock,
+    jewelrySubType,
     sort = 'created_at',
     order = 'desc',
     page = 1,
@@ -73,6 +83,27 @@ const getAllProducts = asyncHandler(async (req, res) => {
     }
   ];
 
+  // Add JewelrySubType include if model is available
+  if (JewelrySubType) {
+    include.push({
+      model: JewelrySubType,
+      as: 'jewelrySubType',
+      attributes: ['id', 'name', 'slug'],
+      required: false
+    });
+  }
+
+  // Add StoneTypes (gemstones) include if model is available
+  if (StoneTypes) {
+    include.push({
+      model: StoneTypes,
+      as: 'gemstones',
+      attributes: ['id', 'name'],
+      through: { attributes: [] },
+      required: false
+    });
+  }
+
   // Category filter
   if (category) {
     include[0].where = { slug: category };
@@ -83,6 +114,15 @@ const getAllProducts = asyncHandler(async (req, res) => {
   if (collection) {
     include[1].where = { slug: collection };
     include[1].required = true;
+  }
+
+  // Jewelry Sub Type filter (engagement/wedding)
+  if (jewelrySubType && JewelrySubType) {
+    const jewelrySubTypeIndex = include.findIndex(inc => inc.model === JewelrySubType);
+    if (jewelrySubTypeIndex !== -1) {
+      include[jewelrySubTypeIndex].where = { slug: jewelrySubType };
+      include[jewelrySubTypeIndex].required = true;
+    }
   }
 
   // Price filters
@@ -192,10 +232,13 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
   } catch (error) {
     logger.error('Error in getAllProducts:', error);
+    logger.error('Error stack:', error.stack);
+    logger.error('Query params:', req.query);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch products',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -527,11 +570,11 @@ const getProductsByCategory = asyncHandler(async (req, res) => {
 });
 
 const getNavigationData = asyncHandler(async (req, res) => {
-  const { RingTypes, ProductMetals, Collection } = getModelInstance();
+  const { RingTypes, ProductMetals, Collection, StoneTypes } = getModelInstance();
 
   try {
     // Fetch all navigation data in parallel
-    const [ringTypes, metals, collections] = await Promise.all([
+    const [ringTypes, metals, collections, stoneTypes] = await Promise.all([
       RingTypes.findAll({
         where: { is_active: true },
         order: [['sort_order', 'ASC'], ['name', 'ASC']],
@@ -546,6 +589,11 @@ const getNavigationData = asyncHandler(async (req, res) => {
         where: { is_active: true },
         order: [['sort_order', 'ASC'], ['name', 'ASC']],
         attributes: ['id', 'name', 'slug', 'description']
+      }),
+      StoneTypes.findAll({
+        where: { is_active: true },
+        order: [['sort_order', 'ASC'], ['name', 'ASC']],
+        attributes: ['id', 'name', 'slug', 'description']
       })
     ]);
 
@@ -554,7 +602,8 @@ const getNavigationData = asyncHandler(async (req, res) => {
       data: {
         ring_types: ringTypes,
         metals: metals,
-        eternity_rings: collections // Using collections as eternity rings
+        eternity_rings: collections, // Using collections as eternity rings
+        gemstones: stoneTypes // Stone types for gemstone navigation
       }
     });
   } catch (error) {

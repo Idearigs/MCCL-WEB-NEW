@@ -89,7 +89,8 @@ const AdminProducts: React.FC = () => {
     category: '',
     collection: '',
     status: '',
-    featured: ''
+    featured: '',
+    jewelryCategory: ''
   });
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -129,6 +130,7 @@ const AdminProducts: React.FC = () => {
         collection: filters.collection,
         status: filters.status,
         featured: filters.featured,
+        jewelryCategory: filters.jewelryCategory,
         sortBy,
         sortOrder
       });
@@ -860,21 +862,28 @@ const AdminProducts: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-light text-gray-900 font-cormorant">Products</h1>
-            <p className="text-gray-600 mt-1 font-satoshi">
-              Manage your jewelry collection and product catalog
-            </p>
+        {/* Modern Header with Gradient */}
+        <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-8 shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
+                <Package className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-light text-white font-cormorant tracking-wide">Product Management</h1>
+                <p className="text-gray-300 mt-1 font-satoshi text-sm">
+                  {pagination.totalItems} products in your jewelry collection
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openCreateForm}
+              className="bg-white text-gray-900 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2 font-satoshi font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Add Product</span>
+            </button>
           </div>
-          <button
-            onClick={openCreateForm}
-            className="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 flex items-center space-x-2 font-satoshi"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Product</span>
-          </button>
         </div>
 
         {/* Error Alert */}
@@ -891,27 +900,27 @@ const AdminProducts: React.FC = () => {
           </div>
         )}
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            {/* Search */}
+        {/* Modern Search and Filters Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 gap-4">
+            {/* Enhanced Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search products by name, SKU, or description..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full font-satoshi"
+                className="pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-full font-satoshi text-sm transition-all duration-200"
               />
             </div>
 
-            {/* Filters */}
-            <div className="flex items-center space-x-4">
+            {/* Modern Filters */}
+            <div className="flex items-center flex-wrap gap-3">
               <select
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
               >
                 <option value="">All Categories</option>
                 {productOptions?.categories.map((category) => (
@@ -922,9 +931,22 @@ const AdminProducts: React.FC = () => {
               </select>
 
               <select
+                value={filters.jewelryCategory}
+                onChange={(e) => handleFilterChange('jewelryCategory', e.target.value)}
+                className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
+              >
+                <option value="">All Ring Types</option>
+                {productOptions?.jewelrySubTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
               >
                 <option value="">All Status</option>
                 <option value="active">Active</option>
@@ -934,7 +956,7 @@ const AdminProducts: React.FC = () => {
               <select
                 value={filters.featured}
                 onChange={(e) => handleFilterChange('featured', e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
               >
                 <option value="">All Products</option>
                 <option value="true">Featured</option>
@@ -945,7 +967,7 @@ const AdminProducts: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
               >
                 <option value="sku">Sort by: SKU</option>
                 <option value="name">Sort by: Name</option>
@@ -957,7 +979,7 @@ const AdminProducts: React.FC = () => {
               {/* Sort Order Toggle */}
               <button
                 onClick={() => setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC')}
-                className="border border-gray-300 rounded-lg px-3 py-2 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+                className="border-2 border-gray-200 rounded-xl px-4 py-2.5 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white transition-all duration-200 font-medium"
                 title={sortOrder === 'ASC' ? 'Ascending' : 'Descending'}
               >
                 {sortOrder === 'ASC' ? '↑ A-Z' : '↓ Z-A'}
@@ -1005,11 +1027,11 @@ const AdminProducts: React.FC = () => {
           </div>
         )}
 
-        {/* Products Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Modern Products Table */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                 <tr>
                   <th className="w-12 px-6 py-3 text-left">
                     <input
@@ -1054,9 +1076,9 @@ const AdminProducts: React.FC = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <tr key={product.id} className="hover:bg-gray-50/50 transition-all duration-200 border-b border-gray-50 hover:shadow-sm">
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
@@ -1067,7 +1089,7 @@ const AdminProducts: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center overflow-hidden shadow-sm ring-2 ring-gray-100">
                           {product.primary_image ? (
                             <img
                               src={product.primary_image}
@@ -1082,7 +1104,7 @@ const AdminProducts: React.FC = () => {
                           <p className="text-sm font-medium text-gray-900 truncate font-satoshi">
                             {product.name}
                           </p>
-                          <p className="text-sm text-gray-500 truncate font-satoshi">
+                          <p className="text-xs text-gray-500 truncate font-satoshi mt-0.5">
                             SKU: {product.sku}
                           </p>
                         </div>
@@ -1198,29 +1220,29 @@ const AdminProducts: React.FC = () => {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Modern Pagination */}
           {pagination.totalPages > 1 && (
-            <div className="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-500 font-satoshi">
-                Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to{' '}
-                {Math.min(pagination.currentPage * pagination.limit, pagination.totalItems)} of{' '}
-                {pagination.totalItems} products
+            <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-t-2 border-gray-100 flex items-center justify-between">
+              <div className="text-sm text-gray-600 font-satoshi font-medium">
+                Showing <span className="text-gray-900 font-semibold">{((pagination.currentPage - 1) * pagination.limit) + 1}</span> to{' '}
+                <span className="text-gray-900 font-semibold">{Math.min(pagination.currentPage * pagination.limit, pagination.totalItems)}</span> of{' '}
+                <span className="text-gray-900 font-semibold">{pagination.totalItems}</span> products
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
                   disabled={!pagination.hasPrev}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-satoshi"
+                  className="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed font-satoshi transition-all duration-200"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-gray-700 font-satoshi">
-                  Page {pagination.currentPage} of {pagination.totalPages}
+                <span className="text-sm text-gray-700 font-satoshi px-2">
+                  Page <span className="font-bold">{pagination.currentPage}</span> of <span className="font-bold">{pagination.totalPages}</span>
                 </span>
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
                   disabled={!pagination.hasNext}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-satoshi"
+                  className="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed font-satoshi transition-all duration-200"
                 >
                   Next
                 </button>
@@ -1229,21 +1251,24 @@ const AdminProducts: React.FC = () => {
           )}
         </div>
 
-        {/* Empty State */}
+        {/* Modern Empty State */}
         {!isLoading && products.length === 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2 font-cormorant">No products found</h3>
-            <p className="text-gray-500 mb-4 font-satoshi">
+          <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-lg border-2 border-dashed border-gray-300 p-16 text-center">
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <Package className="h-10 w-10 text-gray-500" />
+            </div>
+            <h3 className="text-2xl font-light text-gray-900 mb-3 font-cormorant">No products found</h3>
+            <p className="text-gray-600 mb-6 font-satoshi max-w-md mx-auto">
               {searchTerm || Object.values(filters).some(f => f)
-                ? 'Try adjusting your search or filters'
-                : 'Get started by adding your first product'}
+                ? 'No products match your current filters. Try adjusting your search criteria.'
+                : 'Your product catalog is empty. Start building your jewelry collection by adding your first product.'}
             </p>
             <button
               onClick={openCreateForm}
-              className="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-satoshi"
+              className="bg-gradient-to-r from-gray-900 to-gray-800 text-white px-8 py-3 rounded-xl hover:from-gray-800 hover:to-gray-700 transition-all duration-200 font-satoshi font-medium shadow-lg hover:shadow-xl transform hover:scale-105 inline-flex items-center space-x-2"
             >
-              Add Product
+              <Plus className="h-5 w-5" />
+              <span>Add Your First Product</span>
             </button>
           </div>
         )}

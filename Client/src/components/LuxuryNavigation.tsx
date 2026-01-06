@@ -115,7 +115,7 @@ const LuxuryNavigation = (): JSX.Element => {
   const { favoritesCount } = useFavorites();
 
   const isMobile = useIsMobile();
-  const anyDropdownOpen = engagementHover || weddingHover || diamondsHover || jewelleryHover || watchesHover || heritageHover;
+  const anyDropdownOpen = engagementHover || weddingHover || diamondsHover || jewelleryHover || watchesHover;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -493,31 +493,25 @@ const LuxuryNavigation = (): JSX.Element => {
                       Watches
                     </Link>
                   </div>
-                  <div 
-                    className="relative"
-                    onMouseEnter={handleHoverEnter(setHeritageHover)}
-                    onMouseLeave={handleHoverLeave(setHeritageHover, setHeritageClosing)}
-                  >
-                    <Link 
-                      to="/heritage" 
-                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
-                        anyDropdownOpen || navbarHover || isScrolled 
-                          ? 'text-gray-700 hover:text-gray-900' 
-                          : 'text-white hover:text-white/80'
-                      }`}
-                    >
-                      Our Heritage
-                    </Link>
-                  </div>
-                  <Link 
-                    to="/contact" 
+                  <Link
+                    to="/bespoke-design"
                     className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
-                      anyDropdownOpen || navbarHover || isScrolled 
-                        ? 'text-gray-700 hover:text-gray-900' 
+                      anyDropdownOpen || navbarHover || isScrolled
+                        ? 'text-gray-700 hover:text-gray-900'
                         : 'text-white hover:text-white/80'
                     }`}
                   >
-                    Contact
+                    Bespoke Design
+                  </Link>
+                  <Link
+                    to="/our-story"
+                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled
+                        ? 'text-gray-700 hover:text-gray-900'
+                        : 'text-white hover:text-white/80'
+                    }`}
+                  >
+                    Our Story
                   </Link>
                 </div>
               </div>
@@ -547,7 +541,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     <div>
                       <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>RING TYPES</h3>
                       <div className="space-y-1">
-                        {navigationData?.ring_types?.slice(0, 9).map((item) => (
+                        {navigationData?.ring_types?.slice(0, 8).map((item) => (
                           <Link
                             key={item.id}
                             to={`/engagement-rings?ringType=${encodeURIComponent(item.name)}`}
@@ -559,10 +553,10 @@ const LuxuryNavigation = (): JSX.Element => {
                         ))}
                         <Link
                           to="/engagement-rings"
-                          className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          className="block font-satoshi font-bold text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
                           style={{fontSize: '12px'}}
                         >
-                          All Types
+                          Shop All
                         </Link>
                       </div>
                     </div>
@@ -571,7 +565,7 @@ const LuxuryNavigation = (): JSX.Element => {
                     <div>
                       <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>GEMSTONES</h3>
                       <div className="space-y-1">
-                        {navigationData?.gemstones?.map((item) => (
+                        {navigationData?.gemstones?.slice(0, 8).map((item) => (
                           <Link
                             key={item.id}
                             to={`/engagement-rings?gemstone=${encodeURIComponent(item.name)}`}
@@ -581,6 +575,13 @@ const LuxuryNavigation = (): JSX.Element => {
                             {item.name}
                           </Link>
                         ))}
+                        <Link
+                          to="/engagement-rings"
+                          className="block font-satoshi font-bold text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12px'}}
+                        >
+                          Shop All
+                        </Link>
                       </div>
                     </div>
 
@@ -996,85 +997,6 @@ const LuxuryNavigation = (): JSX.Element => {
             </div>
           )}
 
-          {/* Our Heritage Dropdown */}
-          {heritageHover && (
-            <div 
-              className={`absolute left-0 right-0 top-full w-full shadow-xl border border-gray-100/50 z-[60] duration-300 ease-out ${
-                heritageClosing 
-                  ? 'animate-out slide-out-to-top-4' 
-                  : 'animate-in slide-in-from-top-4'
-              }`}
-              onMouseEnter={handleHoverEnter(setHeritageHover)}
-              onMouseLeave={handleHoverLeave(setHeritageHover, setHeritageClosing)}
-              style={{backgroundColor: '#fcfcfc'}}
-            >
-              <div className="max-w-7xl mx-auto px-12 pt-6 pb-8">
-                <div className="grid grid-cols-4 gap-8">
-                  {/* OUR STORY Column */}
-                  <div>
-                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>OUR STORY</h3>
-                    <div className="space-y-1">
-                      <Link to="/our-story#about-us" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>About Us</Link>
-                      <Link to="/our-story#our-history" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Our History</Link>
-                      <Link to="/our-story#our-craftsmen" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Our Craftsmen</Link>
-                      <Link to="/our-story#our-philosophy" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Our Philosophy</Link>
-                      <Link to="/our-story#awards-recognition" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Awards & Recognition</Link>
-                      <Link to="/our-story#customer-stories" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Customer Stories</Link>
-                    </div>
-                  </div>
-
-                  {/* SERVICES Column */}
-                  <div>
-                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>CUSTOMER SERVICE</h3>
-                    <div className="space-y-1">
-                      <Link to="/customer-service#bespoke-design" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Bespoke Design</Link>
-                      <Link to="/customer-service#jewellery-repair" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Jewellery Repair</Link>
-                      <Link to="/customer-service#ring-resizing" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Ring Resizing</Link>
-                      <Link to="/customer-service#valuations" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Valuations</Link>
-                      <Link to="/customer-service#cleaning-care" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Cleaning & Care</Link>
-                      <Link to="/customer-service#engraving-services" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Engraving Services</Link>
-                      <Link to="/customer-service#gift-wrapping" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Gift Wrapping</Link>
-                    </div>
-                  </div>
-
-                  {/* LOCATION & CONTACT Column */}
-                  <div>
-                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>VISIT US</h3>
-                    <div className="space-y-1">
-                      <Link to="/visit-us#our-showroom" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Our Showroom</Link>
-                      <Link to="/visit-us#book-appointment" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Book Appointment</Link>
-                      <Link to="/visit-us#private-viewing" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Private Viewing</Link>
-                      <Link to="/visit-us#directions" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Directions</Link>
-                      <Link to="/visit-us#opening-hours" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Opening Hours</Link>
-                      <Link to="/visit-us#parking-information" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Parking Information</Link>
-                    </div>
-                  </div>
-
-                  {/* TRUST & GUARANTEES Column */}
-                  <div>
-                    <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>TRUST & GUARANTEES</h3>
-                    <div className="space-y-1">
-                      <Link to="/trust-guarantees#lifetime-warranty" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Lifetime Warranty</Link>
-                      <Link to="/trust-guarantees#money-back-guarantee" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Money Back Guarantee</Link>
-                      <Link to="/trust-guarantees#certified-quality" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Certified Quality</Link>
-                      <Link to="/trust-guarantees#ethical-sourcing" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Ethical Sourcing</Link>
-                      <Link to="/trust-guarantees#secure-shopping" className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5" style={{fontSize: '12px'}}>Secure Shopping</Link>
-                    </div>
-                    
-                    {/* Learn More Button */}
-                    <div className="mt-4">
-                      <Link 
-                        to="/trust-guarantees#learn-more" 
-                        className="inline-flex items-center justify-center px-5 py-2.5 bg-gray-900 text-white text-xs font-satoshi font-semibold uppercase tracking-wide hover:bg-gray-800 hover:shadow-md hover:scale-105 transition-all duration-200 ease-out rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
-                      >
-                        LEARN MORE
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Mobile Navigation */}
           <div className="lg:hidden px-4 py-4">
@@ -1469,6 +1391,62 @@ const LuxuryNavigation = (): JSX.Element => {
                       <ChevronDown className="w-4 h-4 text-gray-500" />
                     )}
                   </button>
+
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    expandedSection === 'jewellery' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="bg-gray-50/30">
+                      <div className="px-6 py-4">
+                        <div className="space-y-1 ml-4">
+                          <Link
+                            to="/earrings"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Earrings
+                          </Link>
+                          <Link
+                            to="/necklaces"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Necklaces
+                          </Link>
+                          <Link
+                            to="/bracelets"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Bracelets
+                          </Link>
+                          <Link
+                            to="/birthday-gifts"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Birthday Gifts
+                          </Link>
+                          <Link
+                            to="/anniversary-gifts"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
+                            Anniversary Gifts
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Watches Section */}
@@ -1537,34 +1515,28 @@ const LuxuryNavigation = (): JSX.Element => {
                   </div>
                 </div>
 
-                {/* Guides Section */}
+                {/* Bespoke Design Section */}
                 <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'guides' ? null : 'guides')}
+                  <Link
+                    to="/bespoke-design"
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
+                    onClick={closeMobileMenu}
                   >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">GUIDES</span>
-                    {expandedSection === 'guides' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">BESPOKE DESIGN</span>
+                    <ChevronDown className="w-4 h-4 text-gray-500 transform rotate-[-90deg]" />
+                  </Link>
                 </div>
 
-                {/* About Us Section */}
+                {/* Our Story Section */}
                 <div>
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'about' ? null : 'about')}
+                  <Link
+                    to="/our-story"
                     className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
+                    onClick={closeMobileMenu}
                   >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">ABOUT US</span>
-                    {expandedSection === 'about' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">OUR STORY</span>
+                    <ChevronDown className="w-4 h-4 text-gray-500 transform rotate-[-90deg]" />
+                  </Link>
                 </div>
               </div>
 

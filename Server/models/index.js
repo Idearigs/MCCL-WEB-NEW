@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { postgresDB } = require('../config/database');
 
-let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage;
+let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage;
 
 const initializeModels = () => {
   const sequelize = postgresDB();
@@ -329,6 +329,13 @@ const initializeModels = () => {
       type: DataTypes.UUID,
       references: {
         model: 'ring_types',
+        key: 'id'
+      }
+    },
+    jewelry_sub_type_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'jewelry_sub_types',
         key: 'id'
       }
     }
@@ -983,6 +990,41 @@ const initializeModels = () => {
     ]
   });
 
+  // Product Stone Types Junction (Gemstones)
+  ProductStoneTypes = sequelize.define('ProductStoneTypes', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    product_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'products',
+        key: 'id'
+      }
+    },
+    stone_type_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'stone_types',
+        key: 'id'
+      }
+    }
+  }, {
+    tableName: 'product_stone_types',
+    underscored: true,
+    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['product_id', 'stone_type_id']
+      }
+    ]
+  });
+
   // Product Metals Junction
   ProductMetalsJunction = sequelize.define('ProductMetalsJunction', {
     id: {
@@ -1100,6 +1142,19 @@ const initializeModels = () => {
     as: 'stoneShapeProducts'
   });
 
+  Product.belongsToMany(StoneTypes, {
+    through: ProductStoneTypes,
+    foreignKey: 'product_id',
+    otherKey: 'stone_type_id',
+    as: 'gemstones'
+  });
+  StoneTypes.belongsToMany(Product, {
+    through: ProductStoneTypes,
+    foreignKey: 'stone_type_id',
+    otherKey: 'product_id',
+    as: 'gemstoneProducts'
+  });
+
   Product.belongsToMany(ProductMetals, {
     through: ProductMetalsJunction,
     foreignKey: 'product_id',
@@ -1141,6 +1196,12 @@ const initializeModels = () => {
   const { getJewelryModels } = require('./jewelryModels');
   const jewelryModels = getJewelryModels();
 
+  // Set up Product <-> JewelrySubType associations
+  if (jewelryModels && jewelryModels.JewelrySubType) {
+    jewelryModels.JewelrySubType.hasMany(Product, { foreignKey: 'jewelry_sub_type_id', as: 'products' });
+    Product.belongsTo(jewelryModels.JewelrySubType, { foreignKey: 'jewelry_sub_type_id', as: 'jewelrySubType' });
+  }
+
   return {
     Category,
     Collection,
@@ -1155,6 +1216,7 @@ const initializeModels = () => {
     StoneTypes,
     ProductRingTypes,
     ProductStoneShapes,
+    ProductStoneTypes,
     ProductMetalsJunction,
     MarketingContent,
     ...watchModels,
@@ -1188,6 +1250,7 @@ module.exports = {
       StoneTypes,
       ProductRingTypes,
       ProductStoneShapes,
+      ProductStoneTypes,
       ProductMetalsJunction,
       MarketingContent,
       Promotion,

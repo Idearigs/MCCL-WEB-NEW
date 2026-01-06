@@ -89,6 +89,7 @@ const getProducts = async (req, res) => {
       collection = '',
       status = '',
       featured = '',
+      jewelryCategory = '',
       sortBy = 'created_at',
       sortOrder = 'DESC'
     } = req.query;
@@ -120,6 +121,10 @@ const getProducts = async (req, res) => {
 
     if (collection) {
       whereConditions.collection_id = collection;
+    }
+
+    if (jewelryCategory) {
+      whereConditions.jewelry_sub_type_id = jewelryCategory;
     }
 
     const { count, rows: products } = await Product.findAndCountAll({

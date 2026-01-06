@@ -1,0 +1,897 @@
+{
+  "timestamp": "2025-12-30T07:48:01.691Z",
+  "summary": {
+    "totalVideos": 109,
+    "bjVideos": 106,
+    "nonBjVideos": 3,
+    "matched": 99,
+    "unmatched": 1,
+    "manualReview": 6,
+    "matchRate": "93.4%",
+    "overallRate": "90.8%"
+  },
+  "matched": [
+    {
+      "filename": "BJ -001.mp4",
+      "matchedVariation": "BJ-001",
+      "productSKU": "BJ-001",
+      "productName": "Aurelia",
+      "productId": "0f1e2c1b-c7db-49e8-b136-048141383f3c",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ -001.mp4"
+    },
+    {
+      "filename": "BJ -011.mp4",
+      "matchedVariation": "BJ-011",
+      "productSKU": "BJ-011",
+      "productName": "Andromeda",
+      "productId": "acab6704-b75b-4e82-988e-b41bc9223155",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ -011.mp4"
+    },
+    {
+      "filename": "BJ -032.mp4",
+      "matchedVariation": "BJ-032",
+      "productSKU": "BJ-032",
+      "productName": "Theia",
+      "productId": "e672d7fb-d122-4802-b026-1d73058506ec",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ -032.mp4"
+    },
+    {
+      "filename": "BJ -044.mp4",
+      "matchedVariation": "BJ-044",
+      "productSKU": "BJ-044",
+      "productName": "Test Name 43",
+      "productId": "ad85c068-de7c-454b-93c6-629e7795f819",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ -044.mp4"
+    },
+    {
+      "filename": "BJ -056.mp4",
+      "matchedVariation": "BJ-056",
+      "productSKU": "BJ-056",
+      "productName": "Nova",
+      "productId": "2eebc0a7-d39c-457a-b5d3-8f6f8aa88b36",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ -056.mp4"
+    },
+    {
+      "filename": "BJ -063.mp4",
+      "matchedVariation": "BJ-063",
+      "productSKU": "BJ-063",
+      "productName": "Zinnia",
+      "productId": "a0d770b5-734f-427f-b813-460547d4b8da",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ -063.mp4"
+    },
+    {
+      "filename": "BJ -069.mp4",
+      "matchedVariation": "BJ-069",
+      "productSKU": "BJ-069",
+      "productName": "Ariadne",
+      "productId": "9e5ca66b-04ee-46b0-8ccd-ae173b2e3b45",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ -069.mp4"
+    },
+    {
+      "filename": "BJ -074.mp4",
+      "matchedVariation": "BJ-074",
+      "productSKU": "BJ-074",
+      "productName": "Lucia",
+      "productId": "d39b7fd7-8579-40cf-a912-34640b426cab",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ -074.mp4"
+    },
+    {
+      "filename": "BJ 002.mp4",
+      "matchedVariation": "BJ 002",
+      "productSKU": "BJ-002",
+      "productName": "Dahlia",
+      "productId": "8df51d35-5cb6-465f-afd5-d344c64795e4",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 002.mp4"
+    },
+    {
+      "filename": "BJ 003.mp4",
+      "matchedVariation": "BJ 003",
+      "productSKU": "BJ-003",
+      "productName": "Zephira",
+      "productId": "ccd08a9e-e13b-48cd-9a22-c447444351e4",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 003.mp4"
+    },
+    {
+      "filename": "BJ 004.mp4",
+      "matchedVariation": "BJ 004",
+      "productSKU": "BJ-004",
+      "productName": "Elara",
+      "productId": "9b6fdf71-4bb4-48cb-bbcf-701858535872",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 004.mp4"
+    },
+    {
+      "filename": "BJ 005.mp4",
+      "matchedVariation": "BJ 005",
+      "productSKU": "BJ-005",
+      "productName": "Maris",
+      "productId": "2be11805-1642-4def-a9e0-bb63d5e8e732",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 005.mp4"
+    },
+    {
+      "filename": "BJ 007.mp4",
+      "matchedVariation": "BJ 007",
+      "productSKU": "BJ-007",
+      "productName": "Amara",
+      "productId": "6ea46a7d-8981-4227-8ba4-616392b3554b",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 007.mp4"
+    },
+    {
+      "filename": "BJ 011 1.mp4",
+      "matchedVariation": "BJ-011",
+      "productSKU": "BJ-011",
+      "productName": "Andromeda",
+      "productId": "acab6704-b75b-4e82-988e-b41bc9223155",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 011 1.mp4"
+    },
+    {
+      "filename": "BJ 011.mp4",
+      "matchedVariation": "BJ 011",
+      "productSKU": "BJ-011",
+      "productName": "Andromeda",
+      "productId": "acab6704-b75b-4e82-988e-b41bc9223155",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 011.mp4"
+    },
+    {
+      "filename": "BJ 012.mp4",
+      "matchedVariation": "BJ 012",
+      "productSKU": "BJ-012",
+      "productName": "Vivienne",
+      "productId": "38554c7b-0da7-489e-9067-2ebe3f0cfcec",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 012.mp4"
+    },
+    {
+      "filename": "BJ 013.mp4",
+      "matchedVariation": "BJ 013",
+      "productSKU": "BJ-013",
+      "productName": "Auralis",
+      "productId": "f4df5854-d720-410a-9008-79158976f697",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 013.mp4"
+    },
+    {
+      "filename": "BJ 014.mp4",
+      "matchedVariation": "BJ 014",
+      "productSKU": "BJ-014",
+      "productName": "Altair",
+      "productId": "7993d094-d8f7-4a4e-8417-8f2db59128a9",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 014.mp4"
+    },
+    {
+      "filename": "BJ 016.mp4",
+      "matchedVariation": "BJ 016",
+      "productSKU": "BJ-016",
+      "productName": "Alina",
+      "productId": "14e244c8-15e7-42e0-8eac-36da21bfcb42",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 016.mp4"
+    },
+    {
+      "filename": "BJ 017.mp4",
+      "matchedVariation": "BJ 017",
+      "productSKU": "BJ-017",
+      "productName": "Isalyn",
+      "productId": "8e5fddae-f958-463b-aa4c-5ec2de07cc80",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 017.mp4"
+    },
+    {
+      "filename": "BJ 018.mp4",
+      "matchedVariation": "BJ 018",
+      "productSKU": "BJ-018",
+      "productName": "Cassara",
+      "productId": "f39f06cb-85ba-4afe-a022-a2d3e4ddac2f",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 018.mp4"
+    },
+    {
+      "filename": "BJ 019.mp4",
+      "matchedVariation": "BJ 019",
+      "productSKU": "BJ-019",
+      "productName": "Ysolde",
+      "productId": "c27c17b2-f5c4-43b6-b60c-be46da9056dc",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 019.mp4"
+    },
+    {
+      "filename": "BJ 024.mp4",
+      "matchedVariation": "BJ 024",
+      "productSKU": "BJ-024",
+      "productName": "Maristelle",
+      "productId": "86382b7f-ae0f-47ea-9659-fe49e463828a",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 024.mp4"
+    },
+    {
+      "filename": "BJ 026.mp4",
+      "matchedVariation": "BJ 026",
+      "productSKU": "BJ-026",
+      "productName": "Lavina",
+      "productId": "a4e0591b-2f77-4638-a11b-1ad9c65ed643",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 026.mp4"
+    },
+    {
+      "filename": "BJ 032.mp4",
+      "matchedVariation": "BJ 032",
+      "productSKU": "BJ-032",
+      "productName": "Theia",
+      "productId": "e672d7fb-d122-4802-b026-1d73058506ec",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 032.mp4"
+    },
+    {
+      "filename": "BJ 042.mp4",
+      "matchedVariation": "BJ 042",
+      "productSKU": "BJ-042",
+      "productName": "Selene",
+      "productId": "b32cefca-c021-40e2-acc2-96f900a18ad6",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 042.mp4"
+    },
+    {
+      "filename": "BJ 043.mp4",
+      "matchedVariation": "BJ 043",
+      "productSKU": "BJ-043",
+      "productName": "Evelina",
+      "productId": "94527281-d308-4d4e-acbf-5b94322d8c88",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 043.mp4"
+    },
+    {
+      "filename": "BJ 044.mp4",
+      "matchedVariation": "BJ 044",
+      "productSKU": "BJ-044",
+      "productName": "Test Name 43",
+      "productId": "ad85c068-de7c-454b-93c6-629e7795f819",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 044.mp4"
+    },
+    {
+      "filename": "BJ 045.mp4",
+      "matchedVariation": "BJ 045",
+      "productSKU": "BJ-045",
+      "productName": "Nerina",
+      "productId": "42ebcdf7-d771-4c4b-be94-1bbcd48629a0",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 045.mp4"
+    },
+    {
+      "filename": "BJ 047.mp4",
+      "matchedVariation": "BJ 047",
+      "productSKU": "BJ-047",
+      "productName": "Celeste",
+      "productId": "94aebed0-458b-43cc-94c3-69b3792a9fd9",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 047.mp4"
+    },
+    {
+      "filename": "BJ 049.mp4",
+      "matchedVariation": "BJ 049",
+      "productSKU": "BJ-049",
+      "productName": "Orlaya",
+      "productId": "0a5be6d9-ec5d-440f-921b-d8ae212b4f17",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 049.mp4"
+    },
+    {
+      "filename": "BJ 050.mp4",
+      "matchedVariation": "BJ-50",
+      "productSKU": "BJ-50",
+      "productName": "Orlira",
+      "productId": "8729d7c2-a9bd-4c4b-aa8c-0c03cd2ea875",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 050.mp4"
+    },
+    {
+      "filename": "BJ 051.mp4",
+      "matchedVariation": "BJ-51",
+      "productSKU": "BJ-51",
+      "productName": "Elarina",
+      "productId": "abafc5b0-0a45-4cd6-bc32-ebeadd0258a2",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 051.mp4"
+    },
+    {
+      "filename": "BJ 052.mp4",
+      "matchedVariation": "BJ-52",
+      "productSKU": "BJ-52",
+      "productName": "Sylvia",
+      "productId": "e329d3a3-4a8c-4c0e-93f0-0a39636613cf",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 052.mp4"
+    },
+    {
+      "filename": "BJ 054.mp4",
+      "matchedVariation": "BJ 054",
+      "productSKU": "BJ-054",
+      "productName": "Camellia",
+      "productId": "7c42df92-b16f-40fb-8e31-bfe89a3d1bc8",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 054.mp4"
+    },
+    {
+      "filename": "BJ 055.mp4",
+      "matchedVariation": "BJ 055",
+      "productSKU": "BJ-055",
+      "productName": "Caelina",
+      "productId": "6e23c2dc-d7d3-4146-bdb6-ded6040b703c",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 055.mp4"
+    },
+    {
+      "filename": "BJ 056.mp4",
+      "matchedVariation": "BJ 056",
+      "productSKU": "BJ-056",
+      "productName": "Nova",
+      "productId": "2eebc0a7-d39c-457a-b5d3-8f6f8aa88b36",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 056.mp4"
+    },
+    {
+      "filename": "BJ 058.mp4",
+      "matchedVariation": "BJ-58",
+      "productSKU": "BJ-58",
+      "productName": "Isolith",
+      "productId": "3d259034-12e6-4234-acdf-66db2d03481d",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 058.mp4"
+    },
+    {
+      "filename": "BJ 059.mp4",
+      "matchedVariation": "BJ-59",
+      "productSKU": "BJ-59",
+      "productName": "Velarira",
+      "productId": "553122cf-b447-4fd8-ae99-cbfa9db24a7d",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 059.mp4"
+    },
+    {
+      "filename": "BJ 061.mp4",
+      "matchedVariation": "BJ 061",
+      "productSKU": "BJ-061",
+      "productName": "Primrose",
+      "productId": "d2be1f55-f6d4-4ad7-9531-7790c330d876",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 061.mp4"
+    },
+    {
+      "filename": "BJ 064.mp4",
+      "matchedVariation": "BJ 064",
+      "productSKU": "BJ-064",
+      "productName": "Daphne",
+      "productId": "f9196b89-3c13-4c86-a1a6-951e70bdede8",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 064.mp4"
+    },
+    {
+      "filename": "BJ 065.mp4",
+      "matchedVariation": "BJ 065",
+      "productSKU": "BJ-065",
+      "productName": "Thalassa",
+      "productId": "8e090215-5ffc-4c22-9a33-da5a9fd671bf",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 065.mp4"
+    },
+    {
+      "filename": "BJ 066.mp4",
+      "matchedVariation": "BJ 066",
+      "productSKU": "BJ-066",
+      "productName": "Clio",
+      "productId": "3b198d97-c32b-44ca-accc-bfe9775ddf4c",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 066.mp4"
+    },
+    {
+      "filename": "BJ 070.mp4",
+      "matchedVariation": "BJ 070",
+      "productSKU": "BJ-070",
+      "productName": "Celine",
+      "productId": "bcfbc6db-ef42-4206-919d-36865ed03343",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 070.mp4"
+    },
+    {
+      "filename": "BJ 071.mp4",
+      "matchedVariation": "BJ 071",
+      "productSKU": "BJ-071",
+      "productName": "Gaia",
+      "productId": "716b3eba-1326-4cfd-a16b-3bd5ba0da04d",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 071.mp4"
+    },
+    {
+      "filename": "BJ 072.mp4",
+      "matchedVariation": "BJ 072",
+      "productSKU": "BJ-072",
+      "productName": "Arabella",
+      "productId": "168832f4-440a-47c7-ad29-5e284f595f1c",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 072.mp4"
+    },
+    {
+      "filename": "BJ 073.mp4",
+      "matchedVariation": "BJ 073",
+      "productSKU": "BJ-073",
+      "productName": "Isolde",
+      "productId": "e6179866-04f5-448a-9bac-e51d3d78ef5a",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 073.mp4"
+    },
+    {
+      "filename": "BJ 077.mp4",
+      "matchedVariation": "BJ 077",
+      "productSKU": "BJ-077",
+      "productName": "Thalia",
+      "productId": "a0b8d7f0-7b1a-46d6-948d-ce2b4827e67e",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 077.mp4"
+    },
+    {
+      "filename": "BJ 079.mp4",
+      "matchedVariation": "BJ 079",
+      "productSKU": "BJ-079",
+      "productName": "Violetta",
+      "productId": "66a56032-9066-42d6-8a2c-ace00b4c8269",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 079.mp4"
+    },
+    {
+      "filename": "BJ 080.mp4",
+      "matchedVariation": "BJ 080",
+      "productSKU": "BJ-080",
+      "productName": "Nyx",
+      "productId": "931f36a8-ffb8-405f-9358-a736dfb552e3",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 080.mp4"
+    },
+    {
+      "filename": "BJ 101 C.mp4",
+      "matchedVariation": "BJ-101(C)",
+      "productSKU": "BJ-101(C)",
+      "productName": "Seraphinayn",
+      "productId": "ce18fa2c-d776-4bea-bcb0-a676ac1be0aa",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 101 C.mp4"
+    },
+    {
+      "filename": "BJ 101 D.mp4",
+      "matchedVariation": "BJ-101(D)",
+      "productSKU": "BJ-101(D)",
+      "productName": "Cassiae",
+      "productId": "4faabd6c-7a56-4b62-aa00-a91b55192c63",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 101 D.mp4"
+    },
+    {
+      "filename": "BJ 101 E.mp4",
+      "matchedVariation": "BJ-101(E)",
+      "productSKU": "BJ-101(E)",
+      "productName": "Test Name 95",
+      "productId": "634245ca-d5d9-4ea8-9df2-4a6757d21b33",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 101 E.mp4"
+    },
+    {
+      "filename": "BJ 102 D.mp4",
+      "matchedVariation": "BJ-102(D)",
+      "productSKU": "BJ-102 (D)",
+      "productName": "Velariselle",
+      "productId": "db056f3d-cb1c-449a-ab9e-15e90864b786",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 102 D.mp4"
+    },
+    {
+      "filename": "BJ 102 E.mp4",
+      "matchedVariation": "BJ-102(E)",
+      "productSKU": "BJ-102(E)",
+      "productName": "Isoldea",
+      "productId": "80f7dde6-f50c-4c83-9edb-a8b932663d6d",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 102 E.mp4"
+    },
+    {
+      "filename": "BJ 103 D.mp4",
+      "matchedVariation": "BJ-103(D)",
+      "productSKU": "BJ-103(D)",
+      "productName": "Cassiaa",
+      "productId": "3f0af808-0be0-4fd2-95ab-989586c324b6",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 103 D.mp4"
+    },
+    {
+      "filename": "BJ 103 E.mp4",
+      "matchedVariation": "BJ-103(E)",
+      "productSKU": "BJ-103(E)",
+      "productName": "Orlae",
+      "productId": "9a70cc0a-0005-46a3-854d-8378a5846613",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 103 E.mp4"
+    },
+    {
+      "filename": "BJ 103 F.mp4",
+      "matchedVariation": "BJ-103(F)",
+      "productSKU": "BJ-103(F)",
+      "productName": "Seraphinae",
+      "productId": "238b415b-626f-4e50-8d01-f665545b618e",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 103 F.mp4"
+    },
+    {
+      "filename": "bj 103.mp4",
+      "matchedVariation": "BJ 103",
+      "productSKU": "BJ-103(A)",
+      "productName": "Orlaelle",
+      "productId": "f1048726-b2ef-493d-b07a-f9fab33c7af7",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\bj 103.mp4"
+    },
+    {
+      "filename": "BJ 104A.mp4",
+      "matchedVariation": "BJ-104(A)",
+      "productSKU": "BJ-104(A)",
+      "productName": "Sylvaa",
+      "productId": "d7233a75-a7ba-41a7-a284-5eeff5561934",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 104A.mp4"
+    },
+    {
+      "filename": "BJ 105 B.mp4",
+      "matchedVariation": "BJ-105(B)",
+      "productSKU": "BJ-105(B)",
+      "productName": "Elarora",
+      "productId": "886b4aa7-a4f6-4803-8bd3-1e352d33460f",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 105 B.mp4"
+    },
+    {
+      "filename": "BJ 105 C.mp4",
+      "matchedVariation": "BJ-105(C)",
+      "productSKU": "BJ-105(C)",
+      "productName": "Lunis",
+      "productId": "2df4da1c-18ed-4659-add9-c4c989e428f1",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 105 C.mp4"
+    },
+    {
+      "filename": "BJ 105A.mp4",
+      "matchedVariation": "BJ-105(A)",
+      "productSKU": "BJ-105(A)",
+      "productName": "Isolis",
+      "productId": "ada0cb12-3a84-4183-9f75-c4c8002a0d8c",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 105A.mp4"
+    },
+    {
+      "filename": "BJ 108 C.mp4",
+      "matchedVariation": "BJ-108(C)",
+      "productSKU": "BJ-108(C)",
+      "productName": "Velarara",
+      "productId": "0bf0825c-e388-4f0a-9a94-358dbc856cbe",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 108 C.mp4"
+    },
+    {
+      "filename": "BJ 108 F.mp4",
+      "matchedVariation": "BJ-108(F)",
+      "productSKU": "BJ-108(F)",
+      "productName": "Cassia",
+      "productId": "daf8ee9f-0a58-4370-85e1-1fd4f89c1653",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 108 F.mp4"
+    },
+    {
+      "filename": "BJ 108A.mp4",
+      "matchedVariation": "BJ-108(A)",
+      "productSKU": "BJ-108(A)",
+      "productName": "Seraphelle",
+      "productId": "4e2703ec-aeac-4fc3-8aea-9d7c3b6a85ba",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 108A.mp4"
+    },
+    {
+      "filename": "BJ 108E.mp4",
+      "matchedVariation": "BJ-108(E)",
+      "productSKU": "BJ-108(E)",
+      "productName": "Sylvis",
+      "productId": "06decb4a-9cf3-48f2-92c4-37495a63b38a",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 108E.mp4"
+    },
+    {
+      "filename": "BJ 110 A.mp4",
+      "matchedVariation": "BJ-110(A)",
+      "productSKU": "BJ-110(A)",
+      "productName": "Test Name 139",
+      "productId": "2c4e7e82-9f22-4ebb-a790-db6ff035076d",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 110 A.mp4"
+    },
+    {
+      "filename": "BJ 110 B.mp4",
+      "matchedVariation": "BJ-110(B)",
+      "productSKU": "BJ-110(B)",
+      "productName": "Test Name 140",
+      "productId": "118c3c23-6645-4230-a500-3f7ff0613f1f",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 110 B.mp4"
+    },
+    {
+      "filename": "BJ 110 C.mp4",
+      "matchedVariation": "BJ-110(C)",
+      "productSKU": "BJ-110(C)",
+      "productName": "Test Name 141",
+      "productId": "525cb5d8-fb8c-4534-a056-5d37b8e0a4c1",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 110 C.mp4"
+    },
+    {
+      "filename": "BJ 110 D.mp4",
+      "matchedVariation": "BJ-110(D)",
+      "productSKU": "BJ-110(D)",
+      "productName": "Test Name 142",
+      "productId": "22e4b84c-99d4-4b4a-9d6c-74cc4aa6ff44",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 110 D.mp4"
+    },
+    {
+      "filename": "BJ 110 E.mp4",
+      "matchedVariation": "BJ-110(E)",
+      "productSKU": "BJ-110(E)",
+      "productName": "Test Name 143",
+      "productId": "f003c2b1-c261-4272-a2a5-670a98731b49",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 110 E.mp4"
+    },
+    {
+      "filename": "BJ 110 F.mp4",
+      "matchedVariation": "BJ-110(F)",
+      "productSKU": "BJ-110(F)",
+      "productName": "Test Name 144",
+      "productId": "f9a28eca-c73f-4850-83d8-3bb6d3f62020",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 110 F.mp4"
+    },
+    {
+      "filename": "BJ 110F.mp4",
+      "matchedVariation": "BJ-110(F)",
+      "productSKU": "BJ-110(F)",
+      "productName": "Test Name 144",
+      "productId": "f9a28eca-c73f-4850-83d8-3bb6d3f62020",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 110F.mp4"
+    },
+    {
+      "filename": "BJ 111A.mp4",
+      "matchedVariation": "BJ-111(A)",
+      "productSKU": "BJ-111(A)",
+      "productName": "Test Name 145",
+      "productId": "f18fa356-f930-4d47-8891-9a490b6c7297",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 111A.mp4"
+    },
+    {
+      "filename": "BJ 120 1.mp4",
+      "matchedVariation": "BJ-120",
+      "productSKU": "BJ-120",
+      "productName": "Elarelle",
+      "productId": "23c5032b-cb02-4229-90a0-b900337b4b29",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 120 1.mp4"
+    },
+    {
+      "filename": "BJ 120.mp4",
+      "matchedVariation": "BJ 120",
+      "productSKU": "BJ-120",
+      "productName": "Elarelle",
+      "productId": "23c5032b-cb02-4229-90a0-b900337b4b29",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 120.mp4"
+    },
+    {
+      "filename": "BJ 122.mp4",
+      "matchedVariation": "BJ 122",
+      "productSKU": "BJ-122",
+      "productName": "Isolora",
+      "productId": "4ebf56bc-a6bd-4937-84b3-8191d0f6dc7d",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 122.mp4"
+    },
+    {
+      "filename": "BJ 123.mp4",
+      "matchedVariation": "BJ 123",
+      "productSKU": "BJ-123",
+      "productName": "Orlelle",
+      "productId": "f5eead01-ebdf-46d7-9031-5faf8801bef5",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 123.mp4"
+    },
+    {
+      "filename": "BJ 124.mp4",
+      "matchedVariation": "BJ 124",
+      "productSKU": "BJ-124",
+      "productName": "Elaris",
+      "productId": "a37b61fc-8e21-4bee-909c-3fa9a409ae15",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 124.mp4"
+    },
+    {
+      "filename": "BJ 126.mp4",
+      "matchedVariation": "BJ 126",
+      "productSKU": "BJ-126",
+      "productName": "Elarira",
+      "productId": "6aee53d9-95a4-4120-9941-25c97a8b1b89",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 126.mp4"
+    },
+    {
+      "filename": "BJ 128.mp4",
+      "matchedVariation": "BJ 128",
+      "productSKU": "BJ-128",
+      "productName": "Orlara",
+      "productId": "84d46d82-3b57-4f6e-b1c3-4fd4940a30f6",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 128.mp4"
+    },
+    {
+      "filename": "BJ 130.mp4",
+      "matchedVariation": "BJ 130",
+      "productSKU": "BJ-130",
+      "productName": "Isolelle",
+      "productId": "4d30f791-536e-4315-ac64-1d0c29eb069c",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 130.mp4"
+    },
+    {
+      "filename": "BJ 131.mp4",
+      "matchedVariation": "BJ 131",
+      "productSKU": "BJ-131",
+      "productName": "Sylvora",
+      "productId": "fc1cedc7-7d5c-45ac-bef5-ab3afbc713ad",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 131.mp4"
+    },
+    {
+      "filename": "BJ 135.mp4",
+      "matchedVariation": "BJ 135",
+      "productSKU": "BJ-135",
+      "productName": "Elarara",
+      "productId": "295ac0b3-c1bd-4c35-add0-b433777684f7",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ 135.mp4"
+    },
+    {
+      "filename": "BJ-038.mp4",
+      "matchedVariation": "BJ-038",
+      "productSKU": "BJ-038",
+      "productName": "Aralyn",
+      "productId": "4605dc3b-bdf4-46af-b572-cf912574fb01",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ-038.mp4"
+    },
+    {
+      "filename": "BJ-050.mp4",
+      "matchedVariation": "BJ-50",
+      "productSKU": "BJ-50",
+      "productName": "Orlira",
+      "productId": "8729d7c2-a9bd-4c4b-aa8c-0c03cd2ea875",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ-050.mp4"
+    },
+    {
+      "filename": "BJ-067.mp4",
+      "matchedVariation": "BJ-067",
+      "productSKU": "BJ-067",
+      "productName": "Orion",
+      "productId": "f605eaeb-f0e8-401e-a89e-dc0356510d8b",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ-067.mp4"
+    },
+    {
+      "filename": "BJ-073.mp4",
+      "matchedVariation": "BJ-073",
+      "productSKU": "BJ-073",
+      "productName": "Isolde",
+      "productId": "e6179866-04f5-448a-9bac-e51d3d78ef5a",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ-073.mp4"
+    },
+    {
+      "filename": "BJ-077.mp4",
+      "matchedVariation": "BJ-077",
+      "productSKU": "BJ-077",
+      "productName": "Thalia",
+      "productId": "a0b8d7f0-7b1a-46d6-948d-ce2b4827e67e",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ-077.mp4"
+    },
+    {
+      "filename": "BJ0066.mp4",
+      "matchedVariation": "BJ-66",
+      "productSKU": "BJ-066",
+      "productName": "Clio",
+      "productId": "3b198d97-c32b-44ca-accc-bfe9775ddf4c",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ0066.mp4"
+    },
+    {
+      "filename": "BJ008.mp4",
+      "matchedVariation": "BJ008",
+      "productSKU": "BJ-008",
+      "productName": "Adara",
+      "productId": "be7c3883-f41b-4cd1-8750-a97704d715db",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ008.mp4"
+    },
+    {
+      "filename": "BJ012.mp4",
+      "matchedVariation": "BJ012",
+      "productSKU": "BJ-012",
+      "productName": "Vivienne",
+      "productId": "38554c7b-0da7-489e-9067-2ebe3f0cfcec",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ012.mp4"
+    },
+    {
+      "filename": "BJ043.mp4",
+      "matchedVariation": "BJ043",
+      "productSKU": "BJ-043",
+      "productName": "Evelina",
+      "productId": "94527281-d308-4d4e-acbf-5b94322d8c88",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ043.mp4"
+    },
+    {
+      "filename": "BJ049.mp4",
+      "matchedVariation": "BJ049",
+      "productSKU": "BJ-049",
+      "productName": "Orlaya",
+      "productId": "0a5be6d9-ec5d-440f-921b-d8ae212b4f17",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ049.mp4"
+    },
+    {
+      "filename": "BJ054.mp4",
+      "matchedVariation": "BJ054",
+      "productSKU": "BJ-054",
+      "productName": "Camellia",
+      "productId": "7c42df92-b16f-40fb-8e31-bfe89a3d1bc8",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ054.mp4"
+    },
+    {
+      "filename": "BJ055.mp4",
+      "matchedVariation": "BJ055",
+      "productSKU": "BJ-055",
+      "productName": "Caelina",
+      "productId": "6e23c2dc-d7d3-4146-bdb6-ded6040b703c",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ055.mp4"
+    },
+    {
+      "filename": "BJ080.mp4",
+      "matchedVariation": "BJ080",
+      "productSKU": "BJ-080",
+      "productName": "Nyx",
+      "productId": "931f36a8-ffb8-405f-9358-a736dfb552e3",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ080.mp4"
+    },
+    {
+      "filename": "BJ124.mp4",
+      "matchedVariation": "BJ124",
+      "productSKU": "BJ-124",
+      "productName": "Elaris",
+      "productId": "a37b61fc-8e21-4bee-909c-3fa9a409ae15",
+      "localPath": "C:\\xampp\\htdocs\\testmccl\\McCulloch Website\\McCulloch Website\\Edited Videos\\BJ124.mp4"
+    }
+  ],
+  "unmatched": [
+    {
+      "filename": "BJ 054 I.mp4",
+      "triedVariations": [
+        "BJ 054 I",
+        "BJ-054I",
+        "BJ-054 I",
+        "BJ-054(I)",
+        "BJ-054 (I)"
+      ]
+    }
+  ],
+  "manualReview": [
+    {
+      "filename": "118cbj.mp4",
+      "reason": "Non-standard SKU format with number prefix",
+      "triedVariations": [
+        "118CBJ"
+      ]
+    },
+    {
+      "filename": "BJ 118CEJ.mp4",
+      "reason": "Non-standard SKU format with number prefix",
+      "triedVariations": [
+        "BJ 118CEJ",
+        "BJ-118C",
+        "BJ-118 C",
+        "BJ-118(C)",
+        "BJ-118 (C)"
+      ]
+    },
+    {
+      "filename": "BJ118ccj.mp4",
+      "reason": "Non-standard SKU format with number prefix",
+      "triedVariations": [
+        "BJ118CCJ",
+        "BJ-118C",
+        "BJ-118 C",
+        "BJ-118(C)",
+        "BJ-118 (C)"
+      ]
+    },
+    {
+      "filename": "BJ118cdj.mp4",
+      "reason": "Non-standard SKU format with number prefix",
+      "triedVariations": [
+        "BJ118CDJ",
+        "BJ-118C",
+        "BJ-118 C",
+        "BJ-118(C)",
+        "BJ-118 (C)"
+      ]
+    },
+    {
+      "filename": "BJ118cej.mp4",
+      "reason": "Non-standard SKU format with number prefix",
+      "triedVariations": [
+        "BJ118CEJ",
+        "BJ-118C",
+        "BJ-118 C",
+        "BJ-118(C)",
+        "BJ-118 (C)"
+      ]
+    },
+    {
+      "filename": "BJ119Cj.mp4",
+      "reason": "Non-standard SKU format with number prefix",
+      "triedVariations": [
+        "BJ119CJ",
+        "BJ-119C",
+        "BJ-119 C",
+        "BJ-119(C)",
+        "BJ-119 (C)"
+      ]
+    }
+  ],
+  "nonBjVideos": [
+    {
+      "filename": "P12.mp4",
+      "reason": "Not a BJ-prefixed product"
+    },
+    {
+      "filename": "P13.mp4",
+      "reason": "Not a BJ-prefixed product"
+    },
+    {
+      "filename": "PN 0931.mp4",
+      "reason": "Not a BJ-prefixed product"
+    }
+  ]
+}

@@ -108,7 +108,7 @@ const WeddingRings = (): JSX.Element => {
           gemstonesResponse,
           metalsResponse
         ] = await Promise.all([
-          fetch(`${API_BASE_URL}/products/category/rings`),
+          fetch(`${API_BASE_URL}/products?category=rings&jewelrySubType=wedding-rings`),
           fetch(`${API_BASE_URL}/filters/collections`),
           fetch(`${API_BASE_URL}/filters/ring-types`),
           fetch(`${API_BASE_URL}/filters/gemstones`),
@@ -116,11 +116,18 @@ const WeddingRings = (): JSX.Element => {
         ]);
 
         // Handle products data
-        const productsData = await productsResponse.json();
-        if (productsData.success) {
-          setRingProducts(productsData.data.products || []);
+        if (!productsResponse.ok) {
+          console.error('Products API error:', productsResponse.status);
+          setRingProducts([]);
+          setError('Unable to load wedding rings at the moment. Please try again later.');
         } else {
-          setError(productsData.message || 'Failed to fetch ring products');
+          const productsData = await productsResponse.json();
+          if (productsData.success) {
+            setRingProducts(productsData.data.products || []);
+          } else {
+            setRingProducts([]);
+            setError(productsData.message || 'Failed to fetch ring products');
+          }
         }
 
         // Handle collections data
@@ -165,6 +172,7 @@ const WeddingRings = (): JSX.Element => {
         }
 
       } catch (err) {
+        setRingProducts([]);
         setError('Failed to fetch ring products');
         console.error('Error fetching data:', err);
       } finally {
