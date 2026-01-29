@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, ChevronUp, Plus, X, Minus, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, ChevronUp, Plus, X, Minus, ZoomIn, ZoomOut, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
 import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
@@ -75,6 +75,13 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
+
+  // Custom video player states
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [showVideoControls, setShowVideoControls] = useState(true);
 
   // Helper function to check if file is video
   const isVideoFile = (url) => {
@@ -461,6 +468,44 @@ const ProductDetail = () => {
     setZoomLevel(1);
   };
 
+  // Video player control functions
+  const toggleVideoPlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      if (isVideoPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsVideoPlaying(!isVideoPlaying);
+    }
+  };
+
+  const toggleVideoMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.muted = !isVideoMuted;
+      setIsVideoMuted(!isVideoMuted);
+    }
+  };
+
+  const handleVideoTimeUpdate = () => {
+    if (videoRef.current) {
+      const progress = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      setVideoProgress(progress);
+    }
+  };
+
+  const handleVideoSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = clickX / rect.width;
+      videoRef.current.currentTime = percentage * videoRef.current.duration;
+    }
+  };
+
   const goToLightboxImage = (index: number) => {
     setLightboxImageIndex(index);
     setZoomLevel(1);
@@ -588,37 +633,100 @@ const ProductDetail = () => {
       {/* Mobile Image Carousel - Full Width, Large & Clean */}
       <div className="block lg:hidden w-full bg-white">
         <div
-          className="relative w-full cursor-pointer flex items-center justify-center"
-          style={{ height: '550px' }}
-          onClick={() => openLightbox(currentImageIndex)}
+          className="relative w-full"
+          style={{ minHeight: '400px' }}
         >
           {isVideoFile(displayImages[currentImageIndex]?.url) ? (
-            <video
-              src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
-              controls
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-              className="max-w-full max-h-full object-contain"
-            />
+            /* Custom Video Player for Mobile */
+            <div
+              className="relative w-full bg-black"
+              onClick={toggleVideoPlay}
+              onMouseEnter={() => setShowVideoControls(true)}
+              onMouseLeave={() => setShowVideoControls(false)}
+            >
+              <video
+                ref={videoRef}
+                src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                className="w-full h-auto object-cover"
+                style={{ maxHeight: '500px' }}
+                onTimeUpdate={handleVideoTimeUpdate}
+                onPlay={() => setIsVideoPlaying(true)}
+                onPause={() => setIsVideoPlaying(false)}
+              />
+
+              {/* Custom Minimal Controls Overlay */}
+              <div className={`absolute inset-0 flex flex-col justify-between transition-opacity duration-300 ${showVideoControls ? 'opacity-100' : 'opacity-0'}`}>
+                {/* Center Play/Pause Button */}
+                <div className="flex-1 flex items-center justify-center">
+                  <button
+                    onClick={toggleVideoPlay}
+                    className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-white/30 hover:scale-110"
+                  >
+                    {isVideoPlaying ? (
+                      <Pause className="w-8 h-8 text-white" fill="white" />
+                    ) : (
+                      <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Bottom Controls Bar */}
+                <div className="px-4 pb-4">
+                  {/* Progress Bar */}
+                  <div
+                    className="w-full h-1 bg-white/30 rounded-full cursor-pointer mb-3"
+                    onClick={handleVideoSeek}
+                  >
+                    <div
+                      className="h-full bg-white rounded-full transition-all duration-100"
+                      style={{ width: `${videoProgress}%` }}
+                    />
+                  </div>
+
+                  {/* Mute Button */}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={toggleVideoMute}
+                      className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-white/30"
+                    >
+                      {isVideoMuted ? (
+                        <VolumeX className="w-5 h-5 text-white" />
+                      ) : (
+                        <Volume2 className="w-5 h-5 text-white" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
-            <img
-              src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
-              alt={displayImages[currentImageIndex]?.alt || productData.name}
-              className="max-w-full max-h-full object-contain"
-            />
+            <div
+              className="w-full flex items-center justify-center cursor-pointer"
+              style={{ height: '450px' }}
+              onClick={() => openLightbox(currentImageIndex)}
+            >
+              <img
+                src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
+                alt={displayImages[currentImageIndex]?.alt || productData.name}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
           )}
 
-          {/* Navigation Arrows - Subtle */}
-          {displayImages.length > 1 && (
+          {/* Navigation Arrows - Only for images, not videos */}
+          {displayImages.length > 1 && !isVideoFile(displayImages[currentImageIndex]?.url) && (
             <>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-amber-300/70 hover:bg-amber-400 rounded-full flex items-center justify-center transition-colors z-10"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10 shadow-md"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-700" />
               </button>
@@ -627,15 +735,15 @@ const ProductDetail = () => {
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-amber-300/70 hover:bg-amber-400 rounded-full flex items-center justify-center transition-colors z-10"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10 shadow-md"
               >
                 <ChevronRight className="w-5 h-5 text-gray-700" />
               </button>
             </>
           )}
 
-          {/* Dots Pagination */}
-          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-1.5 z-10">
+          {/* Dots Pagination - Positioned below content */}
+          <div className="w-full flex justify-center py-4 space-x-2 z-10">
             {displayImages.map((_, index) => (
               <button
                 key={index}

@@ -1062,293 +1062,115 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                     expandedSection === 'engagement' ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
                   }`}>
                     <div className="bg-gray-50/30">
-                      {/* Ring Types Subsection */}
-                      <div className="px-6 py-4">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">RING TYPES</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
+                      {/* Ring Types Subsection - Dynamic from Database */}
+                      {navigationData?.ring_types && navigationData.ring_types.length > 0 && (
+                        <div className="px-6 py-4">
+                          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                            <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">RING TYPES</span>
+                          </div>
+                          <div className="space-y-1 ml-4">
+                            {navigationData.ring_types.slice(0, 8).map((item) => (
+                              <Link
+                                key={item.id}
+                                to={`/engagement-rings?ringType=${encodeURIComponent(item.name)}`}
+                                className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                                style={{fontSize: '12px'}}
+                                onClick={closeMobileMenu}
+                              >
+                                <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                                {item.name}
+                              </Link>
+                            ))}
+                            <Link
+                              to="/engagement-rings"
+                              className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                              style={{fontSize: '12px'}}
+                              onClick={closeMobileMenu}
+                            >
+                              <ArrowRight className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
+                              Shop All Rings
+                            </Link>
+                          </div>
                         </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/engagement/solitaire"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Solitaire
-                          </Link>
-                          <Link
-                            to="/engagement/shoulder-set"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Shoulder Set
-                          </Link>
-                          <Link
-                            to="/engagement/halo"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Crown className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Halo
-                          </Link>
-                          <Link
-                            to="/engagement/hidden-halo"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Crown className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Hidden Halo
-                          </Link>
-                          <Link
-                            to="/engagement/trilogy"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Trilogy
-                          </Link>
-                          <Link
-                            to="/engagement/bezel"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Bezel
-                          </Link>
-                          <Link
-                            to="/engagement/2-stones"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            2 Stones
-                          </Link>
-                          <Link
-                            to="/engagement/vintage"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Vintage
-                          </Link>
-                          <Link
-                            to="/engagement-rings"
-                            className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
-                            Shop All
-                          </Link>
-                        </div>
-                      </div>
+                      )}
 
-                      {/* Gemstones Subsection */}
-                      <div className="px-6 py-4 border-t border-gray-200/30">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">GEMSTONES</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
+                      {/* Gemstones Subsection - Dynamic from Database */}
+                      {navigationData?.gemstones && navigationData.gemstones.length > 0 && (
+                        <div className="px-6 py-4 border-t border-gray-200/30">
+                          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                            <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">GEMSTONES</span>
+                          </div>
+                          <div className="space-y-1 ml-4">
+                            {navigationData.gemstones.slice(0, 8).map((item) => (
+                              <Link
+                                key={item.id}
+                                to={`/engagement-rings?gemstone=${encodeURIComponent(item.name)}`}
+                                className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                                style={{fontSize: '12px'}}
+                                onClick={closeMobileMenu}
+                              >
+                                <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                                {item.name}
+                              </Link>
+                            ))}
+                            <Link
+                              to="/engagement-rings"
+                              className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                              style={{fontSize: '12px'}}
+                              onClick={closeMobileMenu}
+                            >
+                              <ArrowRight className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
+                              Shop All Gemstones
+                            </Link>
+                          </div>
                         </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/engagement/natural-diamond"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Natural Diamond
-                          </Link>
-                          <Link
-                            to="/engagement/lab-grown-diamond"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-blue-400 mr-3 flex-shrink-0" />
-                            Lab Grown Diamond
-                          </Link>
-                          <Link
-                            to="/engagement/yellow-diamond"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-yellow-400 mr-3 flex-shrink-0" />
-                            Yellow Diamond
-                          </Link>
-                          <Link
-                            to="/engagement/black-diamond"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-gray-900 mr-3 flex-shrink-0" />
-                            Black Diamond
-                          </Link>
-                          <Link
-                            to="/engagement/sapphire"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-blue-500 mr-3 flex-shrink-0" />
-                            Sapphire
-                          </Link>
-                          <Link
-                            to="/engagement/ruby"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-red-500 mr-3 flex-shrink-0" />
-                            Ruby
-                          </Link>
-                          <Link
-                            to="/engagement/emerald"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                            Emerald
-                          </Link>
-                          <Link
-                            to="/engagement/aquamarine"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-cyan-400 mr-3 flex-shrink-0" />
-                            Aquamarine
-                          </Link>
-                          <Link
-                            to="/engagement-rings"
-                            className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
-                            Shop All
-                          </Link>
-                        </div>
-                      </div>
+                      )}
 
-                      {/* Eternity Rings Subsection */}
-                      <div className="px-6 py-4 border-t border-gray-200/30">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">ETERNITY RINGS</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
+                      {/* Eternity Rings Subsection - Dynamic from Database */}
+                      {navigationData?.eternity_rings && navigationData.eternity_rings.length > 0 && (
+                        <div className="px-6 py-4 border-t border-gray-200/30">
+                          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                            <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">ETERNITY RINGS</span>
+                          </div>
+                          <div className="space-y-1 ml-4">
+                            {navigationData.eternity_rings.map((item) => (
+                              <Link
+                                key={item.id}
+                                to={`/engagement-rings?collection=${encodeURIComponent(item.name)}`}
+                                className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                                style={{fontSize: '12px'}}
+                                onClick={closeMobileMenu}
+                              >
+                                <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                                {item.name}
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/eternity/bridal-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
-                            Bridal Collection
-                          </Link>
-                          <Link
-                            to="/eternity/heritage-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Heritage Collection
-                          </Link>
-                          <Link
-                            to="/eternity/modern-elegance"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Modern Elegance
-                          </Link>
-                          <Link
-                            to="/eternity/vintage-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Vintage Collection
-                          </Link>
-                          <Link
-                            to="/eternity/modern-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Modern Collection
-                          </Link>
-                          <Link
-                            to="/eternity/diamond-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Diamond Collection
-                          </Link>
-                          <Link
-                            to="/eternity/eternity-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Eternity Collection
-                          </Link>
-                        </div>
-                      </div>
+                      )}
 
-                      {/* Metals Subsection */}
-                      <div className="px-6 py-4 border-t border-gray-200/30">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">METALS</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
+                      {/* Metals Subsection - Dynamic from Database */}
+                      {navigationData?.metals && navigationData.metals.length > 0 && (
+                        <div className="px-6 py-4 border-t border-gray-200/30">
+                          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                            <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">METALS</span>
+                          </div>
+                          <div className="space-y-1 ml-4">
+                            {navigationData.metals.map((item) => (
+                              <Link
+                                key={item.id}
+                                to={`/engagement-rings?metal=${encodeURIComponent(item.name)}`}
+                                className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                                style={{fontSize: '12px'}}
+                                onClick={closeMobileMenu}
+                              >
+                                <Circle className="w-4 h-4 mr-3 flex-shrink-0" style={{ color: item.color_code || '#9ca3af' }} />
+                                {item.name}
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/engagement/yellow-gold"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-yellow-400 mr-3 flex-shrink-0" />
-                            Yellow Gold
-                          </Link>
-                          <Link
-                            to="/engagement/white-gold"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-300 mr-3 flex-shrink-0" />
-                            White Gold
-                          </Link>
-                          <Link
-                            to="/engagement/platinum"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
-                            Platinum
-                          </Link>
-                          <Link
-                            to="/engagement/silver"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-300 mr-3 flex-shrink-0" />
-                            Silver
-                          </Link>
-                          <Link
-                            to="/engagement/gold-vermeil"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-yellow-300 mr-3 flex-shrink-0" />
-                            Gold Vermeil
-                          </Link>
-                          <Link
-                            to="/engagement/rose-gold"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
-                            Rose Gold
-                          </Link>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
