@@ -1298,7 +1298,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   </div>
                 </div>
 
-                {/* Jewellery Section */}
+                {/* Jewellery Section - Dynamic from Database */}
                 <div className="border-b border-gray-100">
                   <button
                     onClick={() => setExpandedSection(expandedSection === 'jewellery' ? null : 'jewellery')}
@@ -1313,38 +1313,105 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   </button>
 
                   <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSection === 'jewellery' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                    expandedSection === 'jewellery' ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
                   }`}>
                     <div className="bg-gray-50/30">
+                      {/* Earrings Subsection - Dynamic from Database */}
                       <div className="px-6 py-4">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">EARRINGS</span>
+                        </div>
                         <div className="space-y-1 ml-4">
                           <Link
                             to="/earrings"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
                             style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Earrings
+                            <ArrowRight className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
+                            Shop All Earrings
                           </Link>
+                          {earringTypes.slice(0, 6).map((type) => (
+                            <Link
+                              key={type.id}
+                              to={`/earrings?type=${encodeURIComponent(type.name)}`}
+                              className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                              style={{fontSize: '12px'}}
+                              onClick={closeMobileMenu}
+                            >
+                              <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                              {type.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Necklaces Subsection - Dynamic from Database */}
+                      <div className="px-6 py-4 border-t border-gray-200/30">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">NECKLACES</span>
+                        </div>
+                        <div className="space-y-1 ml-4">
                           <Link
                             to="/necklaces"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
                             style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Necklaces
+                            <ArrowRight className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
+                            Shop All Necklaces
                           </Link>
+                          {necklaceTypes.slice(0, 6).map((type) => (
+                            <Link
+                              key={type.id}
+                              to={`/necklaces?type=${encodeURIComponent(type.name)}`}
+                              className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                              style={{fontSize: '12px'}}
+                              onClick={closeMobileMenu}
+                            >
+                              <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                              {type.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bracelets Subsection - Dynamic from Database */}
+                      <div className="px-6 py-4 border-t border-gray-200/30">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">BRACELETS</span>
+                        </div>
+                        <div className="space-y-1 ml-4">
                           <Link
                             to="/bracelets"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
                             style={{fontSize: '12px'}}
                             onClick={closeMobileMenu}
                           >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Bracelets
+                            <ArrowRight className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
+                            Shop All Bracelets
                           </Link>
+                          {braceletTypes.slice(0, 6).map((type) => (
+                            <Link
+                              key={type.id}
+                              to={`/bracelets?type=${encodeURIComponent(type.name)}`}
+                              className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                              style={{fontSize: '12px'}}
+                              onClick={closeMobileMenu}
+                            >
+                              <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                              {type.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Gifts & Occasions Subsection */}
+                      <div className="px-6 py-4 border-t border-gray-200/30">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">GIFTS & OCCASIONS</span>
+                        </div>
+                        <div className="space-y-1 ml-4">
                           <Link
                             to="/birthday-gifts"
                             className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
@@ -1363,8 +1430,117 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                             <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
                             Anniversary Gifts
                           </Link>
+                          <Link
+                            to="/mothers-day-gifts"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
+                            Mother's Day
+                          </Link>
+                          <Link
+                            to="/gift-sets"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Layers className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Gift Sets
+                          </Link>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Watches Section - Dynamic from Database */}
+                <div className="border-b border-gray-100">
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === 'watches' ? null : 'watches')}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
+                  >
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">WATCHES</span>
+                    {expandedSection === 'watches' ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    expandedSection === 'watches' ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="bg-gray-50/30">
+                      {loadingWatches ? (
+                        <div className="px-6 py-8 text-center">
+                          <p className="text-sm font-satoshi text-gray-500">Loading collections...</p>
+                        </div>
+                      ) : watchBrands.length > 0 ? (
+                        <>
+                          {watchBrands.map((brand) => (
+                            <div key={brand.id} className="px-6 py-4 border-b border-gray-200/30 last:border-b-0">
+                              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                                <Link
+                                  to={`/${brand.slug}`}
+                                  className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide hover:text-gray-900"
+                                  onClick={closeMobileMenu}
+                                >
+                                  {brand.name}
+                                </Link>
+                                <ChevronDown className="w-3 h-3 text-gray-400" />
+                              </div>
+                              <div className="space-y-1 ml-4">
+                                <Link
+                                  to={`/${brand.slug}`}
+                                  className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                                  style={{fontSize: '12px'}}
+                                  onClick={closeMobileMenu}
+                                >
+                                  <ArrowRight className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
+                                  View All {brand.name}
+                                </Link>
+                                {brand.collections.map((collection) => (
+                                  <Link
+                                    key={collection.id}
+                                    to={`/watches?brand=${brand.slug}&collection=${collection.slug}`}
+                                    className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                                    style={{fontSize: '12px'}}
+                                    onClick={closeMobileMenu}
+                                  >
+                                    <Crown className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                                    {collection.name}
+                                    {collection.is_featured && (
+                                      <span className="ml-2 inline-block w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                                    )}
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                          {/* Explore All Watches Button */}
+                          <div className="px-6 py-4">
+                            <Link
+                              to="/watches"
+                              className="flex items-center justify-center w-full py-3 bg-gray-900 text-white text-xs font-satoshi font-semibold uppercase tracking-wider hover:bg-gray-800 transition-all duration-200 rounded-sm"
+                              onClick={closeMobileMenu}
+                            >
+                              EXPLORE ALL WATCHES
+                            </Link>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="px-6 py-8 text-center">
+                          <p className="text-sm font-satoshi text-gray-500">No watch collections available</p>
+                          <Link
+                            to="/watches"
+                            className="inline-block mt-4 text-sm font-satoshi font-medium text-gray-900 hover:text-gray-700"
+                            onClick={closeMobileMenu}
+                          >
+                            Browse All Watches
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
