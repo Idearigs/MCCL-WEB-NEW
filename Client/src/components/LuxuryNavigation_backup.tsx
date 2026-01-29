@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, ChevronDown, ChevronUp, Calendar, Phone, Mail, HelpCircle, Diamond, Gem, Circle, Layers, Star, Heart, Crown, ArrowRight, ArrowLeft } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronUp, Calendar, Phone, Mail, HelpCircle, Diamond, Gem, Circle, Layers, Star, Heart, Crown, Watch } from "lucide-react";
 import TopBanner from "./TopBanner";
 import CartSlide from "./CartSlide";
 import SearchOverlay from "./SearchOverlay";
+import AuthModal from "./AuthModal";
+import AccountMenu from "./AccountMenu";
 import { useCart } from "../contexts/CartContext";
+import { useFavorites } from "../contexts/FavoritesContext";
 import { useIsMobile } from "../hooks/use-mobile";
 import API_BASE_URL from '../config/api';
 
@@ -47,18 +50,17 @@ interface NavigationItem {
 }
 
 interface NavigationData {
-  ring_types?: NavigationItem[];
-  gemstones?: NavigationItem[];
-  metals?: NavigationItem[];
-  eternity_rings?: NavigationItem[];
+  ring_types: NavigationItem[];
+  gemstones: NavigationItem[];
+  metals: NavigationItem[];
+  eternity_rings: NavigationItem[];
 }
 
-const LuxuryNavigationWhite = (): JSX.Element => {
+const LuxuryNavigation = (): JSX.Element => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
-  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [engagementHover, setEngagementHover] = useState(false);
   const [weddingHover, setWeddingHover] = useState(false);
@@ -94,17 +96,23 @@ const LuxuryNavigationWhite = (): JSX.Element => {
   const [watchesClosing, setWatchesClosing] = useState(false);
   const [heritageClosing, setHeritageClosing] = useState(false);
   
+  // Auth modal state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
   // Cart context
-  const { 
-    cartItems, 
-    isCartOpen, 
-    isCartVisible, 
-    openCart, 
-    closeCart, 
-    updateQuantity, 
-    removeItem, 
-    getCartCount 
+  const {
+    cartItems,
+    isCartOpen,
+    isCartVisible,
+    openCart,
+    closeCart,
+    updateQuantity,
+    removeItem,
+    getCartCount
   } = useCart();
+
+  // Favorites context
+  const { favoritesCount } = useFavorites();
 
   const isMobile = useIsMobile();
   const anyDropdownOpen = engagementHover || weddingHover || diamondsHover || jewelleryHover || watchesHover;
@@ -278,8 +286,14 @@ const LuxuryNavigationWhite = (): JSX.Element => {
     <>
       <div className="fixed top-0 left-0 right-0 z-50">
         <TopBanner />
-        <nav
-          className="relative transition-all duration-0 bg-white"
+        <nav 
+          className={`relative transition-all duration-0 ${
+            anyDropdownOpen || navbarHover
+              ? 'bg-white shadow-lg'
+              : isScrolled 
+                ? 'bg-white/95 backdrop-blur-sm shadow-sm' 
+                : 'bg-transparent'
+          }`}
           onMouseEnter={() => setNavbarHover(true)}
           onMouseLeave={() => setNavbarHover(false)}
         >
@@ -290,16 +304,22 @@ const LuxuryNavigationWhite = (): JSX.Element => {
               <div className="flex items-center justify-between w-full mb-6">
                 {/* Left side */}
                 <div className="flex items-center space-x-4 min-w-[120px]">
-                  <span className="text-xs uppercase tracking-widest transition-colors duration-0 text-gray-600">UK</span>
+                  <span className={`text-xs uppercase tracking-widest transition-colors duration-0 ${
+                    anyDropdownOpen || navbarHover || isScrolled ? 'text-gray-600' : 'text-white/70'
+                  }`}>UK</span>
                 </div>
 
                 {/* Center Logo */}
                 <div className="flex-1 flex justify-center mx-12">
                   <Link to="/" className="flex flex-col items-center">
-                    <div className="text-2xl font-serif font-light tracking-[0.3em] uppercase transition-colors duration-0 text-gray-900">
+                    <div className={`text-2xl font-serif font-light tracking-[0.3em] uppercase transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled ? 'text-gray-900' : 'text-white'
+                    }`}>
                       McCulloch
                     </div>
-                    <div className="text-sm font-light tracking-[0.5em] uppercase transition-colors duration-0 text-gray-600">
+                    <div className={`text-sm font-light tracking-[0.5em] uppercase transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled ? 'text-gray-600' : 'text-white/80'
+                    }`}>
                       Jewellers
                     </div>
                   </Link>
@@ -307,55 +327,83 @@ const LuxuryNavigationWhite = (): JSX.Element => {
 
                 {/* Right Icons */}
                 <div className="flex items-center space-x-4 min-w-[120px] justify-end">
+                  {/* Search Icon */}
                   <div className="relative group">
                     <button onClick={openSearch}>
-                      <svg className="w-5 h-5 cursor-pointer transition-colors duration-0 text-gray-600 hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled
+                          ? 'text-gray-600 hover:text-gray-900'
+                          : 'text-white hover:text-white/80'
+                      }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                         <circle cx="11" cy="11" r="8"/>
                         <path d="m21 21-4.35-4.35"/>
                       </svg>
                     </button>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
                       Search
                     </div>
                   </div>
 
-                  <div className="relative group">
-                    <svg className="w-5 h-5 cursor-pointer transition-colors duration-0 text-gray-600 hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <circle cx="12" cy="8" r="5"/>
-                      <path d="M20 21a8 8 0 1 0-16 0"/>
-                    </svg>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                      Account
-                    </div>
-                  </div>
+                  {/* Account Menu */}
+                  <AccountMenu
+                    onLoginClick={() => setAuthModalOpen(true)}
+                    isTransparent={!isScrolled && !anyDropdownOpen && !navbarHover}
+                  />
 
-                  <div className="relative group">
-                    <svg className="w-5 h-5 cursor-pointer transition-colors duration-0 text-gray-600 hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  {/* Favorites Icon with Badge */}
+                  <Link to="/favorites" className="relative group">
+                    <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled
+                        ? 'text-gray-600 hover:text-gray-900'
+                        : 'text-white hover:text-white/80'
+                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                      Wishlist
+                    {/* Favorites count badge */}
+                    {favoritesCount > 0 && (
+                      <span className={`absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled
+                          ? 'bg-rose-500 text-white'
+                          : 'bg-white text-rose-500'
+                      }`}>
+                        {favoritesCount}
+                      </span>
+                    )}
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                      Favorites
                     </div>
-                  </div>
+                  </Link>
 
+                  {/* Cart Icon */}
                   <div className="relative group">
                     <button
                       onClick={openCart}
                       className="relative"
                     >
-                      <svg className="w-5 h-5 cursor-pointer transition-colors duration-0 text-gray-600 hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled
+                          ? 'text-gray-600 hover:text-gray-900'
+                          : 'text-white hover:text-white/80'
+                      }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
                         <path d="M3 6h18"/>
                         <path d="M16 10a4 4 0 0 1-8 0"/>
                       </svg>
                       {getCartCount() > 0 && (
-                        <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium transition-colors duration-0 bg-gray-900 text-white">
+                        <span className={`absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium transition-colors duration-0 ${
+                          anyDropdownOpen || navbarHover || isScrolled
+                            ? 'bg-gray-900 text-white'
+                            : 'bg-white text-gray-900'
+                        }`}>
                           {getCartCount()}
                         </span>
                       )}
                     </button>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                      Cart {getCartCount() > 0 && `(${getCartCount()})`}
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
+                      Cart ({getCartCount()})
                     </div>
                   </div>
                 </div>
@@ -371,7 +419,11 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   >
                     <Link
                       to="/engagement-rings"
-                      className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled
+                          ? 'text-gray-700 hover:text-gray-900'
+                          : 'text-white hover:text-white/80'
+                      }`}
                     >
                       Engagement
                     </Link>
@@ -383,7 +435,11 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   >
                     <Link 
                       to="/wedding" 
-                      className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
                     >
                       Wedding
                     </Link>
@@ -396,7 +452,11 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   >
                     <Link
                       to="/diamonds"
-                      className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled
+                          ? 'text-gray-700 hover:text-gray-900'
+                          : 'text-white hover:text-white/80'
+                      }`}
                     >
                       Diamonds
                     </Link>
@@ -408,7 +468,11 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   >
                     <Link 
                       to="/jewellery" 
-                      className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
                     >
                       Jewellery
                     </Link>
@@ -420,20 +484,32 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   >
                     <Link 
                       to="/watches" 
-                      className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
+                      className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                        anyDropdownOpen || navbarHover || isScrolled 
+                          ? 'text-gray-700 hover:text-gray-900' 
+                          : 'text-white hover:text-white/80'
+                      }`}
                     >
                       Watches
                     </Link>
                   </div>
                   <Link
                     to="/bespoke-design"
-                    className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
+                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled
+                        ? 'text-gray-700 hover:text-gray-900'
+                        : 'text-white hover:text-white/80'
+                    }`}
                   >
                     Bespoke Design
                   </Link>
                   <Link
                     to="/our-story"
-                    className="text-xs uppercase tracking-[0.2em] transition-colors duration-0 text-gray-700 hover:text-gray-900"
+                    className={`text-xs uppercase tracking-[0.2em] transition-colors duration-0 ${
+                      anyDropdownOpen || navbarHover || isScrolled
+                        ? 'text-gray-700 hover:text-gray-900'
+                        : 'text-white hover:text-white/80'
+                    }`}
                   >
                     Our Story
                   </Link>
@@ -462,94 +538,86 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 ) : navigationData ? (
                   <div className="grid grid-cols-4 gap-8">
                     {/* Ring Types Column */}
-                    {navigationData?.ring_types && navigationData.ring_types.length > 0 && (
-                      <div>
-                        <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>RING TYPES</h3>
-                        <div className="space-y-1">
-                          {navigationData.ring_types.slice(0, 8).map((item) => (
-                            <Link
-                              key={item.id}
-                              to={`/engagement-rings?ringType=${encodeURIComponent(item.name)}`}
-                              className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                              style={{fontSize: '12px'}}
-                            >
-                              {item.name}
-                            </Link>
-                          ))}
+                    <div>
+                      <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>RING TYPES</h3>
+                      <div className="space-y-1">
+                        {navigationData?.ring_types?.slice(0, 8).map((item) => (
                           <Link
-                            to="/engagement-rings"
-                            className="block font-satoshi font-bold text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            key={item.id}
+                            to={`/engagement-rings?ringType=${encodeURIComponent(item.name)}`}
+                            className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
                             style={{fontSize: '12px'}}
                           >
-                            Shop All
+                            {item.name}
                           </Link>
-                        </div>
+                        ))}
+                        <Link
+                          to="/engagement-rings"
+                          className="block font-satoshi font-bold text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12px'}}
+                        >
+                          Shop All
+                        </Link>
                       </div>
-                    )}
+                    </div>
 
                     {/* Gemstones Column */}
-                    {navigationData?.gemstones && navigationData.gemstones.length > 0 && (
-                      <div>
-                        <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>GEMSTONES</h3>
-                        <div className="space-y-1">
-                          {navigationData.gemstones.slice(0, 8).map((item) => (
-                            <Link
-                              key={item.id}
-                              to={`/engagement-rings?gemstone=${encodeURIComponent(item.name)}`}
-                              className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                              style={{fontSize: '12px'}}
-                            >
-                              {item.name}
-                            </Link>
-                          ))}
+                    <div>
+                      <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>GEMSTONES</h3>
+                      <div className="space-y-1">
+                        {navigationData?.gemstones?.slice(0, 8).map((item) => (
                           <Link
-                            to="/engagement-rings"
-                            className="block font-satoshi font-bold text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            key={item.id}
+                            to={`/engagement-rings?gemstone=${encodeURIComponent(item.name)}`}
+                            className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
                             style={{fontSize: '12px'}}
                           >
-                            Shop All
+                            {item.name}
                           </Link>
-                        </div>
+                        ))}
+                        <Link
+                          to="/engagement-rings"
+                          className="block font-satoshi font-bold text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12px'}}
+                        >
+                          Shop All
+                        </Link>
                       </div>
-                    )}
+                    </div>
 
                     {/* Eternity Rings Column */}
-                    {navigationData?.eternity_rings && navigationData.eternity_rings.length > 0 && (
-                      <div>
-                        <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>ETERNITY RINGS</h3>
-                        <div className="space-y-1">
-                          {navigationData.eternity_rings.map((item) => (
-                            <Link
-                              key={item.id}
-                              to={`/engagement-rings?collection=${encodeURIComponent(item.name)}`}
-                              className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                              style={{fontSize: '12px'}}
-                            >
-                              {item.name}
-                            </Link>
-                          ))}
-                        </div>
+                    <div>
+                      <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>ETERNITY RINGS</h3>
+                      <div className="space-y-1">
+                        {navigationData?.eternity_rings?.map((item) => (
+                          <Link
+                            key={item.id}
+                            to={`/engagement-rings?collection=${encodeURIComponent(item.name)}`}
+                            className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            style={{fontSize: '12px'}}
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
                       </div>
-                    )}
+                    </div>
 
                     {/* Metals Column */}
-                    {navigationData?.metals && navigationData.metals.length > 0 && (
-                      <div>
-                        <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>METALS</h3>
-                        <div className="space-y-1">
-                          {navigationData.metals.map((item) => (
-                            <Link
-                              key={item.id}
-                              to={`/engagement-rings?metal=${encodeURIComponent(item.name)}`}
-                              className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
-                              style={{fontSize: '12px'}}
-                            >
-                              {item.name}
-                            </Link>
-                          ))}
-                        </div>
+                    <div>
+                      <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>METALS</h3>
+                      <div className="space-y-1">
+                        {navigationData?.metals?.map((item) => (
+                          <Link
+                            key={item.id}
+                            to={`/engagement-rings?metal=${encodeURIComponent(item.name)}`}
+                            className="block font-satoshi font-light text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                            style={{fontSize: '12px'}}
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
                       </div>
-                    )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-12">
@@ -936,18 +1004,24 @@ const LuxuryNavigationWhite = (): JSX.Element => {
               {/* Left - Menu Button */}
               <button
                 onClick={openMobileMenu}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-full hover:bg-white/10 transition-colors"
               >
-                <Menu className="w-5 h-5 transition-colors duration-300 text-gray-700" />
+                <Menu className={`w-5 h-5 transition-colors duration-300 ${
+                  isScrolled ? 'text-gray-700' : 'text-white'
+                }`} />
               </button>
 
               {/* Center - Minimal Logo/Brand */}
               <div className="flex-1 flex justify-center">
                 <Link to="/" className="flex flex-col items-center">
-                  <div className="text-lg font-cormorant tracking-[0.2em] uppercase transition-colors duration-300 text-gray-900">
+                  <div className={`text-lg font-cormorant tracking-[0.2em] uppercase transition-colors duration-300 ${
+                    isScrolled ? 'text-gray-900' : 'text-white'
+                  }`}>
                     McCulloch
                   </div>
-                  <div className="text-[10px] font-cormorant tracking-[0.3em] uppercase transition-colors duration-300 text-gray-500">
+                  <div className={`text-[10px] font-cormorant tracking-[0.3em] uppercase transition-colors duration-300 ${
+                    isScrolled ? 'text-gray-500' : 'text-white/70'
+                  }`}>
                     Jewellers
                   </div>
                 </Link>
@@ -958,9 +1032,11 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 {/* Search */}
                 <button 
                   onClick={openSearch}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
                 >
-                  <svg className="w-4 h-4 transition-colors duration-300 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <svg className={`w-4 h-4 transition-colors duration-300 ${
+                    isScrolled ? 'text-gray-700' : 'text-white'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <circle cx="11" cy="11" r="8"/>
                     <path d="m21 21-4.35-4.35"/>
                   </svg>
@@ -969,15 +1045,21 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                 {/* Shopping Bag */}
                 <button 
                   onClick={openCart}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors relative"
                 >
-                  <svg className="w-4 h-4 transition-colors duration-300 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <svg className={`w-4 h-4 transition-colors duration-300 ${
+                    isScrolled ? 'text-gray-700' : 'text-white'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                     <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
                     <path d="M3 6h18"/>
                     <path d="M16 10a4 4 0 0 1-8 0"/>
                   </svg>
                   {getCartCount() > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium bg-gray-900 text-white">
+                    <span className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium ${
+                      isScrolled 
+                        ? 'bg-gray-900 text-white' 
+                        : 'bg-white text-gray-900'
+                    }`}>
                       {getCartCount()}
                     </span>
                   )}
@@ -1069,76 +1151,40 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-1 ml-4">
-                          <Link
-                            to="/engagement/solitaire"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/solitaire" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Solitaire
                           </Link>
-                          <Link
-                            to="/engagement/shoulder-set"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/shoulder-set" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Shoulder Set
                           </Link>
-                          <Link
-                            to="/engagement/halo"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/halo" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Crown className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Halo
                           </Link>
-                          <Link
-                            to="/engagement/hidden-halo"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Crown className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/hidden-halo" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Hidden Halo
                           </Link>
-                          <Link
-                            to="/engagement/trilogy"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/trilogy" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Trilogy
                           </Link>
-                          <Link
-                            to="/engagement/bezel"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/bezel" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Bezel
                           </Link>
-                          <Link
-                            to="/engagement/2-stones"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/2-stones" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             2 Stones
                           </Link>
-                          <Link
-                            to="/engagement/vintage"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/vintage" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Vintage
                           </Link>
-                          <Link
-                            to="/engagement-rings"
-                            className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/all" className="flex items-center font-satoshi font-medium text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Circle className="w-4 h-4 text-gray-900 mr-3 flex-shrink-0" />
                             Shop All
                           </Link>
                         </div>
@@ -1151,76 +1197,40 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-1 ml-4">
-                          <Link
-                            to="/engagement/natural-diamond"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/natural-diamond" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Natural Diamond
                           </Link>
-                          <Link
-                            to="/engagement/lab-grown-diamond"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-blue-400 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/lab-grown-diamond" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Lab Grown Diamond
                           </Link>
-                          <Link
-                            to="/engagement/yellow-diamond"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/yellow-diamond" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Diamond className="w-4 h-4 text-yellow-400 mr-3 flex-shrink-0" />
                             Yellow Diamond
                           </Link>
-                          <Link
-                            to="/engagement/black-diamond"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-gray-900 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/black-diamond" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Circle className="w-4 h-4 text-gray-900 mr-3 flex-shrink-0" />
                             Black Diamond
                           </Link>
-                          <Link
-                            to="/engagement/sapphire"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/sapphire" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Gem className="w-4 h-4 text-blue-500 mr-3 flex-shrink-0" />
                             Sapphire
                           </Link>
-                          <Link
-                            to="/engagement/ruby"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/ruby" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Gem className="w-4 h-4 text-red-500 mr-3 flex-shrink-0" />
                             Ruby
                           </Link>
-                          <Link
-                            to="/engagement/emerald"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/emerald" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Gem className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
                             Emerald
                           </Link>
-                          <Link
-                            to="/engagement/aquamarine"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/aquamarine" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Gem className="w-4 h-4 text-cyan-400 mr-3 flex-shrink-0" />
                             Aquamarine
                           </Link>
-                          <Link
-                            to="/engagement-rings"
-                            className="flex items-center font-satoshi font-semibold text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-gray-700 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/gemstones" className="flex items-center font-satoshi font-medium text-gray-900 hover:text-gray-700 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Gem className="w-4 h-4 text-gray-900 mr-3 flex-shrink-0" />
                             Shop All
                           </Link>
                         </div>
@@ -1233,60 +1243,32 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-1 ml-4">
-                          <Link
-                            to="/eternity/bridal-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/bridal-collection" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
                             Bridal Collection
                           </Link>
-                          <Link
-                            to="/eternity/heritage-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/heritage-collection" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Heritage Collection
                           </Link>
-                          <Link
-                            to="/eternity/modern-elegance"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/modern-elegance" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Modern Elegance
                           </Link>
-                          <Link
-                            to="/eternity/vintage-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/vintage-collection" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Vintage Collection
                           </Link>
-                          <Link
-                            to="/eternity/modern-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/modern-collection" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Modern Collection
                           </Link>
-                          <Link
-                            to="/eternity/diamond-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/diamond-collection" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Diamond Collection
                           </Link>
-                          <Link
-                            to="/eternity/eternity-collection"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/eternity-collection" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Layers className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
                             Eternity Collection
                           </Link>
                         </div>
@@ -1299,52 +1281,28 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                           <ChevronDown className="w-3 h-3 text-gray-400" />
                         </div>
                         <div className="space-y-1 ml-4">
-                          <Link
-                            to="/engagement/yellow-gold"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-yellow-400 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/yellow-gold" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Circle className="w-4 h-4 text-yellow-400 mr-3" />
                             Yellow Gold
                           </Link>
-                          <Link
-                            to="/engagement/white-gold"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/white-gold" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Circle className="w-4 h-4 text-gray-300 mr-3 flex-shrink-0" />
                             White Gold
                           </Link>
-                          <Link
-                            to="/engagement/platinum"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/platinum" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Circle className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
                             Platinum
                           </Link>
-                          <Link
-                            to="/engagement/silver"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
+                          <Link to="/engagement/silver" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
                             <Circle className="w-4 h-4 text-gray-300 mr-3 flex-shrink-0" />
                             Silver
                           </Link>
-                          <Link
-                            to="/engagement/gold-vermeil"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-yellow-300 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/gold-vermeil" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Circle className="w-4 h-4 text-yellow-300 mr-3" />
                             Gold Vermeil
                           </Link>
-                          <Link
-                            to="/engagement/rose-gold"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
+                          <Link to="/engagement/rose-gold" className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}} onClick={closeMobileMenu}>
+                            <Heart className="w-4 h-4 text-rose-400 mr-3" />
                             Rose Gold
                           </Link>
                         </div>
@@ -1547,6 +1505,72 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   </div>
                 </div>
 
+                {/* Watches Section */}
+                <div className="border-b border-gray-100">
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === 'watches' ? null : 'watches')}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
+                  >
+                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">WATCHES</span>
+                    {expandedSection === 'watches' ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    expandedSection === 'watches' ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="bg-gray-50/30">
+                      <div className="px-6 py-4">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
+                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">WATCH BRANDS</span>
+                          <ChevronDown className="w-3 h-3 text-gray-400" />
+                        </div>
+                        <div className="space-y-1 ml-4">
+                          <Link
+                            to="/festina"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Watch className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Festina
+                          </Link>
+                          <Link
+                            to="/briston"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Watch className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Briston
+                          </Link>
+                          <Link
+                            to="/roamer"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Watch className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            Roamer
+                          </Link>
+                          <Link
+                            to="/watches"
+                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
+                            style={{fontSize: '12px'}}
+                            onClick={closeMobileMenu}
+                          >
+                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
+                            All Watches
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Bespoke Design Section */}
                 <div className="border-b border-gray-100">
                   <Link
@@ -1662,8 +1686,15 @@ const LuxuryNavigationWhite = (): JSX.Element => {
           isMobile={true}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialView="login"
+      />
     </>
   );
 };
 
-export default LuxuryNavigationWhite;
+export default LuxuryNavigation;

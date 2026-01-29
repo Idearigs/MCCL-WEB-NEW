@@ -69,7 +69,11 @@
       "Bash(node test-wedding-api.js:*)",
       "Bash(node reorganize-briston-collections.js:*)",
       "Bash(npm run dev)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nImprove mobile UX and add elegant animations\n\n- Make promotion popup smaller and more minimal \\(rectangular design\\)\n- Add smooth scroll animations to Our Story page with fade-in effects\n- Update mobile navigation with all desktop links \\(Jewellery, Bespoke Design, Our Story\\)\n- Fix animation timing for smoother, more elegant transitions\n- Improve mobile navigation UX with proper expandable sections\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nImprove mobile UX and add elegant animations\n\n- Make promotion popup smaller and more minimal \\(rectangular design\\)\n- Add smooth scroll animations to Our Story page with fade-in effects\n- Update mobile navigation with all desktop links \\(Jewellery, Bespoke Design, Our Story\\)\n- Fix animation timing for smoother, more elegant transitions\n- Improve mobile navigation UX with proper expandable sections\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite build:*)",
+      "Bash(npx vite:*)",
+      "WebFetch(domain:mccullochjewellers.co.uk)"
     ],
     "deny": [],
     "ask": [],

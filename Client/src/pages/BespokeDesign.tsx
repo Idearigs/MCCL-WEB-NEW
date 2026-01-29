@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 
@@ -11,46 +12,41 @@ const BespokeDesign = (): JSX.Element => {
       <section className="relative h-[85vh] overflow-hidden">
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            overflow: 'hidden'
-          }}>
-            <iframe
-              src="https://www.youtube-nocookie.com/embed/qqKF96afmVs?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=qqKF96afmVs&rel=0&iv_load_policy=3&vq=hd1080"
-              title="McCulloch Bespoke Collection Video"
-              allow="autoplay"
-              referrerPolicy="strict-origin-when-cross-origin"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                pointerEvents: 'none',
-                transform: 'scale(1.3)',
-                transformOrigin: 'center'
-              }}
-            />
-          </div>
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/qqKF96afmVs?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&loop=1&playlist=qqKF96afmVs&rel=0&iv_load_policy=3&vq=hd1080"
+            title="McCulloch Bespoke Collection Video"
+            allow="autoplay"
+            referrerPolicy="strict-origin-when-cross-origin"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '100vw',
+              height: '56.25vw',
+              minWidth: '177.78vh',
+              minHeight: '100%',
+              transform: 'translate(-50%, -50%)',
+              border: 'none',
+              pointerEvents: 'none'
+            }}
+          />
         </div>
 
         {/* Elegant Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
 
         {/* Content Overlay - Centered */}
-        <div className="relative h-full flex items-center justify-center px-4">
-          <div className="text-center max-w-4xl">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/80 mb-6 font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
+        <div className="relative h-full flex items-center justify-center px-4 pt-16">
+          <div className="text-center max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.3em] text-white/80 mb-4 font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
               BESPOKE
             </p>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-light text-white mb-6 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-white mb-4 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               The McCulloch<br />Bespoke Collection
             </h1>
+            <p className="text-base md:text-lg text-white/90 max-w-xl mx-auto leading-relaxed font-light" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              Crafting your vision into timeless masterpieces
+            </p>
           </div>
         </div>
 
@@ -219,12 +215,20 @@ const BespokeDesign = (): JSX.Element => {
               Schedule a private consultation to begin designing your bespoke masterpiece
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="px-10 py-4 bg-gray-900 text-white hover:bg-gray-800 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <Link
+                to="/contact"
+                className="px-10 py-4 bg-gray-900 text-white hover:bg-gray-800 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
                 Book Consultation
-              </button>
-              <button className="px-10 py-4 border border-gray-300 text-gray-900 hover:border-gray-900 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
-                View Gallery
-              </button>
+              </Link>
+              <Link
+                to="/portfolio"
+                className="px-10 py-4 border border-gray-300 text-gray-900 hover:border-gray-900 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                View Portfolio
+              </Link>
             </div>
           </div>
         </div>

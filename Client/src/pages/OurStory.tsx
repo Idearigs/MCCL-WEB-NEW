@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 
@@ -114,16 +115,16 @@ const OurStory = (): JSX.Element => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
 
         {/* Content Overlay */}
-        <div className="relative h-full flex items-center justify-center px-4">
-          <div className="text-center max-w-4xl">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/90 mb-6 font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
-              SINCE 1847
+        <div className="relative h-full flex items-center justify-center px-4 pt-16">
+          <div className="text-center max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.3em] text-white/90 mb-4 font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
+              SINCE 2017
             </p>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-light text-white mb-8 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              Our Story
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-white mb-4 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              McCulloch The Jewellers History
             </h1>
-            <p className="text-lg md:text-xl text-white/95 max-w-2xl mx-auto leading-relaxed font-light" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              A legacy of excellence, craftsmanship, and timeless beauty
+            <p className="text-base md:text-lg text-white/90 max-w-xl mx-auto leading-relaxed font-light" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              Creating heirlooms with unmatched artistry and traditional craftsmanship
             </p>
           </div>
         </div>
@@ -160,13 +161,13 @@ const OurStory = (): JSX.Element => {
                 HERITAGE
               </p>
               <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                175 Years of Excellence
+                A Legacy of Excellence
               </h2>
               <p className="text-lg text-gray-700 leading-relaxed mb-6" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                Founded in 1847, McCulloch Jewellers has been creating extraordinary pieces that capture life's most precious moments for over a century and three quarters.
+                For five generations, our family has crafted more than just jewelry — we've created heirlooms. As an award-winning business, recognized as Bespoke Jeweller of the Year in 2021, we specialize in bringing your most treasured designs to life with unmatched artistry.
               </p>
               <p className="text-lg text-gray-700 leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                From our humble beginnings as a small workshop to becoming one of the most respected names in fine jewelry, our commitment to excellence has remained unwavering.
+                In our on-site workshop, you'll see every step of the process, from the first sketch to the final polish, all overseen by a designer with 25 years of expertise. Every piece is handmade using traditional techniques, ensuring timeless quality.
               </p>
             </div>
           </div>
@@ -217,125 +218,81 @@ const OurStory = (): JSX.Element => {
         </div>
       </section>
 
-      {/* Our Craftsmen Section */}
+      {/* The De Silva Family Section */}
       <section id="our-craftsmen" className="py-24 px-4 lg:px-12 bg-white">
         <div className="max-w-7xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center mb-20 fade-in-section">
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4 font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
-              OUR TEAM
-            </p>
-            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              Master Artisans
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              Our team of expert craftspeople brings decades of experience and unparalleled skill to every creation
-            </p>
-          </div>
-
-          {/* Three Column Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-            {/* Craftsman 1 */}
-            <div className="group fade-in-section stagger-delay-1">
-              <div className="aspect-[3/4] mb-6 overflow-hidden">
-                <img
-                  src="/images/master-jeweller.jpg"
-                  alt="Master Jeweller"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=600&q=80';
-                  }}
-                />
-              </div>
-              <h3 className="text-2xl font-light text-gray-900 mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                Master Jewellers
-              </h3>
-              <p className="text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                Decades of expertise in creating exceptional pieces with precision and artistry
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left - Content */}
+            <div className="fade-in-section fade-in-left">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4 font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
+                THE DE SILVA FAMILY
+              </p>
+              <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                A Fifth-Generation Master Jeweller
+              </h2>
+              <p className="text-lg text-gray-700 leading-relaxed mb-6" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                The de Silva family are known for being successful jewellers and Has de Silva wanted to pursue his family's tradition and is a fifth-generation jeweller. Has' journey to becoming a jeweller began at the University of Kent in Canterbury – where he obtained a BA (Hons) in Jewellery Designing, Silversmithing and Jewellery Manufacturing.
+              </p>
+              <p className="text-lg text-gray-700 leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                After completing his degree, Has worked for a few notable jewellers in Mayfair – London, and in Winchester – Hampshire before embarking on his own business. McCulloch Jewellers presently remain a well-established watch repair and restoration business, with an in-house workshop and design studio.
               </p>
             </div>
 
-            {/* Craftsman 2 */}
-            <div className="group fade-in-section stagger-delay-2">
-              <div className="aspect-[3/4] mb-6 overflow-hidden">
+            {/* Right - Image */}
+            <div className="fade-in-section fade-in-right">
+              <div className="aspect-[4/5] overflow-hidden">
                 <img
-                  src="/images/diamond-specialist.jpg"
-                  alt="Diamond Specialist"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  src="/images/has-de-silva.jpg"
+                  alt="Has de Silva - Fifth Generation Jeweller"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&q=80';
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=1200&q=80';
                   }}
                 />
               </div>
-              <h3 className="text-2xl font-light text-gray-900 mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                Diamond Specialists
-              </h3>
-              <p className="text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                Expert gemologists selecting only the finest diamonds and precious stones
-              </p>
-            </div>
-
-            {/* Craftsman 3 */}
-            <div className="group fade-in-section stagger-delay-3">
-              <div className="aspect-[3/4] mb-6 overflow-hidden">
-                <img
-                  src="/images/design-artist.jpg"
-                  alt="Design Artist"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=600&q=80';
-                  }}
-                />
-              </div>
-              <h3 className="text-2xl font-light text-gray-900 mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                Design Artists
-              </h3>
-              <p className="text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                Creative visionaries transforming dreams into stunning wearable art
-              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Philosophy Section */}
+      {/* Our Services Section */}
       <section id="our-philosophy" className="relative py-24 px-4 lg:px-12 bg-[#f8f6f0]">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left - Content */}
             <div className="fade-in-section fade-in-left">
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4 font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
-                OUR VALUES
+                OUR PROMISE
               </p>
               <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-8 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                Our Philosophy
+                What We Offer
               </h2>
 
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                    Uncompromising Quality
+                    Bespoke Design
                   </h3>
                   <p className="text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                    Every piece meets our exacting standards of excellence and craftsmanship
+                    Free design consultations with CAD visualization service. We source diamonds and gemstones from all over the world to create your perfect, flawless piece within your budget.
                   </p>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                    Ethical Sourcing
+                    Remodeling & Restoration
                   </h3>
                   <p className="text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                    Committed to responsible practices and sustainable materials
+                    We use your preowned gemstones and gold to create something entirely new. Keep the sentimental value while giving it a whole new rebrand.
                   </p>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                    Timeless Design
+                    Second-Hand & Vintage
                   </h3>
                   <p className="text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                    Creating pieces that transcend trends and become cherished heirlooms
+                    Wide selection of vintage jewelry painstakingly restored to its former glory. All second-hand items come with a one-year guarantee.
                   </p>
                 </div>
               </div>
@@ -345,8 +302,8 @@ const OurStory = (): JSX.Element => {
             <div className="fade-in-section fade-in-right">
               <div className="aspect-[4/5] overflow-hidden">
                 <img
-                  src="/images/philosophy-values.jpg"
-                  alt="Our values and philosophy"
+                  src="/images/workshop-craftsmanship.jpg"
+                  alt="Our workshop and services"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.src = 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&q=80';
@@ -366,33 +323,33 @@ const OurStory = (): JSX.Element => {
               RECOGNITION
             </p>
             <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              Awards & Accolades
+              Winner Bespoke Jeweller of the Year 2021
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Stat 1 */}
             <div className="text-center fade-in-section stagger-delay-1">
-              <div className="text-5xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>175+</div>
-              <div className="text-sm uppercase tracking-wider text-gray-600" style={{ fontFamily: 'Inter, sans-serif' }}>Years of Excellence</div>
+              <div className="text-5xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>5+</div>
+              <div className="text-sm uppercase tracking-wider text-gray-600" style={{ fontFamily: 'Inter, sans-serif' }}>Generations of Expertise</div>
             </div>
 
             {/* Stat 2 */}
             <div className="text-center fade-in-section stagger-delay-2">
-              <div className="text-5xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>50K+</div>
+              <div className="text-5xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>5K+</div>
               <div className="text-sm uppercase tracking-wider text-gray-600" style={{ fontFamily: 'Inter, sans-serif' }}>Happy Customers</div>
             </div>
 
             {/* Stat 3 */}
             <div className="text-center fade-in-section stagger-delay-3">
               <div className="text-5xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>25+</div>
-              <div className="text-sm uppercase tracking-wider text-gray-600" style={{ fontFamily: 'Inter, sans-serif' }}>Industry Awards</div>
+              <div className="text-sm uppercase tracking-wider text-gray-600" style={{ fontFamily: 'Inter, sans-serif' }}>Years of Experience</div>
             </div>
 
             {/* Stat 4 */}
             <div className="text-center fade-in-section stagger-delay-3">
-              <div className="text-5xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>100%</div>
-              <div className="text-sm uppercase tracking-wider text-gray-600" style={{ fontFamily: 'Inter, sans-serif' }}>Ethical Sourcing</div>
+              <div className="text-5xl font-light text-gray-900 mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>2021</div>
+              <div className="text-sm uppercase tracking-wider text-gray-600" style={{ fontFamily: 'Inter, sans-serif' }}>Bespoke Jeweller Award</div>
             </div>
           </div>
         </div>
@@ -406,33 +363,41 @@ const OurStory = (): JSX.Element => {
               TESTIMONIALS
             </p>
             <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              Stories From Our Clients
+              Join Over 5K Happy Buyers
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Testimonial 1 */}
             <div className="bg-white p-8 fade-in-section stagger-delay-1">
-              <p className="text-lg text-gray-700 leading-relaxed mb-6 italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                "The bespoke engagement ring exceeded all expectations. Truly extraordinary craftsmanship."
+              <p className="text-base text-gray-700 leading-relaxed mb-6 italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                "I have been going to McCullochs for over 20 years and have always been delighted with everything I have purchased from there. They are friendly and reliable and always make you feel like a valued customer."
               </p>
-              <div className="text-sm font-light text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>— James & Sarah</div>
+              <div className="text-sm font-light text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>— Rosemary Hile, Derby, UK</div>
             </div>
 
             {/* Testimonial 2 */}
             <div className="bg-white p-8 fade-in-section stagger-delay-2">
-              <p className="text-lg text-gray-700 leading-relaxed mb-6 italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                "They transformed my grandmother's vintage piece into something stunning while preserving its soul."
+              <p className="text-base text-gray-700 leading-relaxed mb-6 italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                "Amazing customer service. Fantastic bespoke jewellery at the right price. Professional friendly service, can't rate them enough. From a first time customer who will be returning again."
               </p>
-              <div className="text-sm font-light text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>— Emma Thompson</div>
+              <div className="text-sm font-light text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>— Phil Burton, Nottingham, UK</div>
             </div>
 
             {/* Testimonial 3 */}
             <div className="bg-white p-8 fade-in-section stagger-delay-3">
-              <p className="text-lg text-gray-700 leading-relaxed mb-6 italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                "The expertise and personal service made finding the perfect anniversary gift effortless."
+              <p className="text-base text-gray-700 leading-relaxed mb-6 italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                "Needed a repair & redesign doing on a sentimental item of jewellery. They really took time to ensure that the design would be what I wanted. Did a superb job and delivered ahead of schedule."
               </p>
-              <div className="text-sm font-light text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>— Michael Richards</div>
+              <div className="text-sm font-light text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>— Racheal, Beeston, Nottingham</div>
+            </div>
+
+            {/* Testimonial 4 */}
+            <div className="bg-white p-8 fade-in-section stagger-delay-3">
+              <p className="text-base text-gray-700 leading-relaxed mb-6 italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                "Has and his team have repaired items of my jewellery on a number of occasions now. The job is done with such care and skill. A very pleased customer. Thank you."
+              </p>
+              <div className="text-sm font-light text-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>— Nat Thorpe, United Kingdom</div>
             </div>
           </div>
         </div>
@@ -452,12 +417,27 @@ const OurStory = (): JSX.Element => {
               Visit our showroom and discover our exquisite collections
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="px-10 py-4 bg-gray-900 text-white hover:bg-gray-800 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
+              <Link
+                to="/contact"
+                className="px-10 py-4 bg-gray-900 text-white hover:bg-gray-800 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
                 Book Appointment
-              </button>
-              <button className="px-10 py-4 border border-gray-300 text-gray-900 hover:border-gray-900 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light" style={{ fontFamily: 'Inter, sans-serif' }}>
+              </Link>
+              <Link
+                to="/portfolio"
+                className="px-10 py-4 border border-gray-300 text-gray-900 hover:border-gray-900 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                View Portfolio
+              </Link>
+              <Link
+                to="/engagement-rings"
+                className="px-10 py-4 border border-gray-300 text-gray-900 hover:border-gray-900 transition-all duration-300 text-sm uppercase tracking-[0.2em] font-light"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
                 View Collections
-              </button>
+              </Link>
             </div>
           </div>
         </div>

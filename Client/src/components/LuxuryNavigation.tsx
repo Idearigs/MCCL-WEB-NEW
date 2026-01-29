@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, ChevronDown, ChevronUp, Calendar, Phone, Mail, HelpCircle, Diamond, Gem, Circle, Layers, Star, Heart, Crown, Watch } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronUp, Calendar, Phone, Mail, HelpCircle, Diamond, Gem, Circle, Layers, Star, Heart, Crown, Watch, ArrowRight, ArrowLeft } from "lucide-react";
 import TopBanner from "./TopBanner";
 import CartSlide from "./CartSlide";
 import SearchOverlay from "./SearchOverlay";
@@ -61,6 +61,7 @@ const LuxuryNavigation = (): JSX.Element => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [engagementHover, setEngagementHover] = useState(false);
   const [weddingHover, setWeddingHover] = useState(false);
@@ -231,6 +232,7 @@ const LuxuryNavigation = (): JSX.Element => {
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
+    setActiveSubmenu(null);
     setTimeout(() => {
       setMobileMenuVisible(false);
       setExpandedSection(null);
@@ -1093,8 +1095,8 @@ const LuxuryNavigation = (): JSX.Element => {
           />
           
           {/* Menu Panel */}
-          <div 
-            className={`absolute left-0 top-0 h-full w-full shadow-xl transform transition-transform duration-300 ease-out ${
+          <div
+            className={`absolute left-0 top-0 h-full w-full shadow-xl transform transition-transform duration-300 ease-out flex flex-col ${
               mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
             style={{
@@ -1102,11 +1104,10 @@ const LuxuryNavigation = (): JSX.Element => {
               backdropFilter: 'blur(20px)'
             }}
           >
-            <div className="h-full overflow-y-auto">
-            {/* Mobile Header */}
-            <div className="border-b border-gray-200/30 px-0 py-0" style={{background: 'linear-gradient(90deg, #fafafa 0%, #fcfcfc 100%)'}}>
-              <div className="flex items-center justify-between px-6 py-4">
-                <div className="flex-1 text-center">
+            {/* Mobile Header - Always Visible */}
+            <div className="border-b border-gray-200/30 px-0 py-0 flex-shrink-0" style={{background: 'linear-gradient(90deg, #fafafa 0%, #fcfcfc 100%)'}}>
+              <div className="flex items-center justify-center px-6 py-5 relative">
+                <div className="text-center">
                   <div className="text-xl font-cormorant font-light uppercase text-gray-900" style={{letterSpacing: '0.3em'}}>
                     McCulloch
                   </div>
@@ -1114,499 +1115,265 @@ const LuxuryNavigation = (): JSX.Element => {
                     Jewellers
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={closeMobileMenu}
-                  className="p-2 hover:bg-white/60 hover:shadow-sm rounded-full transition-all duration-200"
+                  className="absolute right-6 p-2 hover:bg-white/60 hover:shadow-sm rounded-full transition-all duration-200"
                 >
                   <X className="w-5 h-5 text-gray-600" />
                 </button>
               </div>
             </div>
-          
-            <nav className="px-0 py-0 overflow-y-auto">
-              {/* Main Navigation Sections */}
-              <div className="border-b border-gray-200">
-                {/* Engagement Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'engagement' ? null : 'engagement')}
-                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
-                  >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">ENGAGEMENT</span>
-                    {expandedSection === 'engagement' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
-                  
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSection === 'engagement' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="bg-gray-50/30">
-                      {/* Diamond Engagement Rings Subsection */}
-                      <div className="px-6 py-4">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">DIAMOND ENGAGEMENT RINGS</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                        </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/engagement/all"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            All Engagement Rings
-                          </Link>
-                          <Link
-                            to="/engagement/quickship"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Quickship Collection
-                          </Link>
-                          <Link
-                            to="/engagement/inspiration"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Inspiration Gallery
-                          </Link>
-                          <Link
-                            to="/engagement/reviews"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Reviews
-                          </Link>
-                        </div>
-                      </div>
 
-                      {/* Shop by Styles Subsection */}
-                      <div className="px-6 py-4 border-t border-gray-200/30">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">SHOP BY STYLES</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                        </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/engagement/solitaire"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Solitaire
-                          </Link>
-                          <Link
-                            to="/engagement/trilogy"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Trilogy
-                          </Link>
-                          <Link
-                            to="/engagement/diamond-band"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Layers className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Diamond Band
-                          </Link>
-                          <Link
-                            to="/engagement/halo"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Crown className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Halo
-                          </Link>
-                          <Link
-                            to="/engagement/platinum"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Platinum
-                          </Link>
-                          <Link
-                            to="/engagement/rose-gold"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Heart className="w-4 h-4 text-rose-400 mr-3" />
-                            Rose Gold
-                          </Link>
-                          <Link
-                            to="/engagement/yellow-gold"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md" style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-yellow-400 mr-3" />
-                            Yellow Gold
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
+            {/* Sliding Content Area */}
+            <div className="relative flex-1 overflow-hidden">
+              {/* Main Menu Panel */}
+              <div className={`absolute inset-0 bg-white transition-transform duration-500 ease-in-out ${
+                activeSubmenu ? '-translate-x-full' : 'translate-x-0'
+              }`}>
+              <div className="h-full flex flex-col">
+                {/* Navigation Items */}
+                <nav className="flex-1 overflow-y-auto">
+                  <div className="py-6">
+                    {/* Engagement */}
+                    <button
+                      onClick={() => setActiveSubmenu('engagement')}
+                      className="w-full flex items-center justify-between px-8 py-6 border-b border-gray-100 hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide" style={{fontFamily: 'Inter, sans-serif'}}>ENGAGEMENT</span>
+                      <ArrowRight className="w-4 h-4 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
+                    </button>
+
+                    {/* Wedding */}
+                    <button
+                      onClick={() => setActiveSubmenu('wedding')}
+                      className="w-full flex items-center justify-between px-8 py-6 border-b border-gray-100 hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide" style={{fontFamily: 'Inter, sans-serif'}}>WEDDING</span>
+                      <ArrowRight className="w-4 h-4 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
+                    </button>
+
+                    {/* Jewellery */}
+                    <button
+                      onClick={() => setActiveSubmenu('jewellery')}
+                      className="w-full flex items-center justify-between px-8 py-6 border-b border-gray-100 hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide" style={{fontFamily: 'Inter, sans-serif'}}>JEWELLERY</span>
+                      <ArrowRight className="w-4 h-4 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
+                    </button>
+
+                    {/* Watches */}
+                    <button
+                      onClick={() => setActiveSubmenu('watches')}
+                      className="w-full flex items-center justify-between px-8 py-6 border-b border-gray-100 hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide" style={{fontFamily: 'Inter, sans-serif'}}>WATCHES</span>
+                      <ArrowRight className="w-4 h-4 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
+                    </button>
+
+                    {/* Bespoke Design */}
+                    <Link
+                      to="/bespoke-design"
+                      onClick={closeMobileMenu}
+                      className="w-full flex items-center justify-between px-8 py-6 border-b border-gray-100 hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide" style={{fontFamily: 'Inter, sans-serif'}}>BESPOKE DESIGN</span>
+                      <ArrowRight className="w-4 h-4 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
+                    </Link>
+
+                    {/* Our Story */}
+                    <Link
+                      to="/our-story"
+                      onClick={closeMobileMenu}
+                      className="w-full flex items-center justify-between px-8 py-6 border-b border-gray-100 hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide" style={{fontFamily: 'Inter, sans-serif'}}>OUR STORY</span>
+                      <ArrowRight className="w-4 h-4 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
+                    </Link>
                   </div>
-                </div>
+                </nav>
 
-                {/* Wedding Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'wedding' ? null : 'wedding')}
-                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
-                  >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">WEDDING</span>
-                    {expandedSection === 'wedding' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
-                  
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSection === 'wedding' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="bg-gray-50/30">
-                      <div className="px-6 py-4">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">WEDDING COLLECTIONS</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                        </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/wedding/all"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            All Wedding Rings
-                          </Link>
-                          <Link
-                            to="/wedding/his"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            His Wedding Rings
-                          </Link>
-                          <Link
-                            to="/wedding/hers"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
-                            Her Wedding Rings
-                          </Link>
-                          <Link
-                            to="/wedding/matching-sets"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Layers className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Matching Sets
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Diamonds Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'diamonds' ? null : 'diamonds')}
-                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
-                  >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">DIAMONDS</span>
-                    {expandedSection === 'diamonds' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
-                  
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSection === 'diamonds' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="bg-gray-50/30">
-                      <div className="px-6 py-4">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">DIAMOND COLLECTIONS</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                        </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/diamonds/engagement"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Diamond className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Diamond Engagement
-                          </Link>
-                          <Link
-                            to="/diamonds/loose"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Loose Diamonds
-                          </Link>
-                          <Link
-                            to="/diamonds/lab-grown"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Star className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Lab Grown
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Jewellery Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'jewellery' ? null : 'jewellery')}
-                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
-                  >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">JEWELLERY</span>
-                    {expandedSection === 'jewellery' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
-
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSection === 'jewellery' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="bg-gray-50/30">
-                      <div className="px-6 py-4">
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/earrings"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Earrings
-                          </Link>
-                          <Link
-                            to="/necklaces"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Necklaces
-                          </Link>
-                          <Link
-                            to="/bracelets"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Circle className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Bracelets
-                          </Link>
-                          <Link
-                            to="/birthday-gifts"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Birthday Gifts
-                          </Link>
-                          <Link
-                            to="/anniversary-gifts"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Heart className="w-4 h-4 text-rose-400 mr-3 flex-shrink-0" />
-                            Anniversary Gifts
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Watches Section */}
-                <div className="border-b border-gray-100">
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === 'watches' ? null : 'watches')}
-                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
-                  >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">WATCHES</span>
-                    {expandedSection === 'watches' ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
-                  </button>
-
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    expandedSection === 'watches' ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="bg-gray-50/30">
-                      <div className="px-6 py-4">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/40">
-                          <span className="text-xs font-satoshi font-medium text-gray-800 uppercase tracking-wide">WATCH BRANDS</span>
-                          <ChevronDown className="w-3 h-3 text-gray-400" />
-                        </div>
-                        <div className="space-y-1 ml-4">
-                          <Link
-                            to="/festina"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Watch className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Festina
-                          </Link>
-                          <Link
-                            to="/briston"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Watch className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Briston
-                          </Link>
-                          <Link
-                            to="/roamer"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Watch className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            Roamer
-                          </Link>
-                          <Link
-                            to="/watches"
-                            className="flex items-center font-satoshi font-normal text-gray-800 hover:text-gray-900 hover:bg-white/70 hover:shadow-sm hover:scale-[1.02] transition-all duration-300 ease-out py-2 px-2 rounded-md"
-                            style={{fontSize: '12px'}}
-                            onClick={closeMobileMenu}
-                          >
-                            <Gem className="w-4 h-4 text-gray-500 mr-3 flex-shrink-0" />
-                            All Watches
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bespoke Design Section */}
-                <div className="border-b border-gray-100">
+                {/* Contact Section - Minimal */}
+                <div className="border-t border-gray-200 bg-gray-50/50 p-4">
                   <Link
-                    to="/bespoke-design"
-                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
+                    to="/appointment"
+                    className="flex items-center justify-between px-4 py-3 mb-2 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors"
                     onClick={closeMobileMenu}
                   >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">BESPOKE DESIGN</span>
-                    <ChevronDown className="w-4 h-4 text-gray-500 transform rotate-[-90deg]" />
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 text-gray-600 mr-3" />
+                      <span className="text-sm font-light text-gray-900">Book Appointment</span>
+                    </div>
                   </Link>
-                </div>
-
-                {/* Our Story Section */}
-                <div>
-                  <Link
-                    to="/our-story"
-                    className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gradient-to-r hover:from-white/60 hover:to-gray-50/40 hover:shadow-sm transition-all duration-300 ease-out"
-                    onClick={closeMobileMenu}
-                  >
-                    <span className="text-sm font-satoshi font-normal text-gray-800 uppercase tracking-wide">OUR STORY</span>
-                    <ChevronDown className="w-4 h-4 text-gray-500 transform rotate-[-90deg]" />
-                  </Link>
+                  <div className="flex items-center justify-center space-x-4 pt-2">
+                    <Link to="/contact" className="text-xs text-gray-600 hover:text-gray-900" onClick={closeMobileMenu}>
+                      <Phone className="w-4 h-4 inline mr-1" />
+                      Contact
+                    </Link>
+                    <Link to="/faq" className="text-xs text-gray-600 hover:text-gray-900" onClick={closeMobileMenu}>
+                      <HelpCircle className="w-4 h-4 inline mr-1" />
+                      Help
+                    </Link>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              {/* Contact & Services Section */}
-              <div className="bg-gray-50">
-                {/* Book Appointment */}
-                <Link
-                  to="/appointment"
-                  className="flex items-center px-6 py-4 border-b border-gray-200/50 hover:bg-gray-50/60 transition-all duration-200"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
-                    <Calendar className="w-5 h-5 text-gray-600" />
+            {/* Submenu Panel - Engagement */}
+            <div className={`absolute inset-0 bg-white transform transition-transform duration-500 ease-in-out ${
+              activeSubmenu === 'engagement' ? 'translate-x-0' : 'translate-x-full'
+            } ${activeSubmenu === 'engagement' ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+                <div className="h-full flex flex-col">
+                  {/* Submenu Header */}
+                  <div className="flex items-center px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                    <button onClick={() => setActiveSubmenu(null)} className="flex items-center hover:opacity-70 transition-opacity">
+                      <ArrowLeft className="w-5 h-5 text-gray-600 mr-2" />
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide">ENGAGEMENT</span>
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-satoshi font-normal text-gray-800">Book Appointment</div>
-                    <div className="text-xs font-satoshi font-light text-gray-700">Schedule your free consultation</div>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
-                </Link>
 
-                {/* Phone */}
-                <Link
-                  to="/contact"
-                  className="flex items-center px-6 py-4 border-b border-gray-200/50 hover:bg-gray-50/60 transition-all duration-200"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
-                    <Phone className="w-5 h-5 text-gray-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-satoshi font-normal text-gray-800">Phone</div>
-                    <div className="text-xs font-satoshi font-light text-gray-700">Call on +44 207 831 1901</div>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
-                </Link>
+                  {/* Submenu Content */}
+                  <div className="flex-1 overflow-y-auto">
+                    {/* RING TYPES */}
+                    {navigationData?.ring_types && navigationData.ring_types.length > 0 && (
+                      <div className="px-6 py-4">
+                        <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-3">RING TYPES</h3>
+                        <div className="space-y-0">
+                          {navigationData.ring_types.map((ringType) => (
+                            <Link
+                              key={ringType.id}
+                              to={`/engagement/${ringType.slug}`}
+                              className="block py-2 text-sm text-gray-700 hover:text-gray-900"
+                              onClick={closeMobileMenu}
+                            >
+                              {ringType.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                {/* Email */}
-                <Link
-                  to="/contact"
-                  className="flex items-center px-6 py-4 border-b border-gray-200/50 hover:bg-gray-50/60 transition-all duration-200"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
-                    <Mail className="w-5 h-5 text-gray-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-satoshi font-normal text-gray-800">Email</div>
-                    <div className="text-xs font-satoshi font-light text-gray-700">Got any questions about rings? Send us an email</div>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
-                </Link>
+                    {/* GEMSTONES */}
+                    {navigationData?.gemstones && navigationData.gemstones.length > 0 && (
+                      <div className="px-6 py-4 border-t border-gray-100">
+                        <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-3">GEMSTONES</h3>
+                        <div className="space-y-0">
+                          {navigationData.gemstones.map((gemstone) => (
+                            <Link
+                              key={gemstone.id}
+                              to={`/engagement/${gemstone.slug}`}
+                              className="block py-2 text-sm text-gray-700 hover:text-gray-900"
+                              onClick={closeMobileMenu}
+                            >
+                              {gemstone.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                {/* Help & FAQs */}
-                <Link
-                  to="/faq"
-                  className="flex items-center px-6 py-4 hover:bg-gray-50/60 transition-all duration-200"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
-                    <HelpCircle className="w-5 h-5 text-gray-600" />
+                    {/* ETERNITY RINGS */}
+                    {navigationData?.eternity_rings && navigationData.eternity_rings.length > 0 && (
+                      <div className="px-6 py-4 border-t border-gray-100">
+                        <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wide mb-3">ETERNITY RINGS</h3>
+                        <div className="space-y-0">
+                          {navigationData.eternity_rings.map((ring) => (
+                            <Link
+                              key={ring.id}
+                              to={`/eternity/${ring.slug}`}
+                              className="block py-2 text-sm text-gray-700 hover:text-gray-900"
+                              onClick={closeMobileMenu}
+                            >
+                              {ring.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-satoshi font-normal text-gray-800">Help & FAQs</div>
-                    <div className="text-xs font-satoshi font-light text-gray-700">Phone lines available Mon-Fri 9:30am - 6pm</div>
+                </div>
+            </div>
+
+            {/* Submenu Panel - Wedding */}
+            <div className={`absolute inset-0 bg-white transform transition-transform duration-500 ease-in-out ${
+              activeSubmenu === 'wedding' ? 'translate-x-0' : 'translate-x-full'
+            } ${activeSubmenu === 'wedding' ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+                <div className="h-full flex flex-col">
+                  {/* Submenu Header */}
+                  <div className="flex items-center px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                    <button onClick={() => setActiveSubmenu(null)} className="flex items-center hover:opacity-70 transition-opacity">
+                      <ArrowLeft className="w-5 h-5 text-gray-600 mr-2" />
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide">WEDDING</span>
+                    </button>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
-                </Link>
-              </div>
-            </nav>
+
+                  {/* Submenu Content */}
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="px-6 py-4">
+                      <div className="space-y-0">
+                        <Link to="/wedding/all" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>All Wedding Rings</Link>
+                        <Link to="/wedding/his" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>His Wedding Rings</Link>
+                        <Link to="/wedding/hers" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Her Wedding Rings</Link>
+                        <Link to="/wedding/matching-sets" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Matching Sets</Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+            {/* Submenu Panel - Jewellery */}
+            <div className={`absolute inset-0 bg-white transform transition-transform duration-500 ease-in-out ${
+              activeSubmenu === 'jewellery' ? 'translate-x-0' : 'translate-x-full'
+            } ${activeSubmenu === 'jewellery' ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+                <div className="h-full flex flex-col">
+                  {/* Submenu Header */}
+                  <div className="flex items-center px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                    <button onClick={() => setActiveSubmenu(null)} className="flex items-center hover:opacity-70 transition-opacity">
+                      <ArrowLeft className="w-5 h-5 text-gray-600 mr-2" />
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide">JEWELLERY</span>
+                    </button>
+                  </div>
+
+                  {/* Submenu Content */}
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="px-6 py-4">
+                      <div className="space-y-0">
+                        <Link to="/earrings" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Earrings</Link>
+                        <Link to="/necklaces" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Necklaces</Link>
+                        <Link to="/bracelets" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Bracelets</Link>
+                        <Link to="/birthday-gifts" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Birthday Gifts</Link>
+                        <Link to="/anniversary-gifts" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Anniversary Gifts</Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+            {/* Submenu Panel - Watches */}
+            <div className={`absolute inset-0 bg-white transform transition-transform duration-500 ease-in-out ${
+              activeSubmenu === 'watches' ? 'translate-x-0' : 'translate-x-full'
+            } ${activeSubmenu === 'watches' ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+                <div className="h-full flex flex-col">
+                  {/* Submenu Header */}
+                  <div className="flex items-center px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                    <button onClick={() => setActiveSubmenu(null)} className="flex items-center hover:opacity-70 transition-opacity">
+                      <ArrowLeft className="w-5 h-5 text-gray-600 mr-2" />
+                      <span className="text-sm font-light text-gray-900 uppercase tracking-wide">WATCHES</span>
+                    </button>
+                  </div>
+
+                  {/* Submenu Content */}
+                  <div className="flex-1 overflow-y-auto">
+                    <div className="px-6 py-4">
+                      <div className="space-y-0">
+                        <Link to="/watches/rolex" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Rolex</Link>
+                        <Link to="/watches/omega" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Omega</Link>
+                        <Link to="/watches/cartier" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Cartier</Link>
+                        <Link to="/watches/all" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>All Watches</Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            </div>
             </div>
           </div>
         </div>

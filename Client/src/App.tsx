@@ -51,6 +51,7 @@ import AuthCallback from "./pages/AuthCallback";
 import AdminApp from "./admin/AdminApp";
 import NivodaTestingPage from "./pages/NivodaTestingPage";
 import BespokeDesign from "./pages/BespokeDesign";
+import Portfolio from "./pages/Portfolio";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/our-story" element={<OurStory />} />
             <Route path="/bespoke-design" element={<BespokeDesign />} />
+            <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/customer-service" element={<CustomerService />} />
             <Route path="/visit-us" element={<VisitUs />} />
             <Route path="/trust-guarantees" element={<TrustGuarantees />} />
