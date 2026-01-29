@@ -6,7 +6,7 @@ import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, Ch
 import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
 import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getMediaUrl } from '../config/api';
 
 const ProductDetail = () => {
   const { productId } = useParams();
@@ -594,7 +594,7 @@ const ProductDetail = () => {
         >
           {isVideoFile(displayImages[currentImageIndex]?.url) ? (
             <video
-              src={displayImages[currentImageIndex]?.url}
+              src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
               controls
               autoPlay
               muted
@@ -602,7 +602,7 @@ const ProductDetail = () => {
             />
           ) : (
             <img
-              src={displayImages[currentImageIndex]?.url}
+              src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
               alt={displayImages[currentImageIndex]?.alt || productData.name}
               className="max-w-full max-h-full object-contain"
             />
@@ -901,7 +901,7 @@ const ProductDetail = () => {
                   {isVideoFile(image?.url) ? (
                     <div className="relative w-full h-full">
                       <video
-                        src={image?.url}
+                        src={getMediaUrl(image?.url || '')}
                         muted
                         loop
                         autoPlay
@@ -921,7 +921,7 @@ const ProductDetail = () => {
                     </div>
                   ) : (
                     <img
-                      src={image?.url}
+                      src={getMediaUrl(image?.url || '')}
                       alt={image?.alt || `${productData.name} - Image ${index + 1}`}
                       className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
                         index === 0 ? 'p-8' : ''
@@ -1487,7 +1487,7 @@ const ProductDetail = () => {
                 {isVideoFile(image.url) ? (
                   <div className="relative w-full h-full bg-gray-100 flex items-center justify-center">
                     <video
-                      src={image.url}
+                      src={getMediaUrl(image.url || '')}
                       className="w-full h-full object-cover"
                       muted
                       autoPlay
@@ -1501,7 +1501,7 @@ const ProductDetail = () => {
                   </div>
                 ) : (
                   <img
-                    src={image.url}
+                    src={getMediaUrl(image.url || '')}
                     alt={image.alt || `Product view ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
@@ -1539,7 +1539,7 @@ const ProductDetail = () => {
             >
               {isVideoFile(displayImages[lightboxImageIndex]?.url) ? (
                 <video
-                  src={displayImages[lightboxImageIndex]?.url}
+                  src={getMediaUrl(displayImages[lightboxImageIndex]?.url || '')}
                   controls
                   autoPlay
                   muted
@@ -1548,7 +1548,7 @@ const ProductDetail = () => {
                 />
               ) : (
                 <img
-                  src={displayImages[lightboxImageIndex]?.url}
+                  src={getMediaUrl(displayImages[lightboxImageIndex]?.url || '')}
                   alt={displayImages[lightboxImageIndex]?.alt || productData.name}
                   className="max-w-full max-h-full object-contain"
                   style={{ maxHeight: '80vh', maxWidth: '80vw' }}

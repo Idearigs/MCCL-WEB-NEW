@@ -7,10 +7,9 @@ import { useUserAuth } from "../contexts/UserAuthContext";
 import { useNavigate } from "react-router-dom";
 import CheckoutAuthModal from "../components/CheckoutAuthModal";
 
-// Initialize Stripe promise at module level
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
-);
+// Initialize Stripe promise at module level - only if key is available
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 // Helper function to parse price from string or number
 const getPriceAsNumber = (price: string | number): number => {
@@ -581,26 +580,33 @@ const Checkout = (): JSX.Element => {
 
                   {/* Credit Card Fields - Stripe Elements */}
                   <div className="p-4 bg-gray-50 space-y-4">
-                    <Elements stripe={stripePromise}>
-                      <PaymentForm
-                        email={email}
-                        firstName={firstName}
-                        lastName={lastName}
-                        address={address}
-                        apartment={apartment}
-                        city={city}
-                        postalCode={postalCode}
-                        country={country}
-                        phone={phone}
-                        total={total}
-                        cartItems={cartItems}
-                        onSuccess={handleSuccess}
-                        onError={handleError}
-                        isProcessing={isProcessing}
-                        setIsProcessing={setIsProcessing}
-                        cardElementOptions={cardElementOptions}
-                      />
-                    </Elements>
+                    {stripePromise ? (
+                      <Elements stripe={stripePromise}>
+                        <PaymentForm
+                          email={email}
+                          firstName={firstName}
+                          lastName={lastName}
+                          address={address}
+                          apartment={apartment}
+                          city={city}
+                          postalCode={postalCode}
+                          country={country}
+                          phone={phone}
+                          total={total}
+                          cartItems={cartItems}
+                          onSuccess={handleSuccess}
+                          onError={handleError}
+                          isProcessing={isProcessing}
+                          setIsProcessing={setIsProcessing}
+                          cardElementOptions={cardElementOptions}
+                        />
+                      </Elements>
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 bg-yellow-50 border border-yellow-200 rounded">
+                        <AlertCircle className="w-5 h-5 mx-auto mb-2 text-yellow-600" />
+                        <p className="text-sm">Payment system is being configured. Please contact us to complete your order.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
