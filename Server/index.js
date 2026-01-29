@@ -81,8 +81,21 @@ if (config.NODE_ENV !== 'test') {
   }));
 }
 
-// Static file serving for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static file serving for uploads with video streaming support
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  // Enable Accept-Ranges for video streaming
+  acceptRanges: true,
+  // Set proper cache headers
+  maxAge: '1d',
+  // Set headers for video files
+  setHeaders: (res, filePath) => {
+    // Check if it's a video file
+    if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg')) {
+      res.set('Accept-Ranges', 'bytes');
+      res.set('Cache-Control', 'public, max-age=86400');
+    }
+  }
+}));
 
 // Health check endpoint - returns server and database status
 app.get('/health', async (req, res) => {

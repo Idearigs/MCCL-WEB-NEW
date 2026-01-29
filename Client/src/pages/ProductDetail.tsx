@@ -598,6 +598,8 @@ const ProductDetail = () => {
               controls
               autoPlay
               muted
+              playsInline
+              preload="auto"
               className="max-w-full max-h-full object-contain"
             />
           ) : (
@@ -905,6 +907,8 @@ const ProductDetail = () => {
                         muted
                         loop
                         autoPlay
+                        playsInline
+                        preload="metadata"
                         className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
                         onLoadedData={(e) => {
                           // Hide loading skeleton when video loads
@@ -1492,6 +1496,8 @@ const ProductDetail = () => {
                       muted
                       autoPlay
                       loop
+                      playsInline
+                      preload="metadata"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
                       <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
@@ -1543,6 +1549,8 @@ const ProductDetail = () => {
                   controls
                   autoPlay
                   muted
+                  playsInline
+                  preload="auto"
                   className="max-w-full max-h-full object-contain"
                   style={{ maxHeight: '80vh', maxWidth: '80vw' }}
                 />
