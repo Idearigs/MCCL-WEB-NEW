@@ -7,6 +7,7 @@ import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
 import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
 import API_BASE_URL, { getMediaUrl } from '../config/api';
+import { trackViewContent, trackAddToCart } from '../services/pixelService';
 
 const ProductDetail = () => {
   const { productId } = useParams();
@@ -82,6 +83,9 @@ const ProductDetail = () => {
   const [isVideoMuted, setIsVideoMuted] = useState(true);
   const [videoProgress, setVideoProgress] = useState(0);
   const [showVideoControls, setShowVideoControls] = useState(true);
+
+  // Track if ViewContent pixel event has been fired
+  const viewContentFired = useRef(false);
 
   // Helper function to check if file is video
   const isVideoFile = (url) => {
@@ -353,6 +357,25 @@ const ProductDetail = () => {
     }
   }, [selectedCarat, selectedClarity, selectedColour, selectedCut, productData?.nivoda_enabled, fetchNivodaPrice]);
 
+  // Facebook Pixel: Track ViewContent when product loads
+  useEffect(() => {
+    if (productData && !viewContentFired.current) {
+      // Parse price value from string (e.g., "£2,500" -> 2500)
+      const priceString = productData.price?.replace(/[^\d.,]/g, '').replace(/,/g, '') || '0';
+      const priceValue = parseFloat(priceString) || 0;
+
+      trackViewContent({
+        content_name: productData.name,
+        content_ids: [productData.id],
+        content_type: 'product',
+        value: priceValue,
+        currency: 'GBP',
+      });
+
+      viewContentFired.current = true;
+    }
+  }, [productData]);
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -436,6 +459,25 @@ const ProductDetail = () => {
         newItem.nivodaPrice = nivodaPrice; // { min, avg, max }
         newItem.totalPrice = calculateTotalPrice(); // Uses Nivoda API price (avg) when available
       }
+
+      // Calculate price for pixel tracking
+      const priceForTracking = productData?.nivoda_enabled && nivodaPrice
+        ? nivodaPrice.avg
+        : parseFloat(productData.price?.replace(/[^\d.,]/g, '').replace(/,/g, '') || '0');
+
+      // Facebook Pixel: Track AddToCart event
+      trackAddToCart({
+        content_name: productData.name,
+        content_ids: [productData.id],
+        content_type: 'product',
+        value: priceForTracking,
+        currency: 'GBP',
+        contents: [{
+          id: productData.id,
+          quantity: 1,
+          item_price: priceForTracking,
+        }],
+      });
 
       addToCart(newItem);
       setIsLoading(false);

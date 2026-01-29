@@ -8,6 +8,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { CartProvider } from "./contexts/CartContext";
 import { UserAuthProvider } from "./contexts/UserAuthContext";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
+import { usePixelPageView } from "./hooks/usePixelPageView";
 import Index from "./pages/Index";
 import Collections from "./pages/Collections";
 import Jewellery from "./pages/Jewellery";
@@ -55,6 +56,12 @@ import Portfolio from "./pages/Portfolio";
 
 const queryClient = new QueryClient();
 
+// Component to track PageView on route changes
+const PixelPageViewTracker = () => {
+  usePixelPageView();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -65,6 +72,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <ScrollToTop />
+              <PixelPageViewTracker />
               <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/collections" element={<Collections />} />

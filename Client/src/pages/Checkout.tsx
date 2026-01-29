@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown, AlertCircle, CheckCircle, Loader } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -6,6 +6,7 @@ import { useCart } from "../contexts/CartContext";
 import { useUserAuth } from "../contexts/UserAuthContext";
 import { useNavigate } from "react-router-dom";
 import CheckoutAuthModal from "../components/CheckoutAuthModal";
+import { trackInitiateCheckout, trackPurchase } from "../services/pixelService";
 
 // Initialize Stripe promise at module level - only if key is available
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -270,6 +271,9 @@ const Checkout = (): JSX.Element => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalShown, setAuthModalShown] = useState(false);
 
+  // Track if InitiateCheckout pixel event has been fired
+  const initiateCheckoutFired = useRef(false);
+
   // Redirect to cart if empty
   useEffect(() => {
     if (cartItems.length === 0 && !successMessage) {
@@ -284,6 +288,31 @@ const Checkout = (): JSX.Element => {
       setAuthModalShown(true);
     }
   }, [isLoading, isAuthenticated, authModalShown, cartItems.length]);
+
+  // Facebook Pixel: Track InitiateCheckout when page loads with cart items
+  useEffect(() => {
+    if (cartItems.length > 0 && !initiateCheckoutFired.current) {
+      const checkoutTotal = cartItems.reduce((total, item) => {
+        const price = getPriceAsNumber(item.price);
+        return total + (price * item.quantity);
+      }, 0);
+
+      trackInitiateCheckout({
+        content_ids: cartItems.map(item => item.id.toString()),
+        content_type: 'product',
+        value: checkoutTotal,
+        currency: 'GBP',
+        num_items: cartItems.reduce((count, item) => count + item.quantity, 0),
+        contents: cartItems.map(item => ({
+          id: item.id.toString(),
+          quantity: item.quantity,
+          item_price: getPriceAsNumber(item.price),
+        })),
+      });
+
+      initiateCheckoutFired.current = true;
+    }
+  }, [cartItems]);
 
   // Calculate totals from cart
   const getSubtotal = () => {
@@ -302,6 +331,20 @@ const Checkout = (): JSX.Element => {
   const handleSuccess = (data: any) => {
     setOrderData(data);
     setSuccessMessage(`Order confirmed! Order Number: ${data.orderNumber}`);
+
+    // Facebook Pixel: Track Purchase event
+    trackPurchase({
+      content_ids: cartItems.map(item => item.id.toString()),
+      content_type: 'product',
+      value: data.totalAmount || total,
+      currency: 'GBP',
+      num_items: cartItems.reduce((count, item) => count + item.quantity, 0),
+      contents: cartItems.map(item => ({
+        id: item.id.toString(),
+        quantity: item.quantity,
+        item_price: getPriceAsNumber(item.price),
+      })),
+    });
 
     // Prepare order items data with attributes for ThankYou page
     const orderItems = cartItems.map((item: any) => ({

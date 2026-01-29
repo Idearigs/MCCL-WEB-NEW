@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle, Package, Truck, ArrowRight } from "lucide-react";
 import { FooterSection } from "../components/FooterSection";
+import { trackPurchase } from "../services/pixelService";
 
 interface OrderItemData {
   product_name: string;
@@ -38,6 +39,29 @@ const ThankYou = (): JSX.Element => {
   const location = useLocation();
   const orderData = (location.state as OrderState) || {};
   const [continueShoppingUrl, setContinueShoppingUrl] = React.useState('/rings');
+
+  // Track if Purchase pixel event has been fired (backup tracking)
+  const purchaseFired = useRef(false);
+
+  // Facebook Pixel: Track Purchase event (backup in case it wasn't fired in Checkout)
+  useEffect(() => {
+    if (orderData.orderId && orderData.items && !purchaseFired.current) {
+      trackPurchase({
+        content_ids: orderData.items.map((item, index) => `item_${index}`),
+        content_type: 'product',
+        value: orderData.totalAmount || 0,
+        currency: 'GBP',
+        num_items: orderData.items.reduce((count, item) => count + item.quantity, 0),
+        contents: orderData.items.map((item, index) => ({
+          id: `item_${index}`,
+          quantity: item.quantity,
+          item_price: item.unit_price,
+        })),
+      });
+
+      purchaseFired.current = true;
+    }
+  }, [orderData]);
 
   // Redirect to home if no order data after 10 seconds of inactivity
   useEffect(() => {
