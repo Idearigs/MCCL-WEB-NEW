@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Check, XCircle, Loader2, Mail } from 'lucide-react';
-import LuxuryNavigation from '../components/LuxuryNavigation';
+import LuxuryNavigationWhite from '../components/LuxuryNavigationWhite';
 import { FooterSection } from '../components/FooterSection';
 import { api } from '../config/api';
 
@@ -57,7 +57,7 @@ const VerifyEmail: React.FC = () => {
 
   return (
     <>
-      <LuxuryNavigation />
+      <LuxuryNavigationWhite />
       <div className="min-h-screen bg-gray-50 pt-32 pb-20">
         <div className="max-w-2xl mx-auto px-4">
           <div className="bg-white rounded-lg shadow-sm p-12">

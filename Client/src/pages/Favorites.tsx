@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import LuxuryNavigation from '../components/LuxuryNavigation';
+import LuxuryNavigationWhite from '../components/LuxuryNavigationWhite';
 import { FooterSection } from '../components/FooterSection';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useUserAuth } from '../contexts/UserAuthContext';
@@ -33,7 +33,7 @@ const Favorites: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-        <LuxuryNavigation />
+        <LuxuryNavigationWhite />
         <div className="min-h-screen bg-gray-50 pt-32">
           <div className="max-w-4xl mx-auto px-4 py-16 text-center">
             <Heart className="w-16 h-16 mx-auto text-gray-300 mb-6" />
@@ -58,7 +58,7 @@ const Favorites: React.FC = () => {
   if (isLoading) {
     return (
       <>
-        <LuxuryNavigation />
+        <LuxuryNavigationWhite />
         <div className="min-h-screen bg-gray-50 pt-32">
           <div className="max-w-6xl mx-auto px-4 py-16">
             <div className="animate-pulse space-y-6">
@@ -75,7 +75,7 @@ const Favorites: React.FC = () => {
 
   return (
     <>
-      <LuxuryNavigation />
+      <LuxuryNavigationWhite />
       <div className="min-h-screen bg-gray-50 pt-32">
         <div className="max-w-6xl mx-auto px-4 py-12">
           {/* Header */}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import LuxuryNavigation from "../components/LuxuryNavigation";
+import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 import { FooterSection } from "../components/FooterSection";
 import { Link } from "react-router-dom";
 import { Plus, Minus, X, ChevronRight, Heart, Shield, Truck, RotateCcw } from "lucide-react";

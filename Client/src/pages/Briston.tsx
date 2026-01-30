@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FooterSection } from "../components/FooterSection";
-import LuxuryNavigation from "../components/LuxuryNavigation";
+import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 import { Link } from "react-router-dom";
 import API_BASE_URL from '../config/api';
 
@@ -91,7 +91,7 @@ const Briston = (): JSX.Element => {
 
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
-      <LuxuryNavigation />
+      <LuxuryNavigationWhite />
 
       {/* Hero Section */}
       <div className="relative h-screen bg-black overflow-hidden">

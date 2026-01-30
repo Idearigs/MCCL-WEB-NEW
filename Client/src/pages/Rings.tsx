@@ -4,7 +4,9 @@ import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 import API_BASE_URL from '../config/api';
 import { useUserAuth } from "../contexts/UserAuthContext";
+import { useCart } from "../contexts/CartContext";
 import { toast } from "sonner";
+import { trackAddToCart } from "../services/pixelService";
 
 interface RingProduct {
   id: string;
@@ -63,6 +65,7 @@ interface RingProduct {
 
 const Rings = (): JSX.Element => {
   const { isAuthenticated, user } = useUserAuth();
+  const { addToCart, openCart } = useCart();
   const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set());
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
   const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null);
@@ -303,6 +306,58 @@ const Rings = (): JSX.Element => {
       gemstones: [],
       metals: [],
       collections: []
+    });
+  };
+
+  // Handle Add to Cart with animation feedback
+  const handleAddToCart = (e: React.MouseEvent, product: RingProduct) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Get selected metal name
+    const selectedMetalId = selectedMetals[product.id];
+    const selectedMetal = product.available_metals?.find(m => m.id === selectedMetalId);
+    const metalName = selectedMetal?.name || product.primary_metal?.name || 'Not specified';
+
+    // Parse price value
+    const priceValue = product.base_price || parseFloat(product.price?.replace(/[£,]/g, '') || '0');
+
+    // Add to cart
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price || `£${priceValue.toLocaleString()}`,
+      metal: metalName,
+      size: 'Select size at checkout',
+      image: product.image?.url || '',
+      type: 'jewelry',
+      selectedOptions: {
+        metal: metalName,
+      }
+    });
+
+    // Track AddToCart event for Facebook Pixel
+    trackAddToCart({
+      content_name: product.name,
+      content_ids: [product.id],
+      content_type: 'product',
+      value: priceValue,
+      currency: 'GBP',
+      contents: [{
+        id: product.id,
+        quantity: 1,
+        item_price: priceValue,
+      }],
+    });
+
+    // Show success toast notification
+    toast.success(`${product.name} added to bag`, {
+      description: metalName !== 'Not specified' ? `Metal: ${metalName}` : undefined,
+      duration: 3000,
+      action: {
+        label: 'View Bag',
+        onClick: () => openCart(),
+      },
     });
   };
 
@@ -883,11 +938,7 @@ const Rings = (): JSX.Element => {
 
                             {/* Add to Bag Button */}
                             <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                // Add to bag logic here
-                              }}
+                              onClick={(e) => handleAddToCart(e, product)}
                               className="w-full bg-white/95 backdrop-blur-sm text-gray-700 hover:text-white hover:bg-black py-3 px-4 font-inter font-light text-sm tracking-wider uppercase transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75"
                             >
                               ADD TO BAG
