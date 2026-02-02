@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
+import FavoriteButton from "../components/FavoriteButton";
+import AuthModal from "../components/AuthModal";
 import API_BASE_URL from '../config/api';
 
 interface RingProduct {
@@ -54,7 +56,7 @@ interface RingProduct {
 
 const EngagementRings = (): JSX.Element => {
   const [searchParams] = useSearchParams();
-  const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set());
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('engagement');
   const [selectedFilters, setSelectedFilters] = useState<{
@@ -179,18 +181,6 @@ const EngagementRings = (): JSX.Element => {
 
     fetchData();
   }, []);
-
-  const toggleLike = (productId: string) => {
-    setLikedProducts(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(productId)) {
-        newSet.delete(productId);
-      } else {
-        newSet.add(productId);
-      }
-      return newSet;
-    });
-  };
 
   const toggleFilter = (filterName: string) => {
     setActiveFilter(activeFilter === filterName ? null : filterName);
@@ -691,20 +681,13 @@ const EngagementRings = (): JSX.Element => {
                     className="group cursor-pointer bg-white transition-all duration-300 block"
                   >
                     <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleLike(product.id);
-                        }}
-                        className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center transition-colors"
-                      >
-                        <svg className={`w-4 h-4 transition-colors duration-200 ${
-                          likedProducts.has(product.id) ? 'text-gray-700 fill-gray-700' : 'text-gray-400 group-hover:text-white fill-none'
-                        }`} stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                      </button>
+                      <div className="absolute top-3 right-3 z-20">
+                        <FavoriteButton
+                          productId={product.id}
+                          size="sm"
+                          onAuthRequired={() => setShowAuthModal(true)}
+                        />
+                      </div>
 
                       {/* Default Image */}
                       <img
@@ -774,6 +757,13 @@ const EngagementRings = (): JSX.Element => {
       </main>
 
       <FooterSection />
+
+      {/* Auth Modal for Wishlist */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialView="login"
+      />
     </div>
   );
 };

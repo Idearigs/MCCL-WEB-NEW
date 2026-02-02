@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
+import FavoriteButton from "../components/FavoriteButton";
+import AuthModal from "../components/AuthModal";
 import API_BASE_URL from '../config/api';
-import { useUserAuth } from "../contexts/UserAuthContext";
 import { useCart } from "../contexts/CartContext";
 import { toast } from "sonner";
 import { trackAddToCart } from "../services/pixelService";
@@ -64,11 +65,8 @@ interface RingProduct {
 }
 
 const Rings = (): JSX.Element => {
-  const { isAuthenticated, user } = useUserAuth();
   const { addToCart, openCart } = useCart();
-  const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set());
-  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
-  const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('rings');
   const [displayCount, setDisplayCount] = useState<number>(30);
@@ -180,91 +178,10 @@ const Rings = (): JSX.Element => {
     fetchData();
   }, []);
 
-  // Fetch user's existing favorites
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const fetchFavorites = async () => {
-        try {
-          const token = localStorage.getItem('user_access_token');
-          if (!token) return;
-
-          const response = await fetch(`${API_BASE_URL}/favorites`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.data) {
-              const favoriteIds = new Set(data.data.map((fav: any) => fav.product.id));
-              setLikedProducts(favoriteIds);
-            }
-          }
-        } catch (err) {
-          console.error('Failed to fetch favorites:', err);
-        }
-      };
-
-      fetchFavorites();
-    }
-  }, [isAuthenticated, user]);
-
   // Reset display count when filters change
   useEffect(() => {
     setDisplayCount(30);
   }, [selectedFilters]);
-
-  const toggleLike = async (productId: string) => {
-    // Check if user is authenticated
-    if (!isAuthenticated || !user) {
-      setShowSignInPrompt(true);
-      return;
-    }
-
-    try {
-      setTogglingFavorite(productId);
-      const token = localStorage.getItem('user_access_token');
-
-      if (!token) {
-        toast.error('Authentication token not found. Please sign in again.');
-        return;
-      }
-
-      // Call toggle favorite API
-      const response = await fetch(`${API_BASE_URL}/favorites/toggle/${productId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        // Update local state
-        setLikedProducts(prev => {
-          const newSet = new Set(prev);
-          if (data.data.isFavorite) {
-            newSet.add(productId);
-            toast.success('Added to favorites');
-          } else {
-            newSet.delete(productId);
-            toast.success('Removed from favorites');
-          }
-          return newSet;
-        });
-      } else {
-        toast.error(data.message || 'Failed to update favorite');
-      }
-    } catch (err) {
-      console.error('Error toggling favorite:', err);
-      toast.error('Failed to update favorite. Please try again.');
-    } finally {
-      setTogglingFavorite(null);
-    }
-  };
 
   const toggleFilter = (filterName: string) => {
     setActiveFilter(activeFilter === filterName ? null : filterName);
@@ -897,21 +814,13 @@ const Rings = (): JSX.Element => {
                         className="block group"
                       >
                         <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              toggleLike(product.id);
-                            }}
-                            disabled={togglingFavorite === product.id}
-                            className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center transition-colors disabled:opacity-50"
-                          >
-                            <svg className={`w-4 h-4 transition-colors duration-200 ${
-                              likedProducts.has(product.id) ? 'text-gray-700 fill-gray-700' : 'text-gray-400 group-hover:text-white fill-none'
-                            }`} stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
-                          </button>
+                          <div className="absolute top-3 right-3 z-20">
+                            <FavoriteButton
+                              productId={product.id}
+                              size="sm"
+                              onAuthRequired={() => setShowAuthModal(true)}
+                            />
+                          </div>
 
                           {/* Default Image */}
                           <img
@@ -1138,34 +1047,12 @@ const Rings = (): JSX.Element => {
         </div>
       </main>
 
-      {/* Sign In Modal for Favorites */}
-      {showSignInPrompt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-8">
-            <h2 className="text-2xl font-light text-gray-900 mb-4">Sign In to Save Favorites</h2>
-            <p className="text-gray-600 font-light mb-6">
-              Create an account or sign in to save your favorite products and access your wishlist anytime.
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => {
-                  setShowSignInPrompt(false);
-                  window.location.href = '/account';
-                }}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 rounded-lg transition-colors"
-              >
-                Sign In / Create Account
-              </button>
-              <button
-                onClick={() => setShowSignInPrompt(false)}
-                className="w-full text-gray-700 hover:text-gray-900 font-medium py-3 rounded-lg transition-colors border border-gray-300"
-              >
-                Continue Browsing
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Auth Modal for Wishlist */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialView="login"
+      />
 
       <FooterSection />
     </div>

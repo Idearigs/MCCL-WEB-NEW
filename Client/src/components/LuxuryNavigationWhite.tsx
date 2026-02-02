@@ -3,8 +3,12 @@ import { Link } from "react-router-dom";
 import { Menu, X, ChevronDown, ChevronUp, Calendar, Phone, Mail, HelpCircle, Diamond, Gem, Circle, Layers, Star, Heart, Crown, ArrowRight, ArrowLeft } from "lucide-react";
 import TopBanner from "./TopBanner";
 import CartSlide from "./CartSlide";
+import WishlistSlide from "./WishlistSlide";
 import SearchOverlay from "./SearchOverlay";
+import AuthModal from "./AuthModal";
 import { useCart } from "../contexts/CartContext";
+import { useFavorites } from "../contexts/FavoritesContext";
+import { useUserAuth } from "../contexts/UserAuthContext";
 import { useIsMobile } from "../hooks/use-mobile";
 import API_BASE_URL from '../config/api';
 
@@ -95,19 +99,45 @@ const LuxuryNavigationWhite = (): JSX.Element => {
   const [heritageClosing, setHeritageClosing] = useState(false);
   
   // Cart context
-  const { 
-    cartItems, 
-    isCartOpen, 
-    isCartVisible, 
-    openCart, 
-    closeCart, 
-    updateQuantity, 
-    removeItem, 
-    getCartCount 
+  const {
+    cartItems,
+    isCartOpen,
+    isCartVisible,
+    openCart,
+    closeCart,
+    updateQuantity,
+    removeItem,
+    getCartCount
   } = useCart();
+
+  // Favorites/Wishlist context
+  const { favoritesCount } = useFavorites();
+  const { isAuthenticated } = useUserAuth();
+
+  // Wishlist slide state
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isWishlistVisible, setIsWishlistVisible] = useState(false);
+
+  // Auth modal state (for wishlist)
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const isMobile = useIsMobile();
   const anyDropdownOpen = engagementHover || weddingHover || diamondsHover || jewelleryHover || watchesHover;
+
+  // Wishlist slide functions
+  const openWishlist = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    setIsWishlistVisible(true);
+    setTimeout(() => setIsWishlistOpen(true), 10);
+  };
+
+  const closeWishlist = () => {
+    setIsWishlistOpen(false);
+    setTimeout(() => setIsWishlistVisible(false), 300);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -320,21 +350,36 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                   </div>
 
                   <div className="relative group">
-                    <svg className="w-5 h-5 cursor-pointer transition-colors duration-0 text-gray-600 hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <circle cx="12" cy="8" r="5"/>
-                      <path d="M20 21a8 8 0 1 0-16 0"/>
-                    </svg>
+                    <Link to="/account" className="relative block">
+                      <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 hover:text-gray-900 ${isAuthenticated ? 'text-gray-900' : 'text-gray-600'}`} fill={isAuthenticated ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <circle cx="12" cy="8" r="5"/>
+                        <path d="M20 21a8 8 0 1 0-16 0"/>
+                      </svg>
+                      {isAuthenticated && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" />
+                      )}
+                    </Link>
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                      Account
+                      {isAuthenticated ? 'My Account' : 'Sign In'}
                     </div>
                   </div>
 
                   <div className="relative group">
-                    <svg className="w-5 h-5 cursor-pointer transition-colors duration-0 text-gray-600 hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                    </svg>
+                    <button
+                      onClick={openWishlist}
+                      className="relative"
+                    >
+                      <svg className="w-5 h-5 cursor-pointer transition-colors duration-0 text-gray-600 hover:text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                      {favoritesCount > 0 && (
+                        <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium transition-colors duration-0 bg-rose-500 text-white">
+                          {favoritesCount}
+                        </span>
+                      )}
+                    </button>
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                      Wishlist
+                      Wishlist {favoritesCount > 0 && `(${favoritesCount})`}
                     </div>
                   </div>
 
@@ -1265,6 +1310,20 @@ const LuxuryNavigationWhite = (): JSX.Element => {
         onClose={closeCart}
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeItem}
+      />
+
+      {/* Wishlist Slide Component */}
+      <WishlistSlide
+        isOpen={isWishlistOpen}
+        isVisible={isWishlistVisible}
+        onClose={closeWishlist}
+      />
+
+      {/* Auth Modal for Wishlist */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialView="login"
       />
 
       {/* Mobile Search Overlay Component */}
