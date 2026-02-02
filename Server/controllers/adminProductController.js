@@ -380,6 +380,10 @@ const createProduct = async (req, res) => {
       is_featured = false,
       in_stock = true,
       stock_quantity = 0,
+      // Made on Request fields
+      is_made_on_request = false,
+      made_on_request_lead_time = '4-6 weeks',
+      made_on_request_message = '',
       weight,
       dimensions,
       care_instructions,
@@ -449,6 +453,10 @@ const createProduct = async (req, res) => {
       is_featured,
       in_stock,
       stock_quantity,
+      // Made on Request fields
+      is_made_on_request,
+      made_on_request_lead_time: is_made_on_request ? made_on_request_lead_time : null,
+      made_on_request_message: is_made_on_request ? made_on_request_message : null,
       weight,
       dimensions,
       care_instructions,
@@ -634,6 +642,16 @@ const updateProduct = async (req, res) => {
     }
     if (updateData.collection_id === '') {
       updateData.collection_id = null;
+    }
+
+    // Handle Made on Request fields
+    if (updateData.is_made_on_request === false || updateData.is_made_on_request === 'false') {
+      updateData.is_made_on_request = false;
+      updateData.made_on_request_lead_time = null;
+      updateData.made_on_request_message = null;
+    }
+    if (updateData.made_on_request_message === '') {
+      updateData.made_on_request_message = null;
     }
 
     // Handle Nivoda options configuration - convert to JSON if provided and validate
@@ -924,6 +942,16 @@ const updateProductWithMedia = async (req, res) => {
     }
     if (updateData.collection_id === '') {
       updateData.collection_id = null;
+    }
+
+    // Handle Made on Request fields
+    if (updateData.is_made_on_request === false || updateData.is_made_on_request === 'false') {
+      updateData.is_made_on_request = false;
+      updateData.made_on_request_lead_time = null;
+      updateData.made_on_request_message = null;
+    }
+    if (updateData.made_on_request_message === '') {
+      updateData.made_on_request_message = null;
     }
 
     // Handle Nivoda options configuration - convert to JSON if provided and validate

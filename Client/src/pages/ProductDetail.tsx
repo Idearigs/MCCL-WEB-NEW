@@ -1473,6 +1473,18 @@ const ProductDetail = () => {
               >
                 Enquire
               </Button>
+
+              {/* Made on Request Notice - Below Buttons */}
+              {productData.is_made_on_request && (
+                <div className="flex items-center justify-center space-x-2 mt-3 py-2 px-3 bg-amber-50/80 rounded border border-amber-100">
+                  <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xs font-futura-pt text-amber-700">
+                    Made to order • Delivery in {productData.made_on_request_lead_time || '4-6 weeks'}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Add to Wishlist */}
@@ -1548,6 +1560,35 @@ const ProductDetail = () => {
                     <p className="text-sm 2xl:text-base font-futura-pt font-light text-gray-700 leading-relaxed mb-3">
                       {productData.description}
                     </p>
+
+                    {/* Made on Request Notice */}
+                    {productData.is_made_on_request && (
+                      <div className="mt-4 mb-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-futura-pt font-medium text-amber-800 uppercase tracking-wider mb-1">
+                              Made to Order
+                            </h4>
+                            <p className="text-sm font-futura-pt font-light text-amber-700 leading-relaxed">
+                              This exquisite piece is crafted specially for you. Please allow approximately{' '}
+                              <span className="font-medium">{productData.made_on_request_lead_time || '4-6 weeks'}</span>{' '}
+                              for creation and delivery.
+                            </p>
+                            {productData.made_on_request_message && (
+                              <p className="text-sm font-futura-pt font-light text-amber-700 leading-relaxed mt-2">
+                                {productData.made_on_request_message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <button className="text-xs 2xl:text-sm font-futura-pt text-amber-700 hover:text-amber-900 transition-colors">
                       Read More →
                     </button>

@@ -28,6 +28,10 @@ interface ProductFormData {
   is_featured: boolean;
   in_stock: boolean;
   stock_quantity: string;
+  // Made on Request fields
+  is_made_on_request: boolean;
+  made_on_request_lead_time: string;
+  made_on_request_message: string;
   weight: string;
   dimensions: string;
   care_instructions: string;
@@ -120,6 +124,10 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     is_featured: false,
     in_stock: true,
     stock_quantity: '0',
+    // Made on Request defaults
+    is_made_on_request: false,
+    made_on_request_lead_time: '4-6 weeks',
+    made_on_request_message: '',
     weight: '',
     dimensions: '',
     care_instructions: '',
@@ -214,6 +222,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         care_instructions: initialData.care_instructions || '',
         warranty_info: initialData.warranty_info || '',
         meta_description: initialData.meta_description || '',
+        made_on_request_message: initialData.made_on_request_message || '',
         images: initialData.images || [],
         videos: initialData.videos || [],
         variants: initialData.variants || [],
@@ -890,6 +899,65 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     In Stock
                   </label>
                 </div>
+              </div>
+
+              {/* Made on Request Section */}
+              <div className="mt-6 p-4 border border-amber-200 rounded-lg bg-amber-50/50">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="is_made_on_request"
+                    checked={formData.is_made_on_request}
+                    onChange={(e) => handleInputChange('is_made_on_request', e.target.checked)}
+                    className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded mt-1"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="is_made_on_request" className="block text-sm font-medium text-gray-900 font-satoshi">
+                      Made on Request
+                    </label>
+                    <p className="text-xs text-gray-600 mt-1 font-satoshi">
+                      Enable this for products that are custom-made by our partner craftsmen and require additional production time.
+                    </p>
+                  </div>
+                </div>
+
+                {formData.is_made_on_request && (
+                  <div className="mt-4 space-y-4 pl-7">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                        Lead Time
+                      </label>
+                      <select
+                        value={formData.made_on_request_lead_time}
+                        onChange={(e) => handleInputChange('made_on_request_lead_time', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 font-satoshi"
+                      >
+                        <option value="2-3 weeks">2-3 weeks</option>
+                        <option value="3-4 weeks">3-4 weeks</option>
+                        <option value="4-6 weeks">4-6 weeks</option>
+                        <option value="6-8 weeks">6-8 weeks</option>
+                        <option value="8-10 weeks">8-10 weeks</option>
+                        <option value="10-12 weeks">10-12 weeks</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                        Custom Message (Optional)
+                      </label>
+                      <textarea
+                        value={formData.made_on_request_message}
+                        onChange={(e) => handleInputChange('made_on_request_message', e.target.value)}
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 font-satoshi"
+                        placeholder="e.g., This exquisite piece is handcrafted by our master jewellers..."
+                      />
+                      <p className="text-xs text-gray-500 mt-1 font-satoshi">
+                        Leave empty to use the default message on the product page.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

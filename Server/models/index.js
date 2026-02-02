@@ -195,6 +195,22 @@ const initializeModels = () => {
       type: DataTypes.INTEGER,
       defaultValue: 0
     },
+    // Made on Request fields
+    is_made_on_request: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Whether this product is made to order/request'
+    },
+    made_on_request_lead_time: {
+      type: DataTypes.STRING(100),
+      defaultValue: '4-6 weeks',
+      comment: 'Expected lead time for made-on-request products'
+    },
+    made_on_request_message: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Custom message to display for made-on-request products'
+    },
     weight: {
       type: DataTypes.DECIMAL(8, 3)
     },
