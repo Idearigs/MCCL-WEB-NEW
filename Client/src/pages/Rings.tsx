@@ -48,6 +48,11 @@ interface RingProduct {
     name: string;
     color_code: string;
   }>;
+  diamondSizes?: Array<{
+    id: string;
+    name: string;
+    display_name: string;
+  }>;
   image?: {
     url: string;
     alt: string;
@@ -77,12 +82,14 @@ const Rings = (): JSX.Element => {
     gemstones: string[];
     metals: string[];
     collections: string[];
+    diamondSizes: string[];
   }>({
     price: [],
     ringType: [],
     gemstones: [],
     metals: [],
-    collections: []
+    collections: [],
+    diamondSizes: []
   });
   const [ringProducts, setRingProducts] = useState<RingProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -91,6 +98,7 @@ const Rings = (): JSX.Element => {
   const [ringTypes, setRingTypes] = useState<Array<{id: string, name: string, slug: string}>>([]);
   const [gemstones, setGemstones] = useState<Array<{id: string, name: string, slug: string, color?: string}>>([]);
   const [metals, setMetals] = useState<Array<{id: string, name: string, color_code: string}>>([]);
+  const [diamondSizes, setDiamondSizes] = useState<Array<{id: string, name: string, display_name: string}>>([]);
 
   // Save shopping category for post-purchase redirect
   useEffect(() => {
@@ -109,13 +117,15 @@ const Rings = (): JSX.Element => {
           collectionsResponse,
           ringTypesResponse,
           gemstonesResponse,
-          metalsResponse
+          metalsResponse,
+          diamondSizesResponse
         ] = await Promise.all([
           fetch(`${API_BASE_URL}/products/category/rings`),
           fetch(`${API_BASE_URL}/filters/collections`),
           fetch(`${API_BASE_URL}/filters/ring-types`),
           fetch(`${API_BASE_URL}/filters/gemstones`),
-          fetch(`${API_BASE_URL}/filters/metals`)
+          fetch(`${API_BASE_URL}/filters/metals`),
+          fetch(`${API_BASE_URL}/filters/diamond-sizes`)
         ]);
 
         // Handle products data
@@ -165,6 +175,18 @@ const Rings = (): JSX.Element => {
           }
         } catch (metalsErr) {
           console.warn('Failed to fetch metals:', metalsErr);
+        }
+
+        // Handle diamond sizes data
+        try {
+          if (diamondSizesResponse && diamondSizesResponse.ok) {
+            const diamondSizesData = await diamondSizesResponse.json();
+            if (diamondSizesData.success && Array.isArray(diamondSizesData.data)) {
+              setDiamondSizes(diamondSizesData.data);
+            }
+          }
+        } catch (diamondSizesErr) {
+          console.warn('Failed to fetch diamond sizes:', diamondSizesErr);
         }
 
       } catch (err) {
@@ -222,7 +244,8 @@ const Rings = (): JSX.Element => {
       ringType: [],
       gemstones: [],
       metals: [],
-      collections: []
+      collections: [],
+      diamondSizes: []
     });
   };
 
@@ -351,6 +374,15 @@ const Rings = (): JSX.Element => {
       if (!matchesCollection) return false;
     }
 
+    // Diamond Sizes filter (for Engagement Rings)
+    if (selectedFilters.diamondSizes.length > 0) {
+      const matchesDiamondSize = selectedFilters.diamondSizes.some(diamondSizeName => {
+        if (!product.diamondSizes || product.diamondSizes.length === 0) return false;
+        return product.diamondSizes.some(ds => ds.name === diamondSizeName);
+      });
+      if (!matchesDiamondSize) return false;
+    }
+
     return true;
   });
 
@@ -367,8 +399,14 @@ const Rings = (): JSX.Element => {
     ringType: ringTypes.map(type => type.name),
     gemstones: gemstones.map(gemstone => gemstone.name),
     metals: metals.map(metal => metal.name),
-    collections: collections.map(collection => collection.name)
+    collections: collections.map(collection => collection.name),
+    diamondSizes: diamondSizes.map(ds => ds.name)
   };
+
+  // Check if we have any engagement ring products (to show diamond size filter)
+  const hasEngagementRings = ringProducts.some(product =>
+    product.ringTypes?.some(rt => rt.name.toLowerCase().includes('engagement'))
+  );
 
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
@@ -627,7 +665,7 @@ const Rings = (): JSX.Element => {
 
                 {/* Metals Filter */}
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => toggleFilter('metals')}
                     className={`text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light transition-colors flex items-center gap-1 ${
                       activeFilter === 'metals' ? 'text-gray-900' : ''
@@ -679,6 +717,63 @@ const Rings = (): JSX.Element => {
                   )}
                 </div>
 
+                {/* Diamond Size Filter - Only show for Engagement Rings */}
+                {(hasEngagementRings || diamondSizes.length > 0) && (
+                  <div className="relative">
+                    <button
+                      onClick={() => toggleFilter('diamondSizes')}
+                      className={`text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light transition-colors flex items-center gap-1 ${
+                        activeFilter === 'diamondSizes' ? 'text-gray-900' : ''
+                      }`}
+                    >
+                      Diamond Size
+                      <svg className={`w-3 h-3 transition-transform ${activeFilter === 'diamondSizes' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+                    {activeFilter === 'diamondSizes' && (
+                      <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-gray-200 shadow-xl rounded-none z-50 animate-fade-in">
+                        <div className="p-6">
+                          <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">Diamond Size</h3>
+                          <div className="space-y-3">
+                            {filterOptions.diamondSizes.length > 0 ? filterOptions.diamondSizes.map((option, index) => (
+                              <label key={index} className="flex items-center group cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedFilters.diamondSizes.includes(option)}
+                                  onChange={(e) => handleFilterChange('diamondSizes', option, e.target.checked)}
+                                  className="w-3 h-3 border border-gray-300 rounded-none bg-white checked:bg-gray-900 checked:border-gray-900 transition-colors"
+                                />
+                                <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 font-inter font-light transition-colors">
+                                  {option}
+                                </span>
+                              </label>
+                            )) : (
+                              <p className="text-sm text-gray-500 font-inter">No diamond sizes available</p>
+                            )}
+                          </div>
+                          <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
+                            <button
+                              onClick={() => {
+                                setSelectedFilters(prev => ({ ...prev, diamondSizes: [] }));
+                                setActiveFilter(null);
+                              }}
+                              className="text-xs text-gray-600 hover:text-gray-900 uppercase tracking-wider font-inter font-light transition-colors"
+                            >
+                              Clear
+                            </button>
+                            <button
+                              onClick={() => setActiveFilter(null)}
+                              className="bg-gray-900 text-white px-4 py-2 text-xs uppercase tracking-wider font-inter font-light hover:bg-gray-800 transition-colors"
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Collection Filter */}
                 <div className="relative">

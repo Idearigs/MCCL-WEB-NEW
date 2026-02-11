@@ -15,7 +15,7 @@ const getModelInstance = () => {
 const getAllProducts = asyncHandler(async (req, res) => {
   try {
     const models = getModelInstance();
-    const { Category, Collection, Product, ProductImage, ProductVariant, RingTypes, ProductMetals, StoneTypes, JewelrySubType } = models;
+    const { Category, Collection, Product, ProductImage, ProductVariant, RingTypes, ProductMetals, StoneTypes, JewelrySubType, DiamondSizes } = models;
 
     // Debug logging
     if (!JewelrySubType) {
@@ -34,6 +34,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     featured,
     in_stock,
     jewelrySubType,
+    diamondSize,
     sort = 'created_at',
     order = 'desc',
     page = 1,
@@ -57,7 +58,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     {
       model: ProductImage,
       as: 'images',
-      attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview'],
+      attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview', 'diamond_size_id', 'is_diamond_size_preview'],
       order: [['sort_order', 'ASC'], ['created_at', 'ASC']]
     },
     {
@@ -104,6 +105,17 @@ const getAllProducts = asyncHandler(async (req, res) => {
     });
   }
 
+  // Add DiamondSizes include if model is available
+  if (DiamondSizes) {
+    include.push({
+      model: DiamondSizes,
+      as: 'diamondSizes',
+      attributes: ['id', 'name', 'display_name'],
+      through: { attributes: [] },
+      required: false
+    });
+  }
+
   // Category filter
   if (category) {
     include[0].where = { slug: category };
@@ -122,6 +134,15 @@ const getAllProducts = asyncHandler(async (req, res) => {
     if (jewelrySubTypeIndex !== -1) {
       include[jewelrySubTypeIndex].where = { slug: jewelrySubType };
       include[jewelrySubTypeIndex].required = true;
+    }
+  }
+
+  // Diamond Size filter (for Engagement Rings)
+  if (diamondSize && DiamondSizes) {
+    const diamondSizeIndex = include.findIndex(inc => inc.model === DiamondSizes);
+    if (diamondSizeIndex !== -1) {
+      include[diamondSizeIndex].where = { name: diamondSize };
+      include[diamondSizeIndex].required = true;
     }
   }
 
@@ -206,8 +227,11 @@ const getAllProducts = asyncHandler(async (req, res) => {
         alt: img.alt_text || '',
         is_primary: img.is_primary || false,
         is_metal_preview: img.is_metal_preview || false,
-        metal_id: img.metal_id || null
+        metal_id: img.metal_id || null,
+        diamond_size_id: img.diamond_size_id || null,
+        is_diamond_size_preview: img.is_diamond_size_preview || false
       })),
+      diamondSizes: product.diamondSizes || [],
       variants: product.variants || [],
       created_at: product.created_at
     };
@@ -244,7 +268,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
 });
 
 const getProductBySlug = asyncHandler(async (req, res) => {
-  const { Category, Collection, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, RingTypes } = getModelInstance();
+  const { Category, Collection, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, RingTypes, DiamondSizes } = getModelInstance();
   const { slug } = req.params;
 
   const product = await Product.findOne({
@@ -264,7 +288,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       {
         model: ProductImage,
         as: 'images',
-        attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview'],
+        attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview', 'diamond_size_id', 'is_diamond_size_preview'],
         order: [['sort_order', 'ASC'], ['created_at', 'ASC']]
       },
       {
@@ -290,6 +314,13 @@ const getProductBySlug = asyncHandler(async (req, res) => {
         model: RingTypes,
         as: 'ringTypes',
         attributes: ['id', 'name', 'slug'],
+        through: { attributes: [] },
+        required: false
+      },
+      {
+        model: DiamondSizes,
+        as: 'diamondSizes',
+        attributes: ['id', 'name', 'display_name', 'sort_order'],
         through: { attributes: [] },
         required: false
       }
@@ -377,9 +408,12 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       url: img.image_url,
       alt: img.alt_text || product.name,
       is_primary: img.is_primary,
+      is_metal_preview: img.is_metal_preview || false,
       type: 'image',
       sort_order: img.sort_order,
-      metal_id: img.metal_id || null
+      metal_id: img.metal_id || null,
+      diamond_size_id: img.diamond_size_id || null,
+      is_diamond_size_preview: img.is_diamond_size_preview || false
     });
   });
 
@@ -419,6 +453,10 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     is_featured: product.is_featured,
     in_stock: product.in_stock,
     stock_quantity: product.stock_quantity,
+    // Made on Request Fields
+    is_made_on_request: product.is_made_on_request || false,
+    made_on_request_lead_time: product.made_on_request_lead_time,
+    made_on_request_message: product.made_on_request_message,
     // Nivoda Integration Fields
     nivoda_enabled: product.nivoda_enabled,
     show_stone_type: product.show_stone_type,
@@ -460,6 +498,12 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       id: size.id,
       name: size.size_name,
       value: size.size_value
+    })),
+    available_diamond_sizes: (product.diamondSizes || []).map(diamondSize => ({
+      id: diamondSize.id,
+      name: diamondSize.name,
+      display_name: diamondSize.display_name,
+      sort_order: diamondSize.sort_order
     })),
     breadcrumbs: [
       {

@@ -185,6 +185,47 @@ const getCollectionsByBrand = asyncHandler(async (req, res) => {
   });
 });
 
+// Get all collections (for admin filter dropdown)
+const getAllCollections = asyncHandler(async (req, res) => {
+  const { WatchCollection, WatchBrand, Watch } = getModelInstance();
+
+  const collections = await WatchCollection.findAll({
+    where: { is_active: true },
+    order: [['name', 'ASC']],
+    include: [
+      {
+        model: WatchBrand,
+        as: 'brand',
+        attributes: ['id', 'name', 'slug']
+      },
+      {
+        model: Watch,
+        as: 'watches',
+        attributes: ['id'],
+        where: { is_active: true },
+        required: false
+      }
+    ]
+  });
+
+  const transformedCollections = collections.map(collection => ({
+    id: collection.id,
+    name: collection.name,
+    slug: collection.slug,
+    brand: collection.brand ? {
+      id: collection.brand.id,
+      name: collection.brand.name,
+      slug: collection.brand.slug
+    } : null,
+    watches_count: collection.watches ? collection.watches.length : 0
+  }));
+
+  res.json({
+    success: true,
+    data: transformedCollections
+  });
+});
+
 const createCollection = asyncHandler(async (req, res) => {
   const { WatchCollection } = getModelInstance();
   const { brand_id, name, description, image_url, launch_year, target_audience } = req.body;
@@ -437,9 +478,11 @@ const getCollectionBySlug = asyncHandler(async (req, res) => {
 
 const getAllWatches = asyncHandler(async (req, res) => {
   const { WatchBrand, WatchCollection, Watch, WatchImage, WatchSpecification, WatchVariant } = getModelInstance();
+  const { Op } = require('sequelize');
   const {
     brand,
     collection,
+    search,
     gender,
     watch_type,
     style,
@@ -453,6 +496,15 @@ const getAllWatches = asyncHandler(async (req, res) => {
 
   const offset = (page - 1) * limit;
   const whereClause = { is_active: true };
+
+  // Search filter - search by name, sku, or reference
+  if (search) {
+    whereClause[Op.or] = [
+      { name: { [Op.iLike]: `%${search}%` } },
+      { sku: { [Op.iLike]: `%${search}%` } },
+      { reference_number: { [Op.iLike]: `%${search}%` } }
+    ];
+  }
   const include = [
     {
       model: WatchBrand,
@@ -492,9 +544,15 @@ const getAllWatches = asyncHandler(async (req, res) => {
     include[0].required = true;
   }
 
-  // Collection filter
+  // Collection filter - support both UUID and slug
   if (collection) {
-    include[1].where = { slug: collection };
+    // Check if it's a UUID (collection ID) or slug
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(collection);
+    if (isUUID) {
+      include[1].where = { id: collection };
+    } else {
+      include[1].where = { slug: collection };
+    }
     include[1].required = true;
   }
 
@@ -1430,6 +1488,7 @@ module.exports = {
   updateBrand,
   deleteBrand,
   getCollectionsByBrand,
+  getAllCollections,
   createCollection,
   updateCollection,
   deleteCollection,

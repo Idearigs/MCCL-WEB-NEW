@@ -388,82 +388,124 @@ const WatchDetail = () => {
         </div>
       </nav>
 
-      <div className="w-full px-0 py-0 flex flex-col lg:flex-row lg:items-stretch">
+      <div className="w-full flex flex-col lg:flex-row lg:min-h-[calc(100vh-120px)]">
 
-          {/* Left Column - Image Gallery - Modern Minimal Design */}
-          <div className="flex flex-col bg-white overflow-visible w-full lg:w-1/2">
-            {/* Main Image Container */}
-            <div className="relative overflow-hidden flex items-center justify-center w-full bg-gradient-to-br from-white via-gray-50 to-gray-100 px-4 lg:px-16" style={{ height: displayImages.length > 1 ? 'auto' : '100vh', minHeight: '60vh', paddingTop: '2rem', paddingBottom: '2rem' }} data-section="image-main">
+          {/* Left Column - Luxury Image Gallery */}
+          <div className="relative flex w-full lg:w-[58%] bg-[#f8f8f8]">
 
-              <img
-                src={currentImage.image_url}
-                alt={currentImage.alt_text}
-                className="w-auto h-auto max-w-5xl object-contain drop-shadow-sm"
-                style={{ maxHeight: '75vh', marginTop: '-40px' }}
-              />
-
-              {/* Navigation Arrows */}
-              {displayImages.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length)}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-all z-10"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-gray-900" />
-                  </button>
-                  <button
-                    onClick={() => setCurrentImageIndex((prev) => (prev + 1) % displayImages.length)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-all z-10"
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-900" />
-                  </button>
-                </>
-              )}
-
-              {/* Image Counter - Minimal */}
-              <div className="absolute bottom-20 right-4 lg:bottom-24 lg:right-8 bg-black/60 text-white px-3 py-1.5 rounded-full text-xs font-medium tracking-wider backdrop-blur-sm">
-                {currentImageIndex + 1}/{displayImages.length}
-              </div>
-
-              {/* Wishlist Button - Modern Minimal */}
-              <button
-                onClick={() => setIsWishlisted(!isWishlisted)}
-                className="absolute bottom-20 left-4 lg:bottom-24 lg:left-8 w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 hover:scale-110 active:scale-95 duration-200"
-                style={{
-                  background: isWishlisted ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(10px)'
-                }}
-              >
-                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-900'}`} />
-              </button>
-            </div>
-
-            {/* Related Product Images Grid - Fill the Space */}
+            {/* Vertical Thumbnail Strip - Desktop Only */}
             {displayImages.length > 1 && (
-              <div className="hidden md:grid grid-cols-2 gap-1 px-0 lg:px-0 py-0 flex-1" style={{ gridAutoRows: '1fr', minHeight: '250px' }}>
-                {displayImages.slice(0, 2).map((img, index) => (
-                  <div
+              <div className="hidden lg:flex flex-col gap-2 absolute left-6 top-1/2 -translate-y-1/2 z-10">
+                {displayImages.map((img, index) => (
+                  <button
                     key={img.id}
-                    className="relative overflow-hidden bg-gray-50 border border-gray-200 hover:border-gray-400 cursor-pointer transition-all hover:shadow-md"
-                    style={{}}
                     onClick={() => setCurrentImageIndex(index)}
+                    className={`w-16 h-16 overflow-hidden bg-white transition-all duration-300 ${
+                      index === currentImageIndex
+                        ? 'ring-2 ring-gray-900'
+                        : 'opacity-70 hover:opacity-100 ring-1 ring-gray-200 hover:ring-gray-400'
+                    }`}
                   >
                     <img
                       src={img.image_url}
                       alt={img.alt_text}
-                      className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                      className="w-full h-full object-cover"
                     />
-                    {index === currentImageIndex && (
-                      <div className="absolute inset-0 border-3 border-gray-900"></div>
-                    )}
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
+
+            {/* Main Image Container */}
+            <div className="relative flex-1 flex flex-col" data-section="image-main">
+
+              {/* Main Image - Full width on mobile */}
+              <div className="flex-1 flex items-center justify-center px-4 py-6 lg:py-12 lg:px-24 min-h-[50vh] lg:min-h-0">
+                <img
+                  src={currentImage.image_url}
+                  alt={currentImage.alt_text}
+                  className="w-full h-full max-h-[45vh] lg:max-h-[70vh] object-contain"
+                />
+              </div>
+
+              {/* Minimal Navigation Arrows */}
+              {displayImages.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length)}
+                    className="absolute left-2 lg:left-24 top-1/2 -translate-y-1/2 w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors duration-300 bg-white/90 hover:bg-white rounded-full shadow-sm"
+                  >
+                    <ChevronLeft className="w-4 h-4 lg:w-5 lg:h-5" strokeWidth={1.5} />
+                  </button>
+                  <button
+                    onClick={() => setCurrentImageIndex((prev) => (prev + 1) % displayImages.length)}
+                    className="absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors duration-300 bg-white/90 hover:bg-white rounded-full shadow-sm"
+                  >
+                    <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5" strokeWidth={1.5} />
+                  </button>
+                </>
+              )}
+
+              {/* Mobile Thumbnail Strip */}
+              {displayImages.length > 1 && (
+                <div className="lg:hidden flex justify-center gap-2 px-4 py-3 bg-[#f8f8f8]">
+                  {displayImages.map((img, index) => (
+                    <button
+                      key={img.id}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-14 h-14 overflow-hidden bg-white transition-all duration-300 ${
+                        index === currentImageIndex
+                          ? 'ring-2 ring-gray-900'
+                          : 'opacity-60 ring-1 ring-gray-200'
+                      }`}
+                    >
+                      <img
+                        src={img.image_url}
+                        alt={img.alt_text}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Bottom Controls */}
+              <div className="flex items-center justify-center gap-4 lg:gap-6 px-4 py-3 lg:py-4 bg-[#f8f8f8] lg:absolute lg:bottom-6 lg:left-0 lg:right-0 lg:bg-transparent">
+                {/* Wishlist Button */}
+                <button
+                  onClick={() => setIsWishlisted(!isWishlisted)}
+                  className="group flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors duration-300"
+                >
+                  <Heart className={`w-5 h-5 transition-all duration-300 ${isWishlisted ? 'fill-gray-900 text-gray-900' : 'group-hover:scale-110'}`} strokeWidth={1.5} />
+                </button>
+
+                {/* Image Counter - Elegant Dots */}
+                {displayImages.length > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    {displayImages.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`transition-all duration-300 rounded-full ${
+                          index === currentImageIndex
+                            ? 'w-5 h-1.5 bg-gray-900'
+                            : 'w-1.5 h-1.5 bg-gray-400 hover:bg-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Image Number */}
+                <span className="text-xs text-gray-400 tracking-widest font-light">
+                  {String(currentImageIndex + 1).padStart(2, '0')} / {String(displayImages.length).padStart(2, '0')}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Right Column - Product Info - Modern Minimal Luxury - SCROLLABLE */}
-          <div className="flex flex-col px-6 md:px-8 lg:px-48 py-8 md:py-12 lg:py-20 bg-white space-y-8 w-full lg:flex-1" data-product-details>
+          {/* Right Column - Product Info - Modern Minimal Luxury */}
+          <div className="flex flex-col px-6 md:px-8 lg:px-12 xl:px-16 py-8 md:py-10 lg:py-12 bg-white space-y-6 w-full lg:w-[42%] lg:overflow-y-auto lg:max-h-[calc(100vh-120px)]" data-product-details>
 
             {/* Brand & Model - Elegant Header */}
             <div className="space-y-4">

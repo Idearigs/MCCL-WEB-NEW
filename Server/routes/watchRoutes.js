@@ -7,6 +7,7 @@ const {
   updateBrand,
   deleteBrand,
   getCollectionsByBrand,
+  getAllCollections,
   createCollection,
   updateCollection,
   deleteCollection,
@@ -35,6 +36,7 @@ router.delete('/brands/:id', deleteBrand);
 
 // Collection routes
 router.get('/featured-collections', getFeaturedCollections);
+router.get('/collections/all', getAllCollections); // Get all collections for admin filter dropdown
 router.get('/collections/:slug', getCollectionBySlug);
 router.get('/brands/:brandId/collections', getCollectionsByBrand);
 router.post('/collections', createCollection);

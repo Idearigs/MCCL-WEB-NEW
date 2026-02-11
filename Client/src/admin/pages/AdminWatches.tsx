@@ -110,9 +110,12 @@ const AdminWatches: React.FC = () => {
   const [brands, setBrands] = useState<WatchBrand[]>([]);
   const [collections, setCollections] = useState<WatchCollection[]>([]);
   const [watches, setWatches] = useState<Watch[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('');
+  const [selectedCollection, setSelectedCollection] = useState<string>('');
+  const [allCollections, setAllCollections] = useState<WatchCollection[]>([]);
   const [showBrandModal, setShowBrandModal] = useState(false);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [showWatchModal, setShowWatchModal] = useState(false);
@@ -234,10 +237,33 @@ const AdminWatches: React.FC = () => {
     }
   };
 
+  // Fetch all collections for the watches filter dropdown
+  const fetchAllCollections = async () => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_BASE_URL}/admin/watches/collections/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setAllCollections(data.data || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching all collections:', error);
+    }
+  };
+
   const fetchWatches = async () => {
     try {
       const params = new URLSearchParams();
       if (selectedBrand) params.append('brand', selectedBrand);
+      if (selectedCollection) params.append('collection', selectedCollection);
       if (searchTerm) params.append('search', searchTerm);
 
       const token = localStorage.getItem('admin_token');
@@ -297,18 +323,23 @@ const AdminWatches: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
+      // Only show loading indicator for subsequent fetches, not full page loader
+      if (!initialLoading) {
+        setLoading(true);
+      }
       await fetchBrands();
       if (activeTab === 'collections') {
         await fetchCollections(selectedBrandForCollections?.id);
       } else if (activeTab === 'watches') {
+        await fetchAllCollections(); // Fetch all collections for the filter dropdown
         await fetchWatches();
       }
       setLoading(false);
+      setInitialLoading(false);
     };
 
     loadData();
-  }, [activeTab, selectedBrand, searchTerm, selectedBrandForCollections]);
+  }, [activeTab, selectedBrand, selectedCollection, searchTerm, selectedBrandForCollections]);
 
   // Filter collections based on selected brand
   useEffect(() => {
@@ -658,7 +689,8 @@ const AdminWatches: React.FC = () => {
     setActiveTab('brands');
   };
 
-  if (loading) {
+  // Only show full-page loader on initial load
+  if (initialLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
@@ -668,6 +700,13 @@ const AdminWatches: React.FC = () => {
 
   return (
     <AdminLayout>
+      {/* Subtle loading overlay for subsequent fetches */}
+      {loading && (
+        <div className="fixed top-16 right-4 z-50 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg px-4 py-2 flex items-center space-x-2">
+          <LoadingSpinner size="sm" />
+          <span className="text-sm text-gray-600">Loading...</span>
+        </div>
+      )}
       <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -777,7 +816,10 @@ const AdminWatches: React.FC = () => {
             <>
               <select
                 value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
+                onChange={(e) => {
+                  setSelectedBrand(e.target.value);
+                  setSelectedCollection(''); // Reset collection when brand changes
+                }}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
               >
                 <option value="">All Brands</option>
@@ -785,13 +827,20 @@ const AdminWatches: React.FC = () => {
                   <option key={brand.id} value={brand.slug}>{brand.name}</option>
                 ))}
               </select>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi">
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi">
-                <option value="">All {activeTab === 'brands' ? 'Brands' : 'Watches'}</option>
+              <select
+                value={selectedCollection}
+                onChange={(e) => setSelectedCollection(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 font-satoshi"
+              >
+                <option value="">All Collections</option>
+                {(selectedBrand
+                  ? allCollections.filter(c => c.brand?.slug === selectedBrand)
+                  : allCollections
+                ).map(collection => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.brand?.name ? `${collection.brand.name} - ` : ''}{collection.name}
+                  </option>
+                ))}
               </select>
             </>
           )}

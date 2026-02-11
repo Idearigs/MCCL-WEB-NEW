@@ -218,7 +218,7 @@ const getProducts = async (req, res) => {
 // Get single product by ID for admin
 const getProductById = async (req, res) => {
   try {
-    const { Product, Category, Collection, ProductImage, ProductVideo, ProductVariant, RingTypes, StoneShapes, StoneTypes, ProductMetals } = getModelInstance();
+    const { Product, Category, Collection, ProductImage, ProductVideo, ProductVariant, RingTypes, StoneShapes, StoneTypes, ProductMetals, DiamondSizes } = getModelInstance();
     const { id } = req.params;
 
     const product = await Product.findByPk(id, {
@@ -237,7 +237,7 @@ const getProductById = async (req, res) => {
         {
           model: ProductImage,
           as: 'images',
-          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview'],
+          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview', 'diamond_size_id', 'is_diamond_size_preview'],
           order: [['sort_order', 'ASC']]
         },
         {
@@ -309,6 +309,13 @@ const getProductById = async (req, res) => {
           as: 'metals',
           attributes: ['id', 'name', 'color_code'],
           through: { attributes: [] }
+        },
+        {
+          model: DiamondSizes,
+          as: 'diamondSizes',
+          attributes: ['id', 'name', 'display_name', 'sort_order'],
+          through: { attributes: [] },
+          required: false
         }
       ]
     });
@@ -354,7 +361,8 @@ const createProduct = async (req, res) => {
       ProductMetals,
       ProductRingTypes,
       ProductStoneShapes,
-      ProductMetalsJunction
+      ProductMetalsJunction,
+      ProductDiamondSizes
     } = getModelInstance();
 
     const {
@@ -376,6 +384,7 @@ const createProduct = async (req, res) => {
       ring_style_4_id = null,
       ring_style_5_id = null,
       metal_ids = [],
+      diamond_size_ids = [],
       is_active = true,
       is_featured = false,
       in_stock = true,
@@ -532,6 +541,17 @@ const createProduct = async (req, res) => {
       relationshipPromises.push(...metalPromises);
     }
 
+    // Diamond size relationships (for Engagement Rings)
+    if (diamond_size_ids && diamond_size_ids.length > 0 && ProductDiamondSizes) {
+      const diamondSizePromises = diamond_size_ids.map(diamondSizeId =>
+        ProductDiamondSizes.create({
+          product_id: product.id,
+          diamond_size_id: diamondSizeId
+        })
+      );
+      relationshipPromises.push(...diamondSizePromises);
+    }
+
     // Execute all relationship promises
     if (relationshipPromises.length > 0) {
       await Promise.all(relationshipPromises);
@@ -600,7 +620,9 @@ const updateProduct = async (req, res) => {
       ProductMetals,
       ProductRingTypes,
       ProductStoneShapes,
-      ProductMetalsJunction
+      ProductMetalsJunction,
+      DiamondSizes,
+      ProductDiamondSizes
     } = getModelInstance();
     const { id } = req.params;
 
@@ -617,6 +639,7 @@ const updateProduct = async (req, res) => {
       ring_type_ids = [],
       stone_shape_ids = [],
       metal_ids = [],
+      diamond_size_ids = [],
       nivoda_options_config,
       ...productData
     } = req.body;
@@ -725,6 +748,25 @@ const updateProduct = async (req, res) => {
       }
     }
 
+    // Update diamond size relationships (for Engagement Rings)
+    if (diamond_size_ids !== undefined && ProductDiamondSizes) {
+      // Delete existing diamond size relationships
+      await ProductDiamondSizes.destroy({
+        where: { product_id: id }
+      });
+
+      // Create new diamond size relationships
+      if (diamond_size_ids && diamond_size_ids.length > 0) {
+        const diamondSizePromises = diamond_size_ids.map(diamondSizeId =>
+          ProductDiamondSizes.create({
+            product_id: id,
+            diamond_size_id: diamondSizeId
+          })
+        );
+        relationshipPromises.push(...diamondSizePromises);
+      }
+    }
+
     // Execute all relationship promises
     if (relationshipPromises.length > 0) {
       await Promise.all(relationshipPromises);
@@ -784,7 +826,7 @@ const updateProduct = async (req, res) => {
         {
           model: ProductImage,
           as: 'images',
-          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview'],
+          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview', 'diamond_size_id', 'is_diamond_size_preview'],
           order: [['sort_order', 'ASC']]
         },
         {
@@ -847,6 +889,13 @@ const updateProduct = async (req, res) => {
           as: 'metals',
           attributes: ['id', 'name', 'color_code'],
           through: { attributes: [] }
+        },
+        {
+          model: DiamondSizes,
+          as: 'diamondSizes',
+          attributes: ['id', 'name', 'display_name', 'sort_order'],
+          through: { attributes: [] },
+          required: false
         }
       ]
     });
@@ -1161,9 +1210,9 @@ const toggleFeaturedStatus = async (req, res) => {
 // Get product categories and collections for dropdowns
 const getProductOptions = async (req, res) => {
   try {
-    const { Category, Collection, ProductMetals, ProductSizes, RingTypes, StoneShapes, StoneTypes } = getModelInstance();
+    const { Category, Collection, ProductMetals, ProductSizes, RingTypes, StoneShapes, StoneTypes, DiamondSizes } = getModelInstance();
 
-    const [categories, collections, metals, sizes, ringTypes, stoneShapes, stoneTypes] = await Promise.all([
+    const [categories, collections, metals, sizes, ringTypes, stoneShapes, stoneTypes, diamondSizes] = await Promise.all([
       Category.findAll({
         where: { is_active: true },
         attributes: ['id', 'name', 'slug'],
@@ -1205,7 +1254,12 @@ const getProductOptions = async (req, res) => {
         where: { is_active: true },
         attributes: ['id', 'name', 'slug', 'description'],
         order: [['sort_order', 'ASC'], ['name', 'ASC']]
-      })
+      }),
+      DiamondSizes ? DiamondSizes.findAll({
+        where: { is_active: true },
+        attributes: ['id', 'name', 'display_name', 'description', 'sort_order'],
+        order: [['sort_order', 'ASC'], ['name', 'ASC']]
+      }) : Promise.resolve([])
     ]);
 
     res.json({
@@ -1217,7 +1271,8 @@ const getProductOptions = async (req, res) => {
         sizes,
         ringTypes,
         stoneShapes,
-        stoneTypes
+        stoneTypes,
+        diamondSizes
       }
     });
   } catch (error) {
@@ -1312,7 +1367,9 @@ const createProductWithMedia = async (req, res) => {
       ProductMetals,
       ProductRingTypes,
       ProductStoneShapes,
-      ProductMetalsJunction
+      ProductMetalsJunction,
+      DiamondSizes,
+      ProductDiamondSizes
     } = getModelInstance();
 
     // Parse form data
@@ -1335,6 +1392,7 @@ const createProductWithMedia = async (req, res) => {
       ring_style_4_id,
       ring_style_5_id,
       metal_ids,
+      diamond_size_ids,
       is_active = true,
       is_featured = false,
       in_stock = true,
@@ -1369,6 +1427,7 @@ const createProductWithMedia = async (req, res) => {
     const parsedRingTypeIds = ring_type_ids ? JSON.parse(ring_type_ids) : [];
     const parsedStoneShapeIds = stone_shape_ids ? JSON.parse(stone_shape_ids) : [];
     const parsedMetalIds = metal_ids ? JSON.parse(metal_ids) : [];
+    const parsedDiamondSizeIds = diamond_size_ids ? JSON.parse(diamond_size_ids) : [];
 
     // Handle ring style arrays - extract first element from each array or convert empty to null
     // Frontend sends arrays (ring_style_1_ids, ring_style_2_ids, etc.)
@@ -1612,6 +1671,18 @@ const createProductWithMedia = async (req, res) => {
       });
     }
 
+    // Diamond size relationships (for Engagement Rings)
+    if (parsedDiamondSizeIds.length > 0 && ProductDiamondSizes) {
+      parsedDiamondSizeIds.forEach(diamondSizeId => {
+        promises.push(
+          ProductDiamondSizes.create({
+            product_id: product.id,
+            diamond_size_id: diamondSizeId
+          })
+        );
+      });
+    }
+
     // Execute all promises
     await Promise.all(promises);
 
@@ -1631,7 +1702,8 @@ const createProductWithMedia = async (req, res) => {
         { model: RingTypes, as: 'ringStyle3', required: false },
         { model: RingTypes, as: 'ringStyle4', required: false },
         { model: RingTypes, as: 'ringStyle5', required: false },
-        { model: ProductMetals, as: 'metals' }
+        { model: ProductMetals, as: 'metals' },
+        { model: DiamondSizes, as: 'diamondSizes', required: false }
       ]
     });
 

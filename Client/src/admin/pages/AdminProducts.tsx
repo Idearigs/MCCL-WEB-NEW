@@ -75,6 +75,7 @@ interface ProductOptions {
   ringTypes: Array<{ id: string; name: string; slug: string }>;
   stoneShapes: Array<{ id: string; name: string; slug: string }>;
   stoneTypes: Array<{ id: string; name: string; slug: string }>;
+  diamondSizes: Array<{ id: string; name: string; display_name?: string; sort_order?: number }>;
 }
 
 const AdminProducts: React.FC = () => {
@@ -236,7 +237,8 @@ const AdminProducts: React.FC = () => {
         stoneShapes: Array.isArray(stoneShapesData) ? stoneShapesData : [],
         stoneTypes: Array.isArray(stoneTypesData) ? stoneTypesData : [],
         metals: Array.isArray(metalsData) ? metalsData : [],
-        sizes: productsOptionsData.success ? productsOptionsData.data.sizes : []
+        sizes: productsOptionsData.success ? productsOptionsData.data.sizes : [],
+        diamondSizes: productsOptionsData.success ? productsOptionsData.data.diamondSizes || [] : []
       };
 
       setProductOptions(combinedOptions);
@@ -251,7 +253,8 @@ const AdminProducts: React.FC = () => {
         stoneShapes: [],
         stoneTypes: [],
         metals: [],
-        sizes: []
+        sizes: [],
+        diamondSizes: []
       });
     }
   };
@@ -793,6 +796,8 @@ const AdminProducts: React.FC = () => {
           alt_text: img.alt_text || '',
           metal_id: img.metal_id || null,
           is_metal_preview: img.is_metal_preview || false,
+          diamond_size_id: img.diamond_size_id || null,
+          is_diamond_size_preview: img.is_diamond_size_preview || false,
           id: img.id
         })) || [],
         // Transform videos to include proper structure
@@ -1291,6 +1296,7 @@ const AdminProducts: React.FC = () => {
         stoneShapes={productOptions?.stoneShapes || []}
         stoneTypes={productOptions?.stoneTypes || []}
         metals={productOptions?.metals || []}
+        diamondSizes={productOptions?.diamondSizes || []}
         isLoading={formLoading}
       />
 

@@ -187,6 +187,7 @@ const PaymentForm = ({
             type: item.type || null,
             selectedOptions: item.selectedOptions || null,
             metal: item.metal || null,
+            diamondSize: (item as any).diamondSize || null,
             size: item.size || null,
             brand: item.brand || null,
             variant_name: item.variant_name || null
@@ -243,7 +244,7 @@ const PaymentForm = ({
 // Main Checkout Component
 const Checkout = (): JSX.Element => {
   const { cartItems, clearCart } = useCart();
-  const { isAuthenticated, isLoading } = useUserAuth();
+  const { user, isAuthenticated, isLoading } = useUserAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -269,7 +270,6 @@ const Checkout = (): JSX.Element => {
 
   // Auth modal state
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalShown, setAuthModalShown] = useState(false);
 
   // Track if InitiateCheckout pixel event has been fired
   const initiateCheckoutFired = useRef(false);
@@ -281,13 +281,14 @@ const Checkout = (): JSX.Element => {
     }
   }, [cartItems.length, successMessage, navigate]);
 
-  // Show auth modal if user is not authenticated
+  // Pre-fill email if user is authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !authModalShown && cartItems.length > 0) {
-      setShowAuthModal(true);
-      setAuthModalShown(true);
+    if (!isLoading && isAuthenticated && user) {
+      if (user.email && !email) setEmail(user.email);
+      if (user.firstName && !firstName) setFirstName(user.firstName);
+      if (user.lastName && !lastName) setLastName(user.lastName);
     }
-  }, [isLoading, isAuthenticated, authModalShown, cartItems.length]);
+  }, [isLoading, isAuthenticated]);
 
   // Facebook Pixel: Track InitiateCheckout when page loads with cart items
   useEffect(() => {
@@ -406,7 +407,10 @@ const Checkout = (): JSX.Element => {
       <CheckoutAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onAuthComplete={() => setShowAuthModal(false)}
+        onAuthComplete={() => {
+          setShowAuthModal(false);
+          // Re-check auth state - user data will be picked up by the useEffect
+        }}
       />
 
       {/* Header */}
@@ -450,9 +454,17 @@ const Checkout = (): JSX.Element => {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-medium text-gray-900">Contact</h3>
-                <button className="text-xs text-blue-600 hover:text-blue-700 underline">
-                  Log in
-                </button>
+                {!isAuthenticated && (
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="text-xs text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Log in
+                  </button>
+                )}
+                {isAuthenticated && user && (
+                  <span className="text-xs text-green-600">Signed in as {user.email}</span>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -713,6 +725,7 @@ const Checkout = (): JSX.Element => {
                       ) : (
                         <>
                           {item.metal && <span>{item.metal}</span>}
+                          {(item as any).diamondSize && <span> • Diamond Size {(item as any).diamondSize}</span>}
                           {item.size && <span> • {item.size}</span>}
                         </>
                       )}

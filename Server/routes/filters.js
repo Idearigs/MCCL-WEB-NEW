@@ -15,6 +15,8 @@ const {
   getBraceletTypes
 } = require('../controllers/adminJewelryCategoriesController');
 
+const { getModels } = require('../models');
+
 // Public filter endpoints (no authentication required)
 router.get('/ring-types', getRingTypes);
 router.get('/gemstones', getGemstones);
@@ -25,5 +27,37 @@ router.get('/collections', getCollections);
 router.get('/earring-types', getEarringTypes);
 router.get('/necklace-types', getNecklaceTypes);
 router.get('/bracelet-types', getBraceletTypes);
+
+// Diamond Sizes endpoint (public - for Engagement Rings)
+router.get('/diamond-sizes', async (req, res) => {
+  try {
+    const { DiamondSizes } = getModels();
+
+    if (!DiamondSizes) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const diamondSizes = await DiamondSizes.findAll({
+      where: { is_active: true },
+      attributes: ['id', 'name', 'display_name', 'description', 'sort_order'],
+      order: [['sort_order', 'ASC'], ['name', 'ASC']]
+    });
+
+    res.json({
+      success: true,
+      data: diamondSizes
+    });
+  } catch (error) {
+    console.error('Error fetching diamond sizes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch diamond sizes',
+      error: error.message
+    });
+  }
+});
 
 module.exports = router;

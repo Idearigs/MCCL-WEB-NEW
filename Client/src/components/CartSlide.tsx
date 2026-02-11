@@ -9,6 +9,7 @@ interface CartItem {
   price: string | number;
   metal?: string;
   size?: string;
+  diamondSize?: string;
   image: string;
   quantity: number;
   brand?: string;
@@ -101,10 +102,10 @@ const CartSlide: React.FC<CartSlideProps> = ({
                 <div key={index} className="flex space-x-4 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                   {/* Product Image */}
                   <div className="flex-shrink-0 w-20 h-20 bg-gray-50 rounded overflow-hidden">
-                    <img 
-                      src={item.image} 
+                    <img
+                      src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-contain p-2"
+                      className="w-full h-full object-cover"
                     />
                   </div>
                   
@@ -131,6 +132,7 @@ const CartSlide: React.FC<CartSlideProps> = ({
                       ) : (
                         <div>
                           {item.metal && <span>{item.metal.charAt(0).toUpperCase() + item.metal.slice(1)}</span>}
+                          {item.diamondSize && <span> / Diamond Size {item.diamondSize}</span>}
                           {item.size && <span> / Size {item.size}</span>}
                         </div>
                       )}

@@ -24,6 +24,7 @@ interface ProductFormData {
   ring_style_4_ids: string[];
   ring_style_5_ids: string[];
   metal_ids: string[];
+  diamond_size_ids: string[]; // Diamond sizes for Engagement Rings
   is_active: boolean;
   is_featured: boolean;
   in_stock: boolean;
@@ -82,6 +83,7 @@ interface ProductFormModalProps {
   stoneShapes: Array<{ id: string; name: string; slug: string }>;
   stoneTypes: Array<{ id: string; name: string; slug: string }>;
   metals: Array<{ id: string; name: string; color_code: string; price_multiplier?: number }>;
+  diamondSizes: Array<{ id: string; name: string; display_name?: string; sort_order?: number }>; // Diamond sizes
   isLoading?: boolean;
 }
 
@@ -97,6 +99,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   ringTypes,
   stoneShapes,
   stoneTypes,
+  diamondSizes = [],
   metals,
   isLoading = false
 }) => {
@@ -120,6 +123,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     ring_style_4_ids: [],
     ring_style_5_ids: [],
     metal_ids: [],
+    diamond_size_ids: [],
     is_active: true,
     is_featured: false,
     in_stock: true,
@@ -216,13 +220,24 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         sale_price: initialData.sale_price?.toString() || '',
         stock_quantity: initialData.stock_quantity?.toString() || '0',
         weight: initialData.weight?.toString() || '',
-        // Convert null to empty string for textarea fields to prevent React warnings
+        // Convert null to empty string for select/textarea fields to prevent React warnings
+        category_id: initialData.category_id || '',
+        collection_id: initialData.collection_id || '',
+        jewelry_sub_type_id: initialData.jewelry_sub_type_id || '',
+        stone_type_id: initialData.stone_type_id || '',
+        certificate: initialData.certificate || '',
         description: initialData.description || '',
         short_description: initialData.short_description || '',
         care_instructions: initialData.care_instructions || '',
         warranty_info: initialData.warranty_info || '',
+        meta_title: initialData.meta_title || '',
         meta_description: initialData.meta_description || '',
         made_on_request_message: initialData.made_on_request_message || '',
+        made_on_request_lead_time: initialData.made_on_request_lead_time || '4-6 weeks',
+        dimensions: initialData.dimensions || '',
+        currency: initialData.currency || 'GBP',
+        name: initialData.name || '',
+        sku: initialData.sku || '',
         images: initialData.images || [],
         videos: initialData.videos || [],
         variants: initialData.variants || [],
@@ -257,10 +272,14 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         ring_style_4_ids: [],
         ring_style_5_ids: [],
         metal_ids: [],
+        diamond_size_ids: [],
         is_active: true,
         is_featured: false,
         in_stock: true,
         stock_quantity: '0',
+        is_made_on_request: false,
+        made_on_request_lead_time: '4-6 weeks',
+        made_on_request_message: '',
         weight: '',
         dimensions: '',
         care_instructions: '',
@@ -307,6 +326,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               url: img.url,
               alt_text: img.alt_text || img.alt || '',
               is_metal_preview: img.is_metal_preview || false,
+              diamond_size_id: img.diamond_size_id || null,
+              is_diamond_size_preview: img.is_diamond_size_preview || false,
               id: img.id
             });
           }
@@ -1050,6 +1071,73 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Diamond Sizes Section - Only for Engagement Rings */}
+              {jewelrySubTypes.find(jst => jst.slug === 'engagement-rings')?.id === formData.jewelry_sub_type_id && diamondSizes.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2 font-cormorant">
+                    Diamond Sizes for this Product
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-6 font-satoshi">
+                    Select which diamond sizes this engagement ring is available in. Different diamond sizes may have different images.
+                  </p>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {diamondSizes.map((diamondSize) => (
+                      <label
+                        key={diamondSize.id}
+                        className="flex items-center justify-center space-x-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-900 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.diamond_size_ids.includes(diamondSize.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData(prev => ({
+                                ...prev,
+                                diamond_size_ids: [...prev.diamond_size_ids, diamondSize.id]
+                              }));
+                            } else {
+                              setFormData(prev => ({
+                                ...prev,
+                                diamond_size_ids: prev.diamond_size_ids.filter(id => id !== diamondSize.id)
+                              }));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-900"
+                        />
+                        <div className="text-center">
+                          <span className="text-lg font-semibold text-gray-900 font-satoshi">{diamondSize.name}</span>
+                          {diamondSize.display_name && (
+                            <span className="text-xs text-gray-500 block font-satoshi">{diamondSize.display_name}</span>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+
+                  {formData.diamond_size_ids.length > 0 && (
+                    <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                      <h4 className="text-sm font-medium text-purple-900 mb-2 font-satoshi">
+                        ✓ Selected Diamond Sizes ({formData.diamond_size_ids.length})
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.diamond_size_ids.map((sizeId) => {
+                          const size = diamondSizes.find(s => s.id === sizeId);
+                          return size ? (
+                            <span
+                              key={sizeId}
+                              className="bg-white px-3 py-1 rounded-full border border-purple-300 text-sm text-gray-900 font-satoshi"
+                            >
+                              Size {size.name}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -1383,13 +1471,9 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                           {/* Images for this metal */}
                           <div className="p-4 bg-gray-50">
                             <h5 className="text-sm font-medium text-gray-900 mb-3 font-satoshi">
-                              Images for {metal.name} ({(metalMediaState[metalId]?.images?.length || 0)}/4)
+                              Images for {metal.name} ({(metalMediaState[metalId]?.images?.length || 0)})
                             </h5>
-                            <label className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg cursor-pointer w-fit mb-3 font-satoshi transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                              style={{
-                                pointerEvents: (metalMediaState[metalId]?.images?.length || 0) >= 4 ? 'none' : 'auto',
-                                opacity: (metalMediaState[metalId]?.images?.length || 0) >= 4 ? 0.6 : 1
-                              }}>
+                            <label className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg cursor-pointer w-fit mb-3 font-satoshi transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
                               <Upload className="h-4 w-4" />
                               <span>Upload {metal.name} Images</span>
                               <input
@@ -1399,10 +1483,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                 className="hidden"
                                 onChange={(e) => {
                                   const files = Array.from(e.target.files || []);
-                                  const remainingSlots = 4 - (metalMediaState[metalId]?.images?.length || 0);
-                                  const filesToAdd = files.slice(0, remainingSlots);
-
-                                  const newImages = filesToAdd.map(file => ({
+                                  const newImages = files.map(file => ({
                                     file,
                                     url: URL.createObjectURL(file),
                                     alt_text: file.name.replace(/\.[^/.]+$/, "")
@@ -1418,73 +1499,165 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
                                   e.target.value = '';
                                 }}
-                                disabled={(metalMediaState[metalId]?.images?.length || 0) >= 4}
                               />
                             </label>
-                            <div className="text-xs text-gray-500 font-satoshi">
-                              You can upload up to 4 images per metal type
-                            </div>
 
-                            {/* Display uploaded metal-specific images */}
-                            {(metalMediaState[metalId]?.images?.length || 0) > 0 && (
-                              <div className="space-y-3 mt-3">
-                                <p className="text-xs text-gray-500 font-satoshi">Check the checkbox to mark this image as the preview for metal selection</p>
-                                <div className="grid grid-cols-2 gap-3">
-                                  {metalMediaState[metalId]?.images?.map((img, idx) => (
-                                    <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
-                                      <div className="relative bg-gray-100">
-                                        <img
-                                          src={getMediaUrl(img.url)}
-                                          alt={img.alt_text || `${metal.name} image ${idx + 1}`}
-                                          className="w-full h-24 object-cover"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setMetalMediaState(prev => ({
-                                              ...prev,
-                                              [metalId]: {
-                                                ...prev[metalId],
-                                                images: prev[metalId]?.images?.filter((_, i) => i !== idx) || []
-                                              }
-                                            }));
-                                          }}
-                                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                        >
-                                          <X className="h-3 w-3" />
-                                        </button>
+                            {/* Display images - grouped by diamond size if any */}
+                            {(metalMediaState[metalId]?.images?.length || 0) > 0 && (() => {
+                              const allImgs = metalMediaState[metalId]?.images || [];
+                              const hasDiamondSizes = allImgs.some((img: any) => img.diamond_size_id);
+
+                              if (hasDiamondSizes) {
+                                // Group images by diamond_size_id
+                                const grouped: Record<string, any[]> = {};
+                                const noDs: any[] = [];
+                                allImgs.forEach((img: any, idx: number) => {
+                                  const imgWithIdx = { ...img, _originalIdx: idx };
+                                  if (img.diamond_size_id) {
+                                    if (!grouped[img.diamond_size_id]) grouped[img.diamond_size_id] = [];
+                                    grouped[img.diamond_size_id].push(imgWithIdx);
+                                  } else {
+                                    noDs.push(imgWithIdx);
+                                  }
+                                });
+
+                                // Sort diamond size groups by name
+                                const sortedGroups = Object.entries(grouped).sort(([aId], [bId]) => {
+                                  const aDs = diamondSizes.find(d => d.id === aId);
+                                  const bDs = diamondSizes.find(d => d.id === bId);
+                                  return (aDs?.sort_order || 0) - (bDs?.sort_order || 0);
+                                });
+
+                                return (
+                                  <div className="space-y-4 mt-3">
+                                    {/* Images without diamond size */}
+                                    {noDs.length > 0 && (
+                                      <div>
+                                        <p className="text-xs font-medium text-gray-600 mb-2 font-satoshi">General Images</p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                          {noDs.map((img: any) => (
+                                            <div key={img._originalIdx} className="border border-gray-200 rounded-lg overflow-hidden">
+                                              <div className="relative bg-gray-100">
+                                                <img src={getMediaUrl(img.url)} alt={img.alt_text || ''} className="w-full h-20 object-cover" />
+                                                <button type="button" onClick={() => {
+                                                  setMetalMediaState(prev => ({ ...prev, [metalId]: { ...prev[metalId], images: prev[metalId]?.images?.filter((_: any, i: number) => i !== img._originalIdx) || [] } }));
+                                                }} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600">
+                                                  <X className="h-3 w-3" />
+                                                </button>
+                                              </div>
+                                              <div className="p-1 border-t border-gray-200">
+                                                <label className="flex items-center space-x-1 cursor-pointer">
+                                                  <input type="checkbox" checked={img.is_metal_preview || false} onChange={(e) => {
+                                                    setMetalMediaState(prev => ({ ...prev, [metalId]: { ...prev[metalId], images: prev[metalId]?.images?.map((image: any, i: number) => i === img._originalIdx ? { ...image, is_metal_preview: e.target.checked } : { ...image, is_metal_preview: false }) || [] } }));
+                                                  }} className="w-3 h-3 rounded" />
+                                                  <span className="text-[10px] text-gray-700 font-satoshi">{img.is_metal_preview ? 'Preview' : 'Set Preview'}</span>
+                                                </label>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
                                       </div>
-                                      {/* Metal Preview Checkbox */}
-                                      <div className="p-2 border-t border-gray-200">
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                          <input
-                                            type="checkbox"
-                                            checked={img.is_metal_preview || false}
-                                            onChange={(e) => {
+                                    )}
+                                    {/* Images grouped by diamond size */}
+                                    {sortedGroups.map(([dsId, imgs]) => {
+                                      const ds = diamondSizes.find(d => d.id === dsId);
+                                      return (
+                                        <div key={dsId} className="border border-indigo-200 rounded-lg overflow-hidden">
+                                          <div className="bg-indigo-50 px-3 py-1.5 border-b border-indigo-200">
+                                            <span className="text-xs font-semibold text-indigo-800 font-satoshi">
+                                              Diamond Size {ds?.name || dsId} {ds?.display_name ? `- ${ds.display_name}` : ''}
+                                            </span>
+                                            <span className="text-[10px] text-indigo-500 ml-2">({imgs.length} images)</span>
+                                          </div>
+                                          <div className="p-2 grid grid-cols-3 gap-2">
+                                            {imgs.map((img: any) => (
+                                              <div key={img._originalIdx} className="border border-gray-200 rounded-lg overflow-hidden">
+                                                <div className="relative bg-gray-100">
+                                                  <img src={getMediaUrl(img.url)} alt={img.alt_text || ''} className="w-full h-20 object-cover" />
+                                                  <button type="button" onClick={() => {
+                                                    setMetalMediaState(prev => ({ ...prev, [metalId]: { ...prev[metalId], images: prev[metalId]?.images?.filter((_: any, i: number) => i !== img._originalIdx) || [] } }));
+                                                  }} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600">
+                                                    <X className="h-3 w-3" />
+                                                  </button>
+                                                </div>
+                                                <div className="p-1 border-t border-gray-200">
+                                                  <label className="flex items-center space-x-1 cursor-pointer">
+                                                    <input type="checkbox" checked={img.is_metal_preview || false} onChange={(e) => {
+                                                      setMetalMediaState(prev => ({ ...prev, [metalId]: { ...prev[metalId], images: prev[metalId]?.images?.map((image: any, i: number) => i === img._originalIdx ? { ...image, is_metal_preview: e.target.checked } : { ...image, is_metal_preview: false }) || [] } }));
+                                                    }} className="w-3 h-3 rounded" />
+                                                    <span className="text-[10px] text-gray-700 font-satoshi">{img.is_metal_preview ? 'Preview' : 'Set Preview'}</span>
+                                                  </label>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              }
+
+                              // No diamond sizes - show flat grid (original behavior)
+                              return (
+                                <div className="space-y-3 mt-3">
+                                  <p className="text-xs text-gray-500 font-satoshi">Check the checkbox to mark this image as the preview for metal selection</p>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    {allImgs.map((img: any, idx: number) => (
+                                      <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
+                                        <div className="relative bg-gray-100">
+                                          <img
+                                            src={getMediaUrl(img.url)}
+                                            alt={img.alt_text || `${metal.name} image ${idx + 1}`}
+                                            className="w-full h-24 object-cover"
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
                                               setMetalMediaState(prev => ({
                                                 ...prev,
                                                 [metalId]: {
                                                   ...prev[metalId],
-                                                  images: prev[metalId]?.images?.map((image, i) =>
-                                                    i === idx
-                                                      ? { ...image, is_metal_preview: e.target.checked }
-                                                      : { ...image, is_metal_preview: false } // Only one preview per metal
-                                                  ) || []
+                                                  images: prev[metalId]?.images?.filter((_: any, i: number) => i !== idx) || []
                                                 }
                                               }));
                                             }}
-                                            className="w-4 h-4 rounded"
-                                          />
-                                          <span className="text-xs text-gray-700 font-satoshi">
-                                            {img.is_metal_preview ? '✓ Preview Image' : 'Set as Preview'}
-                                          </span>
-                                        </label>
+                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                          >
+                                            <X className="h-3 w-3" />
+                                          </button>
+                                        </div>
+                                        <div className="p-2 border-t border-gray-200">
+                                          <label className="flex items-center space-x-2 cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={img.is_metal_preview || false}
+                                              onChange={(e) => {
+                                                setMetalMediaState(prev => ({
+                                                  ...prev,
+                                                  [metalId]: {
+                                                    ...prev[metalId],
+                                                    images: prev[metalId]?.images?.map((image: any, i: number) =>
+                                                      i === idx
+                                                        ? { ...image, is_metal_preview: e.target.checked }
+                                                        : { ...image, is_metal_preview: false }
+                                                    ) || []
+                                                  }
+                                                }));
+                                              }}
+                                              className="w-4 h-4 rounded"
+                                            />
+                                            <span className="text-xs text-gray-700 font-satoshi">
+                                              {img.is_metal_preview ? '✓ Preview Image' : 'Set as Preview'}
+                                            </span>
+                                          </label>
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })()}
                           </div>
 
                           {/* Videos for this metal */}

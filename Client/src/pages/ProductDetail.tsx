@@ -12,6 +12,7 @@ import { trackViewContent, trackAddToCart } from '../services/pixelService';
 const ProductDetail = () => {
   const { productId } = useParams();
   const [selectedMetal, setSelectedMetal] = useState('platinum');
+  const [selectedDiamondSize, setSelectedDiamondSize] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState('L');
   const [isLoading, setIsLoading] = useState(false);
   const [productData, setProductData] = useState(null);
@@ -119,20 +120,38 @@ const ProductDetail = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [sizeDropdownOpen]);
 
-  // Helper function to filter images and videos by selected metal
-  const getMetalSpecificMedia = (allImages: any[], selectedMetalId: string) => {
+  // Helper function to filter images and videos by selected metal AND diamond size
+  const getMetalSpecificMedia = (allImages: any[], selectedMetalId: string, selectedDiamondSizeId?: string) => {
     if (!allImages || allImages.length === 0) return [];
 
+    // If diamond size is selected, try to get images for both metal AND diamond size
+    if (selectedDiamondSizeId) {
+      const metalAndDiamondImages = allImages.filter(img =>
+        img.metal_id === selectedMetalId && img.diamond_size_id === selectedDiamondSizeId
+      );
+      if (metalAndDiamondImages.length > 0) {
+        return metalAndDiamondImages;
+      }
+
+      // Fallback: try diamond size only (no specific metal)
+      const diamondOnlyImages = allImages.filter(img =>
+        !img.metal_id && img.diamond_size_id === selectedDiamondSizeId
+      );
+      if (diamondOnlyImages.length > 0) {
+        return diamondOnlyImages;
+      }
+    }
+
     // First, try to get metal-specific images for the selected metal
-    const metalSpecificImages = allImages.filter(img => img.metal_id === selectedMetalId);
+    const metalSpecificImages = allImages.filter(img => img.metal_id === selectedMetalId && !img.diamond_size_id);
 
     // If metal-specific images exist, return them
     if (metalSpecificImages.length > 0) {
       return metalSpecificImages;
     }
 
-    // Otherwise, return general images (those with no metal_id)
-    return allImages.filter(img => !img.metal_id);
+    // Otherwise, return general images (those with no metal_id and no diamond_size_id)
+    return allImages.filter(img => !img.metal_id && !img.diamond_size_id);
   };
 
   // Helper function to get the primary image for a specific metal
@@ -140,15 +159,19 @@ const ProductDetail = () => {
     if (!productData || !productData.images) return null;
 
     // First try to get metal-specific image marked as preview
-    const metalPreviewImage = productData.images.find(img => img.metal_id === metalId && img.is_metal_preview);
+    const metalPreviewImage = productData.images.find((img: any) => img.metal_id === metalId && img.is_metal_preview);
     if (metalPreviewImage) return metalPreviewImage;
 
-    // Fall back to first metal-specific image for this metal
-    const metalSpecificImage = productData.images.find(img => img.metal_id === metalId);
-    if (metalSpecificImage) return metalSpecificImage;
+    // Fall back to first metal-specific image for this metal (prefer non-diamond-size images)
+    const metalGeneralImage = productData.images.find((img: any) => img.metal_id === metalId && !img.diamond_size_id);
+    if (metalGeneralImage) return metalGeneralImage;
+
+    // Fall back to first metal-specific image (including diamond size images)
+    const metalAnyImage = productData.images.find((img: any) => img.metal_id === metalId);
+    if (metalAnyImage) return metalAnyImage;
 
     // Fall back to general image
-    const generalImage = productData.images.find(img => !img.metal_id);
+    const generalImage = productData.images.find((img: any) => !img.metal_id);
     return generalImage || null;
   };
 
@@ -302,6 +325,11 @@ const ProductDetail = () => {
           if (data.data.product.available_metals && data.data.product.available_metals.length > 0) {
             setSelectedMetal(data.data.product.available_metals[0].id);
           }
+
+          // Set initial diamond size selection to first available diamond size (for Engagement Rings)
+          if (data.data.product.available_diamond_sizes && data.data.product.available_diamond_sizes.length > 0) {
+            setSelectedDiamondSize(data.data.product.available_diamond_sizes[0].id);
+          }
         } else {
           setError(data.message || 'Failed to fetch product');
         }
@@ -428,11 +456,20 @@ const ProductDetail = () => {
         (size) => size.value === selectedSize
       )?.label || selectedSize;
 
+      // Get diamond size name if selected
+      const selectedDiamondSizeName = productData?.available_diamond_sizes?.find(
+        (ds: any) => ds.id === selectedDiamondSize
+      )?.name || null;
+
       // Build selected options object with all customizations
       const selectedOptions: any = {
         metal: selectedMetalName,
         size: selectedSizeLabel
       };
+
+      if (selectedDiamondSizeName) {
+        selectedOptions.diamondSize = selectedDiamondSizeName;
+      }
 
       // Include Nivoda stone options if enabled
       if (productData?.nivoda_enabled) {
@@ -443,13 +480,16 @@ const ProductDetail = () => {
         selectedOptions.cut = selectedCut;
       }
 
+      const imageUrl = displayImages[0]?.url || productData.images[0]?.url;
+
       const newItem: any = {
         id: productData.id,
         name: productData.name,
         price: productData.price,
         metal: selectedMetalName,
         size: selectedSizeLabel,
-        image: displayImages[0]?.url || productData.images[0]?.url,
+        diamondSize: selectedDiamondSizeName,
+        image: imageUrl ? getMediaUrl(imageUrl) : '',
         type: 'jewelry',  // Mark as jewelry product for order ID system
         selectedOptions: selectedOptions
       };
@@ -648,7 +688,7 @@ const ProductDetail = () => {
   }
 
   // Get filtered images and videos based on selected metal
-  const displayImages = productData ? getMetalSpecificMedia(productData.images || [], selectedMetal) : [];
+  const displayImages = productData ? getMetalSpecificMedia(productData.images || [], selectedMetal, selectedDiamondSize || undefined) : [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -748,14 +788,14 @@ const ProductDetail = () => {
             </div>
           ) : (
             <div
-              className="w-full flex items-center justify-center cursor-pointer"
+              className="w-full cursor-pointer overflow-hidden"
               style={{ height: '450px' }}
               onClick={() => openLightbox(currentImageIndex)}
             >
               <img
                 src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
                 alt={displayImages[currentImageIndex]?.alt || productData.name}
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-cover"
               />
             </div>
           )}
@@ -784,13 +824,13 @@ const ProductDetail = () => {
             </>
           )}
 
-          {/* Dots Pagination - Positioned below content */}
-          <div className="w-full flex justify-center py-4 space-x-2 z-10">
+          {/* Dots Pagination - Overlaid on bottom of image */}
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-3 pt-4 space-x-1.5 z-10">
             {displayImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToImage(index)}
-                className={`w-2 h-2 rounded-full transition-all ${
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
                   index === currentImageIndex
                     ? 'bg-gray-900'
                     : 'bg-gray-300 hover:bg-gray-500'
@@ -798,11 +838,13 @@ const ProductDetail = () => {
               />
             ))}
           </div>
+          {/* Divider line flush with image */}
+          <div className="w-full border-b border-gray-200" />
         </div>
       </div>
 
       {/* Mobile Product Details Section */}
-      <div className="block lg:hidden px-4 py-6 bg-white border-t border-gray-200">
+      <div className="block lg:hidden px-4 py-6 bg-white">
         <h1 className="text-3xl font-cormorant font-light text-gray-900 mb-2 leading-tight">
           {productData.name}
         </h1>
@@ -823,14 +865,14 @@ const ProductDetail = () => {
                   <button
                     key={metal.id}
                     onClick={() => setSelectedMetal(metal.id)}
-                    className={`w-12 h-12 border-2 transition-all overflow-hidden flex items-center justify-center bg-gray-100 ${
+                    className={`w-12 h-12 border transition-all overflow-hidden flex items-center justify-center bg-gray-100 ${
                       selectedMetal === metal.id ? 'border-gray-800' : 'border-gray-300'
                     }`}
                     title={metal.name}
                   >
                     {metalImage && metalImage.url ? (
                       <img
-                        src={metalImage.url}
+                        src={getMediaUrl(metalImage.url)}
                         alt={metal.name}
                         className="w-full h-full object-cover"
                       />
@@ -844,6 +886,31 @@ const ProductDetail = () => {
                   </button>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Diamond Size Selection - Only for Engagement Rings */}
+        {productData.available_diamond_sizes && productData.available_diamond_sizes.length > 0 && (
+          <div className="mb-4">
+            <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2">
+              Diamond Size: {productData.available_diamond_sizes.find(ds => ds.id === selectedDiamondSize)?.display_name || productData.available_diamond_sizes.find(ds => ds.id === selectedDiamondSize)?.name || 'Select'}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {productData.available_diamond_sizes.map((diamondSize) => (
+                <button
+                  key={diamondSize.id}
+                  onClick={() => setSelectedDiamondSize(diamondSize.id)}
+                  className={`px-4 py-2 border transition-all font-futura-pt text-sm font-medium ${
+                    selectedDiamondSize === diamondSize.id
+                      ? 'border-gray-800 bg-gray-100'
+                      : 'border-gray-300 hover:border-gray-500'
+                  }`}
+                  title={diamondSize.display_name || `Size ${diamondSize.name}`}
+                >
+                  {diamondSize.name}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -1011,6 +1078,139 @@ const ProductDetail = () => {
             ENQUIRE
           </Button>
         </div>
+
+        {/* Mobile Expandable Information Sections */}
+        <div className="space-y-0 pt-4">
+          {/* About This Piece */}
+          <div className="border-b border-gray-200">
+            <button
+              onClick={() => toggleSection('about')}
+              className="w-full flex items-center justify-between py-3 text-left group"
+            >
+              <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-[0.2em]">
+                About This Piece
+              </h3>
+              <ChevronDown className={`w-4 h-4 text-amber-700 transition-all duration-300 ease-in-out group-hover:text-amber-900 ${
+                expandedSections.about ? 'rotate-180' : 'rotate-0'
+              }`} strokeWidth="2" />
+            </button>
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                expandedSections.about
+                  ? 'max-h-96 opacity-100'
+                  : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="pb-3">
+                <p className="text-sm font-futura-pt font-light text-gray-700 leading-relaxed mb-3">
+                  {productData.description}
+                </p>
+                {productData.is_made_on_request && (
+                  <div className="mt-4 mb-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-futura-pt font-medium text-amber-800 uppercase tracking-wider mb-1">
+                          Made to Order
+                        </h4>
+                        <p className="text-sm font-futura-pt font-light text-amber-700 leading-relaxed">
+                          This exquisite piece is crafted specially for you. Please allow approximately{' '}
+                          <span className="font-medium">{productData.made_on_request_lead_time || '4-6 weeks'}</span>{' '}
+                          for creation and delivery.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <button className="text-xs font-futura-pt text-amber-700 hover:text-amber-900 transition-colors">
+                  Read More →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Delivery Information */}
+          <div className="border-b border-gray-200">
+            <button
+              onClick={() => toggleSection('delivery')}
+              className="w-full flex items-center justify-between py-3 text-left group"
+            >
+              <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-[0.2em]">
+                Delivery Information
+              </h3>
+              <ChevronDown className={`w-4 h-4 text-amber-700 transition-all duration-300 ease-in-out group-hover:text-amber-900 ${
+                expandedSections.delivery ? 'rotate-180' : 'rotate-0'
+              }`} strokeWidth="2" />
+            </button>
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                expandedSections.delivery
+                  ? 'max-h-[500px] opacity-100'
+                  : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="pb-3 space-y-4">
+                {productData.is_made_on_request && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-futura-pt font-medium text-amber-800 mb-1">Made to Order</h4>
+                        <p className="text-sm font-futura-pt font-light text-amber-700 leading-relaxed">
+                          Please allow approximately{' '}
+                          <span className="font-medium">{productData.made_on_request_lead_time || '4-6 weeks'}</span>{' '}
+                          for creation and delivery.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <p className="text-sm font-futura-pt font-light text-gray-700 leading-relaxed">
+                  {productData.is_made_on_request
+                    ? 'Once your piece is ready, we offer free worldwide delivery. Express shipping available upon request.'
+                    : 'Free worldwide delivery on all orders. Express delivery options available.'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Complimentary Insurance */}
+          <div className="border-b border-gray-200">
+            <button
+              onClick={() => toggleSection('insurance')}
+              className="w-full flex items-center justify-between py-3 text-left group"
+            >
+              <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-[0.2em]">
+                Complimentary Insurance
+              </h3>
+              <ChevronDown className={`w-4 h-4 text-amber-700 transition-all duration-300 ease-in-out group-hover:text-amber-900 ${
+                expandedSections.insurance ? 'rotate-180' : 'rotate-0'
+              }`} strokeWidth="2" />
+            </button>
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                expandedSections.insurance
+                  ? 'max-h-96 opacity-100'
+                  : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="pb-3">
+                <p className="text-sm font-futura-pt font-light text-gray-700 leading-relaxed">
+                  All pieces come with complimentary insurance coverage for the first year.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <main className="max-w-full mx-auto px-0 pt-0 lg:pt-44 pb-8">
@@ -1040,7 +1240,7 @@ const ProductDetail = () => {
                 <div
                   key={index}
                   className="relative bg-gray-50 overflow-hidden group cursor-pointer"
-                  style={{ height: '700px' }}
+                  style={{ height: '750px' }}
                   onClick={() => openLightbox(index)}
                 >
                   {/* Loading skeleton for videos */}
@@ -1059,7 +1259,7 @@ const ProductDetail = () => {
                         autoPlay
                         playsInline
                         preload="metadata"
-                        className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
+                        className={`w-full h-full object-contain transition-transform duration-500 group-hover:scale-105`}
                         onLoadedData={(e) => {
                           // Hide loading skeleton when video loads
                           const loadingDiv = e.target.parentElement.previousElementSibling;
@@ -1077,9 +1277,7 @@ const ProductDetail = () => {
                     <img
                       src={getMediaUrl(image?.url || '')}
                       alt={image?.alt || `${productData.name} - Image ${index + 1}`}
-                      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                        index === 0 ? 'p-8' : ''
-                      }`}
+                      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
                     />
                   )}
 
@@ -1139,7 +1337,7 @@ const ProductDetail = () => {
                       <button
                         key={metal.id}
                         onClick={() => setSelectedMetal(metal.id)}
-                        className={`w-14 h-14 2xl:w-16 2xl:h-16 border-2 transition-all duration-200 overflow-hidden flex items-center justify-center bg-gray-100 ${
+                        className={`w-14 h-14 2xl:w-16 2xl:h-16 border transition-all duration-200 overflow-hidden flex items-center justify-center bg-gray-100 ${
                           selectedMetal === metal.id
                             ? 'border-gray-800'
                             : 'border-gray-300 hover:border-gray-500'
@@ -1148,7 +1346,7 @@ const ProductDetail = () => {
                       >
                         {metalImage && metalImage.url ? (
                           <img
-                            src={metalImage.url}
+                            src={getMediaUrl(metalImage.url)}
                             alt={metal.name}
                             className="w-full h-full object-cover"
                           />
@@ -1162,6 +1360,31 @@ const ProductDetail = () => {
                       </button>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Diamond Size Selection - Only for Engagement Rings */}
+            {productData.available_diamond_sizes && productData.available_diamond_sizes.length > 0 && (
+              <div className="mb-4 2xl:mb-5">
+                <h3 className="text-[10px] 2xl:text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2 2xl:mb-2">
+                  Diamond Size: {productData.available_diamond_sizes.find(ds => ds.id === selectedDiamondSize)?.display_name || productData.available_diamond_sizes.find(ds => ds.id === selectedDiamondSize)?.name || 'Select'}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {productData.available_diamond_sizes.map((diamondSize) => (
+                    <button
+                      key={diamondSize.id}
+                      onClick={() => setSelectedDiamondSize(diamondSize.id)}
+                      className={`px-4 py-2 border transition-all duration-200 font-futura-pt text-sm font-medium ${
+                        selectedDiamondSize === diamondSize.id
+                          ? 'border-gray-800 bg-gray-100'
+                          : 'border-gray-300 hover:border-gray-500'
+                      }`}
+                      title={diamondSize.display_name || `Size ${diamondSize.name}`}
+                    >
+                      {diamondSize.name}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -1612,13 +1835,45 @@ const ProductDetail = () => {
                 <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
                     expandedSections.delivery
-                      ? 'max-h-96 opacity-100'
+                      ? 'max-h-[500px] opacity-100'
                       : 'max-h-0 opacity-0'
                   }`}
                 >
-                  <div className="pb-3 2xl:pb-4">
+                  <div className="pb-3 2xl:pb-4 space-y-4">
+                    {/* Made on Request Notice */}
+                    {productData.is_made_on_request && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-futura-pt font-medium text-amber-800 mb-1">
+                              Made to Order
+                            </h4>
+                            <p className="text-sm font-futura-pt font-light text-amber-700 leading-relaxed">
+                              This exquisite piece is crafted specially for you. Please allow approximately{' '}
+                              <span className="font-medium">{productData.made_on_request_lead_time || '4-6 weeks'}</span>{' '}
+                              for creation and delivery.
+                            </p>
+                            {productData.made_on_request_message && (
+                              <p className="text-sm font-futura-pt font-light text-amber-700 leading-relaxed mt-2">
+                                {productData.made_on_request_message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Standard Delivery Info */}
                     <p className="text-sm 2xl:text-base font-futura-pt font-light text-gray-700 leading-relaxed">
-                      Free worldwide delivery on all orders. Express delivery options available.
+                      {productData.is_made_on_request
+                        ? 'Once your piece is ready, we offer free worldwide delivery. Express shipping available upon request.'
+                        : 'Free worldwide delivery on all orders. Express delivery options available.'
+                      }
                     </p>
                   </div>
                 </div>
@@ -1921,15 +2176,6 @@ const ProductDetail = () => {
           </div>
         </section>
       )}
-
-      {/* Chat Widget */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <button className="bg-[#f4e6c8] hover:bg-[#f0ddb0] text-gray-900 px-6 py-3 rounded-full shadow-lg font-serif text-sm transition-colors flex items-center space-x-2">
-          <MessageCircle className="w-4 h-4" />
-          <span>Welcome to Rosalies</span>
-          <span className="text-xs">START A CHAT</span>
-        </button>
-      </div>
 
       <FooterSection />
     </div>

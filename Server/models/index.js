@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { postgresDB } = require('../config/database');
 
-let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage;
+let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage, DiamondSizes, ProductDiamondSizes;
 
 const initializeModels = () => {
   const sequelize = postgresDB();
@@ -400,6 +400,20 @@ const initializeModels = () => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       comment: 'Flag to mark image as the preview image for a specific metal'
+    },
+    diamond_size_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'diamond_sizes',
+        key: 'id'
+      },
+      comment: 'Optional: Link image to specific diamond size'
+    },
+    is_diamond_size_preview: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Flag to mark image as the preview image for a specific diamond size'
     },
     sort_order: {
       type: DataTypes.INTEGER,
@@ -1076,6 +1090,73 @@ const initializeModels = () => {
     ]
   });
 
+  // Diamond Sizes Model (for Engagement Rings)
+  DiamondSizes = sequelize.define('DiamondSizes', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    name: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true
+    },
+    display_name: {
+      type: DataTypes.STRING(100)
+    },
+    description: {
+      type: DataTypes.TEXT
+    },
+    sort_order: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    }
+  }, {
+    tableName: 'diamond_sizes',
+    underscored: true,
+    timestamps: true
+  });
+
+  // Product Diamond Sizes Junction (many-to-many)
+  ProductDiamondSizes = sequelize.define('ProductDiamondSizes', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    product_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'products',
+        key: 'id'
+      }
+    },
+    diamond_size_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'diamond_sizes',
+        key: 'id'
+      }
+    }
+  }, {
+    tableName: 'product_diamond_sizes',
+    underscored: true,
+    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['product_id', 'diamond_size_id']
+      }
+    ]
+  });
+
   // Define Associations
 
   // Self-referencing hierarchy for categories
@@ -1095,6 +1176,10 @@ const initializeModels = () => {
   // Metal-specific image relationships
   ProductMetals.hasMany(ProductImage, { foreignKey: 'metal_id', as: 'images' });
   ProductImage.belongsTo(ProductMetals, { foreignKey: 'metal_id', as: 'metal' });
+
+  // Diamond size-specific image relationships
+  DiamondSizes.hasMany(ProductImage, { foreignKey: 'diamond_size_id', as: 'images' });
+  ProductImage.belongsTo(DiamondSizes, { foreignKey: 'diamond_size_id', as: 'diamondSize' });
 
   Product.hasMany(ProductVideo, { foreignKey: 'product_id', as: 'videos' });
   ProductVideo.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
@@ -1184,6 +1269,20 @@ const initializeModels = () => {
     as: 'metalProducts'
   });
 
+  // Diamond Size associations (for Engagement Rings)
+  Product.belongsToMany(DiamondSizes, {
+    through: ProductDiamondSizes,
+    foreignKey: 'product_id',
+    otherKey: 'diamond_size_id',
+    as: 'diamondSizes'
+  });
+  DiamondSizes.belongsToMany(Product, {
+    through: ProductDiamondSizes,
+    foreignKey: 'diamond_size_id',
+    otherKey: 'product_id',
+    as: 'diamondSizeProducts'
+  });
+
   // Marketing Content associations
   MarketingContent.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
   Product.hasMany(MarketingContent, { foreignKey: 'product_id', as: 'marketingContent' });
@@ -1235,6 +1334,8 @@ const initializeModels = () => {
     ProductStoneTypes,
     ProductMetalsJunction,
     MarketingContent,
+    DiamondSizes,
+    ProductDiamondSizes,
     ...watchModels,
     ...jewelryModels
   };
@@ -1272,6 +1373,8 @@ module.exports = {
       Promotion,
       Chat,
       ChatMessage,
+      DiamondSizes,
+      ProductDiamondSizes,
       ...watchModels,
       ...jewelryModels,
       ...orderModels
