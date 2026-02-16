@@ -25,6 +25,10 @@ export default defineConfig(({ mode }) => ({
     // Copy all files from public directory
     copyPublicDir: true,
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        chat: path.resolve(__dirname, 'chat.html'),
+      },
       output: {
         // Prevent chunking issues with large files
         assetFileNames: (assetInfo) => {

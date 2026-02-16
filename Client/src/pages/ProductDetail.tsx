@@ -12,8 +12,17 @@ import { trackViewContent, trackAddToCart } from '../services/pixelService';
 const ProductDetail = () => {
   const { productId } = useParams();
   const [selectedMetal, setSelectedMetal] = useState('platinum');
+  const [selectedMetalType, setSelectedMetalType] = useState('');
   const [selectedDiamondSize, setSelectedDiamondSize] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState('L');
+
+  const metalTypeOptions = [
+    { value: '9ct-white-gold', label: '9ct White Gold' },
+    { value: '18ct-white-gold', label: '18ct White Gold' },
+    { value: '9ct-yellow-gold', label: '9ct Yellow Gold' },
+    { value: '18ct-yellow-gold', label: '18ct Yellow Gold' },
+    { value: 'platinum', label: 'Platinum' },
+  ];
   const [isLoading, setIsLoading] = useState(false);
   const [productData, setProductData] = useState(null);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
@@ -890,6 +899,28 @@ const ProductDetail = () => {
           </div>
         )}
 
+        {/* Mobile Metal Type Selection */}
+        <div className="mb-4">
+          <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2">
+            Metal Type: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {metalTypeOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setSelectedMetalType(option.value)}
+                className={`px-4 py-2 border transition-all font-futura-pt text-xs font-medium ${
+                  selectedMetalType === option.value
+                    ? 'border-gray-800 bg-gray-100'
+                    : 'border-gray-300'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Mobile Diamond Size Selection - Only for Engagement Rings */}
         {productData.available_diamond_sizes && productData.available_diamond_sizes.length > 0 && (
           <div className="mb-4">
@@ -1363,6 +1394,28 @@ const ProductDetail = () => {
                 </div>
               </div>
             )}
+
+            {/* Metal Type Selection */}
+            <div className="mb-4 2xl:mb-5">
+              <h3 className="text-[10px] 2xl:text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2 2xl:mb-2">
+                Metal Type: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {metalTypeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setSelectedMetalType(option.value)}
+                    className={`px-4 py-2 border transition-all duration-200 font-futura-pt text-sm font-medium ${
+                      selectedMetalType === option.value
+                        ? 'border-gray-800 bg-gray-100'
+                        : 'border-gray-300 hover:border-gray-500'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Diamond Size Selection - Only for Engagement Rings */}
             {productData.available_diamond_sizes && productData.available_diamond_sizes.length > 0 && (
