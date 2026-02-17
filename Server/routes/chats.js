@@ -15,7 +15,15 @@ const {
   getUnreadCount,
   getVapidPublicKey,
   subscribePush,
-  unsubscribePush
+  unsubscribePush,
+  getAllLabels,
+  createLabel,
+  updateLabel,
+  deleteLabel,
+  assignLabel,
+  removeLabel,
+  deleteMessage,
+  deleteChat
 } = require('../controllers/chatController');
 const { adminAuth } = require('../middleware/adminAuth');
 
@@ -54,6 +62,15 @@ router.get('/push/vapid-key', getVapidPublicKey);
 router.post('/push/subscribe', subscribePush);
 router.post('/push/unsubscribe', unsubscribePush);
 
+// Label CRUD routes (admin auth) - must come before parameterized routes
+router.get('/labels', adminAuth, getAllLabels);
+router.post('/labels', adminAuth, createLabel);
+router.put('/labels/:id', adminAuth, updateLabel);
+router.delete('/labels/:id', adminAuth, deleteLabel);
+
+// Delete message route (admin auth)
+router.delete('/messages/:messageId', adminAuth, deleteMessage);
+
 // Public POST routes
 router.post('/', createChat);
 router.post('/message/send', upload.single('attachment'), sendMessage);
@@ -70,6 +87,13 @@ router.get('/:id', adminAuth, getChatById);
 router.put('/:id/status', adminAuth, updateChatStatus);
 router.put('/:id/close', adminAuth, closeChat);
 router.put('/:chat_id/messages/read', adminAuth, markMessagesAsRead);
+
+// Label assignment routes (admin auth)
+router.post('/:id/labels', adminAuth, assignLabel);
+router.delete('/:id/labels/:labelId', adminAuth, removeLabel);
+
+// Delete entire chat (admin auth)
+router.delete('/:id', adminAuth, deleteChat);
 
 // Catch-all GET for listing all chats (auth required) - MUST come last
 router.get('/', adminAuth, getAllChats);

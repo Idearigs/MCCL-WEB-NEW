@@ -71,7 +71,7 @@ exports.createChat = async (req, res) => {
 // Get all chats (admin view with pagination)
 exports.getAllChats = async (req, res) => {
   try {
-    const { Chat } = getModelInstance();
+    const { Chat, ChatLabelAssignment, ChatLabel } = getModelInstance();
     const { status, page = 1, limit = 20, search } = req.query;
     const offset = (page - 1) * limit;
 
@@ -90,6 +90,11 @@ exports.getAllChats = async (req, res) => {
 
     const { count, rows } = await Chat.findAndCountAll({
       where,
+      include: [{
+        model: ChatLabelAssignment,
+        as: 'labelAssignments',
+        include: [{ model: ChatLabel, as: 'label' }]
+      }],
       order: [['last_message_at', 'DESC']],
       limit: parseInt(limit),
       offset: offset
@@ -120,15 +125,22 @@ exports.getAllChats = async (req, res) => {
 // Get specific chat with messages
 exports.getChatById = async (req, res) => {
   try {
-    const { Chat, ChatMessage } = getModelInstance();
+    const { Chat, ChatMessage, ChatLabelAssignment, ChatLabel } = getModelInstance();
     const { id } = req.params;
 
     const chat = await Chat.findByPk(id, {
-      include: [{
-        model: ChatMessage,
-        as: 'messages',
-        order: [['created_at', 'ASC']]
-      }]
+      include: [
+        {
+          model: ChatMessage,
+          as: 'messages',
+          order: [['created_at', 'ASC']]
+        },
+        {
+          model: ChatLabelAssignment,
+          as: 'labelAssignments',
+          include: [{ model: ChatLabel, as: 'label' }]
+        }
+      ]
     });
 
     if (!chat) {
@@ -420,6 +432,135 @@ exports.unsubscribePush = (req, res) => {
     removeSubscription(endpoint);
   }
   res.json({ success: true, message: 'Unsubscribed from push notifications' });
+};
+
+// === Label CRUD ===
+
+// Get all labels
+exports.getAllLabels = async (req, res) => {
+  try {
+    const { ChatLabel } = getModelInstance();
+    const labels = await ChatLabel.findAll({ order: [['name', 'ASC']] });
+    return res.json({ success: true, data: { labels } });
+  } catch (error) {
+    console.error('Error getting labels:', error);
+    return res.status(500).json({ success: false, message: 'Failed to get labels', error: error.message });
+  }
+};
+
+// Create label
+exports.createLabel = async (req, res) => {
+  try {
+    const { ChatLabel } = getModelInstance();
+    const { name, color } = req.body;
+    if (!name || !color) {
+      return res.status(400).json({ success: false, message: 'Name and color are required' });
+    }
+    const label = await ChatLabel.create({ name, color });
+    return res.status(201).json({ success: true, data: { label } });
+  } catch (error) {
+    console.error('Error creating label:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create label', error: error.message });
+  }
+};
+
+// Update label
+exports.updateLabel = async (req, res) => {
+  try {
+    const { ChatLabel } = getModelInstance();
+    const { id } = req.params;
+    const { name, color } = req.body;
+    const label = await ChatLabel.findByPk(id);
+    if (!label) return res.status(404).json({ success: false, message: 'Label not found' });
+    if (name) label.name = name;
+    if (color) label.color = color;
+    await label.save();
+    return res.json({ success: true, data: { label } });
+  } catch (error) {
+    console.error('Error updating label:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update label', error: error.message });
+  }
+};
+
+// Delete label + cascade assignments
+exports.deleteLabel = async (req, res) => {
+  try {
+    const { ChatLabel, ChatLabelAssignment } = getModelInstance();
+    const { id } = req.params;
+    await ChatLabelAssignment.destroy({ where: { label_id: id } });
+    const deleted = await ChatLabel.destroy({ where: { id } });
+    if (!deleted) return res.status(404).json({ success: false, message: 'Label not found' });
+    return res.json({ success: true, message: 'Label deleted' });
+  } catch (error) {
+    console.error('Error deleting label:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete label', error: error.message });
+  }
+};
+
+// === Label Assignment ===
+
+// Assign label to chat
+exports.assignLabel = async (req, res) => {
+  try {
+    const { ChatLabelAssignment } = getModelInstance();
+    const { id } = req.params;
+    const { labelId } = req.body;
+    if (!labelId) return res.status(400).json({ success: false, message: 'labelId is required' });
+    const [assignment, created] = await ChatLabelAssignment.findOrCreate({
+      where: { chat_id: id, label_id: labelId },
+      defaults: { chat_id: id, label_id: labelId }
+    });
+    return res.status(created ? 201 : 200).json({ success: true, data: { assignment } });
+  } catch (error) {
+    console.error('Error assigning label:', error);
+    return res.status(500).json({ success: false, message: 'Failed to assign label', error: error.message });
+  }
+};
+
+// Remove label from chat
+exports.removeLabel = async (req, res) => {
+  try {
+    const { ChatLabelAssignment } = getModelInstance();
+    const { id, labelId } = req.params;
+    await ChatLabelAssignment.destroy({ where: { chat_id: id, label_id: labelId } });
+    return res.json({ success: true, message: 'Label removed from chat' });
+  } catch (error) {
+    console.error('Error removing label:', error);
+    return res.status(500).json({ success: false, message: 'Failed to remove label', error: error.message });
+  }
+};
+
+// === Delete ===
+
+// Delete single message
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { ChatMessage } = getModelInstance();
+    const { messageId } = req.params;
+    const deleted = await ChatMessage.destroy({ where: { id: messageId } });
+    if (!deleted) return res.status(404).json({ success: false, message: 'Message not found' });
+    return res.json({ success: true, message: 'Message deleted' });
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete message', error: error.message });
+  }
+};
+
+// Delete entire chat + all messages
+exports.deleteChat = async (req, res) => {
+  try {
+    const { Chat, ChatMessage, ChatLabelAssignment } = getModelInstance();
+    const { id } = req.params;
+    const chat = await Chat.findByPk(id);
+    if (!chat) return res.status(404).json({ success: false, message: 'Chat not found' });
+    await ChatMessage.destroy({ where: { chat_id: id } });
+    await ChatLabelAssignment.destroy({ where: { chat_id: id } });
+    await chat.destroy();
+    return res.json({ success: true, message: 'Chat deleted' });
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete chat', error: error.message });
+  }
 };
 
 // Get chat details by ID (PUBLIC - for customers to view their own chat)

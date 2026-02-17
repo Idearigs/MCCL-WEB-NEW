@@ -566,3 +566,244 @@ html, body {
   top: 12px;
   color: var(--chat-text-muted);
 }
+
+/* ======= Image Lightbox ======= */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: calc(var(--safe-top) + 12px);
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ======= Modal Overlay & Box ======= */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal-box {
+  background: var(--chat-surface);
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: var(--chat-surface-light);
+  color: var(--chat-text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.modal-btn:active {
+  background: var(--chat-border);
+}
+
+.modal-btn.primary {
+  background: var(--chat-gold);
+  color: #fff;
+}
+
+.modal-btn.primary:active {
+  background: var(--chat-gold-dim);
+}
+
+.modal-btn.danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.modal-btn.danger:active {
+  background: #b91c1c;
+}
+
+.modal-btn.sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* ======= Label Pills ======= */
+.label-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.label-pill-sm {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* ======= Label Toggle Button (in conversation label modal) ======= */
+.label-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--chat-border);
+  background: transparent;
+  color: var(--chat-text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.label-toggle-btn:active,
+.label-toggle-btn.active {
+  background: var(--chat-surface-light);
+}
+
+.label-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ======= Label Management Modal ======= */
+.label-mgmt-modal {
+  max-width: 420px;
+}
+
+.label-input {
+  background: var(--chat-input-bg);
+  border: 1px solid var(--chat-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--chat-text);
+  font-size: 14px;
+  outline: none;
+  min-width: 0;
+  flex: 1;
+}
+
+.label-input:focus {
+  border-color: var(--chat-gold);
+}
+
+.label-input::placeholder {
+  color: var(--chat-text-muted);
+}
+
+.color-picker-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  padding: 0;
+}
+
+.color-swatch.active {
+  border-color: #fff;
+  transform: scale(1.15);
+}
+
+.label-mgmt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--chat-border);
+}
+
+.label-mgmt-row:last-child {
+  border-bottom: none;
+}
+
+.label-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--chat-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.label-action-btn:active {
+  background: var(--chat-surface-light);
+}
+
+.label-action-btn.danger:active {
+  background: rgba(220, 38, 38, 0.2);
+  color: #ef4444;
+}

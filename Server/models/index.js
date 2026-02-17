@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { postgresDB } = require('../config/database');
 
-let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage, DiamondSizes, ProductDiamondSizes;
+let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage, DiamondSizes, ProductDiamondSizes, ChatLabel, ChatLabelAssignment;
 
 const initializeModels = () => {
   const sequelize = postgresDB();
@@ -804,6 +804,64 @@ const initializeModels = () => {
     timestamps: true
   });
 
+  // Chat Labels Model - for categorizing chats with color-coded labels
+  ChatLabel = sequelize.define('ChatLabel', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    name: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true
+    },
+    color: {
+      type: DataTypes.STRING(7),
+      allowNull: false,
+      comment: 'Hex color code e.g. #ef4444'
+    }
+  }, {
+    tableName: 'chat_labels',
+    underscored: true,
+    timestamps: true
+  });
+
+  // Chat Label Assignments Junction - links chats to labels
+  ChatLabelAssignment = sequelize.define('ChatLabelAssignment', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    chat_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'chats',
+        key: 'id'
+      }
+    },
+    label_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'chat_labels',
+        key: 'id'
+      }
+    }
+  }, {
+    tableName: 'chat_label_assignments',
+    underscored: true,
+    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['chat_id', 'label_id']
+      }
+    ]
+  });
+
   // Ring Types Model (for ring categorization)
   RingTypes = sequelize.define('RingTypes', {
     id: {
@@ -1295,6 +1353,12 @@ const initializeModels = () => {
   Chat.hasMany(ChatMessage, { foreignKey: 'chat_id', as: 'messages', onDelete: 'CASCADE' });
   ChatMessage.belongsTo(Chat, { foreignKey: 'chat_id', as: 'chat' });
 
+  // Chat Label associations
+  Chat.hasMany(ChatLabelAssignment, { foreignKey: 'chat_id', as: 'labelAssignments', onDelete: 'CASCADE' });
+  ChatLabelAssignment.belongsTo(Chat, { foreignKey: 'chat_id', as: 'chat' });
+  ChatLabel.hasMany(ChatLabelAssignment, { foreignKey: 'label_id', as: 'assignments', onDelete: 'CASCADE' });
+  ChatLabelAssignment.belongsTo(ChatLabel, { foreignKey: 'label_id', as: 'label' });
+
   // Get admin models to establish Chat-AdminUser relationship
   const { getAdminModels } = require('./adminModels');
   const adminModels = getAdminModels();
@@ -1336,6 +1400,8 @@ const initializeModels = () => {
     MarketingContent,
     DiamondSizes,
     ProductDiamondSizes,
+    ChatLabel,
+    ChatLabelAssignment,
     ...watchModels,
     ...jewelryModels
   };
@@ -1375,6 +1441,8 @@ module.exports = {
       ChatMessage,
       DiamondSizes,
       ProductDiamondSizes,
+      ChatLabel,
+      ChatLabelAssignment,
       ...watchModels,
       ...jewelryModels,
       ...orderModels

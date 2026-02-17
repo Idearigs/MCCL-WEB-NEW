@@ -12,12 +12,25 @@ interface Message {
   created_at: string;
 }
 
+interface Label {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface LabelAssignment {
+  id: string;
+  label_id: string;
+  label: Label;
+}
+
 interface ChatConversationProps {
   chatId: string;
   customerName: string;
   chatStatus: 'active' | 'closed' | 'waiting';
   onBack: () => void;
   onStatusChange: (status: 'active' | 'closed' | 'waiting') => void;
+  onChatDeleted?: () => void;
 }
 
 const SOCKET_URL = API_BASE_URL.replace('/api/v1', '');
@@ -83,6 +96,7 @@ export default function ChatConversation({
   chatStatus,
   onBack,
   onStatusChange,
+  onChatDeleted,
 }: ChatConversationProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -95,6 +109,15 @@ export default function ChatConversation({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [appHeight, setAppHeight] = useState(window.innerHeight);
 
+  // New state for lightbox, delete, labels
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [longPressMessageId, setLongPressMessageId] = useState<string | null>(null);
+  const [labels, setLabels] = useState<LabelAssignment[]>([]);
+  const [allLabels, setAllLabels] = useState<Label[]>([]);
+  const [showLabelModal, setShowLabelModal] = useState(false);
+  const [showDeleteChatConfirm, setShowDeleteChatConfirm] = useState(false);
+  const [showDeleteMsgConfirm, setShowDeleteMsgConfirm] = useState<string | null>(null);
+
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<any>(null);
@@ -102,6 +125,7 @@ export default function ChatConversation({
   const scrollRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<any>(null);
   const messageIdsRef = useRef<Set<string>>(new Set());
+  const longPressTimerRef = useRef<any>(null);
 
   const token = localStorage.getItem('admin_token');
   const adminId = localStorage.getItem('admin_id') || '';
@@ -168,6 +192,9 @@ export default function ChatConversation({
       const data = await res.json();
       if (data.success && data.data.chat) {
         addMessages(data.data.chat.messages || [], true);
+        if (data.data.chat.labelAssignments) {
+          setLabels(data.data.chat.labelAssignments);
+        }
       }
     } catch (err) {
       console.error('Failed to load chat:', err);
@@ -342,6 +369,104 @@ export default function ChatConversation({
     }
   };
 
+  // Long press handlers for message delete
+  const handleMsgTouchStart = (msgId: string) => {
+    longPressTimerRef.current = setTimeout(() => {
+      setShowDeleteMsgConfirm(msgId);
+    }, 600);
+  };
+
+  const handleMsgTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleDeleteMessage = async (msgId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/chats/messages/${msgId}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages(prev => prev.filter(m => m.id !== msgId));
+        messageIdsRef.current.delete(msgId);
+      }
+    } catch (err) {
+      console.error('Delete message failed:', err);
+    }
+    setShowDeleteMsgConfirm(null);
+  };
+
+  const handleDeleteChat = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (data.success) {
+        onChatDeleted?.();
+        onBack();
+      }
+    } catch (err) {
+      console.error('Delete chat failed:', err);
+    }
+    setShowDeleteChatConfirm(false);
+  };
+
+  // Label management
+  const fetchAllLabels = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/chats/labels`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (data.success) setAllLabels(data.data.labels);
+    } catch (err) {
+      console.error('Fetch labels failed:', err);
+    }
+  };
+
+  const handleToggleLabel = async (labelId: string) => {
+    const isAssigned = labels.some(la => la.label_id === labelId || la.label?.id === labelId);
+    try {
+      if (isAssigned) {
+        await fetch(`${API_BASE_URL}/chats/${chatId}/labels/${labelId}`, {
+          method: 'DELETE',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        setLabels(prev => prev.filter(la => la.label_id !== labelId && la.label?.id !== labelId));
+      } else {
+        const res = await fetch(`${API_BASE_URL}/chats/${chatId}/labels`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({ labelId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          const label = allLabels.find(l => l.id === labelId);
+          if (label) {
+            setLabels(prev => [...prev, { id: data.data.assignment.id, label_id: labelId, label }]);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Toggle label failed:', err);
+    }
+  };
+
+  const openLabelModal = () => {
+    setShowMenu(false);
+    fetchAllLabels();
+    setShowLabelModal(true);
+  };
+
   return (
     <div className="chat-app slide-in" style={{ height: appHeight }}>
       {/* Top bar */}
@@ -353,7 +478,18 @@ export default function ChatConversation({
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.2 }}>{customerName}</div>
-          <span className={`status-badge ${chatStatus}`}>{chatStatus}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+            <span className={`status-badge ${chatStatus}`}>{chatStatus}</span>
+            {labels.map(la => (
+              <span
+                key={la.id}
+                className="label-pill"
+                style={{ background: la.label?.color || '#666' }}
+              >
+                {la.label?.name}
+              </span>
+            ))}
+          </div>
         </div>
         <div style={{ position: 'relative' }}>
           <button
@@ -379,6 +515,13 @@ export default function ChatConversation({
                   Close Chat
                 </button>
               )}
+              <button onClick={openLabelModal}>Manage Labels</button>
+              <button
+                onClick={() => { setShowMenu(false); setShowDeleteChatConfirm(true); }}
+                style={{ color: '#ef4444' }}
+              >
+                Delete Chat
+              </button>
             </div>
           )}
         </div>
@@ -403,14 +546,20 @@ export default function ChatConversation({
                     <span>{formatDateSeparator(msg.created_at)}</span>
                   </div>
                 )}
-                <div className={`msg-row ${msg.sender_type === 'admin' ? 'admin' : 'customer'}`}>
+                <div
+                  className={`msg-row ${msg.sender_type === 'admin' ? 'admin' : 'customer'}`}
+                  onTouchStart={() => handleMsgTouchStart(msg.id)}
+                  onTouchEnd={handleMsgTouchEnd}
+                  onTouchMove={handleMsgTouchEnd}
+                  onContextMenu={(e) => { e.preventDefault(); setShowDeleteMsgConfirm(msg.id); }}
+                >
                   <div className={`msg-bubble ${msg.sender_type === 'admin' ? 'msg-admin' : 'msg-customer'}`}>
                     {msg.attachment_url && (
                       <img
                         src={`${mediaBase}${msg.attachment_url}`}
                         alt="Attachment"
                         className="msg-image"
-                        onClick={() => window.open(`${mediaBase}${msg.attachment_url}`, '_blank')}
+                        onClick={() => setLightboxUrl(`${mediaBase}${msg.attachment_url}`)}
                       />
                     )}
                     {msg.message && <span className="msg-content">{msg.message}</span>}
@@ -429,7 +578,7 @@ export default function ChatConversation({
         </div>
       )}
 
-      {/* Image preview */}
+      {/* Image preview (pre-send) */}
       {imagePreview && (
         <div className="image-preview-bar">
           <img src={imagePreview} alt="Preview" />
@@ -489,6 +638,83 @@ export default function ChatConversation({
           flexShrink: 0,
         }}>
           This chat is closed
+        </div>
+      )}
+
+      {/* Image Lightbox */}
+      {lightboxUrl && (
+        <div className="lightbox-overlay" onClick={() => setLightboxUrl(null)}>
+          <img src={lightboxUrl} alt="Full size" className="lightbox-image" />
+          <button className="lightbox-close" onClick={() => setLightboxUrl(null)}>&times;</button>
+        </div>
+      )}
+
+      {/* Delete Message Confirmation */}
+      {showDeleteMsgConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteMsgConfirm(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <p style={{ fontSize: 15, marginBottom: 16 }}>Delete this message?</p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="modal-btn" onClick={() => setShowDeleteMsgConfirm(null)}>Cancel</button>
+              <button className="modal-btn danger" onClick={() => handleDeleteMessage(showDeleteMsgConfirm)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Chat Confirmation */}
+      {showDeleteChatConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteChatConfirm(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <p style={{ fontSize: 15, marginBottom: 4, fontWeight: 600 }}>Delete entire chat?</p>
+            <p style={{ fontSize: 13, color: 'var(--chat-text-muted)', marginBottom: 16 }}>
+              This will permanently delete all messages. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="modal-btn" onClick={() => setShowDeleteChatConfirm(false)}>Cancel</button>
+              <button className="modal-btn danger" onClick={handleDeleteChat}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Label Management Modal */}
+      {showLabelModal && (
+        <div className="modal-overlay" onClick={() => setShowLabelModal(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxHeight: '60vh' }}>
+            <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Manage Labels</p>
+            {allLabels.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--chat-text-muted)' }}>No labels created yet. Create labels from the chat list.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {allLabels.map(label => {
+                  const isAssigned = labels.some(la => la.label_id === label.id || la.label?.id === label.id);
+                  return (
+                    <button
+                      key={label.id}
+                      className={`label-toggle-btn ${isAssigned ? 'active' : ''}`}
+                      onClick={() => handleToggleLabel(label.id)}
+                    >
+                      <span className="label-dot" style={{ background: label.color }} />
+                      <span style={{ flex: 1, textAlign: 'left' }}>{label.name}</span>
+                      {isAssigned && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              className="modal-btn"
+              style={{ marginTop: 16, width: '100%' }}
+              onClick={() => setShowLabelModal(false)}
+            >
+              Done
+            </button>
+          </div>
         </div>
       )}
     </div>

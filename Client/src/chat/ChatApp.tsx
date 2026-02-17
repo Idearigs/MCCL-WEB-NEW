@@ -94,6 +94,7 @@ export default function ChatApp() {
         chatStatus={activeChatStatus}
         onBack={handleBack}
         onStatusChange={setActiveChatStatus}
+        onChatDeleted={handleBack}
       />
     );
   }
