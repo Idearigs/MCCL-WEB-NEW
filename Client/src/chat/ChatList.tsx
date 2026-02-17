@@ -30,6 +30,16 @@ const STATUS_FILTERS = ['all', 'active', 'waiting', 'closed'] as const;
 const SOCKET_URL = API_BASE_URL.replace('/api/v1', '');
 const POLL_INTERVAL = 5000;
 
+// Convert VAPID key from base64 URL string to Uint8Array
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = window.atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
 // Notification sound - short beep using AudioContext
 function playNotificationSound() {
   try {
@@ -239,11 +249,48 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
     return () => { socket.disconnect(); };
   }, []);
 
-  // Request notification permission
+  // Request notification permission + subscribe to Web Push
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+    async function setupPush() {
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+
+      // Request permission
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+      if (Notification.permission !== 'granted') return;
+
+      try {
+        const reg = await navigator.serviceWorker.ready;
+
+        // Get VAPID key from server
+        const keyRes = await fetch(`${API_BASE_URL}/chats/push/vapid-key`);
+        const keyData = await keyRes.json();
+        if (!keyData.success) return;
+
+        const applicationServerKey = urlBase64ToUint8Array(keyData.data.publicKey);
+
+        // Subscribe to push
+        let subscription = await reg.pushManager.getSubscription();
+        if (!subscription) {
+          subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey,
+          });
+        }
+
+        // Send subscription to server
+        await fetch(`${API_BASE_URL}/chats/push/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription.toJSON()),
+        });
+      } catch (err) {
+        console.warn('Push subscription failed:', err);
+      }
     }
+
+    setupPush();
   }, []);
 
   // Pull-to-refresh handlers

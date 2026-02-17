@@ -1,4 +1,5 @@
 const { getModels } = require('../models');
+const { sendPushToAllAdmins, saveSubscription, removeSubscription, VAPID_PUBLIC_KEY } = require('../utils/pushNotifications');
 
 const getModelInstance = () => {
   try {
@@ -44,6 +45,13 @@ exports.createChat = async (req, res) => {
         messages: []
       });
     }
+
+    // Send push notification to all admin devices
+    sendPushToAllAdmins({
+      title: 'New Visitor',
+      body: `${customer_name} started a chat`,
+      chatId: chat.id,
+    }).catch(err => console.error('Push notification error:', err));
 
     return res.status(201).json({
       success: true,
@@ -194,6 +202,15 @@ exports.sendMessage = async (req, res) => {
       last_message_at: new Date(),
       status: sender_type === 'admin' ? 'active' : chat.status
     });
+
+    // Send push notification to admins when customer sends a message
+    if (sender_type === 'customer') {
+      sendPushToAllAdmins({
+        title: chat.customer_name || 'Customer',
+        body: message || 'Sent an image',
+        chatId: chat_id,
+      }).catch(err => console.error('Push notification error:', err));
+    }
 
     return res.status(201).json({
       success: true,
@@ -379,6 +396,30 @@ exports.getCustomerChats = async (req, res) => {
       error: error.message
     });
   }
+};
+
+// Get VAPID public key for push subscription
+exports.getVapidPublicKey = (req, res) => {
+  res.json({ success: true, data: { publicKey: VAPID_PUBLIC_KEY } });
+};
+
+// Subscribe to push notifications
+exports.subscribePush = (req, res) => {
+  const subscription = req.body;
+  if (!subscription || !subscription.endpoint) {
+    return res.status(400).json({ success: false, message: 'Invalid subscription' });
+  }
+  saveSubscription(subscription.endpoint, subscription);
+  res.json({ success: true, message: 'Subscribed to push notifications' });
+};
+
+// Unsubscribe from push notifications
+exports.unsubscribePush = (req, res) => {
+  const { endpoint } = req.body;
+  if (endpoint) {
+    removeSubscription(endpoint);
+  }
+  res.json({ success: true, message: 'Unsubscribed from push notifications' });
 };
 
 // Get chat details by ID (PUBLIC - for customers to view their own chat)

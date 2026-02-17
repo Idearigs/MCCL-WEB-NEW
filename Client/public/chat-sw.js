@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mcculloch-chat-v1';
+const CACHE_NAME = 'mcculloch-chat-v2';
 const STATIC_ASSETS = [
   '/chat.html',
   '/mcculloch-logo.png',

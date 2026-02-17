@@ -12,7 +12,10 @@ const {
   closeChat,
   markMessagesAsRead,
   getCustomerChats,
-  getUnreadCount
+  getUnreadCount,
+  getVapidPublicKey,
+  subscribePush,
+  unsubscribePush
 } = require('../controllers/chatController');
 const { adminAuth } = require('../middleware/adminAuth');
 
@@ -45,6 +48,11 @@ const upload = multer({
   fileFilter: fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
+
+// Push notification routes
+router.get('/push/vapid-key', getVapidPublicKey);
+router.post('/push/subscribe', subscribePush);
+router.post('/push/unsubscribe', unsubscribePush);
 
 // Public POST routes
 router.post('/', createChat);
