@@ -16,10 +16,18 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082', 'http://127.0.0.1:8080', 'http://127.0.0.1:8081', 'http://127.0.0.1:8082'],
+    origin: [
+      'http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082',
+      'http://127.0.0.1:8080', 'http://127.0.0.1:8081', 'http://127.0.0.1:8082',
+      'https://buymediamonds.co.uk', 'https://www.buymediamonds.co.uk',
+      'https://api.buymediamonds.co.uk'
+    ],
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  pingInterval: 10000,
+  pingTimeout: 5000,
+  transports: ['websocket', 'polling']
 });
 
 // Trust proxy for accurate IP addresses

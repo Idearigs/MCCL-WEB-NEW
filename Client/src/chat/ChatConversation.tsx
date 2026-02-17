@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { io, Socket } from 'socket.io-client';
 import API_BASE_URL from '../config/api';
 
 interface Message {
@@ -18,6 +18,26 @@ interface ChatConversationProps {
   chatStatus: 'active' | 'closed' | 'waiting';
   onBack: () => void;
   onStatusChange: (status: 'active' | 'closed' | 'waiting') => void;
+}
+
+const SOCKET_URL = API_BASE_URL.replace('/api/v1', '');
+const POLL_INTERVAL = 3000;
+
+// Notification sound
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  } catch {}
 }
 
 function formatTime(dateStr: string): string {
@@ -65,33 +85,65 @@ export default function ChatConversation({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const socketRef = useRef<any>(null);
+  const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<any>(null);
+  const messageIdsRef = useRef<Set<string>>(new Set());
 
   const token = localStorage.getItem('admin_token');
   const adminId = localStorage.getItem('admin_id') || '';
-  const mediaBase = API_BASE_URL.replace('/api/v1', '');
+  const mediaBase = SOCKET_URL;
+
+  // Deduplicated message setter - prevents duplicate messages
+  const addMessages = useCallback((newMsgs: Message[], replace = false) => {
+    setMessages((prev) => {
+      if (replace) {
+        const idSet = new Set<string>();
+        const deduped: Message[] = [];
+        for (const msg of newMsgs) {
+          if (!idSet.has(msg.id)) {
+            idSet.add(msg.id);
+            deduped.push(msg);
+          }
+        }
+        messageIdsRef.current = idSet;
+        return deduped;
+      }
+
+      // Append only new messages
+      const combined = [...prev];
+      for (const msg of newMsgs) {
+        if (!messageIdsRef.current.has(msg.id)) {
+          messageIdsRef.current.add(msg.id);
+          combined.push(msg);
+        }
+      }
+      return combined;
+    });
+  }, []);
 
   // Fetch chat messages
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const data = await res.json();
-        if (data.success && data.data.chat) {
-          setMessages(data.data.chat.messages || []);
-        }
-      } catch (err) {
-        console.error('Failed to load chat:', err);
-      } finally {
-        setLoading(false);
+  const fetchMessages = useCallback(async (silent = false) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (data.success && data.data.chat) {
+        addMessages(data.data.chat.messages || [], true);
       }
-    };
+    } catch (err) {
+      console.error('Failed to load chat:', err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [chatId, token, addMessages]);
+
+  // Initial fetch
+  useEffect(() => {
     fetchMessages();
 
     // Mark as read
@@ -101,24 +153,42 @@ export default function ChatConversation({
     }).catch(() => {});
   }, [chatId]);
 
+  // Polling fallback - always poll for fresh messages
+  useEffect(() => {
+    pollRef.current = setInterval(() => {
+      fetchMessages(true);
+    }, POLL_INTERVAL);
+    return () => clearInterval(pollRef.current);
+  }, [fetchMessages]);
+
   // Socket connection for this chat
   useEffect(() => {
     const socket = io(mediaBase, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: Infinity,
+      transports: ['websocket', 'polling'],
     });
     socketRef.current = socket;
 
-    socket.emit('join_chat', {
-      chat_id: chatId,
-      user_type: 'admin',
-      user_id: adminId,
+    socket.on('connect', () => {
+      socket.emit('join_chat', {
+        chat_id: chatId,
+        user_type: 'admin',
+        user_id: adminId,
+      });
+      // Refresh on reconnect to catch missed messages
+      fetchMessages(true);
     });
 
     socket.on('receive_message', (message: Message) => {
-      setMessages((prev) => [...prev, message]);
+      // Only add if not already known (dedup handles it)
+      addMessages([message]);
+      // Play sound for customer messages
+      if (message.sender_type === 'customer') {
+        playNotificationSound();
+      }
     });
 
     socket.on('typing_status', (data: any) => {
@@ -191,15 +261,17 @@ export default function ChatConversation({
     e.preventDefault();
     if (!input.trim() && !selectedImage) return;
 
+    const messageText = input;
     setSending(true);
     setIsTyping(false);
+    setInput('');
 
     try {
       const formData = new FormData();
       formData.append('chat_id', chatId);
       formData.append('sender_type', 'admin');
       formData.append('sender_id', adminId);
-      formData.append('message', input || '');
+      formData.append('message', messageText || '');
       if (selectedImage) {
         formData.append('attachment', selectedImage);
       }
@@ -212,9 +284,11 @@ export default function ChatConversation({
       const data = await res.json();
 
       if (data.success) {
-        setInput('');
+        // Optimistically add the sent message immediately
+        addMessages([data.data.message]);
         clearImage();
 
+        // Emit via socket for other clients
         socketRef.current?.emit('send_message', {
           chat_id: chatId,
           message: data.data.message,
@@ -229,6 +303,8 @@ export default function ChatConversation({
       }
     } catch (err) {
       console.error('Send failed:', err);
+      // Restore input on failure
+      setInput(messageText);
     } finally {
       setSending(false);
     }

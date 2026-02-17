@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import API_BASE_URL from '../config/api';
 
 interface Message {
@@ -7,6 +7,7 @@ interface Message {
   chat_id: string;
   sender_type: 'customer' | 'admin';
   message: string;
+  attachment_url?: string;
   created_at: string;
 }
 
@@ -26,6 +27,41 @@ interface ChatListProps {
 }
 
 const STATUS_FILTERS = ['all', 'active', 'waiting', 'closed'] as const;
+const SOCKET_URL = API_BASE_URL.replace('/api/v1', '');
+const POLL_INTERVAL = 5000;
+
+// Notification sound - short beep using AudioContext
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  } catch {}
+}
+
+function showBrowserNotification(title: string, body: string) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(title, {
+        body,
+        icon: '/mcculloch-logo.png',
+        badge: '/mcculloch-logo.png',
+        vibrate: [200, 100, 200],
+        tag: 'mcculloch-chat',
+        renotify: true,
+      });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch {}
+  }
+}
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -45,9 +81,14 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const socketRef = useRef<any>(null);
+  const [connected, setConnected] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
   const searchTimeout = useRef<any>(null);
+  const pollRef = useRef<any>(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const knownChatIds = useRef<Set<string>>(new Set());
+  const knownMessageIds = useRef<Set<string>>(new Set());
+  const isFirstLoad = useRef(true);
 
   // Touch-based pull-to-refresh state
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -56,7 +97,7 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
 
   const token = localStorage.getItem('admin_token');
 
-  const fetchChats = useCallback(async (search?: string) => {
+  const fetchChats = useCallback(async (search?: string, silent = false) => {
     try {
       const s = search ?? debouncedSearch;
       const res = await fetch(
@@ -65,13 +106,51 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
       );
       const data = await res.json();
       if (data.success) {
-        setChats(data.data.chats);
+        const newChats: Chat[] = data.data.chats;
+
+        // Detect new chats/messages for notifications (skip first load)
+        if (!isFirstLoad.current) {
+          for (const chat of newChats) {
+            // New chat notification
+            if (!knownChatIds.current.has(chat.id)) {
+              playNotificationSound();
+              showBrowserNotification(
+                'New Visitor',
+                `${chat.customer_name} started a chat`
+              );
+            }
+            // New message notification
+            if (chat.messages && chat.messages.length > 0) {
+              const lastMsg = chat.messages[chat.messages.length - 1];
+              if (lastMsg.sender_type === 'customer' && !knownMessageIds.current.has(lastMsg.id)) {
+                playNotificationSound();
+                showBrowserNotification(
+                  chat.customer_name,
+                  lastMsg.message || 'Sent an image'
+                );
+              }
+            }
+          }
+        }
+
+        // Update known IDs
+        knownChatIds.current = new Set(newChats.map(c => c.id));
+        for (const chat of newChats) {
+          if (chat.messages) {
+            chat.messages.forEach(m => knownMessageIds.current.add(m.id));
+          }
+        }
+        isFirstLoad.current = false;
+
+        setChats(newChats);
       }
     } catch (err) {
       console.error('Failed to fetch chats:', err);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!silent) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [statusFilter, debouncedSearch, token]);
 
@@ -90,17 +169,51 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
     fetchChats();
   }, [statusFilter, debouncedSearch]);
 
-  // Global socket for real-time updates
+  // Polling fallback - always poll for fresh data
   useEffect(() => {
-    const socket = io(API_BASE_URL.replace('/api/v1', ''), {
+    pollRef.current = setInterval(() => {
+      fetchChats(undefined, true);
+    }, POLL_INTERVAL);
+    return () => clearInterval(pollRef.current);
+  }, [fetchChats]);
+
+  // Socket.IO for instant updates
+  useEffect(() => {
+    const socket = io(SOCKET_URL, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: Infinity,
+      transports: ['websocket', 'polling'],
     });
     socketRef.current = socket;
 
+    socket.on('connect', () => {
+      setConnected(true);
+      // Refresh on reconnect to catch missed messages
+      fetchChats(undefined, true);
+    });
+
+    socket.on('disconnect', () => setConnected(false));
+
     socket.on('admin_chat_update', (message: Message) => {
+      // Deduplicate by message id
+      if (knownMessageIds.current.has(message.id)) return;
+      knownMessageIds.current.add(message.id);
+
+      // Notify for customer messages
+      if (message.sender_type === 'customer') {
+        playNotificationSound();
+        setChats((prev) => {
+          const chat = prev.find(c => c.id === message.chat_id);
+          showBrowserNotification(
+            chat?.customer_name || 'Customer',
+            message.message || 'Sent an image'
+          );
+          return prev;
+        });
+      }
+
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === message.chat_id
@@ -115,6 +228,11 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
     });
 
     socket.on('new_chat', (chat: Chat) => {
+      if (knownChatIds.current.has(chat.id)) return;
+      knownChatIds.current.add(chat.id);
+
+      playNotificationSound();
+      showBrowserNotification('New Visitor', `${chat.customer_name} started a chat`);
       setChats((prev) => [chat, ...prev]);
     });
 
@@ -161,7 +279,18 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
       <div className="chat-header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700 }}>Chats</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 700 }}>
+              Chats
+              <span style={{
+                display: 'inline-block',
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: connected ? '#22c55e' : '#ef4444',
+                marginLeft: 8,
+                verticalAlign: 'middle',
+              }} />
+            </h1>
             <p style={{ fontSize: 12, color: 'var(--chat-text-muted)', marginTop: 2 }}>
               {admin.full_name}
             </p>
