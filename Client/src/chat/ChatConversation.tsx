@@ -23,7 +23,6 @@ interface ChatConversationProps {
 const SOCKET_URL = API_BASE_URL.replace('/api/v1', '');
 const POLL_INTERVAL = 3000;
 
-// Notification sound
 function playNotificationSound() {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -51,21 +50,31 @@ function formatTime(dateStr: string): string {
 }
 
 function formatDateSeparator(dateStr: string): string {
-  const d = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
-  if (d.toDateString() === today.toDateString()) return 'Today';
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
 }
 
 function shouldShowDateSeparator(msgs: Message[], index: number): boolean {
-  if (index === 0) return true;
-  const curr = new Date(msgs[index].created_at).toDateString();
-  const prev = new Date(msgs[index - 1].created_at).toDateString();
-  return curr !== prev;
+  if (index === 0) {
+    const d = new Date(msgs[0].created_at);
+    return !isNaN(d.getTime());
+  }
+  const curr = new Date(msgs[index].created_at);
+  const prev = new Date(msgs[index - 1].created_at);
+  if (isNaN(curr.getTime())) return false;
+  if (isNaN(prev.getTime())) return true;
+  return curr.toDateString() !== prev.toDateString();
 }
 
 export default function ChatConversation({
@@ -84,6 +93,7 @@ export default function ChatConversation({
   const [showMenu, setShowMenu] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [appHeight, setAppHeight] = useState(window.innerHeight);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -97,7 +107,34 @@ export default function ChatConversation({
   const adminId = localStorage.getItem('admin_id') || '';
   const mediaBase = SOCKET_URL;
 
-  // Deduplicated message setter - prevents duplicate messages
+  // Handle virtual keyboard - resize app to visible area
+  useEffect(() => {
+    const updateHeight = () => {
+      const vh = window.visualViewport?.height || window.innerHeight;
+      setAppHeight(vh);
+      document.documentElement.style.setProperty('--app-height', `${vh}px`);
+    };
+
+    updateHeight();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateHeight);
+      window.visualViewport.addEventListener('scroll', updateHeight);
+    } else {
+      window.addEventListener('resize', updateHeight);
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateHeight);
+        window.visualViewport.removeEventListener('scroll', updateHeight);
+      } else {
+        window.removeEventListener('resize', updateHeight);
+      }
+    };
+  }, []);
+
+  // Deduplicated message setter
   const addMessages = useCallback((newMsgs: Message[], replace = false) => {
     setMessages((prev) => {
       if (replace) {
@@ -112,8 +149,6 @@ export default function ChatConversation({
         messageIdsRef.current = idSet;
         return deduped;
       }
-
-      // Append only new messages
       const combined = [...prev];
       for (const msg of newMsgs) {
         if (!messageIdsRef.current.has(msg.id)) {
@@ -125,7 +160,6 @@ export default function ChatConversation({
     });
   }, []);
 
-  // Fetch chat messages
   const fetchMessages = useCallback(async (silent = false) => {
     try {
       const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
@@ -145,23 +179,19 @@ export default function ChatConversation({
   // Initial fetch
   useEffect(() => {
     fetchMessages();
-
-    // Mark as read
     fetch(`${API_BASE_URL}/chats/${chatId}/messages/read`, {
       method: 'PUT',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     }).catch(() => {});
   }, [chatId]);
 
-  // Polling fallback - always poll for fresh messages
+  // Polling fallback
   useEffect(() => {
-    pollRef.current = setInterval(() => {
-      fetchMessages(true);
-    }, POLL_INTERVAL);
+    pollRef.current = setInterval(() => fetchMessages(true), POLL_INTERVAL);
     return () => clearInterval(pollRef.current);
   }, [fetchMessages]);
 
-  // Socket connection for this chat
+  // Socket connection
   useEffect(() => {
     const socket = io(mediaBase, {
       reconnection: true,
@@ -178,14 +208,11 @@ export default function ChatConversation({
         user_type: 'admin',
         user_id: adminId,
       });
-      // Refresh on reconnect to catch missed messages
       fetchMessages(true);
     });
 
     socket.on('receive_message', (message: Message) => {
-      // Only add if not already known (dedup handles it)
       addMessages([message]);
-      // Play sound for customer messages
       if (message.sender_type === 'customer') {
         playNotificationSound();
       }
@@ -205,8 +232,10 @@ export default function ChatConversation({
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, customerTyping]);
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  }, [messages, customerTyping, appHeight]);
 
   // Close menu on outside tap
   useEffect(() => {
@@ -218,25 +247,17 @@ export default function ChatConversation({
 
   const handleTyping = (value: string) => {
     setInput(value);
-
     if (!isTyping && value.trim()) {
       setIsTyping(true);
       socketRef.current?.emit('user_typing', {
-        chat_id: chatId,
-        user_type: 'admin',
-        user_id: adminId,
-        is_typing: true,
+        chat_id: chatId, user_type: 'admin', user_id: adminId, is_typing: true,
       });
     }
-
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
       socketRef.current?.emit('user_typing', {
-        chat_id: chatId,
-        user_type: 'admin',
-        user_id: adminId,
-        is_typing: false,
+        chat_id: chatId, user_type: 'admin', user_id: adminId, is_typing: false,
       });
     }, 1000);
   };
@@ -272,9 +293,7 @@ export default function ChatConversation({
       formData.append('sender_type', 'admin');
       formData.append('sender_id', adminId);
       formData.append('message', messageText || '');
-      if (selectedImage) {
-        formData.append('attachment', selectedImage);
-      }
+      if (selectedImage) formData.append('attachment', selectedImage);
 
       const res = await fetch(`${API_BASE_URL}/chats/message/send`, {
         method: 'POST',
@@ -284,26 +303,15 @@ export default function ChatConversation({
       const data = await res.json();
 
       if (data.success) {
-        // Optimistically add the sent message immediately
         addMessages([data.data.message]);
         clearImage();
-
-        // Emit via socket for other clients
-        socketRef.current?.emit('send_message', {
-          chat_id: chatId,
-          message: data.data.message,
-        });
-
+        socketRef.current?.emit('send_message', { chat_id: chatId, message: data.data.message });
         socketRef.current?.emit('user_typing', {
-          chat_id: chatId,
-          user_type: 'admin',
-          user_id: adminId,
-          is_typing: false,
+          chat_id: chatId, user_type: 'admin', user_id: adminId, is_typing: false,
         });
       }
     } catch (err) {
       console.error('Send failed:', err);
-      // Restore input on failure
       setInput(messageText);
     } finally {
       setSending(false);
@@ -316,7 +324,6 @@ export default function ChatConversation({
       const endpoint = newStatus === 'closed'
         ? `${API_BASE_URL}/chats/${chatId}/close`
         : `${API_BASE_URL}/chats/${chatId}/status`;
-
       const res = await fetch(endpoint, {
         method: 'PUT',
         headers: {
@@ -336,16 +343,16 @@ export default function ChatConversation({
   };
 
   return (
-    <div className="chat-app slide-in">
+    <div className="chat-app slide-in" style={{ height: appHeight }}>
       {/* Top bar */}
       <div className="conv-header">
         <button className="back-btn" onClick={onBack}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 16 }}>{customerName}</div>
+          <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.2 }}>{customerName}</div>
           <span className={`status-badge ${chatStatus}`}>{chatStatus}</span>
         </div>
         <div style={{ position: 'relative' }}>
@@ -396,17 +403,19 @@ export default function ChatConversation({
                     <span>{formatDateSeparator(msg.created_at)}</span>
                   </div>
                 )}
-                <div className={`msg-bubble ${msg.sender_type === 'admin' ? 'msg-admin' : 'msg-customer'}`}>
-                  {msg.attachment_url && (
-                    <img
-                      src={`${mediaBase}${msg.attachment_url}`}
-                      alt="Attachment"
-                      className="msg-image"
-                      onClick={() => window.open(`${mediaBase}${msg.attachment_url}`, '_blank')}
-                    />
-                  )}
-                  {msg.message && <p>{msg.message}</p>}
-                  <div className="msg-time">{formatTime(msg.created_at)}</div>
+                <div className={`msg-row ${msg.sender_type === 'admin' ? 'admin' : 'customer'}`}>
+                  <div className={`msg-bubble ${msg.sender_type === 'admin' ? 'msg-admin' : 'msg-customer'}`}>
+                    {msg.attachment_url && (
+                      <img
+                        src={`${mediaBase}${msg.attachment_url}`}
+                        alt="Attachment"
+                        className="msg-image"
+                        onClick={() => window.open(`${mediaBase}${msg.attachment_url}`, '_blank')}
+                      />
+                    )}
+                    {msg.message && <span className="msg-content">{msg.message}</span>}
+                    <span className="msg-time">{formatTime(msg.created_at)}</span>
+                  </div>
                 </div>
               </div>
             ))
@@ -436,17 +445,15 @@ export default function ChatConversation({
             className="btn-icon btn-attach"
             onClick={() => fileInputRef.current?.click()}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
             </svg>
           </button>
           <input
             type="text"
             value={input}
             onChange={(e) => handleTyping(e.target.value)}
-            placeholder="Message..."
+            placeholder="Message"
             disabled={sending}
           />
           <button
@@ -479,6 +486,7 @@ export default function ChatConversation({
           fontSize: 14,
           borderTop: '1px solid var(--chat-border)',
           paddingBottom: 'calc(14px + var(--safe-bottom))',
+          flexShrink: 0,
         }}>
           This chat is closed
         </div>
