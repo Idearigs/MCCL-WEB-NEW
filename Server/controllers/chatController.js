@@ -88,13 +88,26 @@ exports.getAllChats = async (req, res) => {
       ];
     }
 
+    // Try with label includes, fall back without if tables don't exist yet
+    let labelInclude = [];
+    try {
+      // Test if the table exists by checking the model
+      if (ChatLabelAssignment && ChatLabel) {
+        labelInclude = [{
+          model: ChatLabelAssignment,
+          as: 'labelAssignments',
+          required: false,
+          include: [{ model: ChatLabel, as: 'label' }]
+        }];
+      }
+    } catch (e) {
+      // Tables not created yet, skip includes
+    }
+
     const { count, rows } = await Chat.findAndCountAll({
       where,
-      include: [{
-        model: ChatLabelAssignment,
-        as: 'labelAssignments',
-        include: [{ model: ChatLabel, as: 'label' }]
-      }],
+      include: labelInclude,
+      distinct: true,
       order: [['last_message_at', 'DESC']],
       limit: parseInt(limit),
       offset: offset
@@ -114,11 +127,47 @@ exports.getAllChats = async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting chats:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get chats',
-      error: error.message
-    });
+    // If label tables cause the error, retry without them
+    try {
+      const { Chat } = getModelInstance();
+      const { status, page = 1, limit = 20, search } = req.query;
+      const offset2 = (page - 1) * limit;
+      const where2 = {};
+      if (status && status !== 'all') where2.status = status;
+      if (search) {
+        const { Op } = require('sequelize');
+        where2[Op.or] = [
+          { customer_name: { [Op.iLike]: `%${search}%` } },
+          { customer_email: { [Op.iLike]: `%${search}%` } },
+          { subject: { [Op.iLike]: `%${search}%` } }
+        ];
+      }
+      const { count, rows } = await Chat.findAndCountAll({
+        where: where2,
+        order: [['last_message_at', 'DESC']],
+        limit: parseInt(limit),
+        offset: offset2
+      });
+      return res.json({
+        success: true,
+        data: {
+          chats: rows,
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            pages: Math.ceil(count / limit)
+          }
+        }
+      });
+    } catch (fallbackError) {
+      console.error('Fallback also failed:', fallbackError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to get chats',
+        error: fallbackError.message
+      });
+    }
   }
 };
 
@@ -128,20 +177,38 @@ exports.getChatById = async (req, res) => {
     const { Chat, ChatMessage, ChatLabelAssignment, ChatLabel } = getModelInstance();
     const { id } = req.params;
 
-    const chat = await Chat.findByPk(id, {
-      include: [
-        {
+    // Build includes - label include is optional if tables don't exist yet
+    const includes = [
+      {
+        model: ChatMessage,
+        as: 'messages',
+        order: [['created_at', 'ASC']]
+      }
+    ];
+
+    if (ChatLabelAssignment && ChatLabel) {
+      includes.push({
+        model: ChatLabelAssignment,
+        as: 'labelAssignments',
+        required: false,
+        include: [{ model: ChatLabel, as: 'label' }]
+      });
+    }
+
+    let chat;
+    try {
+      chat = await Chat.findByPk(id, { include: includes });
+    } catch (includeErr) {
+      // Fallback: query without label includes if table doesn't exist
+      console.warn('Label include failed, retrying without:', includeErr.message);
+      chat = await Chat.findByPk(id, {
+        include: [{
           model: ChatMessage,
           as: 'messages',
           order: [['created_at', 'ASC']]
-        },
-        {
-          model: ChatLabelAssignment,
-          as: 'labelAssignments',
-          include: [{ model: ChatLabel, as: 'label' }]
-        }
-      ]
-    });
+        }]
+      });
+    }
 
     if (!chat) {
       return res.status(404).json({
