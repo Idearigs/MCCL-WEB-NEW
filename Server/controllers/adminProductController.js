@@ -385,6 +385,7 @@ const createProduct = async (req, res) => {
       ring_style_5_id = null,
       metal_ids = [],
       diamond_size_ids = [],
+      jewelry_sub_type_id = null,
       is_active = true,
       is_featured = false,
       in_stock = true,
@@ -452,6 +453,7 @@ const createProduct = async (req, res) => {
       currency,
       category_id,
       collection_id: collection_id || null,
+      jewelry_sub_type_id: jewelry_sub_type_id || null,
       stone_type_id: stone_type_id || null,
       ring_style_1_id: ring_style_1_id || null,
       ring_style_2_id: ring_style_2_id || null,
@@ -1393,6 +1395,7 @@ const createProductWithMedia = async (req, res) => {
       ring_style_5_id,
       metal_ids,
       diamond_size_ids,
+      jewelry_sub_type_id,
       is_active = true,
       is_featured = false,
       in_stock = true,
@@ -1421,6 +1424,9 @@ const createProductWithMedia = async (req, res) => {
     }
     if (stone_type_id === '') {
       stone_type_id = null;
+    }
+    if (jewelry_sub_type_id === '') {
+      jewelry_sub_type_id = null;
     }
 
     // Parse array fields that come as JSON strings
@@ -1535,6 +1541,7 @@ const createProductWithMedia = async (req, res) => {
       currency,
       category_id,
       collection_id: collection_id || null,
+      jewelry_sub_type_id: jewelry_sub_type_id || null,
       stone_type_id: stone_type_id || null,
       ring_style_1_id: ring_style_1_id || null,
       ring_style_2_id: ring_style_2_id || null,
