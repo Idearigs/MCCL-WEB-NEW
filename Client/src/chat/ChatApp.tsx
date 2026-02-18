@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import API_BASE_URL from '../config/api';
+import { getToken, setTokens, clearTokens, setOnLogout, fetchWithAuth, getDeviceId } from './authHelper';
 import ChatLogin from './ChatLogin';
 import ChatList from './ChatList';
 import ChatConversation from './ChatConversation';
 import OrderList from './OrderList';
 import OrderDetail from './OrderDetail';
+import DeviceManager from './DeviceManager';
+import InstallPage from './InstallPrompt';
 
 interface AdminUser {
   id: string;
@@ -20,50 +23,56 @@ export default function ChatApp() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [activeChatName, setActiveChatName] = useState('');
   const [activeChatStatus, setActiveChatStatus] = useState<'active' | 'closed' | 'waiting'>('active');
-  const [appView, setAppView] = useState<'chats' | 'orders'>('chats');
+  const [appView, setAppView] = useState<'chats' | 'orders' | 'devices' | 'install'>('chats');
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Set up logout callback for auth helper
+    setOnLogout(() => {
+      setAdmin(null);
+      setActiveChatId(null);
+      setActiveOrderId(null);
+      setAppView('chats');
+    });
+
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('admin_token');
+    const token = getToken();
     if (!token) {
       setIsLoading(false);
       return;
     }
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetchWithAuth(`${API_BASE_URL}/admin/profile`);
       const data = await res.json();
       if (res.ok && data.data) {
         setAdmin(data.data);
       } else {
-        localStorage.removeItem('admin_token');
+        clearTokens();
       }
     } catch {
-      localStorage.removeItem('admin_token');
+      clearTokens();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogin = (user: AdminUser, token: string) => {
-    localStorage.setItem('admin_token', token);
+  const handleLogin = (user: AdminUser, token: string, refreshToken?: string, deviceId?: string) => {
+    setTokens(token, refreshToken || '', deviceId);
     setAdmin(user);
   };
 
   const handleLogout = () => {
-    const token = localStorage.getItem('admin_token');
+    const token = getToken();
     if (token) {
       fetch(`${API_BASE_URL}/admin/logout`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => {});
     }
-    localStorage.removeItem('admin_token');
+    clearTokens();
     setAdmin(null);
     setActiveChatId(null);
     setActiveOrderId(null);
@@ -126,6 +135,24 @@ export default function ChatApp() {
     );
   }
 
+  // Device manager view
+  if (appView === 'devices') {
+    return (
+      <DeviceManager
+        onBack={() => setAppView('chats')}
+      />
+    );
+  }
+
+  // Install page view
+  if (appView === 'install') {
+    return (
+      <InstallPage
+        onBack={() => setAppView('chats')}
+      />
+    );
+  }
+
   // Chat list view (default)
   return (
     <ChatList
@@ -133,6 +160,8 @@ export default function ChatApp() {
       onOpenChat={handleOpenChat}
       onLogout={handleLogout}
       onSwitchToOrders={() => { setAppView('orders'); setActiveOrderId(null); }}
+      onSwitchToDevices={() => setAppView('devices')}
+      onSwitchToInstall={() => setAppView('install')}
     />
   );
 }

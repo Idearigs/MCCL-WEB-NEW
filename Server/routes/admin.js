@@ -4,9 +4,14 @@ const router = express.Router();
 const {
   adminLogin,
   adminLogout,
+  refreshToken,
   getAdminProfile,
   updateAdminProfile,
   changePassword,
+  getDevices,
+  removeDevice,
+  generatePairingCode,
+  verifyPairing,
   getDashboardStats
 } = require('../controllers/adminController');
 
@@ -26,7 +31,8 @@ const Joi = require('joi');
 
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required()
+  password: Joi.string().min(6).required(),
+  device_id: Joi.string().allow(null, '')
 });
 
 const updateProfileSchema = Joi.object({
@@ -46,6 +52,8 @@ const changePasswordSchema = Joi.object({
 
 // Public routes (no auth required)
 router.post('/login', authRateLimit, joiValidation(loginSchema), adminLogin);
+router.post('/refresh-token', refreshToken);
+router.post('/devices/verify-link', verifyPairing);
 
 // Protected routes (require authentication)
 router.use(adminAuth);
@@ -56,9 +64,10 @@ router.put('/profile', joiValidation(updateProfileSchema), updateAdminProfile);
 router.put('/change-password', joiValidation(changePasswordSchema), changePassword);
 router.get('/dashboard/stats', getDashboardStats);
 
-// Admin Product Management Routes
-// NOTE: Product routes are now handled in adminProductRoutes.js with better organization
-// See routes/adminProductRoutes.js for all product-related admin endpoints
+// Device Management
+router.get('/devices', getDevices);
+router.delete('/devices/:sessionId', removeDevice);
+router.post('/devices/link', generatePairingCode);
 
 // Category Management Routes
 router.use('/categories', adminCategoriesRoutes);

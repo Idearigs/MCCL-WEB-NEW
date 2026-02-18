@@ -62,7 +62,10 @@ const adminAuth = async (req, res, next) => {
       });
     }
 
-    // Add admin user to request
+    // Update last_active_at (fire-and-forget)
+    session.update({ last_active_at: new Date() }).catch(() => {});
+
+    // Add admin user and session to request
     req.admin = {
       id: session.admin_user.id,
       email: session.admin_user.email,
@@ -70,6 +73,7 @@ const adminAuth = async (req, res, next) => {
       first_name: session.admin_user.first_name,
       last_name: session.admin_user.last_name
     };
+    req.sessionId = session.id;
 
     next();
   } catch (error) {
@@ -85,7 +89,8 @@ const adminAuth = async (req, res, next) => {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
-        message: 'Access token expired'
+        message: 'Access token expired',
+        code: 'TOKEN_EXPIRED'
       });
     }
 

@@ -103,6 +103,19 @@ const initializeAdminModels = () => {
       allowNull: false,
       unique: true
     },
+    refresh_token_hash: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      unique: true
+    },
+    device_name: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    device_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
     ip_address: {
       type: DataTypes.STRING(45)
     },
@@ -112,6 +125,14 @@ const initializeAdminModels = () => {
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    is_linked: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
+    last_active_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
     },
     expires_at: {
       type: DataTypes.DATE,

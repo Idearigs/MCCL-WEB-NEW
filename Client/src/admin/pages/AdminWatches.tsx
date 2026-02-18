@@ -1134,7 +1134,7 @@ const AdminWatches: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-satoshi">
-                    Invalid Date
+                    {watch.created_at ? new Date(watch.created_at).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API_BASE_URL from '../config/api';
+import { fetchWithAuth } from './authHelper';
 
 interface OrderItem {
   id: string;
@@ -35,18 +36,19 @@ interface OrderDetailProps {
 }
 
 const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+const PROGRESS_STATUSES = ['pending', 'processing', 'shipped', 'delivered'];
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: '#ff9f0a',
-  processing: '#007aff',
-  shipped: '#af52de',
-  delivered: '#34c759',
-  cancelled: '#ff3b30',
+  pending: '#eab308',
+  processing: '#3b82f6',
+  shipped: '#8b5cf6',
+  delivered: '#22c55e',
+  cancelled: '#ef4444',
 };
 
 function formatCurrency(amount: number, currency: string): string {
   const sym = currency === 'GBP' ? '\u00A3' : currency === 'USD' ? '$' : currency === 'EUR' ? '\u20AC' : '';
-  return `${sym}${parseFloat(String(amount)).toFixed(2)}`;
+  return `${sym}${parseFloat(String(amount)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatDateTime(dateStr: string): string {
@@ -60,6 +62,10 @@ function formatDateTime(dateStr: string): string {
   }
 }
 
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+
 export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,8 +74,7 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedField, setSavedField] = useState<string | null>(null);
-
-  const token = localStorage.getItem('admin_token');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrder();
@@ -77,9 +82,7 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/payments/order/${orderId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const res = await fetchWithAuth(`${API_BASE_URL}/payments/order/${orderId}`);
       const data = await res.json();
       if (data.success) {
         const o = data.data;
@@ -103,12 +106,9 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
       if (field === 'tracking_number') body.tracking_number = trackingNumber;
       if (field === 'notes') body.notes = notes;
 
-      const res = await fetch(`${API_BASE_URL}/payments/order/${orderId}`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/payments/order/${orderId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -122,6 +122,12 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCopy = (text: string, field: string) => {
+    copyToClipboard(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 1500);
   };
 
   const parseAddress = (addr: string): Record<string, string> => {
@@ -156,10 +162,12 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
   }
 
   const address = parseAddress(order.shipping_address);
+  const progressIndex = PROGRESS_STATUSES.indexOf(order.status);
+  const isCancelled = order.status === 'cancelled';
 
   return (
     <div className="chat-app slide-in">
-      {/* Header */}
+      {/* Sticky Header */}
       <div className="conv-header">
         <button className="back-btn" onClick={onBack}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -184,6 +192,33 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
 
       {/* Scrollable content */}
       <div className="order-detail-scroll">
+        {/* Progress Bar */}
+        {!isCancelled && (
+          <div className="order-section">
+            <div className="order-progress-bar">
+              {PROGRESS_STATUSES.map((s, i) => (
+                <div key={s} className="order-progress-step">
+                  <div
+                    className={`order-progress-dot ${i <= progressIndex ? 'completed' : ''} ${i === progressIndex ? 'current' : ''}`}
+                  >
+                    {i < progressIndex ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : null}
+                  </div>
+                  {i < PROGRESS_STATUSES.length - 1 && (
+                    <div className={`order-progress-line ${i < progressIndex ? 'completed' : ''}`} />
+                  )}
+                  <span className={`order-progress-label ${i <= progressIndex ? 'active' : ''}`}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Customer Card */}
         <div className="order-section">
           <h3 className="order-section-title">Customer</h3>
@@ -193,7 +228,25 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
           </div>
           <div className="order-field">
             <span className="order-field-label">Email</span>
-            <span style={{ fontSize: 13 }}>{order.customer_email}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 13 }}>{order.customer_email}</span>
+              <button
+                className="copy-btn"
+                onClick={() => handleCopy(order.customer_email, 'email')}
+                title="Copy email"
+              >
+                {copiedField === 'email' ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -249,7 +302,7 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             <span style={{
               textTransform: 'capitalize',
               fontWeight: 600,
-              color: order.payment_status === 'paid' ? '#34c759' : '#ff9f0a'
+              color: order.payment_status === 'paid' ? '#22c55e' : '#eab308'
             }}>
               {order.payment_status}
             </span>
@@ -274,12 +327,15 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               ))}
             </select>
             <button
-              className="modal-btn primary"
+              className="order-save-btn"
               onClick={() => handleSave('status')}
               disabled={saving || status === order.status}
-              style={{ minWidth: 60 }}
             >
-              {savedField === 'status' ? 'Saved!' : 'Save'}
+              {savedField === 'status' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : 'Save'}
             </button>
           </div>
         </div>
@@ -295,13 +351,34 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
               onChange={e => setTrackingNumber(e.target.value)}
               placeholder="Enter tracking number"
             />
+            {trackingNumber && (
+              <button
+                className="copy-btn"
+                style={{ alignSelf: 'center' }}
+                onClick={() => handleCopy(trackingNumber, 'tracking')}
+              >
+                {copiedField === 'tracking' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                  </svg>
+                )}
+              </button>
+            )}
             <button
-              className="modal-btn primary"
+              className="order-save-btn"
               onClick={() => handleSave('tracking_number')}
               disabled={saving}
-              style={{ minWidth: 60 }}
             >
-              {savedField === 'tracking_number' ? 'Saved!' : 'Save'}
+              {savedField === 'tracking_number' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : 'Save'}
             </button>
           </div>
         </div>
@@ -317,12 +394,19 @@ export default function OrderDetail({ orderId, onBack }: OrderDetailProps) {
             rows={3}
           />
           <button
-            className="modal-btn primary"
+            className="order-save-btn"
             style={{ marginTop: 8, width: '100%' }}
             onClick={() => handleSave('notes')}
             disabled={saving}
           >
-            {savedField === 'notes' ? 'Saved!' : 'Save Notes'}
+            {savedField === 'notes' ? (
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Saved
+              </span>
+            ) : 'Save Notes'}
           </button>
         </div>
       </div>

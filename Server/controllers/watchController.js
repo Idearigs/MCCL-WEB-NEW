@@ -497,12 +497,12 @@ const getAllWatches = asyncHandler(async (req, res) => {
   const offset = (page - 1) * limit;
   const whereClause = { is_active: true };
 
-  // Search filter - search by name, sku, or reference
+  // Search filter - search by name, sku, or model number
   if (search) {
     whereClause[Op.or] = [
       { name: { [Op.iLike]: `%${search}%` } },
       { sku: { [Op.iLike]: `%${search}%` } },
-      { reference_number: { [Op.iLike]: `%${search}%` } }
+      { model_number: { [Op.iLike]: `%${search}%` } }
     ];
   }
   const include = [
@@ -595,6 +595,8 @@ const getAllWatches = asyncHandler(async (req, res) => {
       id: watch.id,
       name: watch.name,
       slug: watch.slug,
+      sku: watch.sku,
+      model_number: watch.model_number,
       price: currentPrice ? `£${parseFloat(currentPrice).toLocaleString()}` : '£0',
       base_price: parseFloat(watch.base_price) || 0,
       sale_price: watch.sale_price ? parseFloat(watch.sale_price) : null,
