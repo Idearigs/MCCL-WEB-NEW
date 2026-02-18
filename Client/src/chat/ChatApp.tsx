@@ -3,6 +3,8 @@ import API_BASE_URL from '../config/api';
 import ChatLogin from './ChatLogin';
 import ChatList from './ChatList';
 import ChatConversation from './ChatConversation';
+import OrderList from './OrderList';
+import OrderDetail from './OrderDetail';
 
 interface AdminUser {
   id: string;
@@ -18,6 +20,8 @@ export default function ChatApp() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [activeChatName, setActiveChatName] = useState('');
   const [activeChatStatus, setActiveChatStatus] = useState<'active' | 'closed' | 'waiting'>('active');
+  const [appView, setAppView] = useState<'chats' | 'orders'>('chats');
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -62,6 +66,8 @@ export default function ChatApp() {
     localStorage.removeItem('admin_token');
     setAdmin(null);
     setActiveChatId(null);
+    setActiveOrderId(null);
+    setAppView('chats');
   };
 
   const handleOpenChat = (chatId: string, customerName: string, status: 'active' | 'closed' | 'waiting') => {
@@ -86,6 +92,7 @@ export default function ChatApp() {
     return <ChatLogin onLogin={handleLogin} />;
   }
 
+  // Chat conversation view
   if (activeChatId) {
     return (
       <ChatConversation
@@ -99,11 +106,33 @@ export default function ChatApp() {
     );
   }
 
+  // Order detail view
+  if (appView === 'orders' && activeOrderId) {
+    return (
+      <OrderDetail
+        orderId={activeOrderId}
+        onBack={() => setActiveOrderId(null)}
+      />
+    );
+  }
+
+  // Order list view
+  if (appView === 'orders') {
+    return (
+      <OrderList
+        onSwitchToChats={() => setAppView('chats')}
+        onOpenOrder={(id) => setActiveOrderId(id)}
+      />
+    );
+  }
+
+  // Chat list view (default)
   return (
     <ChatList
       admin={admin}
       onOpenChat={handleOpenChat}
       onLogout={handleLogout}
+      onSwitchToOrders={() => { setAppView('orders'); setActiveOrderId(null); }}
     />
   );
 }

@@ -24,6 +24,23 @@ interface LabelAssignment {
   label: Label;
 }
 
+interface SlashCommand {
+  key: string;
+  label: string;
+  category?: string;
+  jewelrySubType?: string;
+}
+
+interface ProductResult {
+  id: string;
+  slug: string;
+  name: string;
+  price: string;
+  base_price: number;
+  image: { url: string; alt: string } | null;
+  category: { slug: string } | null;
+}
+
 interface ChatConversationProps {
   chatId: string;
   customerName: string;
@@ -35,6 +52,21 @@ interface ChatConversationProps {
 
 const SOCKET_URL = API_BASE_URL.replace('/api/v1', '');
 const POLL_INTERVAL = 3000;
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  { key: 'rings', label: 'Rings', category: 'rings' },
+  { key: 'earrings', label: 'Earrings', category: 'earrings' },
+  { key: 'necklaces', label: 'Necklaces', category: 'necklaces' },
+  { key: 'bracelets', label: 'Bracelets', category: 'bracelets' },
+  { key: 'watches', label: 'Watches', category: 'watches' },
+  { key: 'diamonds', label: 'Diamonds', category: 'diamonds' },
+  { key: 'all', label: 'All Products' },
+];
+
+const RING_SUB_COMMANDS: SlashCommand[] = [
+  { key: 'engagement', label: 'Engagement Rings', category: 'rings', jewelrySubType: 'engagement-rings' },
+  { key: 'wedding', label: 'Wedding Rings', category: 'rings', jewelrySubType: 'wedding-rings' },
+];
 
 function playNotificationSound() {
   try {
@@ -90,6 +122,12 @@ function shouldShowDateSeparator(msgs: Message[], index: number): boolean {
   return curr.toDateString() !== prev.toDateString();
 }
 
+function parseProductCard(text: string): { slug: string; name: string; price: string; imageUrl: string; categorySlug: string } | null {
+  const match = text.match(/^\[PRODUCT:([^:]*):([^:]*):([^:]*):([^:]*):([^\]]*)\]$/);
+  if (!match) return null;
+  return { slug: match[1], name: match[2], price: match[3], imageUrl: match[4], categorySlug: match[5] };
+}
+
 export default function ChatConversation({
   chatId,
   customerName,
@@ -109,14 +147,27 @@ export default function ChatConversation({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [appHeight, setAppHeight] = useState(window.innerHeight);
 
-  // New state for lightbox, delete, labels
+  // Lightbox, labels
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const [longPressMessageId, setLongPressMessageId] = useState<string | null>(null);
   const [labels, setLabels] = useState<LabelAssignment[]>([]);
   const [allLabels, setAllLabels] = useState<Label[]>([]);
   const [showLabelModal, setShowLabelModal] = useState(false);
   const [showDeleteChatConfirm, setShowDeleteChatConfirm] = useState(false);
-  const [showDeleteMsgConfirm, setShowDeleteMsgConfirm] = useState<string | null>(null);
+
+  // Multi-select mode for messages
+  const [msgSelectMode, setMsgSelectMode] = useState(false);
+  const [selectedMsgs, setSelectedMsgs] = useState<Set<string>>(new Set());
+  const longPressTimerRef = useRef<any>(null);
+
+  // Slash commands state
+  const [slashMenuVisible, setSlashMenuVisible] = useState(false);
+  const [slashSubMenu, setSlashSubMenu] = useState<string | null>(null);
+  const [slashSearch, setSlashSearch] = useState('');
+  const [slashCategory, setSlashCategory] = useState<string | null>(null);
+  const [slashJewelrySubType, setSlashJewelrySubType] = useState<string | null>(null);
+  const [productResults, setProductResults] = useState<ProductResult[]>([]);
+  const [searchingProducts, setSearchingProducts] = useState(false);
+  const searchDebounceRef = useRef<any>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -125,29 +176,25 @@ export default function ChatConversation({
   const scrollRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<any>(null);
   const messageIdsRef = useRef<Set<string>>(new Set());
-  const longPressTimerRef = useRef<any>(null);
 
   const token = localStorage.getItem('admin_token');
   const adminId = localStorage.getItem('admin_id') || '';
   const mediaBase = SOCKET_URL;
 
-  // Handle virtual keyboard - resize app to visible area
+  // Handle virtual keyboard
   useEffect(() => {
     const updateHeight = () => {
       const vh = window.visualViewport?.height || window.innerHeight;
       setAppHeight(vh);
       document.documentElement.style.setProperty('--app-height', `${vh}px`);
     };
-
     updateHeight();
-
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', updateHeight);
       window.visualViewport.addEventListener('scroll', updateHeight);
     } else {
       window.addEventListener('resize', updateHeight);
     }
-
     return () => {
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', updateHeight);
@@ -203,7 +250,6 @@ export default function ChatConversation({
     }
   }, [chatId, token, addMessages]);
 
-  // Initial fetch
   useEffect(() => {
     fetchMessages();
     fetch(`${API_BASE_URL}/chats/${chatId}/messages/read`, {
@@ -212,13 +258,11 @@ export default function ChatConversation({
     }).catch(() => {});
   }, [chatId]);
 
-  // Polling fallback
   useEffect(() => {
     pollRef.current = setInterval(() => fetchMessages(true), POLL_INTERVAL);
     return () => clearInterval(pollRef.current);
   }, [fetchMessages]);
 
-  // Socket connection
   useEffect(() => {
     const socket = io(mediaBase, {
       reconnection: true,
@@ -257,14 +301,12 @@ export default function ChatConversation({
     };
   }, [chatId]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
   }, [messages, customerTyping, appHeight]);
 
-  // Close menu on outside tap
   useEffect(() => {
     if (!showMenu) return;
     const close = () => setShowMenu(false);
@@ -272,8 +314,53 @@ export default function ChatConversation({
     return () => document.removeEventListener('click', close);
   }, [showMenu]);
 
+  // Slash command: search products with debounce
+  useEffect(() => {
+    if (!slashSearch.trim()) {
+      setProductResults([]);
+      return;
+    }
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(async () => {
+      setSearchingProducts(true);
+      try {
+        let url = `${API_BASE_URL}/products?search=${encodeURIComponent(slashSearch)}&limit=5`;
+        if (slashCategory) url += `&category=${slashCategory}`;
+        if (slashJewelrySubType) url += `&jewelrySubType=${slashJewelrySubType}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.success) {
+          setProductResults(data.data.products || []);
+        }
+      } catch (err) {
+        console.error('Product search failed:', err);
+      } finally {
+        setSearchingProducts(false);
+      }
+    }, 300);
+    return () => clearTimeout(searchDebounceRef.current);
+  }, [slashSearch, slashCategory, slashJewelrySubType]);
+
   const handleTyping = (value: string) => {
     setInput(value);
+
+    // Check for slash command trigger
+    if (value === '/') {
+      setSlashMenuVisible(true);
+      setSlashSubMenu(null);
+      setSlashSearch('');
+      setSlashCategory(null);
+      setSlashJewelrySubType(null);
+      setProductResults([]);
+    } else if (slashMenuVisible && slashCategory !== null) {
+      // In search mode: extract search text after the command prefix
+      const searchPart = value.replace(/^\/\w*\s*/, '');
+      setSlashSearch(searchPart);
+    } else if (!value.startsWith('/')) {
+      setSlashMenuVisible(false);
+      setSlashSubMenu(null);
+    }
+
     if (!isTyping && value.trim()) {
       setIsTyping(true);
       socketRef.current?.emit('user_typing', {
@@ -287,6 +374,69 @@ export default function ChatConversation({
         chat_id: chatId, user_type: 'admin', user_id: adminId, is_typing: false,
       });
     }, 1000);
+  };
+
+  const handleSlashSelect = (cmd: SlashCommand) => {
+    if (cmd.key === 'rings') {
+      setSlashSubMenu('rings');
+      return;
+    }
+    // Enter search mode
+    setSlashCategory(cmd.category || null);
+    setSlashJewelrySubType(cmd.jewelrySubType || null);
+    setSlashSubMenu(null);
+    setInput(`/${cmd.key} `);
+    setSlashSearch('');
+  };
+
+  const handleRingSubSelect = (cmd: SlashCommand) => {
+    setSlashCategory(cmd.category || null);
+    setSlashJewelrySubType(cmd.jewelrySubType || null);
+    setSlashSubMenu(null);
+    setInput(`/${cmd.key} `);
+    setSlashSearch('');
+  };
+
+  const handleProductSelect = (product: ProductResult) => {
+    const imgUrl = product.image?.url || '';
+    const catSlug = product.category?.slug || '';
+    const msg = `[PRODUCT:${product.slug}:${product.name}:${product.price}:${imgUrl}:${catSlug}]`;
+    setInput(msg);
+    setSlashMenuVisible(false);
+    setSlashCategory(null);
+    setSlashJewelrySubType(null);
+    setSlashSearch('');
+    setProductResults([]);
+    // Auto-send
+    handleSendDirect(msg);
+  };
+
+  const handleSendDirect = async (messageText: string) => {
+    setSending(true);
+    setIsTyping(false);
+    setInput('');
+    try {
+      const formData = new FormData();
+      formData.append('chat_id', chatId);
+      formData.append('sender_type', 'admin');
+      formData.append('sender_id', adminId);
+      formData.append('message', messageText);
+
+      const res = await fetch(`${API_BASE_URL}/chats/message/send`, {
+        method: 'POST',
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        addMessages([data.data.message]);
+        socketRef.current?.emit('send_message', { chat_id: chatId, message: data.data.message });
+      }
+    } catch (err) {
+      console.error('Send failed:', err);
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -313,6 +463,7 @@ export default function ChatConversation({
     setSending(true);
     setIsTyping(false);
     setInput('');
+    setSlashMenuVisible(false);
 
     try {
       const formData = new FormData();
@@ -369,10 +520,11 @@ export default function ChatConversation({
     }
   };
 
-  // Long press handlers for message delete
+  // Multi-select message handlers
   const handleMsgTouchStart = (msgId: string) => {
     longPressTimerRef.current = setTimeout(() => {
-      setShowDeleteMsgConfirm(msgId);
+      setMsgSelectMode(true);
+      setSelectedMsgs(new Set([msgId]));
     }, 600);
   };
 
@@ -383,21 +535,35 @@ export default function ChatConversation({
     }
   };
 
-  const handleDeleteMessage = async (msgId: string) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/chats/messages/${msgId}`, {
-        method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMessages(prev => prev.filter(m => m.id !== msgId));
+  const toggleSelectMsg = (msgId: string) => {
+    setSelectedMsgs(prev => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId);
+      else next.add(msgId);
+      return next;
+    });
+  };
+
+  const exitMsgSelectMode = () => {
+    setMsgSelectMode(false);
+    setSelectedMsgs(new Set());
+  };
+
+  const handleBulkDeleteMessages = async () => {
+    const ids = Array.from(selectedMsgs);
+    for (const msgId of ids) {
+      try {
+        await fetch(`${API_BASE_URL}/chats/messages/${msgId}`, {
+          method: 'DELETE',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         messageIdsRef.current.delete(msgId);
+      } catch (err) {
+        console.error('Delete message failed:', err);
       }
-    } catch (err) {
-      console.error('Delete message failed:', err);
     }
-    setShowDeleteMsgConfirm(null);
+    setMessages(prev => prev.filter(m => !selectedMsgs.has(m.id)));
+    exitMsgSelectMode();
   };
 
   const handleDeleteChat = async () => {
@@ -467,64 +633,133 @@ export default function ChatConversation({
     setShowLabelModal(true);
   };
 
+  const renderMessageContent = (msg: Message) => {
+    const productCard = parseProductCard(msg.message);
+    if (productCard) {
+      const productUrl = `/${productCard.categorySlug}/${productCard.slug}`;
+      return (
+        <div className="product-card-bubble">
+          {productCard.imageUrl && (
+            <img
+              src={productCard.imageUrl.startsWith('http') ? productCard.imageUrl : `${mediaBase}${productCard.imageUrl}`}
+              alt={productCard.name}
+              className="product-card-image"
+            />
+          )}
+          <div className="product-card-info">
+            <span className="product-card-name">{productCard.name}</span>
+            <span className="product-card-price">{productCard.price}</span>
+          </div>
+          <a
+            href={productUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="product-card-link"
+            onClick={(e) => e.stopPropagation()}
+          >
+            View Product
+          </a>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {msg.attachment_url && (
+          <img
+            src={`${mediaBase}${msg.attachment_url}`}
+            alt="Attachment"
+            className="msg-image"
+            onClick={() => setLightboxUrl(`${mediaBase}${msg.attachment_url}`)}
+          />
+        )}
+        {msg.message && <span className="msg-content">{msg.message}</span>}
+      </>
+    );
+  };
+
   return (
     <div className="chat-app slide-in" style={{ height: appHeight }}>
       {/* Top bar */}
       <div className="conv-header">
-        <button className="back-btn" onClick={onBack}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.2 }}>{customerName}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
-            <span className={`status-badge ${chatStatus}`}>{chatStatus}</span>
-            {labels.map(la => (
-              <span
-                key={la.id}
-                className="label-pill"
-                style={{ background: la.label?.color || '#666' }}
-              >
-                {la.label?.name}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div style={{ position: 'relative' }}>
-          <button
-            className="back-btn"
-            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="5" r="2" />
-              <circle cx="12" cy="12" r="2" />
-              <circle cx="12" cy="19" r="2" />
-            </svg>
-          </button>
-          {showMenu && (
-            <div className="status-menu" onClick={(e) => e.stopPropagation()}>
-              {chatStatus !== 'active' && (
-                <button onClick={() => handleStatusUpdate('active')}>Set Active</button>
-              )}
-              {chatStatus !== 'waiting' && (
-                <button onClick={() => handleStatusUpdate('waiting')}>Set Waiting</button>
-              )}
-              {chatStatus !== 'closed' && (
-                <button onClick={() => handleStatusUpdate('closed')} style={{ color: '#ef4444' }}>
-                  Close Chat
-                </button>
-              )}
-              <button onClick={openLabelModal}>Manage Labels</button>
-              <button
-                onClick={() => { setShowMenu(false); setShowDeleteChatConfirm(true); }}
-                style={{ color: '#ef4444' }}
-              >
-                Delete Chat
-              </button>
+        {msgSelectMode ? (
+          <>
+            <button className="back-btn" onClick={exitMsgSelectMode}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+            <span style={{ flex: 1, fontWeight: 600, fontSize: 16 }}>{selectedMsgs.size} selected</span>
+            <button
+              className="back-btn select-mode-trash"
+              onClick={handleBulkDeleteMessages}
+              disabled={selectedMsgs.size === 0}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+              </svg>
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="back-btn" onClick={onBack}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.2 }}>{customerName}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+                <span className={`status-badge ${chatStatus}`}>{chatStatus}</span>
+                {labels.map(la => (
+                  <span
+                    key={la.id}
+                    className="label-pill"
+                    style={{ background: la.label?.color || '#666' }}
+                  >
+                    {la.label?.name}
+                  </span>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
+            <div style={{ position: 'relative' }}>
+              <button
+                className="back-btn"
+                onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                </svg>
+              </button>
+              {showMenu && (
+                <div className="status-menu" onClick={(e) => e.stopPropagation()}>
+                  {chatStatus !== 'active' && (
+                    <button onClick={() => handleStatusUpdate('active')}>Set Active</button>
+                  )}
+                  {chatStatus !== 'waiting' && (
+                    <button onClick={() => handleStatusUpdate('waiting')}>Set Waiting</button>
+                  )}
+                  {chatStatus !== 'closed' && (
+                    <button onClick={() => handleStatusUpdate('closed')} style={{ color: '#ef4444' }}>
+                      Close Chat
+                    </button>
+                  )}
+                  <button onClick={openLabelModal}>Manage Labels</button>
+                  <button
+                    onClick={() => { setShowMenu(false); setShowDeleteChatConfirm(true); }}
+                    style={{ color: '#ef4444' }}
+                  >
+                    Delete Chat
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Messages */}
@@ -547,22 +782,34 @@ export default function ChatConversation({
                   </div>
                 )}
                 <div
-                  className={`msg-row ${msg.sender_type === 'admin' ? 'admin' : 'customer'}`}
-                  onTouchStart={() => handleMsgTouchStart(msg.id)}
+                  className={`msg-row ${msg.sender_type === 'admin' ? 'admin' : 'customer'} ${msgSelectMode && selectedMsgs.has(msg.id) ? 'selected' : ''}`}
+                  onClick={() => {
+                    if (msgSelectMode) toggleSelectMsg(msg.id);
+                  }}
+                  onTouchStart={() => {
+                    if (!msgSelectMode) handleMsgTouchStart(msg.id);
+                  }}
                   onTouchEnd={handleMsgTouchEnd}
                   onTouchMove={handleMsgTouchEnd}
-                  onContextMenu={(e) => { e.preventDefault(); setShowDeleteMsgConfirm(msg.id); }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    if (!msgSelectMode) {
+                      setMsgSelectMode(true);
+                      setSelectedMsgs(new Set([msg.id]));
+                    }
+                  }}
                 >
+                  {msgSelectMode && (
+                    <div className={`select-checkbox msg-checkbox ${selectedMsgs.has(msg.id) ? 'checked' : ''}`}>
+                      {selectedMsgs.has(msg.id) && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </div>
+                  )}
                   <div className={`msg-bubble ${msg.sender_type === 'admin' ? 'msg-admin' : 'msg-customer'}`}>
-                    {msg.attachment_url && (
-                      <img
-                        src={`${mediaBase}${msg.attachment_url}`}
-                        alt="Attachment"
-                        className="msg-image"
-                        onClick={() => setLightboxUrl(`${mediaBase}${msg.attachment_url}`)}
-                      />
-                    )}
-                    {msg.message && <span className="msg-content">{msg.message}</span>}
+                    {renderMessageContent(msg)}
                     <span className="msg-time">{formatTime(msg.created_at)}</span>
                   </div>
                 </div>
@@ -586,6 +833,67 @@ export default function ChatConversation({
         </div>
       )}
 
+      {/* Slash command menu */}
+      {slashMenuVisible && !slashCategory && (
+        <div className="slash-menu">
+          {slashSubMenu === 'rings' ? (
+            <>
+              <div className="slash-menu-header">
+                <button className="slash-back-btn" onClick={() => setSlashSubMenu(null)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+                <span>Rings</span>
+              </div>
+              {RING_SUB_COMMANDS.map(cmd => (
+                <button key={cmd.key} className="slash-menu-item" onClick={() => handleRingSubSelect(cmd)}>
+                  {cmd.label}
+                </button>
+              ))}
+            </>
+          ) : (
+            SLASH_COMMANDS.map(cmd => (
+              <button key={cmd.key} className="slash-menu-item" onClick={() => handleSlashSelect(cmd)}>
+                /{cmd.key}
+                <span className="slash-menu-label">{cmd.label}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Product search results */}
+      {slashMenuVisible && slashCategory !== null && (slashSearch.trim() || productResults.length > 0) && (
+        <div className="slash-menu product-results">
+          {searchingProducts ? (
+            <div style={{ padding: 12, textAlign: 'center' }}>
+              <div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
+            </div>
+          ) : productResults.length === 0 && slashSearch.trim() ? (
+            <div style={{ padding: 12, textAlign: 'center', fontSize: 13, color: 'var(--chat-text-muted)' }}>
+              No products found
+            </div>
+          ) : (
+            productResults.map(product => (
+              <button key={product.id} className="slash-product-item" onClick={() => handleProductSelect(product)}>
+                {product.image?.url && (
+                  <img
+                    src={product.image.url.startsWith('http') ? product.image.url : `${mediaBase}${product.image.url}`}
+                    alt={product.name}
+                    className="slash-product-img"
+                  />
+                )}
+                <div className="slash-product-info">
+                  <span className="slash-product-name">{product.name}</span>
+                  <span className="slash-product-price">{product.price}</span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
       {/* Input bar */}
       {chatStatus !== 'closed' ? (
         <form className="input-bar" onSubmit={handleSend}>
@@ -602,7 +910,7 @@ export default function ChatConversation({
             type="text"
             value={input}
             onChange={(e) => handleTyping(e.target.value)}
-            placeholder="Message"
+            placeholder="Message — type / for products"
             disabled={sending}
           />
           <button
@@ -646,19 +954,6 @@ export default function ChatConversation({
         <div className="lightbox-overlay" onClick={() => setLightboxUrl(null)}>
           <img src={lightboxUrl} alt="Full size" className="lightbox-image" />
           <button className="lightbox-close" onClick={() => setLightboxUrl(null)}>&times;</button>
-        </div>
-      )}
-
-      {/* Delete Message Confirmation */}
-      {showDeleteMsgConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteMsgConfirm(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <p style={{ fontSize: 15, marginBottom: 16 }}>Delete this message?</p>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button className="modal-btn" onClick={() => setShowDeleteMsgConfirm(null)}>Cancel</button>
-              <button className="modal-btn danger" onClick={() => handleDeleteMessage(showDeleteMsgConfirm)}>Delete</button>
-            </div>
-          </div>
         </div>
       )}
 

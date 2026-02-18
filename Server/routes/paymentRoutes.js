@@ -23,4 +23,7 @@ router.get('/orders', authMiddleware, stripeController.getAllOrders);
 // Update order status (admin only)
 router.patch('/order/:orderId/status', authMiddleware, stripeController.updateOrderStatus);
 
+// Update order details - status, tracking, notes (admin only)
+router.patch('/order/:orderId', authMiddleware, stripeController.updateOrderDetails);
+
 module.exports = router;

@@ -35,6 +35,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     in_stock,
     jewelrySubType,
     diamondSize,
+    search,
     sort = 'created_at',
     order = 'desc',
     page = 1,
@@ -43,6 +44,14 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
   const offset = (page - 1) * limit;
   const whereClause = { is_active: true };
+
+  // Search filter (name or SKU)
+  if (search) {
+    whereClause[Op.or] = [
+      { name: { [Op.iLike]: `%${search}%` } },
+      { sku: { [Op.iLike]: `%${search}%` } }
+    ];
+  }
   const include = [
     {
       model: Category,

@@ -544,11 +544,82 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * Update order details (status, tracking, notes)
+ * PATCH /api/v1/payments/order/:orderId
+ */
+const updateOrderDetails = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const { status, tracking_number, notes } = req.body;
+
+  try {
+    const { Order } = getModels();
+
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    const updates = {};
+    if (status !== undefined) {
+      const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid status. Must be one of: ' + validStatuses.join(', ')
+        });
+      }
+      updates.status = status;
+      if (status === 'shipped' && !order.shipped_at) {
+        updates.shipped_at = new Date();
+      }
+      if (status === 'delivered' && !order.delivered_at) {
+        updates.delivered_at = new Date();
+      }
+    }
+    if (tracking_number !== undefined) updates.tracking_number = tracking_number;
+    if (notes !== undefined) updates.notes = notes;
+
+    await order.update(updates);
+
+    // Send status update email if status changed
+    if (status && status !== order.status) {
+      try {
+        await sendOrderStatusUpdateEmail({
+          id: order.id,
+          customerEmail: order.customer_email,
+          customerName: order.customer_name,
+          orderNumber: order.order_number,
+          trackingNumber: updates.tracking_number || order.tracking_number
+        }, status);
+      } catch (emailError) {
+        console.error(`Failed to send status update email: ${emailError.message}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: order
+    });
+  } catch (error) {
+    console.error('Error in updateOrderDetails:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update order',
+      error: error.message
+    });
+  }
+});
+
 module.exports = {
   createPaymentIntent,
   confirmPayment,
   getOrder,
   handleWebhook,
   getAllOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  updateOrderDetails
 };

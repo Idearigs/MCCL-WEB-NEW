@@ -37,6 +37,7 @@ interface ChatListProps {
   admin: { id: string; full_name: string };
   onOpenChat: (chatId: string, customerName: string, status: 'active' | 'closed' | 'waiting') => void;
   onLogout: () => void;
+  onSwitchToOrders?: () => void;
 }
 
 const STATUS_FILTERS = ['all', 'active', 'waiting', 'closed'] as const;
@@ -98,7 +99,7 @@ function timeAgo(dateStr: string): string {
 
 const DEFAULT_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#ec4899', '#f97316', '#06b6d4'];
 
-export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps) {
+export default function ChatList({ admin, onOpenChat, onLogout, onSwitchToOrders }: ChatListProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,8 +126,9 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
   const [newLabelColor, setNewLabelColor] = useState(DEFAULT_COLORS[0]);
   const [editingLabel, setEditingLabel] = useState<Label | null>(null);
 
-  // Long-press delete chat
-  const [showDeleteChatConfirm, setShowDeleteChatConfirm] = useState<string | null>(null);
+  // Multi-select mode for chat deletion
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
   const longPressTimerRef = useRef<any>(null);
 
   const token = localStorage.getItem('admin_token');
@@ -323,10 +325,11 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
     return chat.messages[chat.messages.length - 1].message || 'Image';
   };
 
-  // Long press handlers for delete
+  // Long press to enter select mode
   const handleChatTouchStart = (chatId: string) => {
     longPressTimerRef.current = setTimeout(() => {
-      setShowDeleteChatConfirm(chatId);
+      setSelectMode(true);
+      setSelectedChats(new Set([chatId]));
     }, 600);
   };
 
@@ -337,21 +340,38 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
     }
   };
 
-  const handleDeleteChat = async (chatId: string) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
-        method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json();
-      if (data.success) {
-        setChats(prev => prev.filter(c => c.id !== chatId));
-        knownChatIds.current.delete(chatId);
+  const toggleSelectChat = (chatId: string) => {
+    setSelectedChats(prev => {
+      const next = new Set(prev);
+      if (next.has(chatId)) {
+        next.delete(chatId);
+      } else {
+        next.add(chatId);
       }
-    } catch (err) {
-      console.error('Delete chat failed:', err);
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedChats(new Set());
+  };
+
+  const handleBulkDeleteChats = async () => {
+    const ids = Array.from(selectedChats);
+    for (const chatId of ids) {
+      try {
+        await fetch(`${API_BASE_URL}/chats/${chatId}`, {
+          method: 'DELETE',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        knownChatIds.current.delete(chatId);
+      } catch (err) {
+        console.error('Delete chat failed:', err);
+      }
     }
-    setShowDeleteChatConfirm(null);
+    setChats(prev => prev.filter(c => !selectedChats.has(c.id)));
+    exitSelectMode();
   };
 
   // Label management
@@ -422,7 +442,6 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       setAllLabels(prev => prev.filter(l => l.id !== labelId));
-      // Refresh chats to update label displays
       fetchChats(undefined, true);
     } catch (err) {
       console.error('Delete label failed:', err);
@@ -433,90 +452,116 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
     <div className="chat-app">
       {/* Header */}
       <div className="chat-header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700 }}>
-              Chats
-              <span style={{
-                display: 'inline-block',
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: connected ? '#22c55e' : '#ef4444',
-                marginLeft: 8,
-                verticalAlign: 'middle',
-              }} />
-            </h1>
-            <p style={{ fontSize: 12, color: 'var(--chat-text-muted)', marginTop: 2 }}>
-              {admin.full_name}
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+        {selectMode ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                onClick={exitSelectMode}
+                className="select-mode-close"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>{selectedChats.size} selected</span>
+            </div>
             <button
-              onClick={openLabelMgmt}
-              style={{
-                background: 'var(--chat-surface)',
-                border: 'none',
-                color: 'var(--chat-text-muted)',
-                padding: '8px 10px',
-                borderRadius: 8,
-                fontSize: 13,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-              title="Manage Labels"
+              onClick={handleBulkDeleteChats}
+              disabled={selectedChats.size === 0}
+              className="select-mode-trash"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
-                <line x1="7" y1="7" x2="7.01" y2="7" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
               </svg>
             </button>
-            <button
-              onClick={onLogout}
-              style={{
-                background: 'var(--chat-surface)',
-                border: 'none',
-                color: 'var(--chat-text-muted)',
-                padding: '8px 14px',
-                borderRadius: 8,
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
-            >
-              Logout
-            </button>
           </div>
-        </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h1 style={{ fontSize: 20, fontWeight: 700 }}>
+                Chats
+                <span style={{
+                  display: 'inline-block',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: connected ? '#22c55e' : '#ef4444',
+                  marginLeft: 8,
+                  verticalAlign: 'middle',
+                }} />
+              </h1>
+              <p style={{ fontSize: 12, color: 'var(--chat-text-muted)', marginTop: 2 }}>
+                {admin.full_name}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {onSwitchToOrders && (
+                <button
+                  onClick={onSwitchToOrders}
+                  className="header-icon-btn"
+                  title="Orders"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 01-8 0" />
+                  </svg>
+                </button>
+              )}
+              <button
+                onClick={openLabelMgmt}
+                className="header-icon-btn"
+                title="Manage Labels"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" />
+                </svg>
+              </button>
+              <button
+                onClick={onLogout}
+                className="header-icon-btn"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Search */}
-      <div className="search-wrapper">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Search chats..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+      {!selectMode && (
+        <div className="search-wrapper">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search chats..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      )}
 
       {/* Status filter pills */}
-      <div className="filter-pills">
-        {STATUS_FILTERS.map((f) => (
-          <button
-            key={f}
-            className={`filter-pill ${statusFilter === f ? 'active' : ''}`}
-            onClick={() => setStatusFilter(f)}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
-      </div>
+      {!selectMode && (
+        <div className="filter-pills">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f}
+              className={`filter-pill ${statusFilter === f ? 'active' : ''}`}
+              onClick={() => setStatusFilter(f)}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Chat list */}
       {loading ? (
@@ -546,13 +591,36 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
           {chats.map((chat) => (
             <div
               key={chat.id}
-              className="chat-list-item"
-              onClick={() => onOpenChat(chat.id, chat.customer_name, chat.status)}
-              onTouchStart={() => handleChatTouchStart(chat.id)}
+              className={`chat-list-item ${selectMode && selectedChats.has(chat.id) ? 'selected' : ''}`}
+              onClick={() => {
+                if (selectMode) {
+                  toggleSelectChat(chat.id);
+                } else {
+                  onOpenChat(chat.id, chat.customer_name, chat.status);
+                }
+              }}
+              onTouchStart={() => {
+                if (!selectMode) handleChatTouchStart(chat.id);
+              }}
               onTouchEnd={handleChatTouchEnd}
               onTouchMove={handleChatTouchEnd}
-              onContextMenu={(e) => { e.preventDefault(); setShowDeleteChatConfirm(chat.id); }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                if (!selectMode) {
+                  setSelectMode(true);
+                  setSelectedChats(new Set([chat.id]));
+                }
+              }}
             >
+              {selectMode && (
+                <div className={`select-checkbox ${selectedChats.has(chat.id) ? 'checked' : ''}`}>
+                  {selectedChats.has(chat.id) && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </div>
+              )}
               <div className={`status-dot ${chat.status}`} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -592,22 +660,6 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
         </div>
       )}
 
-      {/* Delete Chat Confirmation */}
-      {showDeleteChatConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteChatConfirm(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <p style={{ fontSize: 15, marginBottom: 4, fontWeight: 600 }}>Delete this chat?</p>
-            <p style={{ fontSize: 13, color: 'var(--chat-text-muted)', marginBottom: 16 }}>
-              All messages will be permanently deleted.
-            </p>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button className="modal-btn" onClick={() => setShowDeleteChatConfirm(null)}>Cancel</button>
-              <button className="modal-btn danger" onClick={() => handleDeleteChat(showDeleteChatConfirm)}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Label Management Modal */}
       {showLabelMgmt && (
         <div className="modal-overlay" onClick={() => { setShowLabelMgmt(false); setEditingLabel(null); }}>
@@ -615,8 +667,8 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
             <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Manage Labels</p>
 
             {/* Create new label */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              <div style={{ display: 'flex', gap: 6, flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
                   value={newLabelName}
@@ -625,18 +677,18 @@ export default function ChatList({ admin, onOpenChat, onLogout }: ChatListProps)
                   className="label-input"
                   onKeyDown={e => e.key === 'Enter' && handleCreateLabel()}
                 />
-                <div className="color-picker-row">
-                  {DEFAULT_COLORS.map(c => (
-                    <button
-                      key={c}
-                      className={`color-swatch ${newLabelColor === c ? 'active' : ''}`}
-                      style={{ background: c }}
-                      onClick={() => setNewLabelColor(c)}
-                    />
-                  ))}
-                </div>
+                <button className="modal-btn primary" onClick={handleCreateLabel}>Add</button>
               </div>
-              <button className="modal-btn primary" onClick={handleCreateLabel}>Add</button>
+              <div className="color-picker-row">
+                {DEFAULT_COLORS.map(c => (
+                  <button
+                    key={c}
+                    className={`color-swatch ${newLabelColor === c ? 'active' : ''}`}
+                    style={{ background: c }}
+                    onClick={() => setNewLabelColor(c)}
+                  />
+                ))}
+              </div>
             </div>
 
             {/* Existing labels */}
