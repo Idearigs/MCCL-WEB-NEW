@@ -295,7 +295,7 @@ const WatchCollection = (): JSX.Element => {
               </button>
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {displayWatches.map((watch) => {
                 const primaryImage = watch.images?.find(img => img.is_primary) || watch.images?.[0];
                 return (
@@ -310,7 +310,7 @@ const WatchCollection = (): JSX.Element => {
                         <img
                           src={getMediaUrl(primaryImage.image_url)}
                           alt={primaryImage.alt_text || watch.name}
-                          className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">

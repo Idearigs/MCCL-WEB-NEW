@@ -25,8 +25,13 @@ const {
   addWatchVideo,
   deleteWatchVideo,
   getWatchVideos,
-  updateWatchVideo
+  updateWatchVideo,
+  getBrandAccessories
 } = require('../controllers/watchController');
+
+// Brand routes
+// Accessories / straps
+router.get('/accessories', getBrandAccessories);
 
 // Brand routes
 router.get('/brands', getAllBrands);

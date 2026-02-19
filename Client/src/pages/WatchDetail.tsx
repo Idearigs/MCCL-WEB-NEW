@@ -252,6 +252,8 @@ const WatchDetail = () => {
   const [expandedSpecs, setExpandedSpecs] = useState<{ [key: string]: boolean }>({});
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [isImageFixed, setIsImageFixed] = useState(true);
+  const [accessories, setAccessories] = useState<Array<{id:string;name:string;slug:string;strap_type:string;color:string;width_mm:number;price_gbp:number;image_url:string}>>([]);
+  const [accessoryFilter, setAccessoryFilter] = useState<string>('all');
 
   // Simple layout - no scroll effect needed
 
@@ -289,6 +291,15 @@ const WatchDetail = () => {
       fetchWatch();
     }
   }, [productId]);
+
+  // Fetch brand accessories (straps) once watch loads
+  useEffect(() => {
+    if (!watch?.brand?.name) return;
+    fetch(`${API_BASE_URL}/watches/accessories?brand=${encodeURIComponent(watch.brand.name)}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setAccessories(d.data); })
+      .catch(() => {});
+  }, [watch?.brand?.name]);
 
 
   if (loading) {
@@ -927,6 +938,70 @@ const WatchDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* ── BRISTON YOUR STYLE – Compatible Straps ───────────────────────── */}
+      {accessories.length > 0 && (
+        <section className="bg-white border-t border-gray-100 py-16 px-4 lg:px-[40px]">
+          <div className="max-w-screen-xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-10">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-400 font-inter mb-2">Personalise your watch</p>
+              <h2 className="text-2xl lg:text-3xl font-cormorant font-light text-gray-900 mb-1">
+                {watch?.brand?.name?.toUpperCase()} YOUR STYLE
+              </h2>
+              <div className="w-12 h-px bg-gray-300 mx-auto mt-4"></div>
+            </div>
+
+            {/* Filter pills */}
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              {['all', ...Array.from(new Set(accessories.map(a => a.strap_type)))].map(type => (
+                <button
+                  key={type}
+                  onClick={() => setAccessoryFilter(type)}
+                  className={`px-4 py-1.5 text-xs uppercase tracking-widest font-inter transition-all ${
+                    accessoryFilter === type
+                      ? 'bg-gray-900 text-white'
+                      : 'border border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900'
+                  }`}
+                >
+                  {type === 'all' ? 'All Straps' : type}
+                </button>
+              ))}
+            </div>
+
+            {/* Straps horizontal scroll grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {accessories
+                .filter(a => accessoryFilter === 'all' || a.strap_type === accessoryFilter)
+                .map(strap => (
+                  <div key={strap.id} className="group cursor-pointer">
+                    {/* Image */}
+                    <div className="aspect-square bg-gray-50 overflow-hidden mb-3 rounded-sm">
+                      {strap.image_url ? (
+                        <img
+                          src={getMediaUrl(strap.image_url)}
+                          alt={strap.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-inter">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    {/* Info */}
+                    <p className="text-xs font-inter font-light text-gray-900 leading-tight mb-1 line-clamp-2 uppercase tracking-wide">
+                      {strap.name}
+                    </p>
+                    <p className="text-sm font-cormorant text-gray-700">
+                      £{strap.price_gbp ? Number(strap.price_gbp).toFixed(2) : '—'}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <FooterSection />
     </div>

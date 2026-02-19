@@ -1484,6 +1484,49 @@ const updateWatchVideo = asyncHandler(async (req, res) => {
   });
 });
 
+// ─── GET BRAND ACCESSORIES (straps) ──────────────────────────────────────────
+const getBrandAccessories = asyncHandler(async (req, res) => {
+  const { brand, brand_id, type, width } = req.query;
+
+  let brandId = brand_id;
+
+  // Resolve brand slug → ID if needed
+  if (!brandId && brand) {
+    const brandRow = await sequelize.query(
+      `SELECT id FROM watch_brands WHERE LOWER(name) = LOWER(:brand) OR LOWER(slug) = LOWER(:brand) LIMIT 1`,
+      { replacements: { brand }, type: QueryTypes.SELECT }
+    );
+    if (brandRow.length) brandId = brandRow[0].id;
+  }
+
+  const conditions = [];
+  const replacements = {};
+
+  if (brandId) {
+    conditions.push('brand_id = :brandId');
+    replacements.brandId = brandId;
+  }
+  if (type) {
+    conditions.push('strap_type = :type');
+    replacements.type = type;
+  }
+  if (width) {
+    conditions.push('width_mm = :width');
+    replacements.width = parseInt(width);
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const accessories = await sequelize.query(
+    `SELECT id, name, slug, strap_type, color, width_mm, price_eur, price_gbp, image_url
+     FROM watch_accessories ${where}
+     ORDER BY strap_type, name`,
+    { replacements, type: QueryTypes.SELECT }
+  );
+
+  res.json({ success: true, data: accessories });
+});
+
 module.exports = {
   getAllBrands,
   createBrand,
@@ -1507,6 +1550,7 @@ module.exports = {
   deleteWatchImage,
   addWatchVideo,
   deleteWatchVideo,
+  getBrandAccessories,
   getWatchVideos,
   updateWatchVideo
 };
