@@ -113,10 +113,10 @@ async function ensureBrand() {
 
   // Create Briston brand
   const res = await query(
-    `INSERT INTO watch_brands (id, name, slug, description, country_of_origin, is_active, sort_order, created_at, updated_at)
+    `INSERT INTO watch_brands (id, name, slug, description, country_origin, website_url, is_active, sort_order, created_at, updated_at)
      VALUES (gen_random_uuid(), 'Briston', 'briston',
              'Briston watches combine French elegance with British spirit, featuring distinctive acetate cases and interchangeable straps.',
-             'France', true, 100, NOW(), NOW())
+             'France', 'https://www.briston-watches.com', true, 100, NOW(), NOW())
      RETURNING id`,
     []
   );
@@ -198,33 +198,51 @@ async function importWatch(product, brandId, collectionId, imageSourceDir) {
   const specs = product.specifications || {};
   const caseDiameter = specs.case_diameter ? parseFloat(specs.case_diameter) : null;
 
+  // Build technical_specs JSON (stores warranty, delivery, straps, all extras)
+  const technicalSpecs = {
+    warranty:          product.warranty          || null,
+    delivery:          product.delivery          || null,
+    compatible_straps: product.compatible_straps || [],
+    extra_sections:    product.extra_sections    || [],
+    tags:              product.tags              || [],
+    options:           product.options           || []
+  };
+
   const res = await query(
     `INSERT INTO watches (
-       id, brand_id, collection_id, name, slug, sku,
+       id, brand_id, collection_id, name, slug, model_number, sku,
        short_description, description,
        base_price, currency,
        gender, watch_type, style,
+       care_instructions,
+       technical_specs,
        is_featured, is_active, in_stock,
-       stock_quantity, sort_order,
+       stock_quantity, availability_status, sort_order,
        created_at, updated_at
      ) VALUES (
-       gen_random_uuid(), $1, $2, $3, $4, $5,
-       $6, $7,
-       $8, 'GBP',
-       $9, $10, $11,
-       false, true, $12,
-       $13, 0,
+       gen_random_uuid(), $1, $2, $3, $4, $5, $6,
+       $7, $8,
+       $9, 'GBP',
+       $10, $11, $12,
+       $13,
+       $14,
+       false, true, $15,
+       $16, 'in_stock', 0,
        NOW(), NOW()
      ) RETURNING id`,
     [
       brandId, collectionId,
-      product.title, slug, sku,
-      product.description.substring(0, 300),
-      product.description,
+      product.title, slug,
+      product.variants[0]?.sku || null,
+      sku,
+      (product.description || '').substring(0, 300),
+      product.description || '',
       eur2gbp(product.base_price),
       detectGender(product),
       detectWatchType(product),
       detectStyle(product),
+      product.warranty || null,
+      JSON.stringify(technicalSpecs),
       product.variants.some(v => v.available),
       product.variants.reduce((s, v) => s + (v.available ? 1 : 0), 0)
     ]
@@ -233,21 +251,33 @@ async function importWatch(product, brandId, collectionId, imageSourceDir) {
   const watchId = res.rows[0].id;
 
   // ── Insert specifications ─────────────────────────────────────
-  if (Object.keys(specs).length > 0) {
-    await query(
-      `INSERT INTO watch_specifications (
-         id, watch_id, movement, case_material, case_diameter,
-         water_resistance, created_at, updated_at
-       ) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW())`,
-      [
-        watchId,
-        specs.movement || null,
-        specs.case_material || null,
-        caseDiameter,
-        specs.water_resistance || null
-      ]
-    );
-  }
+  await query(
+    `INSERT INTO watch_specifications (
+       id, watch_id, movement, movement_type, case_material, case_diameter,
+       crystal_material, glass_type, water_resistance, watertightness,
+       dial_colour, strap_material, luminosity,
+       complications, features, functions, additional_features,
+       created_at, updated_at
+     ) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())`,
+    [
+      watchId,
+      specs.movement          || null,
+      specs.movement_type     || null,
+      specs.case_material     || null,
+      caseDiameter,
+      specs.crystal           || null,
+      specs.crystal           || null,
+      specs.water_resistance  || null,
+      specs.water_resistance  || null,
+      specs.dial_colour       || null,
+      specs.strap             || null,
+      specs.luminosity        || null,
+      specs.functions         || null,
+      specs.functions         || null,
+      specs.functions         || null,
+      specs.strap             || null
+    ]
+  );
 
   // ── Insert variants ───────────────────────────────────────────
   for (const variant of product.variants) {
@@ -328,20 +358,21 @@ function detectGender(product) {
 }
 
 function detectWatchType(product) {
+  // enum: analog, digital, hybrid, smart
   const text = (product.title + ' ' + product.tags.join(' ') + ' ' + product.description).toLowerCase();
-  if (/chrono/.test(text)) return 'chronograph';
-  if (/auto/.test(text)) return 'automatic';
-  if (/dive|diver|diving/.test(text)) return 'diver';
-  if (/dress/.test(text)) return 'dress';
-  if (/sport/.test(text)) return 'sport';
-  return 'quartz';
+  if (/digital|lcd/.test(text)) return 'digital';
+  if (/smart|connect/.test(text)) return 'smart';
+  return 'analog'; // Briston watches are all analog
 }
 
 function detectStyle(product) {
-  const text = (product.title + ' ' + product.product_type).toLowerCase();
+  // enum: dress, sport, casual, luxury, diving, aviation, military
+  const text = (product.title + ' ' + product.tags.join(' ')).toLowerCase();
+  if (/diver|diving|dive/.test(text)) return 'diving';
   if (/sport/.test(text)) return 'sport';
-  if (/classic|elegant/.test(text)) return 'classic';
-  if (/chic|lady|femme/.test(text)) return 'fashion';
+  if (/military|army/.test(text)) return 'military';
+  if (/luxury|gold|diamond/.test(text)) return 'luxury';
+  if (/dress|elegant|formal/.test(text)) return 'dress';
   return 'casual';
 }
 

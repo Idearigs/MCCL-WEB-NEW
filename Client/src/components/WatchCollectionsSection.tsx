@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, getMediaUrl } from "../config/api";
 
 interface Collection {
   id: string;
@@ -92,7 +92,7 @@ export const WatchCollectionsSection = (): JSX.Element => {
                     <div className="relative h-[400px]">
                       <div
                         className="h-[276px] bg-cover bg-center group-hover:scale-105 transition-transform duration-300"
-                        style={{ backgroundImage: `url(${collection.image_url || 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=500&h=400&fit=crop'})` }}
+                        style={{ backgroundImage: `url(${collection.image_url ? getMediaUrl(collection.image_url) : 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=500&h=400&fit=crop'})` }}
                       />
                       <div className="h-[124px] bg-white p-8 group-hover:bg-gray-50 transition-colors duration-300">
                         <h3 className="font-serif font-light text-black text-[20.4px] leading-8 mb-4">

@@ -4,7 +4,7 @@ import { Heart, Share2, ChevronLeft, ChevronRight, Clock, Droplet, Zap, Maximize
 import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
 import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getMediaUrl } from '../config/api';
 
 interface WatchSpecification {
   // Case specifications
@@ -407,7 +407,7 @@ const WatchDetail = () => {
                     }`}
                   >
                     <img
-                      src={img.image_url}
+                      src={getMediaUrl(img.image_url)}
                       alt={img.alt_text}
                       className="w-full h-full object-cover"
                     />
@@ -422,7 +422,7 @@ const WatchDetail = () => {
               {/* Main Image - Full width on mobile */}
               <div className="flex-1 flex items-center justify-center px-4 py-6 lg:py-12 lg:px-24 min-h-[50vh] lg:min-h-0">
                 <img
-                  src={currentImage.image_url}
+                  src={getMediaUrl(currentImage.image_url)}
                   alt={currentImage.alt_text}
                   className="w-full h-full max-h-[45vh] lg:max-h-[70vh] object-contain"
                 />
@@ -460,7 +460,7 @@ const WatchDetail = () => {
                       }`}
                     >
                       <img
-                        src={img.image_url}
+                        src={getMediaUrl(img.image_url)}
                         alt={img.alt_text}
                         className="w-full h-full object-cover"
                       />

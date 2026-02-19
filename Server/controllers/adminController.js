@@ -142,15 +142,7 @@ const adminLogin = asyncHandler(async (req, res) => {
     }
   }
 
-  // Check max devices (only if this is a genuinely new device)
-  if (activeDevices >= config.jwt.maxDevices) {
-    return res.status(403).json({
-      success: false,
-      message: `Maximum ${config.jwt.maxDevices} devices reached. Remove a device first.`,
-      code: 'MAX_DEVICES',
-      active_devices: activeDevices
-    });
-  }
+  // No device limit enforced
 
   // Create tokens
   const tokenPayload = {
@@ -570,13 +562,7 @@ const verifyPairing = asyncHandler(async (req, res) => {
     }
   });
 
-  if (activeDevices >= config.jwt.maxDevices) {
-    return res.status(403).json({
-      success: false,
-      message: `Maximum ${config.jwt.maxDevices} devices reached.`,
-      code: 'MAX_DEVICES'
-    });
-  }
+  // No device limit enforced
 
   // Create new session for paired device
   const tokenPayload = {

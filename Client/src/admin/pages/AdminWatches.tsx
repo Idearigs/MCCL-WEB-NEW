@@ -21,7 +21,7 @@ import Modal from '../components/Modal';
 import Alert from '../components/Alert';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
-import API_BASE_URL from '../../config/api';
+import API_BASE_URL, { getMediaUrl } from '../../config/api';
 
 interface WatchBrand {
   id: string;
@@ -1085,7 +1085,7 @@ const AdminWatches: React.FC = () => {
                       <div className="flex-shrink-0 h-12 w-12">
                         {watch.image?.url ? (
                           <img
-                            src={watch.image.url}
+                            src={getMediaUrl(watch.image.url)}
                             alt={watch.image.alt}
                             className="h-12 w-12 rounded-lg object-cover"
                           />
@@ -1939,9 +1939,9 @@ const AdminWatches: React.FC = () => {
                   if (img.preview) {
                     imageSrc = img.preview; // New uploaded file
                   } else if (img.image_url) {
-                    imageSrc = img.image_url; // From API
+                    imageSrc = getMediaUrl(img.image_url); // From API
                   } else if (img.url) {
-                    imageSrc = img.url; // Alternative property name
+                    imageSrc = getMediaUrl(img.url); // Alternative property name
                   } else if (typeof img === 'string') {
                     imageSrc = img; // String URL
                   }

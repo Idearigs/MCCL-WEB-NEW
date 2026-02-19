@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import StaticNavigation from "../components/StaticNavigation";
 import { Heart, Grid3X3, List } from "lucide-react";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, getMediaUrl } from "../config/api";
 
 interface Watch {
   id: string;
@@ -305,12 +305,12 @@ const WatchCollection = (): JSX.Element => {
                     onClick={() => navigate(`/watches/${watch.slug}`)}
                   >
                     {/* Image Container */}
-                    <div className="relative overflow-hidden bg-gray-100 aspect-square mb-4 rounded-lg">
+                    <div className="relative overflow-hidden bg-gray-50 aspect-square mb-4 rounded-lg">
                       {primaryImage ? (
                         <img
-                          src={primaryImage.image_url}
+                          src={getMediaUrl(primaryImage.image_url)}
                           alt={primaryImage.alt_text || watch.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -375,12 +375,12 @@ const WatchCollection = (): JSX.Element => {
                     onClick={() => navigate(`/watches/${watch.slug}`)}
                   >
                     {/* Image */}
-                    <div className="flex-shrink-0 w-32 h-32 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="flex-shrink-0 w-32 h-32 bg-gray-50 rounded-lg overflow-hidden">
                       {primaryImage ? (
                         <img
-                          src={primaryImage.image_url}
+                          src={getMediaUrl(primaryImage.image_url)}
                           alt={primaryImage.alt_text || watch.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
