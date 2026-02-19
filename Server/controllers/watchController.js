@@ -1,7 +1,7 @@
-const { Op } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 const { getModels } = require('../models');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { logger } = require('../config/database');
+const { logger, postgresDB } = require('../config/database');
 
 const getModelInstance = () => {
   const models = getModels();
@@ -1487,12 +1487,13 @@ const updateWatchVideo = asyncHandler(async (req, res) => {
 // ─── GET BRAND ACCESSORIES (straps) ──────────────────────────────────────────
 const getBrandAccessories = asyncHandler(async (req, res) => {
   const { brand, brand_id, type, width } = req.query;
+  const db = postgresDB();
 
   let brandId = brand_id;
 
   // Resolve brand slug → ID if needed
   if (!brandId && brand) {
-    const brandRow = await sequelize.query(
+    const brandRow = await db.query(
       `SELECT id FROM watch_brands WHERE LOWER(name) = LOWER(:brand) OR LOWER(slug) = LOWER(:brand) LIMIT 1`,
       { replacements: { brand }, type: QueryTypes.SELECT }
     );
@@ -1517,7 +1518,7 @@ const getBrandAccessories = asyncHandler(async (req, res) => {
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  const accessories = await sequelize.query(
+  const accessories = await db.query(
     `SELECT id, name, slug, strap_type, color, width_mm, price_eur, price_gbp, image_url
      FROM watch_accessories ${where}
      ORDER BY strap_type, name`,
