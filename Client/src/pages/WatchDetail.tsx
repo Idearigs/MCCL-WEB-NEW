@@ -253,6 +253,7 @@ const WatchDetail = () => {
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [accessories, setAccessories] = useState<Array<{id:string;name:string;slug:string;strap_type:string;color:string;width_mm:number;price_gbp:number;image_url:string}>>([]);
   const [accessoryFilter, setAccessoryFilter] = useState<string>('all');
+  const [showFullDesc, setShowFullDesc] = useState(false);
 
   // Simple layout - no scroll effect needed
 
@@ -579,7 +580,7 @@ const WatchDetail = () => {
         {/* Mobile: swipeable image gallery */}
         <div
           className="relative bg-white"
-          style={{ minHeight: '80vw' }}
+          style={{ minHeight: '80vw', paddingBottom: '48px' }}
           onTouchStart={(e) => {
             const touch = e.touches[0];
             (e.currentTarget as HTMLDivElement).dataset.touchStartX = String(touch.clientX);
@@ -600,7 +601,7 @@ const WatchDetail = () => {
           <img
             src={getMediaUrl(currentImage.image_url)}
             alt={currentImage.alt_text}
-            className="absolute inset-0 w-full h-full object-contain p-8"
+            className="absolute inset-0 w-full h-full object-contain p-4"
           />
           {/* Prev / Next tap zones */}
           {displayImages.length > 1 && (
@@ -619,7 +620,7 @@ const WatchDetail = () => {
           )}
           {/* Minimal dot indicators */}
           {displayImages.length > 1 && (
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2.5">
               {displayImages.map((_, i) => (
                 <button
                   key={i}
@@ -641,7 +642,7 @@ const WatchDetail = () => {
               {watch?.brand?.name && (
                 <p className="text-[10px] font-inter font-light text-gray-400 uppercase tracking-[0.25em]">{watch.brand.name}</p>
               )}
-              <h1 className="text-lg font-cormorant font-light text-gray-900 leading-snug">{watch?.name}</h1>
+              <h1 className="text-2xl font-cormorant font-light text-gray-900 leading-snug">{watch?.name}</h1>
               {watch?.model_number && (
                 <p className="text-xs text-gray-400 tracking-wide font-light">Ref. {watch.model_number}</p>
               )}
@@ -650,7 +651,7 @@ const WatchDetail = () => {
             {/* Price Section - Clean & Minimal */}
             <div className="space-y-3">
               <div className="flex items-baseline gap-4">
-                <span className="text-3xl font-light text-gray-900">£{price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span className="text-lg font-light text-gray-900">£{price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 {watch?.sale_price && (
                   <>
                     <span className="text-sm text-gray-400 line-through font-light">£{watch?.base_price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -688,8 +689,18 @@ const WatchDetail = () => {
 
             {/* Description */}
             {watch?.short_description && (
-              <div className="hidden lg:block pt-2">
-                <p className="text-sm text-gray-700 leading-relaxed font-light">{watch.short_description}</p>
+              <div className="pt-2">
+                <p className={`text-sm text-gray-600 leading-relaxed font-light ${showFullDesc ? '' : 'line-clamp-3'}`}>
+                  {watch.short_description}
+                </p>
+                {watch.short_description.length > 120 && (
+                  <button
+                    onClick={() => setShowFullDesc(v => !v)}
+                    className="mt-1 text-xs text-gray-400 underline underline-offset-2 font-light"
+                  >
+                    {showFullDesc ? 'See less' : 'See more'}
+                  </button>
+                )}
               </div>
             )}
 
