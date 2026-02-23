@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Heart, Share2, ChevronLeft, ChevronRight, Clock, Droplet, Zap, Maximize2, Plus, Minus } from 'lucide-react';
+import { Heart, Share2, Clock, Droplet, Maximize2 } from 'lucide-react';
 import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
 import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
@@ -251,7 +251,6 @@ const WatchDetail = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [expandedSpecs, setExpandedSpecs] = useState<{ [key: string]: boolean }>({});
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
-  const [isImageFixed, setIsImageFixed] = useState(true);
   const [accessories, setAccessories] = useState<Array<{id:string;name:string;slug:string;strap_type:string;color:string;width_mm:number;price_gbp:number;image_url:string}>>([]);
   const [accessoryFilter, setAccessoryFilter] = useState<string>('all');
 
@@ -292,14 +291,14 @@ const WatchDetail = () => {
     }
   }, [productId]);
 
-  // Fetch brand accessories (straps) once watch loads
+  // Fetch watch-specific compatible straps
   useEffect(() => {
-    if (!watch?.brand?.name) return;
-    fetch(`${API_BASE_URL}/watches/accessories?brand=${encodeURIComponent(watch.brand.name)}`)
+    if (!watch?.id) return;
+    fetch(`${API_BASE_URL}/watches/${watch.id}/straps`)
       .then(r => r.json())
       .then(d => { if (d.success) setAccessories(d.data); })
       .catch(() => {});
-  }, [watch?.brand?.name]);
+  }, [watch?.id]);
 
 
   if (loading) {
@@ -399,133 +398,252 @@ const WatchDetail = () => {
         </div>
       </nav>
 
-      <div className="w-full flex flex-col lg:flex-row lg:min-h-[calc(100vh-120px)]">
+      <div className="hidden lg:grid gap-0 mt-20" style={{ gridTemplateColumns: '65% 35%' }}>
 
-          {/* Left Column - Luxury Image Gallery */}
-          <div className="relative flex w-full lg:w-[58%] bg-[#f8f8f8]">
-
-            {/* Vertical Thumbnail Strip - Desktop Only */}
-            {displayImages.length > 1 && (
-              <div className="hidden lg:flex flex-col gap-2 absolute left-6 top-1/2 -translate-y-1/2 z-10">
-                {displayImages.map((img, index) => (
-                  <button
+          {/* Left Column - 2-column image grid (desktop, ring-page style) */}
+          <div className="w-full px-2 pt-2">
+            <div className="grid grid-cols-2 gap-2">
+              {displayImages.map((img, index) => {
+                const isLastOdd = displayImages.length % 2 === 1 && index === displayImages.length - 1;
+                return (
+                  <div
                     key={img.id}
+                    className={`relative bg-[#f5f5f5] overflow-hidden group cursor-pointer${isLastOdd ? ' col-span-2' : ''}`}
+                    style={{ height: '750px' }}
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`w-16 h-16 overflow-hidden bg-white transition-all duration-300 ${
-                      index === currentImageIndex
-                        ? 'ring-2 ring-gray-900'
-                        : 'opacity-70 hover:opacity-100 ring-1 ring-gray-200 hover:ring-gray-400'
-                    }`}
                   >
                     <img
                       src={getMediaUrl(img.image_url)}
                       alt={img.alt_text}
-                      className="w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Main Image Container */}
-            <div className="relative flex-1 flex flex-col" data-section="image-main">
-
-              {/* Main Image - Full width on mobile */}
-              <div className="flex-1 flex items-center justify-center px-4 py-6 lg:py-12 lg:px-24 min-h-[50vh] lg:min-h-0">
-                <img
-                  src={getMediaUrl(currentImage.image_url)}
-                  alt={currentImage.alt_text}
-                  className="w-full h-full max-h-[45vh] lg:max-h-[70vh] object-contain"
-                />
-              </div>
-
-              {/* Minimal Navigation Arrows */}
-              {displayImages.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length)}
-                    className="absolute left-2 lg:left-24 top-1/2 -translate-y-1/2 w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors duration-300 bg-white/90 hover:bg-white rounded-full shadow-sm"
-                  >
-                    <ChevronLeft className="w-4 h-4 lg:w-5 lg:h-5" strokeWidth={1.5} />
-                  </button>
-                  <button
-                    onClick={() => setCurrentImageIndex((prev) => (prev + 1) % displayImages.length)}
-                    className="absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors duration-300 bg-white/90 hover:bg-white rounded-full shadow-sm"
-                  >
-                    <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5" strokeWidth={1.5} />
-                  </button>
-                </>
-              )}
-
-              {/* Mobile Thumbnail Strip */}
-              {displayImages.length > 1 && (
-                <div className="lg:hidden flex justify-center gap-2 px-4 py-3 bg-[#f8f8f8]">
-                  {displayImages.map((img, index) => (
-                    <button
-                      key={img.id}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`w-14 h-14 overflow-hidden bg-white transition-all duration-300 ${
-                        index === currentImageIndex
-                          ? 'ring-2 ring-gray-900'
-                          : 'opacity-60 ring-1 ring-gray-200'
-                      }`}
-                    >
-                      <img
-                        src={getMediaUrl(img.image_url)}
-                        alt={img.alt_text}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Bottom Controls */}
-              <div className="flex items-center justify-center gap-4 lg:gap-6 px-4 py-3 lg:py-4 bg-[#f8f8f8] lg:absolute lg:bottom-6 lg:left-0 lg:right-0 lg:bg-transparent">
-                {/* Wishlist Button */}
-                <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className="group flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors duration-300"
-                >
-                  <Heart className={`w-5 h-5 transition-all duration-300 ${isWishlisted ? 'fill-gray-900 text-gray-900' : 'group-hover:scale-110'}`} strokeWidth={1.5} />
-                </button>
-
-                {/* Image Counter - Elegant Dots */}
-                {displayImages.length > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    {displayImages.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`transition-all duration-300 rounded-full ${
-                          index === currentImageIndex
-                            ? 'w-5 h-1.5 bg-gray-900'
-                            : 'w-1.5 h-1.5 bg-gray-400 hover:bg-gray-600'
-                        }`}
-                      />
-                    ))}
                   </div>
-                )}
-
-                {/* Image Number */}
-                <span className="text-xs text-gray-400 tracking-widest font-light">
-                  {String(currentImageIndex + 1).padStart(2, '0')} / {String(displayImages.length).padStart(2, '0')}
-                </span>
-              </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Right Column - Product Info - Modern Minimal Luxury */}
-          <div className="flex flex-col px-6 md:px-8 lg:px-12 xl:px-16 py-8 md:py-10 lg:py-12 bg-white space-y-6 w-full lg:w-[42%] lg:overflow-y-auto lg:max-h-[calc(100vh-120px)]" data-product-details>
+          {/* Right Column - sticky product info (desktop) */}
+          <div className="flex flex-col py-10 bg-white space-y-6 sticky top-[120px] self-start" style={{ paddingLeft: '5.5rem', paddingRight: '5.5rem' }} data-product-details>
+
+          {/* Brand & Model */}
+          <div className="space-y-4">
+            {watch?.brand?.name && (
+              <p className="text-xs font-light text-gray-500 uppercase tracking-widest">{watch.brand.name}</p>
+            )}
+            <h1 className="text-3xl xl:text-4xl font-light text-gray-900 leading-tight tracking-tight">{watch?.name}</h1>
+            {watch?.model_number && (
+              <p className="text-sm text-gray-500 tracking-wide font-light">Ref. {watch.model_number}</p>
+            )}
+          </div>
+
+          {/* Price */}
+          <div className="space-y-3">
+            <div className="flex items-baseline gap-4">
+              <span className="text-3xl font-light text-gray-900">£{price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+              {watch?.sale_price && (
+                <>
+                  <span className="text-sm text-gray-400 line-through font-light">£{watch?.base_price?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-xs font-semibold text-red-600">{discount}% OFF</span>
+                </>
+              )}
+            </div>
+            <p className="text-xs text-gray-600 tracking-wide font-light">
+              {watch?.in_stock ? (
+                <span className="text-green-600 font-medium">In Stock ({watch?.stock_quantity} available)</span>
+              ) : (
+                <span className="text-red-600 font-medium">Out of Stock</span>
+              )}
+            </p>
+          </div>
+
+          {/* Quick Specs */}
+          <div className="grid grid-cols-3 gap-4 pt-2">
+            <div className="bg-gray-50 px-4 py-4 space-y-2">
+              <Clock className="w-3.5 h-3.5" style={{ color: BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#374151' }} />
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#374151' }}>Movement</p>
+              <p className="text-xs text-gray-900 font-light leading-relaxed">{watch?.specifications?.movement_type || '—'}</p>
+            </div>
+            <div className="bg-gray-50 px-4 py-4 space-y-2">
+              <Droplet className="w-3.5 h-3.5" style={{ color: BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#374151' }} />
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#374151' }}>Water Resist</p>
+              <p className="text-xs text-gray-900 font-light leading-relaxed">{watch?.specifications?.water_resistance || '—'}</p>
+            </div>
+            <div className="bg-gray-50 px-4 py-4 space-y-2">
+              <Maximize2 className="w-3.5 h-3.5" style={{ color: BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#374151' }} />
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#374151' }}>Case Size</p>
+              <p className="text-xs text-gray-900 font-light leading-relaxed">{watch?.specifications?.case_diameter || '—'}</p>
+            </div>
+          </div>
+
+          {watch?.short_description && (
+            <div className="pt-2">
+              <p className="text-sm text-gray-700 leading-relaxed font-light">{watch.short_description}</p>
+            </div>
+          )}
+
+          {/* Add to Cart */}
+          <div className="space-y-3 pt-4">
+            <button
+              onClick={handleAddToCart}
+              disabled={!watch?.in_stock}
+              className="w-full text-white py-3.5 px-6 font-light tracking-wide disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 text-sm shadow-sm hover:shadow-md"
+              style={{
+                backgroundColor: watch?.in_stock ? (BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#1a1a1a') : '#9ca3af',
+                opacity: watch?.in_stock ? 1 : 0.7
+              }}
+            >
+              {watch?.in_stock ? 'Add to Cart' : 'Out of Stock'}
+            </button>
+            <div className="flex items-center gap-3">
+              <button
+                className="flex-1 flex items-center justify-center gap-2 py-3 text-gray-900 transition-all duration-200"
+                style={{ border: `1px solid ${BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#d1d5db'}` }}
+                onClick={() => setIsWishlisted(!isWishlisted)}
+              >
+                <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-gray-900' : ''}`} />
+                <span className="text-xs font-light">Save</span>
+              </button>
+              <button
+                className="flex-1 flex items-center justify-center gap-2 py-3 text-gray-900 transition-all duration-200"
+                style={{ border: `1px solid ${BRAND_COLOR_CONFIG[watch?.brand?.name || ''] || '#d1d5db'}` }}
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="text-xs font-light">Share</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Description */}
+          {watch?.description && (
+            <div className="space-y-3 pt-4 border-t border-gray-200">
+              <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-widest">About This Piece</h3>
+              <p className="text-gray-700 leading-relaxed text-sm font-light">{watch.description}</p>
+            </div>
+          )}
+
+          {/* Specs accordion */}
+          <div className="space-y-1 pt-4 border-t border-gray-200">
+            <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-widest mb-4">Technical Specifications</h3>
+            {(() => {
+              const brandName = watch?.brand?.name;
+              const config = brandName && BRAND_SPEC_CONFIG[brandName];
+              if (!config) return null;
+              return Object.entries(config.sections).map(([sectionKey, section]) => {
+                const fields = section.fields.filter(f => watch?.specifications?.[f.key]);
+                if (!fields.length) return null;
+                return (
+                  <div key={sectionKey}>
+                    <button onClick={() => toggleSpecSection(sectionKey)} className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50/50 transition-colors">
+                      <span className="text-xs font-semibold text-gray-900">{section.label}</span>
+                      <span className="text-gray-400 text-sm font-light">{expandedSpecs[sectionKey] ? '−' : '+'}</span>
+                    </button>
+                    {expandedSpecs[sectionKey] && (
+                      <div className="pb-3 space-y-2">
+                        {fields.map(f => (
+                          <div key={f.key} className="flex justify-between text-xs py-1.5">
+                            <span className="text-gray-600">{f.label}</span>
+                            <span className="text-gray-900 font-light">{watch?.specifications?.[f.key]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
+            <button onClick={() => toggleSpecSection('care')} className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50/50 transition-colors">
+              <span className="text-xs font-semibold text-gray-900">Warranty & Care</span>
+              <span className="text-gray-400 text-sm font-light">{expandedSpecs.care ? '−' : '+'}</span>
+            </button>
+            {expandedSpecs.care && (
+              <div className="pb-3 space-y-2">
+                <div className="flex justify-between text-xs py-1.5"><span className="text-gray-600">Warranty</span><span className="text-gray-900 font-light">{watch?.warranty_years || 'N/A'} years</span></div>
+                {watch?.care_instructions && <p className="text-xs text-gray-700 leading-relaxed font-light pt-1">{watch.care_instructions}</p>}
+              </div>
+            )}
+          </div>
+
+          {watch?.collection?.name && (
+            <div className="border-t border-gray-200 pt-6 space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Collection</p>
+              <p className="text-sm text-gray-900 font-light">{watch.collection.name}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── MOBILE LAYOUT ── */}
+      <div className="lg:hidden flex flex-col">
+
+        {/* Mobile: swipeable image gallery */}
+        <div
+          className="relative bg-white"
+          style={{ minHeight: '80vw' }}
+          onTouchStart={(e) => {
+            const touch = e.touches[0];
+            (e.currentTarget as HTMLDivElement).dataset.touchStartX = String(touch.clientX);
+          }}
+          onTouchEnd={(e) => {
+            const startX = Number((e.currentTarget as HTMLDivElement).dataset.touchStartX || 0);
+            const endX = e.changedTouches[0].clientX;
+            const diff = startX - endX;
+            if (Math.abs(diff) > 40) {
+              if (diff > 0) {
+                setCurrentImageIndex(i => Math.min(displayImages.length - 1, i + 1));
+              } else {
+                setCurrentImageIndex(i => Math.max(0, i - 1));
+              }
+            }
+          }}
+        >
+          <img
+            src={getMediaUrl(currentImage.image_url)}
+            alt={currentImage.alt_text}
+            className="absolute inset-0 w-full h-full object-contain p-8"
+          />
+          {/* Prev / Next tap zones */}
+          {displayImages.length > 1 && (
+            <>
+              <button
+                onClick={() => setCurrentImageIndex(i => Math.max(0, i - 1))}
+                className="absolute left-0 top-0 h-full w-1/3 z-10"
+                aria-label="Previous image"
+              />
+              <button
+                onClick={() => setCurrentImageIndex(i => Math.min(displayImages.length - 1, i + 1))}
+                className="absolute right-0 top-0 h-full w-1/3 z-10"
+                aria-label="Next image"
+              />
+            </>
+          )}
+          {/* Minimal dot indicators */}
+          {displayImages.length > 1 && (
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+              {displayImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentImageIndex(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === currentImageIndex ? 'w-4 h-1.5 bg-gray-700' : 'w-1.5 h-1.5 bg-gray-400/60'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Mobile: product info */}
+          <div className="flex flex-col px-6 md:px-8 py-8 bg-white space-y-6 w-full" data-product-details>
 
             {/* Brand & Model - Elegant Header */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               {watch?.brand?.name && (
-                <p className="text-xs font-light text-gray-500 uppercase tracking-widest letter-spacing-2">{watch.brand.name}</p>
+                <p className="text-[10px] font-inter font-light text-gray-400 uppercase tracking-[0.25em]">{watch.brand.name}</p>
               )}
-              <h1 className="text-3xl lg:text-4xl font-light text-gray-900 leading-tight tracking-tight">{watch?.name}</h1>
+              <h1 className="text-lg font-cormorant font-light text-gray-900 leading-snug">{watch?.name}</h1>
               {watch?.model_number && (
-                <p className="text-sm text-gray-500 tracking-wide font-light">Ref. {watch.model_number}</p>
+                <p className="text-xs text-gray-400 tracking-wide font-light">Ref. {watch.model_number}</p>
               )}
             </div>
 
@@ -576,11 +694,11 @@ const WatchDetail = () => {
             )}
 
             {/* Variant Selector */}
-            {watch?.variants && watch.variants.length > 0 && (
+            {watch?.variants && watch.variants.filter(v => v.name !== 'Default Title').length > 0 && (
               <div className="space-y-3 pt-4 border-t border-gray-200">
-                <p className="text-xs font-semibold text-gray-900 uppercase tracking-widest">Available Options</p>
+                <p className="text-xs font-semibold text-gray-900 uppercase tracking-widest">Strap Options</p>
                 <div className="flex flex-wrap gap-3">
-                  {watch.variants.map((variant) => (
+                  {watch.variants.filter(v => v.name !== 'Default Title').map((variant) => (
                     <button
                       key={variant.id}
                       onClick={() => setSelectedVariant(variant.id)}

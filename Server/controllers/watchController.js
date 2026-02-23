@@ -151,6 +151,7 @@ const deleteBrand = asyncHandler(async (req, res) => {
 const getCollectionsByBrand = asyncHandler(async (req, res) => {
   const { WatchCollection, Watch } = getModelInstance();
   const { brandId } = req.params;
+  const db = postgresDB();
 
   const collections = await WatchCollection.findAll({
     where: { brand_id: brandId },
@@ -166,6 +167,33 @@ const getCollectionsByBrand = asyncHandler(async (req, res) => {
     ]
   });
 
+  // Fetch one preview image + watch info per collection using DISTINCT ON
+  const collectionIds = collections.map(c => c.id);
+  let previewMap = {};
+  if (collectionIds.length > 0) {
+    const placeholders = collectionIds.map((_, i) => `$${i + 1}`).join(',');
+    const rows = await db.query(
+      `SELECT DISTINCT ON (w.collection_id)
+         w.collection_id,
+         w.name AS watch_name,
+         w.short_description AS watch_description,
+         wi.image_url
+       FROM watches w
+       JOIN watch_images wi ON wi.watch_id = w.id
+       WHERE w.collection_id IN (${placeholders})
+         AND w.is_active = true
+       ORDER BY w.collection_id, wi.is_primary DESC, wi.sort_order ASC`,
+      { bind: collectionIds, type: QueryTypes.SELECT }
+    );
+    rows.forEach(row => {
+      previewMap[row.collection_id] = {
+        preview_image: row.image_url,
+        preview_watch_name: row.watch_name,
+        preview_description: row.watch_description
+      };
+    });
+  }
+
   const transformedCollections = collections.map(collection => ({
     id: collection.id,
     name: collection.name,
@@ -176,7 +204,10 @@ const getCollectionsByBrand = asyncHandler(async (req, res) => {
     is_active: collection.is_active,
     launch_year: collection.launch_year,
     target_audience: collection.target_audience,
-    watches_count: collection.watches ? collection.watches.length : 0
+    watches_count: collection.watches ? collection.watches.length : 0,
+    preview_image: previewMap[collection.id]?.preview_image || null,
+    preview_watch_name: previewMap[collection.id]?.preview_watch_name || null,
+    preview_description: previewMap[collection.id]?.preview_description || null
   }));
 
   res.json({
@@ -332,8 +363,9 @@ const deleteCollection = asyncHandler(async (req, res) => {
 
 const getFeaturedCollections = asyncHandler(async (req, res) => {
   const { WatchBrand, WatchCollection, Watch } = getModelInstance();
+  const db = postgresDB();
 
-  // Fetch all active brands with their featured/latest collections
+  // Fetch all active brands with their collections and watch counts
   const brands = await WatchBrand.findAll({
     where: { is_active: true },
     order: [['sort_order', 'ASC'], ['name', 'ASC']],
@@ -341,16 +373,10 @@ const getFeaturedCollections = asyncHandler(async (req, res) => {
       {
         model: WatchCollection,
         as: 'collections',
-        where: {
-          is_active: true,
-          [Op.or]: [
-            { is_featured: true },
-            { id: { [Op.ne]: null } } // Get all collections if no featured ones
-          ]
-        },
+        where: { is_active: true },
         required: false,
         order: [['is_featured', 'DESC'], ['created_at', 'DESC']],
-        limit: 3, // Get top 3 collections per brand
+        limit: 3,
         include: [
           {
             model: Watch,
@@ -364,6 +390,47 @@ const getFeaturedCollections = asyncHandler(async (req, res) => {
     ]
   });
 
+  // Collect all collection IDs to fetch one preview image per collection
+  const collectionIds = [];
+  brands.forEach(brand => {
+    (brand.collections || []).slice(0, 3).forEach(c => collectionIds.push(c.id));
+  });
+
+  // One raw query: first watch image + accurate count per collection
+  let previewImageMap = {};
+  let watchCountMap = {};
+  if (collectionIds.length > 0) {
+    const placeholders = collectionIds.map((_, i) => `$${i + 1}`).join(',');
+
+    // Preview image: first primary image from first watch per collection
+    const imageRows = await db.query(
+      `SELECT DISTINCT ON (w.collection_id)
+         w.collection_id,
+         wi.image_url
+       FROM watches w
+       JOIN watch_images wi ON wi.watch_id = w.id
+       WHERE w.collection_id IN (${placeholders})
+         AND w.is_active = true
+       ORDER BY w.collection_id, wi.is_primary DESC, wi.sort_order ASC`,
+      { bind: collectionIds, type: QueryTypes.SELECT }
+    );
+    imageRows.forEach(row => {
+      previewImageMap[row.collection_id] = row.image_url;
+    });
+
+    // Accurate watch counts per collection
+    const countRows = await db.query(
+      `SELECT collection_id, COUNT(*) AS cnt
+       FROM watches
+       WHERE collection_id IN (${placeholders}) AND is_active = true
+       GROUP BY collection_id`,
+      { bind: collectionIds, type: QueryTypes.SELECT }
+    );
+    countRows.forEach(row => {
+      watchCountMap[row.collection_id] = parseInt(row.cnt, 10);
+    });
+  }
+
   const transformedData = brands.map(brand => ({
     id: brand.id,
     name: brand.name,
@@ -374,10 +441,10 @@ const getFeaturedCollections = asyncHandler(async (req, res) => {
       name: collection.name,
       slug: collection.slug,
       description: collection.description,
-      image_url: collection.image_url,
+      image_url: collection.image_url || previewImageMap[collection.id] || null,
       is_featured: collection.is_featured,
       launch_year: collection.launch_year,
-      watches_count: collection.watches ? collection.watches.length : 0
+      watches_count: watchCountMap[collection.id] || 0
     })) : []
   }));
 
@@ -1484,6 +1551,41 @@ const updateWatchVideo = asyncHandler(async (req, res) => {
   });
 });
 
+// ─── GET COMPATIBLE STRAPS FOR A SPECIFIC WATCH ───────────────────────────────
+const getWatchStraps = asyncHandler(async (req, res) => {
+  const { watchId } = req.params;
+  const db = postgresDB();
+  const straps = await db.query(
+    `SELECT wa.id, wa.name, wa.slug, wa.strap_type, wa.color, wa.width_mm, wa.price_eur, wa.price_gbp, wa.image_url
+     FROM watch_accessories wa
+     JOIN watch_compatible_straps wcs ON wcs.accessory_id = wa.id
+     WHERE wcs.watch_id = :watchId
+     ORDER BY wa.strap_type, wa.name`,
+    { replacements: { watchId }, type: QueryTypes.SELECT }
+  );
+  res.json({ success: true, data: straps });
+});
+
+// ─── SET COMPATIBLE STRAPS FOR A WATCH (admin) ────────────────────────────────
+const setWatchStraps = asyncHandler(async (req, res) => {
+  const { watchId } = req.params;
+  const { strap_ids } = req.body;
+  const db = postgresDB();
+  await db.query(
+    `DELETE FROM watch_compatible_straps WHERE watch_id = :watchId`,
+    { replacements: { watchId }, type: QueryTypes.DELETE }
+  );
+  if (Array.isArray(strap_ids) && strap_ids.length > 0) {
+    for (const strapId of strap_ids) {
+      await db.query(
+        `INSERT INTO watch_compatible_straps (watch_id, accessory_id) VALUES (:watchId, :strapId) ON CONFLICT DO NOTHING`,
+        { replacements: { watchId, strapId }, type: QueryTypes.INSERT }
+      );
+    }
+  }
+  res.json({ success: true, message: `${strap_ids?.length || 0} straps saved` });
+});
+
 // ─── GET BRAND ACCESSORIES (straps) ──────────────────────────────────────────
 const getBrandAccessories = asyncHandler(async (req, res) => {
   const { brand, brand_id, type, width } = req.query;
@@ -1552,6 +1654,8 @@ module.exports = {
   addWatchVideo,
   deleteWatchVideo,
   getBrandAccessories,
+  getWatchStraps,
+  setWatchStraps,
   getWatchVideos,
   updateWatchVideo
 };

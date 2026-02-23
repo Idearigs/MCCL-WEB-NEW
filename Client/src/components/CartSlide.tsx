@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getMediaUrl } from '../config/api';
 
 interface CartItem {
   id: string;
@@ -103,7 +104,7 @@ const CartSlide: React.FC<CartSlideProps> = ({
                   {/* Product Image */}
                   <div className="flex-shrink-0 w-20 h-20 bg-gray-50 rounded overflow-hidden">
                     <img
-                      src={item.image}
+                      src={getMediaUrl(item.image)}
                       alt={item.name}
                       className="w-full h-full object-cover"
                     />

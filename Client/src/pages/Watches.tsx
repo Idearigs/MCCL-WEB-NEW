@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Heart, ChevronDown } from "lucide-react";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
-import API_BASE_URL from "../config/api";
+import API_BASE_URL, { getMediaUrl } from "../config/api";
 
 interface Watch {
   id: string;
@@ -556,9 +556,9 @@ const Watches = (): JSX.Element => {
                       {/* Product Image */}
                       {watch.image?.url ? (
                         <img
-                          src={watch.image.url}
+                          src={getMediaUrl(watch.image.url)}
                           alt={watch.image.alt || watch.name}
-                          className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">

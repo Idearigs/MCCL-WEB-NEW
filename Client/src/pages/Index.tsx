@@ -1,7 +1,7 @@
 
 import React from "react";
 import { FooterSection } from "../components/FooterSection";
-import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
+import LuxuryNavigation from "../components/LuxuryNavigation";
 import MainContentSection from "../components/MainContentSection";
 import TestimonialsSection from "../components/TestimonialsSection";
 import BespokeDesignSection from "../components/BespokeDesignSection";
@@ -21,7 +21,7 @@ const Index = (): JSX.Element => {
 
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
-      <LuxuryNavigationWhite />
+      <LuxuryNavigation />
       <PromotionPopup delay={3000} />
       <ChatWidget user={user} />
       <MainContentSection />

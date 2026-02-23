@@ -398,6 +398,12 @@ const EngagementRings = (): JSX.Element => {
     }
 
     return true;
+  // Sort: products with images come first
+  }).sort((a, b) => {
+    const aHasImage = !!(a.image?.url);
+    const bHasImage = !!(b.image?.url);
+    if (aHasImage === bHasImage) return 0;
+    return aHasImage ? -1 : 1;
   });
 
   // Ring-specific filter options - using database data only

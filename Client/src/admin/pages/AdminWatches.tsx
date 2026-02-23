@@ -166,6 +166,8 @@ const AdminWatches: React.FC = () => {
   });
 
   const [filteredCollections, setFilteredCollections] = useState<WatchCollection[]>([]);
+  const [brandStraps, setBrandStraps] = useState<Array<{id:string;name:string;strap_type:string;image_url:string;price_gbp:number}>>([]);
+  const [selectedStrapIds, setSelectedStrapIds] = useState<string[]>([]);
   const [bristonTab, setBristonTab] = useState<'movement' | 'case' | 'dial' | 'strap'>('movement');
   const [festinaTab, setFestinaTab] = useState<'case' | 'dial' | 'strap' | 'movement' | 'functions' | 'features'>('case');
 
@@ -281,6 +283,36 @@ const AdminWatches: React.FC = () => {
       console.error('Error fetching watches:', error);
       setAlert({ type: 'error', message: 'Failed to fetch watches' });
     }
+  };
+
+  const fetchBrandStraps = async (brandId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/watches/accessories?brand_id=${brandId}`);
+      const data = await res.json();
+      if (data.success) setBrandStraps(data.data || []);
+    } catch { setBrandStraps([]); }
+  };
+
+  const fetchWatchCompatibleStraps = async (watchId: string) => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      const res = await fetch(`${API_BASE_URL}/watches/${watchId}/straps`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) setSelectedStrapIds(data.data.map((s: any) => s.id));
+    } catch { setSelectedStrapIds([]); }
+  };
+
+  const saveWatchStraps = async (watchId: string) => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      await fetch(`${API_BASE_URL}/watches/${watchId}/straps`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ strap_ids: selectedStrapIds })
+      });
+    } catch (e) { console.error('Failed to save straps', e); }
   };
 
   const fetchWatchDetails = async (watchId: string) => {
@@ -606,6 +638,9 @@ const AdminWatches: React.FC = () => {
             console.error('Error uploading video:', vidError);
           }
         }
+
+        // Save compatible straps
+        await saveWatchStraps(watchId);
 
         setAlert({
           type: 'success',
@@ -1175,6 +1210,9 @@ const AdminWatches: React.FC = () => {
                           const fullWatchDetails = await fetchWatchDetails(watch.id);
                           if (fullWatchDetails) {
                             setEditingWatch(fullWatchDetails);
+                            fetchBrandStraps(fullWatchDetails.brand.id);
+                            fetchWatchCompatibleStraps(fullWatchDetails.id);
+                            setSelectedStrapIds([]);
                             setWatchForm({
                               brand_id: fullWatchDetails.brand.id,
                               collection_id: fullWatchDetails.collection?.id || '',
@@ -2020,6 +2058,45 @@ const AdminWatches: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Compatible Straps Picker */}
+          {brandStraps.length > 0 && (
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1 font-satoshi">Compatible Straps</h3>
+              <p className="text-xs text-gray-500 mb-3 font-satoshi">Select which straps are available for this watch. Only selected straps will appear on the product page.</p>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <button type="button" onClick={() => setSelectedStrapIds(brandStraps.map(s => s.id))}
+                  className="text-xs px-3 py-1 bg-gray-900 text-white rounded font-satoshi">Select All</button>
+                <button type="button" onClick={() => setSelectedStrapIds([])}
+                  className="text-xs px-3 py-1 border border-gray-300 rounded font-satoshi">Clear All</button>
+                <span className="text-xs text-gray-500 self-center">{selectedStrapIds.length} of {brandStraps.length} selected</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                {brandStraps.map(strap => {
+                  const isSelected = selectedStrapIds.includes(strap.id);
+                  return (
+                    <label key={strap.id} className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${isSelected ? 'bg-gray-100 ring-1 ring-gray-400' : 'hover:bg-gray-50'}`}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => setSelectedStrapIds(prev =>
+                          isSelected ? prev.filter(id => id !== strap.id) : [...prev, strap.id]
+                        )}
+                        className="w-4 h-4 accent-gray-900 flex-shrink-0"
+                      />
+                      {strap.image_url && (
+                        <img src={getMediaUrl(strap.image_url)} alt={strap.name} className="w-8 h-8 object-contain flex-shrink-0 rounded" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-satoshi text-gray-900 truncate">{strap.name}</p>
+                        <p className="text-xs text-gray-400 font-satoshi">{strap.strap_type} {strap.price_gbp ? `· £${Number(strap.price_gbp).toFixed(2)}` : ''}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Form Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t">

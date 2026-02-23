@@ -53,6 +53,19 @@ Thumbs.db
 # Server uploads (should be persistent storage/volumes)
 Server/uploads/
 
+# Scraper output directories (large JSON + images)
+Server/scripts/*/output/
+Server/scripts/festina-scraper/
+Server/scripts/roamer-scraper/
+Server/scripts/briston-scraper/output/
+
+# Engagement ring source images (large PNGs, stored on server only)
+Client/images/
+
+# Accidental nul files (Windows artifact)
+nul
+Server/nul
+
 # Package lock files (optional - uncomment if you want to ignore)
 # package-lock.json
 # yarn.lock

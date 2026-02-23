@@ -9,7 +9,7 @@ import AccountMenu from "./AccountMenu";
 import { useCart } from "../contexts/CartContext";
 import { useFavorites } from "../contexts/FavoritesContext";
 import { useIsMobile } from "../hooks/use-mobile";
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getMediaUrl } from '../config/api';
 
 interface WatchCollection {
   id: string;
@@ -937,7 +937,7 @@ const LuxuryNavigation = (): JSX.Element => {
                                   {collection.image_url && (
                                     <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-sm overflow-hidden">
                                       <img
-                                        src={collection.image_url}
+                                        src={getMediaUrl(collection.image_url)}
                                         alt={collection.name}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                       />
@@ -1364,12 +1364,62 @@ const LuxuryNavigation = (): JSX.Element => {
                   {/* Submenu Content */}
                   <div className="flex-1 overflow-y-auto">
                     <div className="px-6 py-4">
-                      <div className="space-y-0">
-                        <Link to="/watches/rolex" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Rolex</Link>
-                        <Link to="/watches/omega" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Omega</Link>
-                        <Link to="/watches/cartier" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Cartier</Link>
-                        <Link to="/watches/all" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>All Watches</Link>
-                      </div>
+                      {loadingWatches ? (
+                        <div className="py-4 text-sm text-gray-400">Loading...</div>
+                      ) : watchBrands.length > 0 ? (
+                        <div className="space-y-6">
+                          {/* Shop All link at top */}
+                          <Link
+                            to="/watches"
+                            className="block text-sm font-cormorant font-light text-gray-900 hover:text-gray-600 transition-colors border-b border-gray-100 pb-4"
+                            onClick={closeMobileMenu}
+                          >
+                            Shop All Watches
+                          </Link>
+
+                          {watchBrands.map((brand) => (
+                            <div key={brand.id} className="pb-4 border-b border-gray-50 last:border-0">
+                              {/* Brand label */}
+                              <p className="text-[10px] font-inter font-medium uppercase tracking-[0.2em] text-gray-400 mb-2">
+                                {brand.name}
+                              </p>
+                              {/* Collections */}
+                              {brand.collections && brand.collections.length > 0 && (
+                                <div className="space-y-0 mb-2">
+                                  {brand.collections.map((collection) => (
+                                    <Link
+                                      key={collection.id}
+                                      to={`/${brand.slug}?collection=${collection.slug}`}
+                                      className="block py-1.5 text-sm font-cormorant font-light text-gray-700 hover:text-gray-900 transition-colors"
+                                      onClick={closeMobileMenu}
+                                    >
+                                      {collection.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                              {/* See More → brand page */}
+                              <Link
+                                to={`/${brand.slug}`}
+                                className="inline-flex items-center gap-1 text-[10px] font-inter font-light uppercase tracking-[0.15em] text-gray-400 hover:text-gray-900 transition-colors mt-1"
+                                onClick={closeMobileMenu}
+                              >
+                                See More
+                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </Link>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-0">
+                          <Link to="/watches/roamer" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Roamer</Link>
+                          <Link to="/watches/briston" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Briston</Link>
+                          <Link to="/watches/festina" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Festina</Link>
+                          <Link to="/watches" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>All Watches</Link>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

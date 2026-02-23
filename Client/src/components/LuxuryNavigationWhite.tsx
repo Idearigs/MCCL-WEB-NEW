@@ -10,7 +10,7 @@ import { useCart } from "../contexts/CartContext";
 import { useFavorites } from "../contexts/FavoritesContext";
 import { useUserAuth } from "../contexts/UserAuthContext";
 import { useIsMobile } from "../hooks/use-mobile";
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getMediaUrl } from '../config/api';
 
 interface WatchCollection {
   id: string;
@@ -912,7 +912,7 @@ const LuxuryNavigationWhite = (): JSX.Element => {
                                   {collection.image_url && (
                                     <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-sm overflow-hidden">
                                       <img
-                                        src={collection.image_url}
+                                        src={getMediaUrl(collection.image_url)}
                                         alt={collection.name}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                       />

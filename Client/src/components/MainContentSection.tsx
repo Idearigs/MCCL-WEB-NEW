@@ -1,13 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
 import WatchBrandsShowcase from "./WatchBrandsShowcase";
 import MarketingSection from "./MarketingSection";
 import PromotionBanner from "./PromotionBanner";
-import AddToCartButton from "./AddToCartButton";
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getMediaUrl } from '../config/api';
 
 const jewelryCategories = [
   {
@@ -44,82 +42,12 @@ interface Product {
   } | null;
 }
 
-const allProductsData = {
-  'Rings': [] as Product[], // Will be populated from API
-  'Earrings': [
-    {
-      id: "diamond-drop-earrings",
-      name: "Classic Diamond Drop Earrings",
-      image: "/images/prod1.png"
-    },
-    {
-      id: "pearl-stud-earrings",
-      name: "Elegant Pearl Stud Earrings",
-      image: "/images/prod2.png"
-    },
-    {
-      id: "gold-hoop-earrings",
-      name: "Rose Gold Hoop Earrings",
-      image: "/images/prod3.png"
-    },
-    {
-      id: "sapphire-cluster-earrings",
-      name: "Sapphire Cluster Drop Earrings",
-      image: "/images/prod4.png"
-    }
-  ],
-  'Necklaces': [
-    {
-      id: "diamond-tennis-necklace",
-      name: "Classic Diamond Tennis Necklace",
-      image: "/images/prod2.png"
-    },
-    {
-      id: "pearl-strand-necklace",
-      name: "Cultured Pearl Strand Necklace",
-      image: "/images/prod3.png"
-    },
-    {
-      id: "emerald-pendant-necklace",
-      name: "Emerald Pendant Gold Necklace",
-      image: "/images/prod4.png"
-    },
-    {
-      id: "vintage-locket-necklace",
-      name: "Vintage Rose Gold Locket Necklace",
-      image: "/images/prod5.png"
-    }
-  ],
-  'Bracelets': [
-    {
-      id: "diamond-tennis-bracelet",
-      name: "Classic Diamond Tennis Bracelet",
-      image: "/images/prod3.png"
-    },
-    {
-      id: "charm-bracelet",
-      name: "Sterling Silver Charm Bracelet",
-      image: "/images/prod4.png"
-    },
-    {
-      id: "gold-bangle-set",
-      name: "Rose Gold Bangle Set",
-      image: "/images/prod5.png"
-    },
-    {
-      id: "vintage-link-bracelet",
-      name: "Vintage Chain Link Bracelet",
-      image: "/images/prod1.png"
-    }
-  ]
-};
 
 
 
 export default function MainContentSection(): JSX.Element {
   const [activeIndex, setActiveIndex] = useState(0);
   const [mobileCarouselIndex, setMobileCarouselIndex] = useState(0);
-  const [activeFilter, setActiveFilter] = useState('Rings');
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [ringProducts, setRingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,9 +55,6 @@ export default function MainContentSection(): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const desktopScrollRef = useRef<HTMLDivElement>(null);
-
-  // Get current products based on active filter
-  const currentProducts = activeFilter === 'Rings' ? ringProducts : allProductsData[activeFilter as keyof typeof allProductsData] || ringProducts;
 
   // Handle window resize for mobile/desktop detection
   useEffect(() => {
@@ -158,7 +83,9 @@ export default function MainContentSection(): JSX.Element {
             price: product.price,
             image: product.image
           }));
-          setRingProducts(transformedProducts.slice(0, 6)); // Limit to 6 products for carousel
+          // Only show products that have images; fetch up to 20
+          const withImages = transformedProducts.filter((p: Product) => p.image?.url);
+          setRingProducts(withImages.slice(0, 20));
         }
       } catch (error) {
         console.error('Error fetching ring products:', error);
@@ -176,11 +103,12 @@ export default function MainContentSection(): JSX.Element {
     const interval = setInterval(() => {
       if (desktopScrollRef.current) {
         const container = desktopScrollRef.current;
-        const cardWidth = 320 + 32; // card width + gap (space-x-8 = 32px)
+        const firstCard = container.querySelector('a') as HTMLElement | null;
+        const cardWidth = firstCard ? firstCard.offsetWidth + 16 : 216; // measured card + gap
         const containerWidth = container.clientWidth;
         const cardsVisible = Math.floor(containerWidth / cardWidth);
-        const maxIndex = Math.max(0, currentProducts.length - cardsVisible);
-        
+        const maxIndex = Math.max(0, ringProducts.length - cardsVisible);
+
         if (currentProductIndex >= maxIndex) {
           // Reset to beginning
           container.scrollTo({ left: 0, behavior: 'smooth' });
@@ -195,13 +123,14 @@ export default function MainContentSection(): JSX.Element {
     }, 3000); // 3 seconds
 
     return () => clearInterval(interval);
-  }, [currentProductIndex, currentProducts.length]);
+  }, [currentProductIndex, ringProducts.length]);
 
   // Navigation arrow handlers
   const handlePrevious = () => {
     if (desktopScrollRef.current) {
       const container = desktopScrollRef.current;
-      const cardWidth = 320 + 32;
+      const firstCard = container.querySelector('a') as HTMLElement | null;
+      const cardWidth = firstCard ? firstCard.offsetWidth + 16 : 216;
       const newIndex = Math.max(0, currentProductIndex - 1);
       container.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
       setCurrentProductIndex(newIndex);
@@ -211,10 +140,11 @@ export default function MainContentSection(): JSX.Element {
   const handleNext = () => {
     if (desktopScrollRef.current) {
       const container = desktopScrollRef.current;
-      const cardWidth = 320 + 32;
+      const firstCard = container.querySelector('a') as HTMLElement | null;
+      const cardWidth = firstCard ? firstCard.offsetWidth + 16 : 216;
       const containerWidth = container.clientWidth;
       const cardsVisible = Math.floor(containerWidth / cardWidth);
-      const maxIndex = Math.max(0, currentProducts.length - cardsVisible);
+      const maxIndex = Math.max(0, ringProducts.length - cardsVisible);
       const newIndex = Math.min(maxIndex, currentProductIndex + 1);
       container.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
       setCurrentProductIndex(newIndex);
@@ -234,24 +164,12 @@ export default function MainContentSection(): JSX.Element {
   const handleMobileCarouselScroll = () => {
     if (mobileScrollRef.current) {
       const container = mobileScrollRef.current;
-      const cardWidth = 200 + 12; // card width + gap
+      const cardWidth = container.offsetWidth; // full width = 1 card
       const scrollLeft = container.scrollLeft;
       const index = Math.round(scrollLeft / cardWidth);
-      setMobileCarouselIndex(Math.min(index, currentProducts.length - 1));
+      setMobileCarouselIndex(Math.min(index, ringProducts.length - 1));
     }
   };
-
-  // Reset carousels when filter changes
-  useEffect(() => {
-    setMobileCarouselIndex(0);
-    setCurrentProductIndex(0);
-    if (mobileScrollRef.current) {
-      mobileScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-    if (desktopScrollRef.current) {
-      desktopScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-  }, [activeFilter]);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -556,223 +474,183 @@ export default function MainContentSection(): JSX.Element {
       </section>
 
       {/* Product Carousel Section */}
-      <section className="bg-white py-20 lg:py-24">
-        <div className="max-w-full px-0">
-          {/* Desktop Category Tabs */}
-          <div className="hidden lg:flex items-center justify-between mb-12 px-6 lg:px-16">
-            <div className="flex space-x-12">
-              {['Rings', 'Earrings', 'Necklaces', 'Bracelets'].map((filter) => (
-                <button 
-                  key={filter}
-                  onClick={() => {
-                    setActiveFilter(filter);
-                    setCurrentProductIndex(0); // Reset to beginning when changing filter
-                  }}
-                  className={`text-sm font-serif font-medium uppercase tracking-[0.15em] transition-colors duration-300 pb-2 relative ${
-                    activeFilter === filter 
-                      ? 'text-gray-900 border-b border-gray-900' 
-                      : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
-            
-            {/* Navigation Arrows */}
-            <div className="flex space-x-3">
-              <button 
-                onClick={handlePrevious}
-                disabled={currentProductIndex === 0}
-                className={`w-10 h-10 border transition-colors duration-300 flex items-center justify-center ${
-                  currentProductIndex === 0 
-                    ? 'border-gray-200 cursor-not-allowed' 
-                    : 'border-gray-300 hover:border-gray-500'
-                }`}
-              >
-                <svg className={`w-4 h-4 ${currentProductIndex === 0 ? 'text-gray-300' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button 
-                onClick={handleNext}
-                className="w-10 h-10 border border-gray-300 hover:border-gray-500 transition-colors duration-300 flex items-center justify-center"
-              >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
+      <section className="bg-white py-12 lg:py-16">
+        {/* Section Header */}
+        <div className="flex items-center justify-between mb-8 px-6 lg:px-8">
+          <div>
+            <p className="text-[10px] font-inter font-light uppercase tracking-[0.35em] text-gray-400 mb-1">
+              Our Collection
+            </p>
+            <h2 className="text-3xl lg:text-4xl font-cormorant font-light text-gray-900 leading-tight">
+              Rings
+            </h2>
           </div>
-
-          {/* Mobile Category Tabs - Functional with Larger Font */}
-          <div className="lg:hidden mb-6 px-4">
-            <div className="flex justify-center space-x-6">
-              {['Rings', 'Earrings', 'Necklaces', 'Bracelets'].map((filter) => (
-                <button 
-                  key={filter}
-                  onClick={() => setActiveFilter(filter)}
-                  className={`text-[15px] font-cormorant font-medium uppercase transition-colors duration-300 pb-2 relative ${
-                    activeFilter === filter 
-                      ? 'text-gray-900 border-b border-gray-900' 
-                      : 'text-gray-500 hover:text-gray-900'
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/rings"
+              className="hidden lg:inline text-[10px] font-inter font-light uppercase tracking-[0.25em] text-gray-400 hover:text-gray-900 transition-colors duration-300 mr-2"
+            >
+              View All
+            </Link>
+            {/* Circular Navigation Arrows */}
+            <button
+              onClick={handlePrevious}
+              disabled={currentProductIndex === 0}
+              className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all duration-200 ${
+                currentProductIndex === 0
+                  ? 'border-gray-200 cursor-not-allowed'
+                  : 'border-gray-300 hover:border-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              <svg className={`w-3.5 h-3.5 ${currentProductIndex === 0 ? 'text-gray-300' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={handleNext}
+              className="w-9 h-9 rounded-full border border-gray-300 hover:border-gray-500 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center"
+            >
+              <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
+        </div>
 
-          {/* Desktop Product Carousel */}
-          <div 
-            ref={desktopScrollRef}
-            className="hidden lg:block overflow-x-auto scrollbar-hide px-6 lg:px-16"
-          >
-            <div className="flex space-x-8 pb-8 transition-all duration-300">
-              {/* Product Cards */}
-              {loading && activeFilter === 'Rings' ? (
-                // Loading skeleton for rings
-                Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={`loading-${index}`}
-                    className="flex-shrink-0 animate-pulse"
-                    style={{ width: '320px', minHeight: '520px' }}
-                  >
-                    <div className="bg-gray-200 h-[28rem] mb-8 rounded"></div>
-                    <div className="bg-gray-200 h-6 rounded mb-2"></div>
-                    <div className="bg-gray-200 h-4 w-3/4 rounded"></div>
-                  </div>
-                ))
-              ) : (
-                currentProducts.map((product, index) => (
+        {/* Desktop Product Carousel */}
+        <div
+          ref={desktopScrollRef}
+          className="hidden lg:block overflow-x-auto pl-6 lg:pl-8"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }}
+        >
+          <div className="flex gap-4">
+            {loading ? (
+              Array.from({ length: 7 }).map((_, index) => (
+                <div
+                  key={`loading-${index}`}
+                  className="flex-shrink-0 animate-pulse"
+                  style={{ width: 'calc((100vw - 4rem - 6 * 1rem) / 7)' }}
+                >
+                  <div className="bg-gray-100 w-full" style={{ aspectRatio: '1 / 1.1' }} />
+                  <div className="bg-gray-100 h-3 mt-3 w-3/4 rounded" />
+                </div>
+              ))
+            ) : (
+              ringProducts.map((product, index) => (
                 <Link
-                  key={`${activeFilter}-${index}`}
-                  to={`/${product.category?.slug || activeFilter.toLowerCase()}/${product.slug || product.id}`}
-                  className="flex-shrink-0 group cursor-pointer block"
-                  style={{ width: '320px', minHeight: '520px' }}
+                  key={index}
+                  to={`/rings/${product.slug || product.id}`}
+                  className="flex-shrink-0 group"
+                  style={{ width: 'calc((100vw - 4rem - 6 * 1rem) / 7)' }}
                 >
-                  <div className="relative mb-8 bg-white group">
+                  {/* Image tile */}
+                  <div
+                    className="w-full bg-[#f0f0f0] overflow-hidden"
+                    style={{ aspectRatio: '1 / 1' }}
+                  >
                     <img
-                      src={product.image?.url || product.image || ''}
+                      src={getMediaUrl(product.image?.url || '')}
                       alt={product.image?.alt || product.name}
-                      className="w-full h-[28rem] object-contain transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
-                    {/* Add to Cart Button - appears on hover */}
-                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                      <AddToCartButton
-                        product={{
-                          id: product.id,
-                          name: product.name,
-                          image: product.image?.url || product.image || ''
-                        }}
-                        className="px-6 py-2"
+                  </div>
+                  {/* Name below on white */}
+                  <div className="pt-3 pb-1">
+                    <h3 className="text-sm font-cormorant font-light text-gray-800 leading-snug">
+                      {product.name}
+                    </h3>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Desktop scroll indicator */}
+        <div className="hidden lg:flex justify-center mt-8">
+          <div className="flex gap-2">
+            {ringProducts.slice(0, Math.min(ringProducts.length, 4)).map((_, index) => (
+              <div
+                key={index}
+                className={`h-0.5 rounded-full transition-all duration-500 ease-in-out ${
+                  index === currentProductIndex ? 'w-10 bg-gray-800' : 'w-4 bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile Product Carousel — 1 card at a time */}
+        <div className="lg:hidden">
+          <div
+            ref={mobileScrollRef}
+            className="overflow-x-auto"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <div className="flex">
+              {loading ? (
+                <div className="flex-shrink-0 w-full px-6 animate-pulse">
+                  <div className="bg-gray-100 w-full" style={{ aspectRatio: '4/3' }} />
+                  <div className="bg-gray-100 h-4 mt-4 w-1/2 rounded mx-auto" />
+                </div>
+              ) : (
+                ringProducts.map((product, index) => (
+                  <Link
+                    key={index}
+                    to={`/rings/${product.slug || product.id}`}
+                    className="flex-shrink-0 w-full px-6 group"
+                    style={{ scrollSnapAlign: 'start' }}
+                  >
+                    {/* Image tile */}
+                    <div
+                      className="w-full bg-[#f5f5f5] overflow-hidden"
+                      style={{ aspectRatio: '4/3' }}
+                    >
+                      <img
+                        src={getMediaUrl(product.image?.url || '')}
+                        alt={product.image?.alt || product.name}
+                        className="w-full h-full object-cover"
                       />
                     </div>
-                  </div>
-                  <h3 className="text-base font-cormorant font-normal text-gray-900 leading-7 px-2 mt-6">
-                    {product.name}
-                  </h3>
-                </Link>
+                    {/* Centered name */}
+                    <div className="mt-4 text-center">
+                      <h3 className="text-lg font-cormorant font-light text-gray-900 tracking-wide">
+                        {product.name}
+                      </h3>
+                    </div>
+                  </Link>
                 ))
               )}
             </div>
           </div>
 
-          {/* Mobile Product Layout - Clean White Background with Proper Margin */}
-          <div className="lg:hidden bg-white py-6">
-            <div className="ml-6 mr-4">
-              <div 
-                ref={mobileScrollRef}
-                className="overflow-x-auto scrollbar-hide mb-8"
-                style={{ 
-                  scrollSnapType: 'x mandatory',
-                  scrollBehavior: 'smooth',
-                  WebkitOverflowScrolling: 'touch'
-                }}
-              >
-                <div className="flex gap-4" style={{ width: 'max-content' }}>
-                  {loading && activeFilter === 'Rings' ? (
-                    // Loading skeleton for mobile rings
-                    Array.from({ length: 6 }).map((_, index) => (
-                      <div
-                        key={`mobile-loading-${index}`}
-                        className="flex-shrink-0 animate-pulse"
-                        style={{ width: '200px', scrollSnapAlign: 'start' }}
-                      >
-                        <div className="bg-gray-200 h-72 mb-6 rounded-lg"></div>
-                        <div className="bg-gray-200 h-4 rounded mb-2"></div>
-                        <div className="bg-gray-200 h-3 w-3/4 rounded"></div>
-                      </div>
-                    ))
-                  ) : (
-                    currentProducts.map((product, index) => (
-                    <Link
-                      key={index}
-                      to={`/${product.category?.slug || activeFilter.toLowerCase()}/${product.slug || product.id}`}
-                      className="flex-shrink-0 group cursor-pointer block"
-                      style={{
-                        width: '200px',
-                        scrollSnapAlign: 'start'
-                      }}
-                    >
-                      <div className="relative mb-6 bg-white p-6 shadow-sm rounded-lg transition-transform duration-300 group-hover:scale-[1.02] group">
-                        <img
-                          src={product.image?.url || product.image || ''}
-                          alt={product.image?.alt || product.name}
-                          className="w-full h-72 object-contain transition-transform duration-500 group-hover:scale-105"
-                        />
-                        {/* Add to Cart Button - appears on mobile tap/hover */}
-                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 rounded-lg">
-                          <AddToCartButton
-                            product={{
-                              id: product.id,
-                              name: product.name,
-                              image: product.image?.url || product.image || ''
-                            }}
-                            className="px-4 py-2 text-xs"
-                          />
-                        </div>
-                      </div>
-                      <h3 className="text-sm font-cormorant font-normal text-gray-900 leading-6 text-left">
-                        {product.name}
-                      </h3>
-                    </Link>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Mobile Reactive Scroll Indicator */}
-            <div className="flex justify-center">
-              <div className="flex space-x-2">
-                {currentProducts.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`h-0.5 rounded-full transition-all duration-300 ${
-                      index === mobileCarouselIndex ? 'w-8 bg-gray-900' : 'w-3 bg-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
+          {/* Elegant dot indicator */}
+          <div className="flex justify-center mt-6 gap-1.5">
+            {ringProducts.map((_, index) => (
+              <div
+                key={index}
+                className={`rounded-full transition-all duration-300 ${
+                  index === mobileCarouselIndex
+                    ? 'w-5 h-[3px] bg-gray-800'
+                    : 'w-[6px] h-[3px] bg-gray-300'
+                }`}
+              />
+            ))}
           </div>
 
-          {/* Desktop Scroll Indicator */}
-          <div className="hidden lg:flex justify-center mt-12">
-            <div className="flex space-x-2">
-              {currentProducts.slice(0, Math.min(currentProducts.length, 4)).map((_, index) => (
-                <div
-                  key={`${activeFilter}-indicator-${index}`}
-                  className={`h-0.5 rounded-full transition-all duration-500 ease-in-out ${
-                    index === currentProductIndex 
-                      ? 'w-8 bg-gray-900' 
-                      : 'w-4 bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
+          {/* View All */}
+          <div className="flex justify-center mt-6">
+            <Link
+              to="/rings"
+              className="text-[10px] font-inter font-light uppercase tracking-[0.3em] text-gray-400 hover:text-gray-800 transition-colors duration-300"
+            >
+              View All Rings
+            </Link>
           </div>
         </div>
       </section>
