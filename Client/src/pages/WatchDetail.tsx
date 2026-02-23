@@ -587,7 +587,7 @@ const WatchDetail = () => {
         {/* Mobile: swipeable image gallery */}
         <div
           className="relative bg-white"
-          style={{ minHeight: '100vw', paddingBottom: '72px' }}
+          style={{ minHeight: '100vw' }}
           onTouchStart={(e) => {
             const touch = e.touches[0];
             (e.currentTarget as HTMLDivElement).dataset.touchStartX = String(touch.clientX);
@@ -625,21 +625,21 @@ const WatchDetail = () => {
               />
             </>
           )}
-          {/* Minimal dot indicators */}
-          {displayImages.length > 1 && (
-            <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-2.5">
-              {displayImages.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentImageIndex(i)}
-                  className={`rounded-full transition-all duration-300 ${
-                    i === currentImageIndex ? 'w-4 h-1.5 bg-gray-700' : 'w-1.5 h-1.5 bg-gray-400/60'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
         </div>
+        {/* Dot indicators — below image section */}
+        {displayImages.length > 1 && (
+          <div className="flex justify-center gap-1.5 py-3 bg-white">
+            {displayImages.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentImageIndex(i)}
+                className={`rounded-full transition-all duration-300 ${
+                  i === currentImageIndex ? 'w-4 h-1.5 bg-gray-700' : 'w-1.5 h-1.5 bg-gray-400/60'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Mobile: product info */}
           <div className="flex flex-col px-6 md:px-8 py-8 bg-white space-y-6 w-full" data-product-details>
