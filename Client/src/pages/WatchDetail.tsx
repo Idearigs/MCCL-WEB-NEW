@@ -238,6 +238,25 @@ const BRAND_COLOR_CONFIG: { [key: string]: string } = {
   'Roamer': '#C3A473'
 };
 
+// Brand-specific showcase section content
+const BRAND_SHOWCASE_CONFIG: { [key: string]: { col1: { title: string; text: string }; col2: { title: string; text: string }; col3: { title: string; text: string } } } = {
+  'Festina': {
+    col1: { title: 'Over 120 Years of Heritage', text: 'Born in 1902 in La Chaux-de-Fonds, Switzerland, Festina has spent over a century refining the art of watchmaking — official timekeeper of the Tour de France since 1983.' },
+    col2: { title: 'Swiss Quality Standards', text: 'Every Festina timepiece undergoes rigorous testing to meet exacting Swiss quality benchmarks, ensuring precision timekeeping and lasting durability for everyday wear.' },
+    col3: { title: 'Authorised Retailer Support', text: 'As an official Festina retailer, McCulloch Jewellers offers expert advice, genuine products, and dedicated after-sales support for your Festina timepiece.' },
+  },
+  'Roamer': {
+    col1: { title: '135 Years of Swiss Tradition', text: 'Founded in 1888 in Solothurn, Switzerland, Roamer blends over 135 years of precision engineering with timeless design — a proud chapter in Swiss horological history.' },
+    col2: { title: 'Sapphire Crystal & Swiss Movements', text: 'Every Roamer watch is built with sapphire crystal glass and reliable Swiss movements, delivering uncompromising accuracy and a lifetime of dependable performance.' },
+    col3: { title: 'Authorised Retailer Support', text: 'As an authorised Roamer retailer, McCulloch Jewellers provides personalised guidance and comprehensive after-sales service to keep your Roamer watch in perfect condition.' },
+  },
+  'Briston': {
+    col1: { title: 'Contemporary London Spirit', text: 'Founded in 2013 in London, Briston brings a bold, colourful vision to watchmaking — combining vibrant acetate cases with a fresh design language that stands apart from tradition.' },
+    col2: { title: 'Colour, Quality & Versatility', text: 'Each Briston watch features a distinctive acetate case available in a spectrum of colours, reliable Japanese movements, and interchangeable straps for effortless personalisation.' },
+    col3: { title: 'Authorised Retailer Support', text: 'As an official Briston retailer, McCulloch Jewellers is here to help you find your perfect colourful companion with expert personal service and genuine product guarantee.' },
+  },
+};
+
 const WatchDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -970,46 +989,32 @@ const WatchDetail = () => {
       {/* Full-Width Showcase Section - Outside Grid */}
       <div className="w-full bg-gradient-to-br from-gray-50 via-white to-gray-50 py-20 px-4 lg:px-12">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {/* Column 1: Brand Story */}
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-full bg-gray-900/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
+          {(() => {
+            const brandName = watch?.brand?.name || '';
+            const showcase = BRAND_SHOWCASE_CONFIG[brandName] || {
+              col1: { title: 'Heritage & Craftsmanship', text: 'Each watch is crafted with precision and attention to detail, representing years of horological expertise and commitment to excellence.' },
+              col2: { title: 'Quality Guaranteed', text: 'Every timepiece undergoes rigorous testing to ensure it meets our exacting standards for durability, accuracy, and performance.' },
+              col3: { title: 'Expert Assistance', text: 'Our knowledgeable team is here to help you find the perfect timepiece and answer any questions about your purchase.' },
+            };
+            const cols = [
+              { data: showcase.col1, icon: <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/> },
+              { data: showcase.col2, icon: <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/> },
+              { data: showcase.col3, icon: <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/> },
+            ];
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                {cols.map((col, idx) => (
+                  <div key={idx} className="space-y-4 flex flex-col items-center text-center md:items-start md:text-left">
+                    <div className="w-12 h-12 rounded-full bg-gray-900/10 flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 24 24">{col.icon}</svg>
+                    </div>
+                    <h3 className="text-lg font-light text-gray-900 tracking-tight">{col.data.title}</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed font-light">{col.data.text}</p>
+                  </div>
+                ))}
               </div>
-              <h3 className="text-lg font-light text-gray-900 tracking-tight">Heritage & Craftsmanship</h3>
-              <p className="text-sm text-gray-600 leading-relaxed font-light">
-                Each watch is crafted with precision and attention to detail, representing years of horological expertise and commitment to excellence.
-              </p>
-            </div>
-
-            {/* Column 2: Quality Assurance */}
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-full bg-gray-900/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                </svg>
-              </div>
-              <h3 className="text-lg font-light text-gray-900 tracking-tight">Quality Guaranteed</h3>
-              <p className="text-sm text-gray-600 leading-relaxed font-light">
-                Every timepiece undergoes rigorous testing to ensure it meets our exacting standards for durability, accuracy, and performance.
-              </p>
-            </div>
-
-            {/* Column 3: Support & Service */}
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-full bg-gray-900/10 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
-                </svg>
-              </div>
-              <h3 className="text-lg font-light text-gray-900 tracking-tight">Expert Assistance</h3>
-              <p className="text-sm text-gray-600 leading-relaxed font-light">
-                Our knowledgeable team is here to help you find the perfect timepiece and answer any questions about your purchase.
-              </p>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Divider */}
           <div className="border-t border-gray-200 my-16"></div>
