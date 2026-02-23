@@ -277,6 +277,13 @@ const WatchDetail = () => {
             brandConfig: BRAND_SPEC_CONFIG[watchData.brand?.name || '']
           });
           setWatch(watchData);
+          // Open all spec sections by default
+          const config = BRAND_SPEC_CONFIG[watchData.brand?.name || ''];
+          const allKeys: { [key: string]: boolean } = { care: true };
+          if (config) Object.keys(config.sections).forEach(k => { allKeys[k] = true; });
+          // Desktop fixed keys
+          ['case', 'movement', 'water'].forEach(k => { allKeys[k] = true; });
+          setExpandedSpecs(allKeys);
         } else {
           throw new Error(data.message || 'Failed to load watch');
         }
@@ -580,7 +587,7 @@ const WatchDetail = () => {
         {/* Mobile: swipeable image gallery */}
         <div
           className="relative bg-white"
-          style={{ minHeight: '80vw', paddingBottom: '48px' }}
+          style={{ minHeight: '100vw', paddingBottom: '72px' }}
           onTouchStart={(e) => {
             const touch = e.touches[0];
             (e.currentTarget as HTMLDivElement).dataset.touchStartX = String(touch.clientX);
@@ -620,7 +627,7 @@ const WatchDetail = () => {
           )}
           {/* Minimal dot indicators */}
           {displayImages.length > 1 && (
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2.5">
+            <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-2.5">
               {displayImages.map((_, i) => (
                 <button
                   key={i}
