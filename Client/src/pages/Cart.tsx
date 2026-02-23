@@ -4,6 +4,7 @@ import { FooterSection } from "../components/FooterSection";
 import { Link } from "react-router-dom";
 import { Plus, Minus, X } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
+import { getMediaUrl } from "../config/api";
 
 const Cart = (): JSX.Element => {
   const { cartItems, updateQuantity, removeItem } = useCart();
@@ -106,7 +107,7 @@ const Cart = (): JSX.Element => {
                         className="flex-shrink-0 w-28 h-28 lg:w-32 lg:h-32 bg-gray-50 overflow-hidden"
                       >
                         <img
-                          src={item.image}
+                          src={getMediaUrl(item.image)}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />
