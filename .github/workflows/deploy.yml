@@ -43,6 +43,7 @@ jobs:
         with:
           url: ${{ secrets.COOLIFY_FRONTEND_WEBHOOK }}
           method: 'GET'
+          customHeaders: '{"Authorization": "Bearer ${{ secrets.COOLIFY_TOKEN }}"}'
           timeout: 30000
 
       - name: Trigger Backend redeploy on Coolify
@@ -50,6 +51,7 @@ jobs:
         with:
           url: ${{ secrets.COOLIFY_BACKEND_WEBHOOK }}
           method: 'GET'
+          customHeaders: '{"Authorization": "Bearer ${{ secrets.COOLIFY_TOKEN }}"}'
           timeout: 30000
 
       - name: Done
