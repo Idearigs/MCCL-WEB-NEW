@@ -4,7 +4,7 @@ import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 import FavoriteButton from "../components/FavoriteButton";
 import AuthModal from "../components/AuthModal";
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getMediaUrl } from '../config/api';
 import { useCart } from "../contexts/CartContext";
 import { toast } from "sonner";
 import { trackAddToCart } from "../services/pixelService";
@@ -217,15 +217,12 @@ const Rings = (): JSX.Element => {
         img => img.is_metal_preview === true && img.metal_id === selectedMetalId
       );
       if (metalImage) {
-        console.log(`Found metal preview image for metal ${selectedMetalId}:`, metalImage);
-        return { url: metalImage.url, alt: metalImage.alt };
-      } else {
-        console.log(`No metal preview found for metal ${selectedMetalId}. Available images:`, product.images);
+        return { url: getMediaUrl(metalImage.url), alt: metalImage.alt };
       }
     }
     // Fallback to primary image
     const primaryImage = product.images?.find(img => img.is_primary === true) || product.images?.[0];
-    return primaryImage ? { url: primaryImage.url, alt: primaryImage.alt } : { url: "/images/Rings.png", alt: product.name };
+    return primaryImage ? { url: getMediaUrl(primaryImage.url), alt: primaryImage.alt } : { url: "/images/Rings.png", alt: product.name };
   };
 
   // Filter handlers
@@ -926,7 +923,7 @@ const Rings = (): JSX.Element => {
 
                           {/* Hover Image */}
                           <img
-                            src={hoverImage?.url || displayImage.url}
+                            src={hoverImage?.url ? getMediaUrl(hoverImage.url) : displayImage.url}
                             alt={hoverImage?.alt || `${product.name} - Alternative View`}
                             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                           />
@@ -989,7 +986,7 @@ const Rings = (): JSX.Element => {
                                   >
                                     {thumbImg ? (
                                       <img
-                                        src={thumbImg.url}
+                                        src={getMediaUrl(thumbImg.url)}
                                         alt={metal.name}
                                         className="w-full h-full object-cover"
                                       />

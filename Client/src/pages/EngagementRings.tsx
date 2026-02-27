@@ -139,22 +139,45 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
         <Link to={`/${product.category.slug}/${product.slug}`}>
           <h3 className="text-base font-cormorant font-normal text-gray-700 mb-2 leading-tight">{product.name}</h3>
         </Link>
-        {/* Metal Color Selectors */}
+        {/* Metal Options - Thumbnail Selector */}
         {metals.length > 0 && (
-          <div className="flex items-center gap-1.5 mb-2">
-            {metals.map((metal) => (
-              <button
-                key={metal.id}
-                onClick={() => setSelectedMetalId(selectedMetalId === metal.id ? null : metal.id)}
-                title={metal.name}
-                className={`w-5 h-5 rounded-full border-2 transition-all duration-200 ${
-                  selectedMetalId === metal.id
-                    ? 'border-gray-900 scale-110'
-                    : 'border-gray-300 hover:border-gray-500'
-                }`}
-                style={{ backgroundColor: metal.color_code || '#ccc' }}
-              />
-            ))}
+          <div className="mb-2">
+            <p className="text-[9px] font-inter font-light tracking-[0.15em] text-gray-500 uppercase mb-2">
+              Metal:{' '}
+              <span className="text-gray-700">
+                {(metals.find(m => m.id === activeMetalId) || metals[0])?.name || ''}
+              </span>
+            </p>
+            <div className="flex items-center gap-1.5">
+              {metals.map((metal) => {
+                const thumbImg = product.images?.find(
+                  img => img.is_metal_preview === true && img.metal_id === metal.id
+                ) || product.images?.find(img => img.is_primary) || product.images?.[0];
+                const isActive = activeMetalId === metal.id;
+                return (
+                  <button
+                    key={metal.id}
+                    onClick={() => setSelectedMetalId(metal.id)}
+                    title={metal.name}
+                    className={`w-12 h-12 overflow-hidden flex-shrink-0 transition-all duration-200 ${
+                      isActive
+                        ? 'ring-2 ring-gray-800 ring-offset-1'
+                        : 'ring-1 ring-gray-200 opacity-60 hover:opacity-100 hover:ring-gray-400'
+                    }`}
+                  >
+                    {thumbImg ? (
+                      <img
+                        src={getMediaUrl(thumbImg.url)}
+                        alt={metal.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full" style={{ backgroundColor: metal.color_code || '#ccc' }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
         <p className="text-lg font-cormorant font-medium text-gray-600">{product.price}</p>
