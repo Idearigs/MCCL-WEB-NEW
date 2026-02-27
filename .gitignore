@@ -1,71 +1,67 @@
+# ============================================================
+# McCulloch Website — .gitignore
+# ============================================================
+
+# Local archive (backup/junk files — stays on your machine only)
+_archive/
+
 # Dependencies
 node_modules/
 */node_modules/
 
 # Logs
-logs
 *.log
+logs/
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
 # Build outputs
 dist/
 build/
 out/
 
-# Environment variables
+# Environment variables (keep .env.example, never commit real .env)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# IDE files
+# IDE / OS files
 .vscode/
 .idea/
+.DS_Store
+.DS_Store?
+Thumbs.db
 *.swp
 *.swo
 *~
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Temporary files
+# Temporary / backup files
 *.tmp
 *.temp
+*.old
+*.new
+nul
+Server/nul
 
-# Large media files (use cloud storage instead)
+# Root-level junk (Windows artifacts, local-only)
+public/
+
+# Large media files (stored in Docker volumes on VPS, not in git)
 *.mp4
 *.mov
 *.avi
 *.mkv
 *.webm
 
-# Server uploads (should be persistent storage/volumes)
+# Server uploads — stored in Docker volume, never in git
 Server/uploads/
 
-# Scraper output directories (large JSON + images)
+# Scraper data — large JSON + images, local use only
 Server/scripts/*/output/
 Server/scripts/festina-scraper/
 Server/scripts/roamer-scraper/
 Server/scripts/briston-scraper/output/
 
-# Engagement ring source images (large PNGs, stored on server only)
+# Source images — large PNGs, stored on VPS only
 Client/images/
-
-# Accidental nul files (Windows artifact)
-nul
-Server/nul
-
-# Package lock files (optional - uncomment if you want to ignore)
-# package-lock.json
-# yarn.lock
