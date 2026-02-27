@@ -956,9 +956,9 @@ const Rings = (): JSX.Element => {
                         {/* Product Name */}
                         <h3 className="text-base font-cormorant font-normal text-gray-700 mb-3 leading-tight">{product.name}</h3>
 
-                        {/* Metal Options - Colored Circles */}
+                        {/* Metal Options - Text Buttons */}
                         {product.available_metals && product.available_metals.length > 0 && (
-                          <div className="flex items-center gap-2 mb-3">
+                          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
                             {product.available_metals.map((metal) => (
                               <button
                                 key={metal.id}
@@ -969,16 +969,14 @@ const Rings = (): JSX.Element => {
                                     [product.id]: metal.id
                                   }));
                                 }}
-                                title={metal.name}
-                                className={`w-6 h-6 rounded-full transition-all ${
+                                className={`px-2 py-0.5 text-[10px] font-inter font-light tracking-wide border transition-all duration-200 ${
                                   selectedMetals[product.id] === metal.id
-                                    ? 'ring-2 ring-gray-700 ring-offset-1'
-                                    : 'border border-gray-300'
+                                    ? 'border-gray-800 bg-gray-800 text-white'
+                                    : 'border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700'
                                 }`}
-                                style={{
-                                  backgroundColor: metal.color_code || '#cccccc'
-                                }}
-                              />
+                              >
+                                {metal.name.replace(' Gold', '')}
+                              </button>
                             ))}
                           </div>
                         )}

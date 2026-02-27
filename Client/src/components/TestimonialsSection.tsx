@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Calendar } from 'lucide-react';
+import ScrollReveal from './ScrollReveal';
 
 // Interface for custom reviews from backend
 interface CustomReview {
@@ -159,7 +160,7 @@ const TestimonialsSection = () => {
     <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="text-center mb-12">
+          <ScrollReveal direction="up" className="text-center mb-12">
             <h2 className="text-3xl font-serif font-light text-gray-900 mb-4">
               What Our Clients Say
             </h2>
@@ -167,10 +168,10 @@ const TestimonialsSection = () => {
             <p className="text-gray-600 max-w-2xl mx-auto">
               Discover the experiences of those who have entrusted us with their most precious moments.
             </p>
-          </div>
+          </ScrollReveal>
 
         {/* Reviews - Horizontal Auto-Swipe Carousel */}
-        <div className="relative max-w-2xl mx-auto overflow-hidden">
+        <ScrollReveal direction="up" delay={200} className="relative max-w-2xl mx-auto overflow-hidden">
           <div 
             className="flex transition-transform duration-500 ease-in-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -222,7 +223,7 @@ const TestimonialsSection = () => {
           </div>
           
           {/* Dots Indicator */}
-          <div className="flex justify-center mt-6 gap-2">
+          <div className="flex justify-center mt-6 gap-2" style={{ position: 'relative', zIndex: 1 }}>
             {reviews.map((_, index) => (
               <button
                 key={index}

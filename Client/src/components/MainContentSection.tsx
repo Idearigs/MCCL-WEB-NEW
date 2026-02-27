@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect } from "react";
 import WatchBrandsShowcase from "./WatchBrandsShowcase";
 import MarketingSection from "./MarketingSection";
 import PromotionBanner from "./PromotionBanner";
+import ScrollReveal from "./ScrollReveal";
 import API_BASE_URL, { getMediaUrl } from '../config/api';
 
 const jewelryCategories = [
@@ -258,10 +259,10 @@ export default function MainContentSection(): JSX.Element {
         <div className="hidden lg:block max-w-7xl mx-auto px-6 lg:px-1">
           <div className="grid grid-cols-4 gap-7">
             {jewelryCategories.map((category, index) => (
+              <ScrollReveal key={index} delay={index * 100} direction="up">
               <Link
-                key={index}
                 to={category.href}
-                className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500"
+                className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500 block"
                 style={{
                   height: '430px'
                 }}
@@ -281,6 +282,7 @@ export default function MainContentSection(): JSX.Element {
                   </div>
                 </div>
               </Link>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -340,8 +342,9 @@ export default function MainContentSection(): JSX.Element {
         {/* Desktop Layout */}
         <div className="hidden lg:block max-w-7xl mx-auto px-8 relative">
           <div className="grid grid-cols-2 gap-28">
-            
+
             {/* Latest Designs */}
+            <ScrollReveal direction="left" duration={800}>
             <div className="flex flex-col">
               <div className="mb-10">
                 <h2 className="text-3xl font-serif font-normal text-gray-900 mb-4 tracking-normal leading-tight">
@@ -370,11 +373,13 @@ export default function MainContentSection(): JSX.Element {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
               </div>
             </div>
+            </ScrollReveal>
 
             {/* Vertical Divider Line */}
             <div className="absolute left-1/2 top-8 bottom-8 w-px bg-gray-200 transform -translate-x-1/2"></div>
 
             {/* Engagement Rings */}
+            <ScrollReveal direction="right" duration={800} delay={100}>
             <div className="flex flex-col">
               <div className="flex-1 relative group overflow-hidden rounded-lg shadow-lg mb-10">
                 <img
@@ -403,6 +408,7 @@ export default function MainContentSection(): JSX.Element {
                 </button>
               </div>
             </div>
+            </ScrollReveal>
 
           </div>
         </div>
@@ -410,6 +416,7 @@ export default function MainContentSection(): JSX.Element {
         {/* Mobile Layout - Full Width Images */}
         <div className="lg:hidden">
           {/* Latest Designs */}
+          <ScrollReveal direction="up">
           <div>
             <div className="px-6 lg:px-0 mx-5 lg:mx-0 mb-10">
               <h2 className="text-2xl font-serif font-normal text-gray-900 mb-4 tracking-normal leading-tight">
@@ -439,7 +446,11 @@ export default function MainContentSection(): JSX.Element {
             </div>
           </div>
 
+          </div>
+          </ScrollReveal>
+
           {/* Engagement Rings */}
+          <ScrollReveal direction="up" delay={100}>
           <div>
             <div className="relative group">
               <img
@@ -470,13 +481,14 @@ export default function MainContentSection(): JSX.Element {
               </div>
             </div>
           </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* Product Carousel Section */}
       <section className="bg-white py-12 lg:py-16">
         {/* Section Header */}
-        <div className="flex items-center justify-between mb-8 px-6 lg:px-8">
+        <ScrollReveal direction="up" className="flex items-center justify-between mb-8 px-6 lg:px-8">
           <div>
             <p className="text-[10px] font-inter font-light uppercase tracking-[0.35em] text-gray-400 mb-1">
               Our Collection
@@ -515,7 +527,7 @@ export default function MainContentSection(): JSX.Element {
               </svg>
             </button>
           </div>
-        </div>
+        </ScrollReveal>
 
         {/* Desktop Product Carousel */}
         <div

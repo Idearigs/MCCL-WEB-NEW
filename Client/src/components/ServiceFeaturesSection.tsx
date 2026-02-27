@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShoppingBag, Crown, CalendarDays, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ScrollReveal from './ScrollReveal';
 
 const ServiceFeaturesSection = () => {
   const features = [
@@ -55,40 +56,42 @@ const ServiceFeaturesSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="text-center group flex flex-col h-full">
-              {/* Icon */}
-              <div className="flex justify-center mb-6">
-                <div className="p-2 transition-transform duration-300 group-hover:scale-110">
-                  {feature.icon}
+            <ScrollReveal key={index} delay={index * 120} direction="up">
+              <div className="text-center group flex flex-col h-full">
+                {/* Icon */}
+                <div className="flex justify-center mb-6">
+                  <div className="p-2 transition-transform duration-300 group-hover:scale-110">
+                    {feature.icon}
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-base font-normal text-gray-900 mb-4 uppercase tracking-wider"
+                    style={{ fontFamily: 'Futura PT, sans-serif', fontWeight: 400 }}>
+                  {feature.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-base text-gray-700 mb-6 leading-relaxed px-2 flex-grow"
+                   style={{ fontFamily: 'Futura PT, sans-serif', fontWeight: 300 }}>
+                  {feature.description}
+                </p>
+
+                {/* Button */}
+                <div className="mt-auto">
+                  <Button
+                    variant="ghost"
+                    className="text-sm font-normal text-gray-900 hover:text-gray-700 uppercase tracking-wider p-0 h-auto group-hover:underline transition-all duration-300"
+                    style={{ fontFamily: 'Futura PT, sans-serif', fontWeight: 400 }}
+                  >
+                    {feature.buttonText}
+                    <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">
+                      →
+                    </span>
+                  </Button>
                 </div>
               </div>
-              
-              {/* Title */}
-              <h3 className="text-base font-normal text-gray-900 mb-4 uppercase tracking-wider"
-                  style={{ fontFamily: 'Futura PT, sans-serif', fontWeight: 400 }}>
-                {feature.title}
-              </h3>
-              
-              {/* Description */}
-              <p className="text-base text-gray-700 mb-6 leading-relaxed px-2 flex-grow"
-                 style={{ fontFamily: 'Futura PT, sans-serif', fontWeight: 300 }}>
-                {feature.description}
-              </p>
-              
-              {/* Button */}
-              <div className="mt-auto">
-                <Button
-                  variant="ghost"
-                  className="text-sm font-normal text-gray-900 hover:text-gray-700 uppercase tracking-wider p-0 h-auto group-hover:underline transition-all duration-300"
-                  style={{ fontFamily: 'Futura PT, sans-serif', fontWeight: 400 }}
-                >
-                  {feature.buttonText}
-                  <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">
-                    →
-                  </span>
-                </Button>
-              </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>
