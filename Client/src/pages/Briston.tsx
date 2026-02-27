@@ -29,18 +29,10 @@ const Briston = (): JSX.Element => {
     const fetchCollections = async () => {
       try {
         setLoading(true);
-        const brandsResponse = await fetch(`${API_BASE_URL}/watches/brands`);
-        const brandsData = await brandsResponse.json();
-
-        if (brandsData.success) {
-          const bristonBrand = brandsData.data.find((b: any) => b.slug === 'briston');
-          if (bristonBrand) {
-            const collectionsResponse = await fetch(`${API_BASE_URL}/watches/brands/${bristonBrand.id}/collections`);
-            const collectionsData = await collectionsResponse.json();
-            if (collectionsData.success) {
-              setCollections(collectionsData.data);
-            }
-          }
+        const response = await fetch(`${API_BASE_URL}/watches/brands/slug/briston/collections`);
+        const data = await response.json();
+        if (data.success) {
+          setCollections(data.data);
         }
       } catch (error) {
         console.error('Error fetching Briston collections:', error);
@@ -169,8 +161,13 @@ const Briston = (): JSX.Element => {
           </h2>
 
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <p className="text-gray-500 font-inter font-light">Loading collections...</p>
+            <div className="flex md:justify-center gap-6 overflow-x-auto pb-8 px-12">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex-shrink-0 w-72 h-[450px] bg-white flex flex-col items-center justify-center gap-6 animate-pulse">
+                  <div className="w-56 h-56 bg-gray-100 rounded-sm" />
+                  <div className="w-32 h-4 bg-gray-100 rounded" />
+                </div>
+              ))}
             </div>
           ) : collections.length > 0 ? (
             <div

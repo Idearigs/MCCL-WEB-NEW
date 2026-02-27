@@ -216,6 +216,76 @@ const getCollectionsByBrand = asyncHandler(async (req, res) => {
   });
 });
 
+// Get collections by brand slug (single call — no need to look up brand ID first)
+const getCollectionsByBrandSlug = asyncHandler(async (req, res) => {
+  const { WatchBrand, WatchCollection, Watch } = getModelInstance();
+  const { slug } = req.params;
+  const db = postgresDB();
+
+  const brand = await WatchBrand.findOne({ where: { slug } });
+  if (!brand) {
+    return res.status(404).json({ success: false, message: 'Brand not found' });
+  }
+
+  const collections = await WatchCollection.findAll({
+    where: { brand_id: brand.id },
+    order: [['sort_order', 'ASC'], ['name', 'ASC']],
+    include: [
+      {
+        model: Watch,
+        as: 'watches',
+        attributes: ['id'],
+        where: { is_active: true },
+        required: false
+      }
+    ]
+  });
+
+  const collectionIds = collections.map(c => c.id);
+  let previewMap = {};
+  if (collectionIds.length > 0) {
+    const placeholders = collectionIds.map((_, i) => `$${i + 1}`).join(',');
+    const rows = await db.query(
+      `SELECT DISTINCT ON (w.collection_id)
+         w.collection_id,
+         w.name AS watch_name,
+         w.short_description AS watch_description,
+         wi.image_url
+       FROM watches w
+       JOIN watch_images wi ON wi.watch_id = w.id
+       WHERE w.collection_id IN (${placeholders})
+         AND w.is_active = true
+       ORDER BY w.collection_id, wi.is_primary DESC, wi.sort_order ASC`,
+      { bind: collectionIds, type: QueryTypes.SELECT }
+    );
+    rows.forEach(row => {
+      previewMap[row.collection_id] = {
+        preview_image: row.image_url,
+        preview_watch_name: row.watch_name,
+        preview_description: row.watch_description
+      };
+    });
+  }
+
+  const transformedCollections = collections.map(collection => ({
+    id: collection.id,
+    name: collection.name,
+    slug: collection.slug,
+    description: collection.description,
+    image_url: collection.image_url,
+    is_featured: collection.is_featured,
+    is_active: collection.is_active,
+    launch_year: collection.launch_year,
+    target_audience: collection.target_audience,
+    watches_count: collection.watches ? collection.watches.length : 0,
+    preview_image: previewMap[collection.id]?.preview_image || null,
+    preview_watch_name: previewMap[collection.id]?.preview_watch_name || null,
+    preview_description: previewMap[collection.id]?.preview_description || null
+  }));
+
+  res.json({ success: true, data: transformedCollections });
+});
+
 // Get all collections (for admin filter dropdown)
 const getAllCollections = asyncHandler(async (req, res) => {
   const { WatchCollection, WatchBrand, Watch } = getModelInstance();
@@ -1636,6 +1706,7 @@ module.exports = {
   updateBrand,
   deleteBrand,
   getCollectionsByBrand,
+  getCollectionsByBrandSlug,
   getAllCollections,
   createCollection,
   updateCollection,

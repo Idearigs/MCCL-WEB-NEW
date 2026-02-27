@@ -930,7 +930,7 @@ const LuxuryNavigation = (): JSX.Element => {
                             brand.collections.map((collection) => (
                               <Link
                                 key={collection.id}
-                                to={`/watches?brand=${brand.slug}&collection=${collection.slug}`}
+                                to={`/collections/${collection.slug}`}
                                 className="group block"
                               >
                                 <div className="flex items-start space-x-3">
@@ -1389,7 +1389,7 @@ const LuxuryNavigation = (): JSX.Element => {
                                   {brand.collections.map((collection) => (
                                     <Link
                                       key={collection.id}
-                                      to={`/${brand.slug}?collection=${collection.slug}`}
+                                      to={`/collections/${collection.slug}`}
                                       className="block py-1.5 text-sm font-cormorant font-light text-gray-700 hover:text-gray-900 transition-colors"
                                       onClick={closeMobileMenu}
                                     >
