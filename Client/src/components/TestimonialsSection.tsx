@@ -223,7 +223,7 @@ const TestimonialsSection = () => {
           </div>
           
           {/* Dots Indicator */}
-          <div className="flex justify-center mt-6 gap-2" style={{ position: 'relative', zIndex: 1 }}>
+          <div className="flex justify-center mt-6 gap-2">
             {reviews.map((_, index) => (
               <button
                 key={index}
@@ -234,7 +234,7 @@ const TestimonialsSection = () => {
               />
             ))}
           </div>
-        </div>
+        </ScrollReveal>
 
       </div>
     </section>
