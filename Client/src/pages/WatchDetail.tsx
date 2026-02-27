@@ -443,6 +443,8 @@ const WatchDetail = () => {
                       src={getMediaUrl(img.image_url)}
                       alt={img.alt_text}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
                     />
                   </div>
                 );
@@ -628,6 +630,7 @@ const WatchDetail = () => {
             src={getMediaUrl(currentImage.image_url)}
             alt={currentImage.alt_text}
             className="absolute inset-0 w-full h-full object-contain p-4"
+            fetchPriority="high"
           />
           {/* Prev / Next tap zones */}
           {displayImages.length > 1 && (
@@ -1123,6 +1126,7 @@ const WatchDetail = () => {
                           src={getMediaUrl(strap.image_url)}
                           alt={strap.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-inter">

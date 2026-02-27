@@ -9,20 +9,49 @@ import { useCart } from '../contexts/CartContext';
 import API_BASE_URL, { getMediaUrl } from '../config/api';
 import { trackViewContent, trackAddToCart } from '../services/pixelService';
 
+const metalTypeOptions = [
+  { value: '9ct-white-gold', label: '9ct White Gold' },
+  { value: '18ct-white-gold', label: '18ct White Gold' },
+  { value: '9ct-yellow-gold', label: '9ct Yellow Gold' },
+  { value: '18ct-yellow-gold', label: '18ct Yellow Gold' },
+  { value: 'platinum', label: 'Platinum' },
+];
+
+const ringSizes = [
+  { value: 'A', label: 'UK Size A (US 0, EU 37.5)' },
+  { value: 'B', label: 'UK Size B (US 0.5, EU 38.2)' },
+  { value: 'C', label: 'UK Size C (US 1, EU 38.8)' },
+  { value: 'D', label: 'UK Size D (US 1.5, EU 39.5)' },
+  { value: 'E', label: 'UK Size E (US 2, EU 40.1)' },
+  { value: 'F', label: 'UK Size F (US 2.5, EU 40.8)' },
+  { value: 'G', label: 'UK Size G (US 3, EU 41.4)' },
+  { value: 'H', label: 'UK Size H (US 3.5, EU 42.1)' },
+  { value: 'I', label: 'UK Size I (US 4, EU 42.8)' },
+  { value: 'J', label: 'UK Size J (US 4.5, EU 43.4)' },
+  { value: 'K', label: 'UK Size K (US 5, EU 44.1)' },
+  { value: 'L', label: 'UK Size L (US 5.5, EU 44.8)' },
+  { value: 'M', label: 'UK Size M (US 6, EU 45.4)' },
+  { value: 'N', label: 'UK Size N (US 6.5, EU 46.1)' },
+  { value: 'O', label: 'UK Size O (US 7, EU 46.8)' },
+  { value: 'P', label: 'UK Size P (US 7.5, EU 47.4)' },
+  { value: 'Q', label: 'UK Size Q (US 8, EU 48.1)' },
+  { value: 'R', label: 'UK Size R (US 8.5, EU 48.7)' },
+  { value: 'S', label: 'UK Size S (US 9, EU 49.4)' },
+  { value: 'T', label: 'UK Size T (US 9.5, EU 50.1)' },
+  { value: 'U', label: 'UK Size U (US 10, EU 50.7)' },
+  { value: 'V', label: 'UK Size V (US 10.5, EU 51.4)' },
+  { value: 'W', label: 'UK Size W (US 11, EU 52.1)' },
+  { value: 'X', label: 'UK Size X (US 11.5, EU 52.7)' },
+  { value: 'Y', label: 'UK Size Y (US 12, EU 53.4)' },
+  { value: 'Z', label: 'UK Size Z (US 12.5, EU 54.1)' }
+];
+
 const ProductDetail = () => {
   const { productId } = useParams();
   const [selectedMetal, setSelectedMetal] = useState('platinum');
   const [selectedMetalType, setSelectedMetalType] = useState('');
   const [selectedDiamondSize, setSelectedDiamondSize] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState('L');
-
-  const metalTypeOptions = [
-    { value: '9ct-white-gold', label: '9ct White Gold' },
-    { value: '18ct-white-gold', label: '18ct White Gold' },
-    { value: '9ct-yellow-gold', label: '9ct Yellow Gold' },
-    { value: '18ct-yellow-gold', label: '18ct Yellow Gold' },
-    { value: 'platinum', label: 'Platinum' },
-  ];
   const [isLoading, setIsLoading] = useState(false);
   const [productData, setProductData] = useState(null);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
@@ -51,36 +80,6 @@ const ProductDetail = () => {
     cut: true
   });
 
-  // Hardcoded ring sizes for all rings with UK/US/EU equivalents
-  const ringSizes = [
-    { value: 'A', label: 'UK Size A (US 0, EU 37.5)' },
-    { value: 'B', label: 'UK Size B (US 0.5, EU 38.2)' },
-    { value: 'C', label: 'UK Size C (US 1, EU 38.8)' },
-    { value: 'D', label: 'UK Size D (US 1.5, EU 39.5)' },
-    { value: 'E', label: 'UK Size E (US 2, EU 40.1)' },
-    { value: 'F', label: 'UK Size F (US 2.5, EU 40.8)' },
-    { value: 'G', label: 'UK Size G (US 3, EU 41.4)' },
-    { value: 'H', label: 'UK Size H (US 3.5, EU 42.1)' },
-    { value: 'I', label: 'UK Size I (US 4, EU 42.8)' },
-    { value: 'J', label: 'UK Size J (US 4.5, EU 43.4)' },
-    { value: 'K', label: 'UK Size K (US 5, EU 44.1)' },
-    { value: 'L', label: 'UK Size L (US 5.5, EU 44.8)' },
-    { value: 'M', label: 'UK Size M (US 6, EU 45.4)' },
-    { value: 'N', label: 'UK Size N (US 6.5, EU 46.1)' },
-    { value: 'O', label: 'UK Size O (US 7, EU 46.8)' },
-    { value: 'P', label: 'UK Size P (US 7.5, EU 47.4)' },
-    { value: 'Q', label: 'UK Size Q (US 8, EU 48.1)' },
-    { value: 'R', label: 'UK Size R (US 8.5, EU 48.7)' },
-    { value: 'S', label: 'UK Size S (US 9, EU 49.4)' },
-    { value: 'T', label: 'UK Size T (US 9.5, EU 50.1)' },
-    { value: 'U', label: 'UK Size U (US 10, EU 50.7)' },
-    { value: 'V', label: 'UK Size V (US 10.5, EU 51.4)' },
-    { value: 'W', label: 'UK Size W (US 11, EU 52.1)' },
-    { value: 'X', label: 'UK Size X (US 11.5, EU 52.7)' },
-    { value: 'Y', label: 'UK Size Y (US 12, EU 53.4)' },
-    { value: 'Z', label: 'UK Size Z (US 12.5, EU 54.1)' }
-  ];
-  
   // Use global cart context
   const { addToCart } = useCart();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -805,6 +804,8 @@ const ProductDetail = () => {
                 src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
                 alt={displayImages[currentImageIndex]?.alt || productData.name}
                 className="w-full h-full object-cover"
+                fetchPriority="high"
+                loading="eager"
               />
             </div>
           )}
@@ -884,6 +885,7 @@ const ProductDetail = () => {
                         src={getMediaUrl(metalImage.url)}
                         alt={metal.name}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     ) : (
                       <div
@@ -1309,6 +1311,7 @@ const ProductDetail = () => {
                       src={getMediaUrl(image?.url || '')}
                       alt={image?.alt || `${productData.name} - Image ${index + 1}`}
                       className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
+                      loading="lazy"
                     />
                   )}
 
@@ -1380,6 +1383,7 @@ const ProductDetail = () => {
                             src={getMediaUrl(metalImage.url)}
                             alt={metal.name}
                             className="w-full h-full object-cover"
+                            loading="lazy"
                           />
                         ) : (
                           <div
@@ -2009,6 +2013,7 @@ const ProductDetail = () => {
                     src={getMediaUrl(image.url || '')}
                     alt={image.alt || `Product view ${index + 1}`}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 )}
               </button>
@@ -2059,6 +2064,7 @@ const ProductDetail = () => {
                   alt={displayImages[lightboxImageIndex]?.alt || productData.name}
                   className="max-w-full max-h-full object-contain"
                   style={{ maxHeight: '80vh', maxWidth: '80vw' }}
+                  loading="lazy"
                 />
               )}
             </div>
@@ -2209,6 +2215,7 @@ const ProductDetail = () => {
                         src={product.image}
                         alt={product.name}
                         className="w-full h-full object-contain p-6 lg:p-8 transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
                       />
                     </div>
                   </div>
