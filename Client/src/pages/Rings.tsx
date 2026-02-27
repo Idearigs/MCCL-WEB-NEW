@@ -919,6 +919,7 @@ const Rings = (): JSX.Element => {
                             src={displayImage.url}
                             alt={displayImage.alt}
                             className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
+                            loading="lazy"
                           />
 
                           {/* Hover Image */}
@@ -926,6 +927,7 @@ const Rings = (): JSX.Element => {
                             src={hoverImage?.url ? getMediaUrl(hoverImage.url) : displayImage.url}
                             alt={hoverImage?.alt || `${product.name} - Alternative View`}
                             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                            loading="lazy"
                           />
 
                           {/* Hover Overlay */}

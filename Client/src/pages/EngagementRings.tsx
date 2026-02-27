@@ -107,6 +107,7 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
             src={primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png"}
             alt={primaryImage?.alt || product.name}
             className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
+            loading="lazy"
           />
 
           {/* Hover Image */}
@@ -114,6 +115,7 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
             src={hoverImage?.url ? getMediaUrl(hoverImage.url) : (primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png")}
             alt={hoverImage?.alt || `${product.name} - Alternative View`}
             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+            loading="lazy"
           />
 
           {/* Hover Overlay */}

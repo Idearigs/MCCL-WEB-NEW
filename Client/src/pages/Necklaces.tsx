@@ -705,6 +705,7 @@ const Necklaces = (): JSX.Element => {
                       <img
                         src={primaryImage?.url || "/images/Rings.png"}
                         alt={primaryImage?.alt || product.name}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
                       />
 
@@ -712,6 +713,7 @@ const Necklaces = (): JSX.Element => {
                       <img
                         src={hoverImage?.url || primaryImage?.url || "/images/Rings.png"}
                         alt={hoverImage?.alt || `${product.name} - Alternative View`}
+                        loading="lazy"
                         className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                       />
 

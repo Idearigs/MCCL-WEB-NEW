@@ -1,4 +1,4 @@
-
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,54 +9,84 @@ import { CartProvider } from "./contexts/CartContext";
 import { UserAuthProvider } from "./contexts/UserAuthContext";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
 import { usePixelPageView } from "./hooks/usePixelPageView";
+
+// ── Eagerly loaded (tiny files or needed immediately) ──────────────────────
 import Index from "./pages/Index";
-import Collections from "./pages/Collections";
-import Jewellery from "./pages/Jewellery";
 import NotFound from "./pages/NotFound";
-import Diamonds from "./pages/Diamonds";
-import Watches from "./pages/Watches";
-import Heritage from "./pages/Heritage";
-import ProductDetail from "./pages/ProductDetail";
-import WatchDetail from "./pages/WatchDetail";
-import Products from "./pages/Products";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import ThankYou from "./pages/ThankYou";
-import Roamer from "./pages/Roamer";
-import Briston from "./pages/Briston";
-import Festina from "./pages/Festina";
-import Rings from "./pages/Rings";
-import EngagementRings from "./pages/EngagementRings";
-import WeddingRings from "./pages/WeddingRings";
-import Earrings from "./pages/Earrings";
-import Necklaces from "./pages/Necklaces";
-import Bracelets from "./pages/Bracelets";
-import FestinaWatches from "./pages/FestinaWatches";
-import BristonWatches from "./pages/BristonWatches";
-import RoamerWatches from "./pages/RoamerWatches";
-import FestinaClassicCollection from "./pages/FestinaClassicCollection";
-import BristonHeritageCollection from "./pages/BristonHeritageCollection";
-import RoamerSwissTradition from "./pages/RoamerSwissTradition";
-import WatchCollection from "./pages/WatchCollection";
-import Contact from "./pages/Contact";
-import OurStory from "./pages/OurStory";
-import CustomerService from "./pages/CustomerService";
-import VisitUs from "./pages/VisitUs";
-import TrustGuarantees from "./pages/TrustGuarantees";
-import Favorites from "./pages/Favorites";
-import Account from "./pages/Account";
-import Orders from "./pages/Orders";
-import OrderDetail from "./pages/OrderDetail";
-import VerifyEmail from "./pages/VerifyEmail";
-import AuthCallback from "./pages/AuthCallback";
-import AdminApp from "./admin/AdminApp";
-import NivodaTestingPage from "./pages/NivodaTestingPage";
-import BespokeDesign from "./pages/BespokeDesign";
-import Portfolio from "./pages/Portfolio";
 
-const queryClient = new QueryClient();
+// ── Lazily loaded pages (split into separate chunks) ──────────────────────
+const Collections       = lazy(() => import("./pages/Collections"));
+const Jewellery         = lazy(() => import("./pages/Jewellery"));
+const Diamonds          = lazy(() => import("./pages/Diamonds"));
+const Watches           = lazy(() => import("./pages/Watches"));
+const Heritage          = lazy(() => import("./pages/Heritage"));
+const Products          = lazy(() => import("./pages/Products"));
+const Cart              = lazy(() => import("./pages/Cart"));
+const Checkout          = lazy(() => import("./pages/Checkout"));
+const ThankYou          = lazy(() => import("./pages/ThankYou"));
 
-// Component to track PageView on route changes
+// Watch brands
+const Roamer            = lazy(() => import("./pages/Roamer"));
+const Briston           = lazy(() => import("./pages/Briston"));
+const Festina           = lazy(() => import("./pages/Festina"));
+const FestinaWatches    = lazy(() => import("./pages/FestinaWatches"));
+const BristonWatches    = lazy(() => import("./pages/BristonWatches"));
+const RoamerWatches     = lazy(() => import("./pages/RoamerWatches"));
+const FestinaClassicCollection  = lazy(() => import("./pages/FestinaClassicCollection"));
+const BristonHeritageCollection = lazy(() => import("./pages/BristonHeritageCollection"));
+const RoamerSwissTradition      = lazy(() => import("./pages/RoamerSwissTradition"));
+const WatchCollection   = lazy(() => import("./pages/WatchCollection"));
+
+// Jewellery categories
+const Rings             = lazy(() => import("./pages/Rings"));
+const EngagementRings   = lazy(() => import("./pages/EngagementRings"));
+const WeddingRings      = lazy(() => import("./pages/WeddingRings"));
+const Earrings          = lazy(() => import("./pages/Earrings"));
+const Necklaces         = lazy(() => import("./pages/Necklaces"));
+const Bracelets         = lazy(() => import("./pages/Bracelets"));
+
+// Product detail pages (heaviest pages — always lazy)
+const ProductDetail     = lazy(() => import("./pages/ProductDetail"));
+const WatchDetail       = lazy(() => import("./pages/WatchDetail"));
+
+// Info / account pages
+const Contact           = lazy(() => import("./pages/Contact"));
+const OurStory          = lazy(() => import("./pages/OurStory"));
+const BespokeDesign     = lazy(() => import("./pages/BespokeDesign"));
+const Portfolio         = lazy(() => import("./pages/Portfolio"));
+const CustomerService   = lazy(() => import("./pages/CustomerService"));
+const VisitUs           = lazy(() => import("./pages/VisitUs"));
+const TrustGuarantees   = lazy(() => import("./pages/TrustGuarantees"));
+const Favorites         = lazy(() => import("./pages/Favorites"));
+const Account           = lazy(() => import("./pages/Account"));
+const Orders            = lazy(() => import("./pages/Orders"));
+const OrderDetail       = lazy(() => import("./pages/OrderDetail"));
+const VerifyEmail       = lazy(() => import("./pages/VerifyEmail"));
+const AuthCallback      = lazy(() => import("./pages/AuthCallback"));
+
+// Admin (largest chunk — always lazy)
+const AdminApp          = lazy(() => import("./admin/AdminApp"));
+
+// Testing
+const NivodaTestingPage = lazy(() => import("./pages/NivodaTestingPage"));
+
+// ── Loading fallback ───────────────────────────────────────────────────────
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <div style={{ width: 32, height: 32, border: '2px solid #e5e7eb', borderTopColor: '#374151', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  </div>
+);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,   // cache API responses for 5 minutes
+      gcTime: 1000 * 60 * 10,     // keep unused data for 10 minutes
+    },
+  },
+});
+
 const PixelPageViewTracker = () => {
   usePixelPageView();
   return null;
@@ -73,74 +103,83 @@ const App = () => (
             <BrowserRouter>
               <ScrollToTop />
               <PixelPageViewTracker />
-              <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/collections" element={<Collections />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/thank-you" element={<ThankYou />} />
-            <Route path="/jewellery" element={<Jewellery />} />
-            <Route path="/diamonds" element={<Diamonds />} />
-            <Route path="/watches" element={<Watches />} />
-            <Route path="/heritage" element={<Heritage />} />
-            <Route path="/roamer" element={<Roamer />} />
-            <Route path="/briston" element={<Briston />} />
-            <Route path="/festina" element={<Festina />} />
-            <Route path="/rings" element={<Rings />} />
-            <Route path="/engagement-rings" element={<EngagementRings />} />
-            <Route path="/wedding-rings" element={<WeddingRings />} />
-            <Route path="/wedding" element={<WeddingRings />} />
-            <Route path="/earrings" element={<Earrings />} />
-            <Route path="/necklaces" element={<Necklaces />} />
-            <Route path="/bracelets" element={<Bracelets />} />
-            <Route path="/festina-watches" element={<FestinaWatches />} />
-            <Route path="/briston-watches" element={<BristonWatches />} />
-            <Route path="/roamer-watches" element={<RoamerWatches />} />
-            <Route path="/collections/festina-classic-collection" element={<FestinaClassicCollection />} />
-            <Route path="/collections/briston-heritage-collection" element={<BristonHeritageCollection />} />
-            <Route path="/collections/roamer-swiss-tradition" element={<RoamerSwissTradition />} />
-            <Route path="/collections/:collectionSlug" element={<WatchCollection />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/our-story" element={<OurStory />} />
-            <Route path="/bespoke-design" element={<BespokeDesign />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/customer-service" element={<CustomerService />} />
-            <Route path="/visit-us" element={<VisitUs />} />
-            <Route path="/trust-guarantees" element={<TrustGuarantees />} />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* Home — eager */}
+                  <Route path="/" element={<Index />} />
 
-            {/* Category-based product URLs */}
-            <Route path="/engagement-rings/:productId" element={<ProductDetail />} />
-            <Route path="/wedding-rings/:productId" element={<ProductDetail />} />
-            <Route path="/wedding/:productId" element={<ProductDetail />} />
-            <Route path="/rings/:productId" element={<ProductDetail />} />
-            <Route path="/earrings/:productId" element={<ProductDetail />} />
-            <Route path="/necklaces/:productId" element={<ProductDetail />} />
-            <Route path="/bracelets/:productId" element={<ProductDetail />} />
-            <Route path="/jewellery/:productId" element={<ProductDetail />} />
-            <Route path="/watches/:productId" element={<WatchDetail />} />
-            <Route path="/diamonds/:productId" element={<ProductDetail />} />
+                  {/* Shop */}
+                  <Route path="/collections" element={<Collections />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/thank-you" element={<ThankYou />} />
 
-            {/* Legacy product URL - redirect to category-based */}
-            <Route path="/product/:productId" element={<ProductDetail />} />
+                  {/* Jewellery */}
+                  <Route path="/jewellery" element={<Jewellery />} />
+                  <Route path="/diamonds" element={<Diamonds />} />
+                  <Route path="/rings" element={<Rings />} />
+                  <Route path="/engagement-rings" element={<EngagementRings />} />
+                  <Route path="/wedding-rings" element={<WeddingRings />} />
+                  <Route path="/wedding" element={<WeddingRings />} />
+                  <Route path="/earrings" element={<Earrings />} />
+                  <Route path="/necklaces" element={<Necklaces />} />
+                  <Route path="/bracelets" element={<Bracelets />} />
 
-            {/* User Account Routes */}
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/orders/:orderId" element={<OrderDetail />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
+                  {/* Watches */}
+                  <Route path="/watches" element={<Watches />} />
+                  <Route path="/roamer" element={<Roamer />} />
+                  <Route path="/briston" element={<Briston />} />
+                  <Route path="/festina" element={<Festina />} />
+                  <Route path="/festina-watches" element={<FestinaWatches />} />
+                  <Route path="/briston-watches" element={<BristonWatches />} />
+                  <Route path="/roamer-watches" element={<RoamerWatches />} />
+                  <Route path="/collections/festina-classic-collection" element={<FestinaClassicCollection />} />
+                  <Route path="/collections/briston-heritage-collection" element={<BristonHeritageCollection />} />
+                  <Route path="/collections/roamer-swiss-tradition" element={<RoamerSwissTradition />} />
+                  <Route path="/collections/:collectionSlug" element={<WatchCollection />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin/*" element={<AdminApp />} />
+                  {/* Product detail pages */}
+                  <Route path="/engagement-rings/:productId" element={<ProductDetail />} />
+                  <Route path="/wedding-rings/:productId" element={<ProductDetail />} />
+                  <Route path="/wedding/:productId" element={<ProductDetail />} />
+                  <Route path="/rings/:productId" element={<ProductDetail />} />
+                  <Route path="/earrings/:productId" element={<ProductDetail />} />
+                  <Route path="/necklaces/:productId" element={<ProductDetail />} />
+                  <Route path="/bracelets/:productId" element={<ProductDetail />} />
+                  <Route path="/jewellery/:productId" element={<ProductDetail />} />
+                  <Route path="/watches/:productId" element={<WatchDetail />} />
+                  <Route path="/diamonds/:productId" element={<ProductDetail />} />
+                  <Route path="/product/:productId" element={<ProductDetail />} />
 
-            {/* Testing Routes */}
-            <Route path="/test/nivoda" element={<NivodaTestingPage />} />
+                  {/* Info */}
+                  <Route path="/heritage" element={<Heritage />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/our-story" element={<OurStory />} />
+                  <Route path="/bespoke-design" element={<BespokeDesign />} />
+                  <Route path="/portfolio" element={<Portfolio />} />
+                  <Route path="/customer-service" element={<CustomerService />} />
+                  <Route path="/visit-us" element={<VisitUs />} />
+                  <Route path="/trust-guarantees" element={<TrustGuarantees />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+                  {/* Account */}
+                  <Route path="/favorites" element={<Favorites />} />
+                  <Route path="/account" element={<Account />} />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/orders/:orderId" element={<OrderDetail />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
+
+                  {/* Admin */}
+                  <Route path="/admin/*" element={<AdminApp />} />
+
+                  {/* Testing */}
+                  <Route path="/test/nivoda" element={<NivodaTestingPage />} />
+
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
           </CartProvider>
         </FavoritesProvider>
       </UserAuthProvider>
