@@ -937,8 +937,7 @@ const EngagementRings = (): JSX.Element => {
       />
 
       {/* ── Mobile Filter Side Panel ── */}
-      {mobileFilterOpen && (
-        <div className="lg:hidden fixed inset-0 z-[200] flex">
+      <div className={`lg:hidden fixed inset-0 z-[200] flex transition-opacity duration-300 ${mobileFilterOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
           {/* Backdrop */}
           <div
             className="flex-1 bg-black/40"
@@ -946,7 +945,7 @@ const EngagementRings = (): JSX.Element => {
           />
 
           {/* Panel — slides from right */}
-          <div className="w-4/5 max-w-sm bg-white h-full flex flex-col shadow-2xl overflow-hidden">
+          <div className={`w-4/5 max-w-sm bg-white h-full flex flex-col shadow-2xl overflow-hidden transform transition-transform duration-300 ease-in-out ${mobileFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
             {/* Header */}
             <div className="flex items-center justify-between px-6 pt-8 pb-6">
               <h2 className="text-2xl font-cormorant font-light text-gray-900">Filter &amp; Sort</h2>
@@ -969,7 +968,7 @@ const EngagementRings = (): JSX.Element => {
                 const count = selectedFilters[key].length;
                 const isOpen = mobilePanelSection === key;
                 return (
-                  <div key={key} className="border-t border-gray-100">
+                  <div key={key}>
                     <button
                       className="w-full flex items-center justify-between px-6 py-4"
                       onClick={() => setMobilePanelSection(isOpen ? null : key)}
@@ -1014,7 +1013,7 @@ const EngagementRings = (): JSX.Element => {
               })}
 
               {/* Sort By */}
-              <div className="border-t border-gray-100">
+              <div>
                 <button
                   className="w-full flex items-center justify-between px-6 py-4"
                   onClick={() => setMobilePanelSection(mobilePanelSection === 'sort' ? null : 'sort')}
@@ -1053,7 +1052,7 @@ const EngagementRings = (): JSX.Element => {
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

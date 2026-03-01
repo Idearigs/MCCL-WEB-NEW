@@ -17,7 +17,7 @@ const WishlistSlide: React.FC<WishlistSlideProps> = ({
   isVisible,
   onClose,
 }) => {
-  const { favorites, removeFavorite, isLoading } = useFavorites();
+  const { favorites, localFavorites, favoritesCount, removeFavorite, isLoading } = useFavorites();
   const { addToCart } = useCart();
 
   const handleRemove = async (productId: string) => {
@@ -76,7 +76,7 @@ const WishlistSlide: React.FC<WishlistSlideProps> = ({
             Wishlist
           </h2>
           <span className="text-sm font-cormorant text-gray-600">
-            {favorites.length} item{favorites.length !== 1 ? 's' : ''}
+            {favoritesCount} item{favoritesCount !== 1 ? 's' : ''}
           </span>
         </div>
 
@@ -87,7 +87,7 @@ const WishlistSlide: React.FC<WishlistSlideProps> = ({
               <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mx-auto mb-4" />
               <p className="font-cormorant text-sm">Loading wishlist...</p>
             </div>
-          ) : favorites.length === 0 ? (
+          ) : favoritesCount === 0 ? (
             <div className="text-center text-gray-500 mt-20">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Heart className="w-8 h-8 text-gray-400" />
@@ -103,6 +103,7 @@ const WishlistSlide: React.FC<WishlistSlideProps> = ({
             </div>
           ) : (
             <div className="space-y-6">
+              {/* Authenticated API favorites */}
               {favorites.map((fav) => (
                 <div key={fav.favoriteId} className="flex space-x-4 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                   {/* Product Image */}
@@ -163,12 +164,41 @@ const WishlistSlide: React.FC<WishlistSlideProps> = ({
                   </div>
                 </div>
               ))}
+
+              {/* Local (non-auth) favorites */}
+              {localFavorites.map((fav) => (
+                <div key={fav.productId} className="flex space-x-4 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+                  {/* Placeholder image */}
+                  <div className="flex-shrink-0 w-20 h-20 bg-gray-50 flex items-center justify-center rounded">
+                    <Heart className="w-6 h-6 text-rose-300 fill-rose-200" />
+                  </div>
+
+                  {/* Product Details */}
+                  <div className="flex-1 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm font-cormorant font-medium text-gray-900 pr-2 leading-tight">
+                        {fav.name || 'Saved item'}
+                      </span>
+                      <button
+                        onClick={() => handleRemove(fav.productId)}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                        title="Remove from wishlist"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 font-cormorant">
+                      Sign in to view full details
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        {favorites.length > 0 && (
+        {favoritesCount > 0 && (
           <div className="border-t border-gray-200 p-6 space-y-3">
             <Link to="/favorites" onClick={onClose}>
               <Button className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-cormorant font-medium uppercase tracking-wider text-xs border-0">

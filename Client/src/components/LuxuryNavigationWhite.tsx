@@ -5,7 +5,6 @@ import TopBanner from "./TopBanner";
 import CartSlide from "./CartSlide";
 import WishlistSlide from "./WishlistSlide";
 import SearchOverlay from "./SearchOverlay";
-import AuthModal from "./AuthModal";
 import { useCart } from "../contexts/CartContext";
 import { useFavorites } from "../contexts/FavoritesContext";
 import { useUserAuth } from "../contexts/UserAuthContext";
@@ -118,18 +117,11 @@ const LuxuryNavigationWhite = (): JSX.Element => {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isWishlistVisible, setIsWishlistVisible] = useState(false);
 
-  // Auth modal state (for wishlist)
-  const [showAuthModal, setShowAuthModal] = useState(false);
-
   const isMobile = useIsMobile();
   const anyDropdownOpen = engagementHover || weddingHover || diamondsHover || jewelleryHover || watchesHover;
 
   // Wishlist slide functions
   const openWishlist = () => {
-    if (!isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
     setIsWishlistVisible(true);
     setTimeout(() => setIsWishlistOpen(true), 10);
   };
@@ -1319,12 +1311,6 @@ const LuxuryNavigationWhite = (): JSX.Element => {
         onClose={closeWishlist}
       />
 
-      {/* Auth Modal for Wishlist */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        initialView="login"
-      />
 
       {/* Mobile Search Overlay Component */}
       {searchOpen && isMobile && (
