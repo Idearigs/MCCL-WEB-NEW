@@ -84,6 +84,11 @@ const getAllProducts = asyncHandler(async (req, res) => {
       through: { attributes: [] },
       required: false
     },
+    { model: RingTypes, as: 'ringStyle1', attributes: ['id', 'name', 'slug'], required: false },
+    { model: RingTypes, as: 'ringStyle2', attributes: ['id', 'name', 'slug'], required: false },
+    { model: RingTypes, as: 'ringStyle3', attributes: ['id', 'name', 'slug'], required: false },
+    { model: RingTypes, as: 'ringStyle4', attributes: ['id', 'name', 'slug'], required: false },
+    { model: RingTypes, as: 'ringStyle5', attributes: ['id', 'name', 'slug'], required: false },
     {
       model: ProductMetals,
       as: 'metals',
@@ -220,7 +225,14 @@ const getAllProducts = asyncHandler(async (req, res) => {
       description: product.short_description || product.description || '',
       category: product.category || null,
       collection: product.collection || null,
-      ringTypes: product.ringTypes || [],
+      ringTypes: (() => {
+        // Merge junction-table ringTypes with direct ring_style_1..5 columns
+        const merged = [...(product.ringTypes || [])];
+        [product.ringStyle1, product.ringStyle2, product.ringStyle3, product.ringStyle4, product.ringStyle5]
+          .filter(Boolean)
+          .forEach(rs => { if (!merged.some(rt => rt.id === rs.id)) merged.push(rs); });
+        return merged;
+      })(),
       primary_metal: product.metals && product.metals.length > 0 ? product.metals[0] : null,
       available_metals: product.metals && product.metals.length > 0 ? product.metals : [],
       gemstones: product.gemstones || [],
