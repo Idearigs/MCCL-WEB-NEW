@@ -93,7 +93,7 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
         to={`/${product.category.slug}/${product.slug}`}
         className="group cursor-pointer block"
       >
-        <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
+        <div className="relative bg-gray-50 overflow-hidden mx-1 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
           <div className="absolute top-3 right-3 z-20">
             <FavoriteButton
               productId={product.id}
@@ -208,6 +208,9 @@ const EngagementRings = (): JSX.Element => {
     collections: []
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [mobileColumns, setMobileColumns] = useState<1 | 2>(2);
+  const [mobilePanelSection, setMobilePanelSection] = useState<string | null>(null);
   const [ringProducts, setRingProducts] = useState<RingProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -507,8 +510,56 @@ const EngagementRings = (): JSX.Element => {
 
           {/* Filter Bar */}
           <div className="mb-6 lg:mb-8 pb-4 lg:pb-6 border-b border-gray-200 relative">
-            {/* Desktop Filter Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
+
+            {/* ── Mobile filter bar ── */}
+            {(() => {
+              const totalActive = selectedFilters.price.length + selectedFilters.ringType.length + selectedFilters.gemstones.length + selectedFilters.metals.length + selectedFilters.collections.length;
+              return (
+                <div className="flex lg:hidden items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setMobileFilterOpen(true)}
+                      className="text-[11px] font-inter font-light uppercase tracking-[0.2em] text-gray-700"
+                    >
+                      Filter &amp; Sort{totalActive > 0 ? ` (${totalActive})` : ''}
+                    </button>
+                    {totalActive > 0 && (
+                      <>
+                        <span className="text-gray-300">|</span>
+                        <button
+                          onClick={clearFilters}
+                          className="flex items-center gap-1 text-[11px] font-inter font-light uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900"
+                        >
+                          Clear
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {/* Layout toggle icons */}
+                  <div className="flex items-center gap-3">
+                    {/* 2-col icon */}
+                    <button onClick={() => setMobileColumns(2)} className={mobileColumns === 2 ? 'text-gray-900' : 'text-gray-300'} aria-label="2-column grid">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/>
+                        <rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/>
+                      </svg>
+                    </button>
+                    {/* 1-col icon */}
+                    <button onClick={() => setMobileColumns(1)} className={mobileColumns === 1 ? 'text-gray-900' : 'text-gray-300'} aria-label="Single column">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="3" width="18" height="8"/><rect x="3" y="13" width="18" height="8"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── Desktop Filter Bar ── */}
+            <div className="hidden lg:flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-6 text-sm font-inter relative">
                 {/* Price Filter */}
                 <div className="relative">
@@ -802,7 +853,7 @@ const EngagementRings = (): JSX.Element => {
           </div>
 
           {/* Engagement Ring Product Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
+          <div className={`grid gap-3 lg:gap-6 mb-16 ${mobileColumns === 2 ? 'grid-cols-2' : 'grid-cols-1'} md:grid-cols-2 lg:grid-cols-4`}>
             {loading ? (
               // Loading skeleton
               Array.from({ length: 4 }).map((_, index) => (
@@ -884,6 +935,125 @@ const EngagementRings = (): JSX.Element => {
         onClose={() => setShowAuthModal(false)}
         initialView="login"
       />
+
+      {/* ── Mobile Filter Side Panel ── */}
+      {mobileFilterOpen && (
+        <div className="lg:hidden fixed inset-0 z-[200] flex">
+          {/* Backdrop */}
+          <div
+            className="flex-1 bg-black/40"
+            onClick={() => { setMobileFilterOpen(false); setMobilePanelSection(null); }}
+          />
+
+          {/* Panel — slides from right */}
+          <div className="w-4/5 max-w-sm bg-white h-full flex flex-col shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-8 pb-6">
+              <h2 className="text-2xl font-cormorant font-light text-gray-900">Filter &amp; Sort</h2>
+              <button onClick={() => { setMobileFilterOpen(false); setMobilePanelSection(null); }} className="p-1">
+                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Filter sections */}
+            <div className="flex-1 overflow-y-auto">
+              {([
+                { key: 'price',       label: 'Price',       options: filterOptions.price },
+                { key: 'ringType',    label: 'Ring Styles', options: filterOptions.ringType },
+                { key: 'gemstones',   label: 'Gemstones',   options: filterOptions.gemstones },
+                { key: 'metals',      label: 'Metals',      options: filterOptions.metals },
+                { key: 'collections', label: 'Collection',  options: filterOptions.collections },
+              ] as const).map(({ key, label, options }) => {
+                const count = selectedFilters[key].length;
+                const isOpen = mobilePanelSection === key;
+                return (
+                  <div key={key} className="border-t border-gray-100">
+                    <button
+                      className="w-full flex items-center justify-between px-6 py-4"
+                      onClick={() => setMobilePanelSection(isOpen ? null : key)}
+                    >
+                      <span className="text-xs font-inter font-light uppercase tracking-[0.2em] text-gray-800">
+                        {label}{count > 0 && <span className="ml-1.5 text-gray-400">({count})</span>}
+                      </span>
+                      <svg className={`w-3.5 h-3.5 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+                    {isOpen && (
+                      <div className="px-6 pb-5 space-y-4">
+                        {options.length === 0 ? (
+                          <p className="text-sm text-gray-400 font-inter">No options available</p>
+                        ) : options.map((option) => (
+                          <label key={option} className="flex items-center gap-3 cursor-pointer group">
+                            <div className={`w-4 h-4 border flex items-center justify-center flex-shrink-0 transition-colors ${
+                              selectedFilters[key].includes(option) ? 'bg-gray-900 border-gray-900' : 'border-gray-300'
+                            }`}>
+                              {selectedFilters[key].includes(option) && (
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/>
+                                </svg>
+                              )}
+                            </div>
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={selectedFilters[key].includes(option)}
+                              onChange={(e) => handleFilterChange(key, option, e.target.checked)}
+                            />
+                            <span className="text-sm font-cormorant text-gray-700 group-hover:text-gray-900 leading-snug">
+                              {option}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Sort By */}
+              <div className="border-t border-gray-100">
+                <button
+                  className="w-full flex items-center justify-between px-6 py-4"
+                  onClick={() => setMobilePanelSection(mobilePanelSection === 'sort' ? null : 'sort')}
+                >
+                  <span className="text-xs font-inter font-light uppercase tracking-[0.2em] text-gray-800">Sort By</span>
+                  <svg className={`w-3.5 h-3.5 text-gray-500 transition-transform ${mobilePanelSection === 'sort' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                {mobilePanelSection === 'sort' && (
+                  <div className="px-6 pb-5 space-y-4">
+                    {['Featured', 'Price: Low to High', 'Price: High to Low', 'Newest'].map(opt => (
+                      <label key={opt} className="flex items-center gap-3 cursor-pointer">
+                        <span className="text-sm font-cormorant text-gray-700">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div className="border-t border-gray-200 px-6 py-5 flex gap-3">
+              <button
+                onClick={() => { clearFilters(); setMobileFilterOpen(false); setMobilePanelSection(null); }}
+                className="flex-1 border border-gray-300 text-gray-700 text-xs font-inter font-light uppercase tracking-wider py-3 hover:border-gray-500 transition-colors"
+              >
+                Clear All
+              </button>
+              <button
+                onClick={() => { setMobileFilterOpen(false); setMobilePanelSection(null); }}
+                className="flex-1 bg-gray-900 text-white text-xs font-inter font-light uppercase tracking-wider py-3 hover:bg-gray-800 transition-colors"
+              >
+                View Results
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
