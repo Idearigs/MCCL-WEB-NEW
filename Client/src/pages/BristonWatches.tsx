@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FooterSection } from "../components/FooterSection";
-import StaticNavigation from "../components/StaticNavigation";
+import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 
 const BristonWatches = (): JSX.Element => {
   const [likedProducts, setLikedProducts] = useState<Set<number>>(new Set());
@@ -66,7 +66,7 @@ const BristonWatches = (): JSX.Element => {
 
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
-      <StaticNavigation />
+      <LuxuryNavigationWhite />
       
       {/* Main Briston Content */}
       <main className="flex-1 pt-32 lg:pt-44 pb-8">

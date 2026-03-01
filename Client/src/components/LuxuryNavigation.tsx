@@ -1322,10 +1322,10 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
                   <div className="flex-1 overflow-y-auto">
                     <div className="px-6 py-4">
                       <div className="space-y-0">
-                        <Link to="/wedding/all" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>All Wedding Rings</Link>
-                        <Link to="/wedding/his" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>His Wedding Rings</Link>
-                        <Link to="/wedding/hers" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Her Wedding Rings</Link>
-                        <Link to="/wedding/matching-sets" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Matching Sets</Link>
+                        <Link to="/wedding-rings" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>All Wedding Rings</Link>
+                        <Link to="/wedding-rings" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>His Wedding Rings</Link>
+                        <Link to="/wedding-rings" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Her Wedding Rings</Link>
+                        <Link to="/wedding-rings" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Matching Sets</Link>
                       </div>
                     </div>
                   </div>
@@ -1352,8 +1352,8 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
                         <Link to="/earrings" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Earrings</Link>
                         <Link to="/necklaces" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Necklaces</Link>
                         <Link to="/bracelets" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Bracelets</Link>
-                        <Link to="/birthday-gifts" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Birthday Gifts</Link>
-                        <Link to="/anniversary-gifts" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Anniversary Gifts</Link>
+                        <Link to="/jewellery" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Birthday Gifts</Link>
+                        <Link to="/jewellery" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Anniversary Gifts</Link>
                       </div>
                     </div>
                   </div>
@@ -1426,9 +1426,9 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
                         </div>
                       ) : (
                         <div className="space-y-0">
-                          <Link to="/watches/roamer" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Roamer</Link>
-                          <Link to="/watches/briston" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Briston</Link>
-                          <Link to="/watches/festina" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Festina</Link>
+                          <Link to="/roamer" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Roamer</Link>
+                          <Link to="/briston" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Briston</Link>
+                          <Link to="/festina" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>Festina</Link>
                           <Link to="/watches" className="block py-2 text-sm text-gray-700 hover:text-gray-900" onClick={closeMobileMenu}>All Watches</Link>
                         </div>
                       )}

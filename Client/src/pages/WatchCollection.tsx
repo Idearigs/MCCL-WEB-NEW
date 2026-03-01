@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
-import StaticNavigation from "../components/StaticNavigation";
+import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 import { Heart, Grid3X3, List } from "lucide-react";
 import { API_BASE_URL, getMediaUrl } from "../config/api";
 
@@ -146,7 +146,7 @@ const WatchCollection = (): JSX.Element => {
   if (loading) {
     return (
       <div className="flex flex-col w-full bg-white min-h-screen">
-        <StaticNavigation />
+        <LuxuryNavigationWhite />
         <main className="flex-1 pt-32 lg:pt-44 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
@@ -161,7 +161,7 @@ const WatchCollection = (): JSX.Element => {
   if (error || !collection) {
     return (
       <div className="flex flex-col w-full bg-white min-h-screen">
-        <StaticNavigation />
+        <LuxuryNavigationWhite />
         <main className="flex-1 pt-32 lg:pt-44">
           <div className="max-w-6xl mx-auto px-4 lg:px-8 py-12">
             <div className="text-center">
@@ -183,7 +183,7 @@ const WatchCollection = (): JSX.Element => {
 
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
-      <StaticNavigation />
+      <LuxuryNavigationWhite />
 
       <main className="flex-1 pt-32 lg:pt-44 pb-8">
         <div className="w-full px-4 lg:px-[40px]">
