@@ -687,8 +687,8 @@ const WeddingRings = (): JSX.Element => {
                       <div className="absolute top-3 right-3 z-20">
                         <FavoriteButton
                           productId={product.id}
+                          productName={product.name}
                           size="sm"
-                          onAuthRequired={() => setShowAuthModal(true)}
                         />
                       </div>
 
