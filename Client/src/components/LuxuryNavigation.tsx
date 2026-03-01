@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Menu, X, ChevronDown, ChevronUp, Calendar, Phone, Mail, HelpCircle, Diamond, Gem, Circle, Layers, Star, Heart, Crown, Watch, ArrowRight, ArrowLeft } from "lucide-react";
 import TopBanner from "./TopBanner";
 import CartSlide from "./CartSlide";
+import WishlistSlide from "./WishlistSlide";
 import SearchOverlay from "./SearchOverlay";
 import AuthModal from "./AuthModal";
 import AccountMenu from "./AccountMenu";
@@ -56,8 +57,8 @@ interface NavigationData {
   eternity_rings: NavigationItem[];
 }
 
-const LuxuryNavigation = (): JSX.Element => {
-  const [isScrolled, setIsScrolled] = useState(false);
+const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX.Element => {
+  const [isScrolled, setIsScrolled] = useState(forceWhite);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -115,18 +116,29 @@ const LuxuryNavigation = (): JSX.Element => {
   // Favorites context
   const { favoritesCount } = useFavorites();
 
+  // Wishlist state
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isWishlistVisible, setIsWishlistVisible] = useState(false);
+  const openWishlist = () => {
+    setIsWishlistVisible(true);
+    setTimeout(() => setIsWishlistOpen(true), 10);
+  };
+  const closeWishlist = () => {
+    setIsWishlistOpen(false);
+    setTimeout(() => setIsWishlistVisible(false), 300);
+  };
+
   const isMobile = useIsMobile();
   const anyDropdownOpen = engagementHover || weddingHover || diamondsHover || jewelleryHover || watchesHover;
 
   useEffect(() => {
+    if (forceWhite) return;
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setIsScrolled(scrollY > 50);
+      setIsScrolled(window.scrollY > 50);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [forceWhite]);
 
   // Fetch watch brands and collections on component mount
   useEffect(() => {
@@ -354,7 +366,7 @@ const LuxuryNavigation = (): JSX.Element => {
                   />
 
                   {/* Favorites Icon with Badge */}
-                  <Link to="/favorites" className="relative group">
+                  <button onClick={openWishlist} className="relative group">
                     <svg className={`w-5 h-5 cursor-pointer transition-colors duration-0 ${
                       anyDropdownOpen || navbarHover || isScrolled
                         ? 'text-gray-600 hover:text-gray-900'
@@ -374,9 +386,9 @@ const LuxuryNavigation = (): JSX.Element => {
                     )}
                     {/* Tooltip */}
                     <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-50">
-                      Favorites
+                      Wishlist
                     </div>
-                  </Link>
+                  </button>
 
                   {/* Cart Icon */}
                   <div className="relative group">
@@ -1241,7 +1253,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           {navigationData.ring_types.map((ringType) => (
                             <Link
                               key={ringType.id}
-                              to={`/engagement/${ringType.slug}`}
+                              to={`/engagement-rings?ringType=${encodeURIComponent(ringType.name)}`}
                               className="block py-2 text-sm text-gray-700 hover:text-gray-900"
                               onClick={closeMobileMenu}
                             >
@@ -1260,7 +1272,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           {navigationData.gemstones.map((gemstone) => (
                             <Link
                               key={gemstone.id}
-                              to={`/engagement/${gemstone.slug}`}
+                              to={`/engagement-rings?gemstone=${encodeURIComponent(gemstone.name)}`}
                               className="block py-2 text-sm text-gray-700 hover:text-gray-900"
                               onClick={closeMobileMenu}
                             >
@@ -1279,7 +1291,7 @@ const LuxuryNavigation = (): JSX.Element => {
                           {navigationData.eternity_rings.map((ring) => (
                             <Link
                               key={ring.id}
-                              to={`/eternity/${ring.slug}`}
+                              to={`/wedding-rings`}
                               className="block py-2 text-sm text-gray-700 hover:text-gray-900"
                               onClick={closeMobileMenu}
                             >
@@ -1453,6 +1465,13 @@ const LuxuryNavigation = (): JSX.Element => {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         initialView="login"
+      />
+
+      {/* Wishlist Slide */}
+      <WishlistSlide
+        isOpen={isWishlistOpen}
+        isVisible={isWishlistVisible}
+        onClose={closeWishlist}
       />
     </>
   );

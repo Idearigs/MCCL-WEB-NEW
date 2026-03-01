@@ -1053,7 +1053,6 @@ const EngagementRings = (): JSX.Element => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
