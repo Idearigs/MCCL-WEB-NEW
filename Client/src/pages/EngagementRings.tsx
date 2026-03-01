@@ -251,7 +251,7 @@ const EngagementRings = (): JSX.Element => {
           gemstonesResponse,
           metalsResponse
         ] = await Promise.all([
-          fetch(`${API_BASE_URL}/products/category/rings`),
+          fetch(`${API_BASE_URL}/products/category/rings?limit=500`),
           fetch(`${API_BASE_URL}/filters/collections`),
           fetch(`${API_BASE_URL}/filters/ring-types`),
           fetch(`${API_BASE_URL}/filters/gemstones`),
@@ -388,37 +388,38 @@ const EngagementRings = (): JSX.Element => {
 
     // Ring type filter
     if (selectedFilters.ringType.length > 0) {
-      const matchesRingType = selectedFilters.ringType.some(ringTypeName => {
-        if (!product.ringTypes || product.ringTypes.length === 0) return false;
-        return product.ringTypes.some(ringType => ringType.name === ringTypeName);
-      });
+      if (!product.ringTypes || product.ringTypes.length === 0) return false;
+      const matchesRingType = selectedFilters.ringType.some(ringTypeName =>
+        product.ringTypes!.some(rt => rt.name.toLowerCase() === ringTypeName.toLowerCase())
+      );
       if (!matchesRingType) return false;
     }
 
     // Gemstones filter
     if (selectedFilters.gemstones.length > 0) {
-      const matchesGemstone = selectedFilters.gemstones.some(gemstoneName => {
-        if (!product.gemstones || product.gemstones.length === 0) return false;
-        return product.gemstones.some(gemstone => gemstone.name === gemstoneName);
-      });
+      if (!product.gemstones || product.gemstones.length === 0) return false;
+      const matchesGemstone = selectedFilters.gemstones.some(gemstoneName =>
+        product.gemstones!.some(g => g.name.toLowerCase() === gemstoneName.toLowerCase())
+      );
       if (!matchesGemstone) return false;
     }
 
-    // Metals filter
+    // Metals filter — check ALL available metals, not just primary
     if (selectedFilters.metals.length > 0) {
-      const matchesMetal = selectedFilters.metals.some(metalName => {
-        if (!product.primary_metal) return false;
-        return product.primary_metal.name === metalName;
-      });
+      const allMetals = product.available_metals || [];
+      if (allMetals.length === 0) return false;
+      const matchesMetal = selectedFilters.metals.some(metalName =>
+        allMetals.some(m => m.name.toLowerCase() === metalName.toLowerCase())
+      );
       if (!matchesMetal) return false;
     }
 
     // Collections filter
     if (selectedFilters.collections.length > 0) {
-      const matchesCollection = selectedFilters.collections.some(collectionName => {
-        if (!product.collection) return false;
-        return product.collection.name === collectionName;
-      });
+      if (!product.collection) return false;
+      const matchesCollection = selectedFilters.collections.some(collectionName =>
+        product.collection!.name.toLowerCase() === collectionName.toLowerCase()
+      );
       if (!matchesCollection) return false;
     }
 
@@ -543,7 +544,10 @@ const EngagementRings = (): JSX.Element => {
                         </div>
                         <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
                           <button
-                            onClick={() => setActiveFilter(null)}
+                            onClick={() => {
+                              setSelectedFilters(prev => ({ ...prev, price: [] }));
+                              setActiveFilter(null);
+                            }}
                             className="text-xs text-gray-600 hover:text-gray-900 uppercase tracking-wider font-inter font-light transition-colors"
                           >
                             Clear
