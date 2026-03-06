@@ -56,7 +56,33 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 
-    # Proxy to frontend service running on port 3000
+    # ── NEVER cache HTML files ────────────────────────────────────────────────
+    # index.html references hashed asset filenames. If it gets cached by the
+    # browser it will request stale hashes after a new deployment → 404 on JS.
+    location ~* \.html$ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+    }
+
+    # ── Cache hashed assets forever (content-addressed, safe to cache) ───────
+    # Vite embeds a content hash in every asset filename under /assets/.
+    # These never change for the same content so can be cached indefinitely.
+    location ~* ^/assets/.*\.(js|css|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|ico|webp|avif)$ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        expires 1y;
+        add_header Cache-Control "public, immutable" always;
+    }
+
+    # ── All other requests (SPA routes + non-hashed public files) ────────────
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -69,12 +95,7 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 
-    # Cache static assets
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
-        proxy_pass http://localhost:3000;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
+    client_max_body_size 10M;
 }
 EOF
 
