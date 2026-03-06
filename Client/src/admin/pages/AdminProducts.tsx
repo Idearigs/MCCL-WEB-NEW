@@ -939,22 +939,23 @@ const AdminProducts: React.FC = () => {
 
               {(() => {
                 const selectedCategory = productOptions?.categories.find(c => c.id === filters.category);
-                const isWeddingCategory = selectedCategory?.slug === 'wedding-rings';
-                // Sub-types shown in the Wedding Types filter
-                const weddingSubTypeSlugs = ['diamond-cut', 'diamond-set', 'two-colour'];
-                // Sub-types hidden from the generic Ring Types dropdown
-                const hiddenFromRingTypes = ['diamond-cut', 'diamond-set', 'two-colour', 'wedding-rings'];
-                const weddingSubTypes = productOptions?.jewelrySubTypes.filter(st => weddingSubTypeSlugs.includes(st.slug)) || [];
-                const ringSubTypes = productOptions?.jewelrySubTypes.filter(st => !hiddenFromRingTypes.includes(st.slug)) || [];
+                const slug = selectedCategory?.slug;
 
-                if (isWeddingCategory) {
+                // No category selected — hide the sub-type filter
+                if (!slug) return null;
+
+                const weddingSubTypeSlugs = ['diamond-cut', 'diamond-set', 'two-colour'];
+                const engagementSubTypeSlugs = ['engagement-rings'];
+
+                if (slug === 'wedding-rings') {
+                  const weddingSubTypes = productOptions?.jewelrySubTypes.filter(st => weddingSubTypeSlugs.includes(st.slug)) || [];
                   return (
                     <select
                       value={filters.jewelryCategory}
                       onChange={(e) => handleFilterChange('jewelryCategory', e.target.value)}
                       className="border-2 border-purple-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent font-satoshi text-sm bg-white hover:border-purple-400 transition-all duration-200"
                     >
-                      <option value="">All Wedding Types</option>
+                      <option value="">All Ring Categories</option>
                       {weddingSubTypes.map((type) => (
                         <option key={type.id} value={type.id}>
                           {type.name}
@@ -964,20 +965,26 @@ const AdminProducts: React.FC = () => {
                   );
                 }
 
-                return (
-                  <select
-                    value={filters.jewelryCategory}
-                    onChange={(e) => handleFilterChange('jewelryCategory', e.target.value)}
-                    className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
-                  >
-                    <option value="">All Ring Types</option>
-                    {ringSubTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    ))}
-                  </select>
-                );
+                if (slug === 'engagement-rings') {
+                  const engSubTypes = productOptions?.jewelrySubTypes.filter(st => engagementSubTypeSlugs.includes(st.slug)) || [];
+                  if (engSubTypes.length === 0) return null;
+                  return (
+                    <select
+                      value={filters.jewelryCategory}
+                      onChange={(e) => handleFilterChange('jewelryCategory', e.target.value)}
+                      className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
+                    >
+                      <option value="">All Ring Categories</option>
+                      {engSubTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </select>
+                  );
+                }
+
+                return null;
               })()}
 
               <select
