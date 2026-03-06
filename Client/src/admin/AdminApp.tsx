@@ -14,6 +14,7 @@ import AdminMarketing from './pages/AdminMarketing';
 import AdminPromotions from './pages/AdminPromotions';
 import AdminChats from './pages/AdminChats';
 import AdminWeddingRings from './pages/AdminWeddingRings';
+import AdminSettings from './pages/AdminSettings';
 
 const AdminApp: React.FC = () => {
   return (
@@ -118,6 +119,15 @@ const AdminApp: React.FC = () => {
           element={
             <ProtectedRoute>
               <AdminWeddingRings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <AdminSettings />
             </ProtectedRoute>
           }
         />

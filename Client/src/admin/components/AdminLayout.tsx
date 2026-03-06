@@ -1,4 +1,5 @@
-import React, { useState, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
+import { loadNavSettings } from '../pages/AdminSettings';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
 import {
@@ -61,6 +62,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const [navSettings, setNavSettings] = useState(loadNavSettings);
+
+  useEffect(() => {
+    const handler = () => setNavSettings(loadNavSettings());
+    window.addEventListener('admin-settings-changed', handler);
+    return () => window.removeEventListener('admin-settings-changed', handler);
+  }, []);
   const { admin, logout } = useAdminAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -70,7 +78,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     navigate('/admin/login');
   };
 
-  const currentNavigation = navigation.map((item) => ({
+  const visibleNavigation = navigation.filter(item =>
+    item.name !== 'Jewelry Categories' || navSettings.showJewelryCategories
+  );
+
+  const currentNavigation = visibleNavigation.map((item) => ({
     ...item,
     current: item.href ? location.pathname === item.href : item.submenu?.some(sub => location.pathname === sub.href),
     submenu: item.submenu?.map(sub => ({
