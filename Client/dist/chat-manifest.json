@@ -1,0 +1,22 @@
+{
+  "name": "McCulloch Chat",
+  "short_name": "MC Chat",
+  "description": "McCulloch Jewelry live chat manager",
+  "start_url": "/chat.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111b21",
+  "theme_color": "#111b21",
+  "icons": [
+    {
+      "src": "/mcculloch-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/mcculloch-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

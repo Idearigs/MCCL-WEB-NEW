@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist committed to git for VPS deployment (no build step on server)
 dist-ssr
 *.local
 

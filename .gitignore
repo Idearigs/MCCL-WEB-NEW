@@ -15,7 +15,7 @@ logs/
 npm-debug.log*
 
 # Build outputs
-dist/
+# dist/ committed for VPS deployment
 build/
 out/
 
