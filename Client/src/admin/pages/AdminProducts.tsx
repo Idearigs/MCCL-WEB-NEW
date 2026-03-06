@@ -230,9 +230,9 @@ const AdminProducts: React.FC = () => {
 
       // Combine all data
       const combinedOptions: ProductOptions = {
-        // Include top-level categories + "Wedding Rings" (level=1 but has real products)
+        // Include top-level categories + level=1 categories that have real products directly
         categories: Array.isArray(categoriesData)
-          ? categoriesData.filter(cat => cat.level === 0 || cat.slug === 'wedding-rings')
+          ? categoriesData.filter(cat => cat.level === 0 || cat.slug === 'wedding-rings' || cat.slug === 'engagement-rings')
           : [],
         collections: Array.isArray(collectionsData) ? collectionsData : [],
         jewelrySubTypes: jewelrySubTypesData.success ? jewelrySubTypesData.data : [],
