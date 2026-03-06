@@ -230,7 +230,10 @@ const AdminProducts: React.FC = () => {
 
       // Combine all data
       const combinedOptions: ProductOptions = {
-        categories: Array.isArray(categoriesData) ? categoriesData.filter(cat => cat.level === 0) : [],
+        // Include top-level categories + "Wedding Rings" (level=1 but has real products)
+        categories: Array.isArray(categoriesData)
+          ? categoriesData.filter(cat => cat.level === 0 || cat.slug === 'wedding-rings')
+          : [],
         collections: Array.isArray(collectionsData) ? collectionsData : [],
         jewelrySubTypes: jewelrySubTypesData.success ? jewelrySubTypesData.data : [],
         ringTypes: Array.isArray(ringTypesData) ? ringTypesData : [],
@@ -936,11 +939,13 @@ const AdminProducts: React.FC = () => {
 
               {(() => {
                 const selectedCategory = productOptions?.categories.find(c => c.id === filters.category);
-                const isWeddingCategory = selectedCategory?.name?.toLowerCase().includes('wedding');
-                // Sub-types specific to wedding rings (diamond cut patterns etc.)
+                const isWeddingCategory = selectedCategory?.slug === 'wedding-rings';
+                // Sub-types shown in the Wedding Types sub-filter (products use diamond-cut)
                 const weddingSubTypeSlugs = ['diamond-cut'];
+                // Sub-types that belong to wedding context — hidden from Ring Types either way
+                const hiddenFromRingTypes = ['diamond-cut', 'wedding-rings'];
                 const weddingSubTypes = productOptions?.jewelrySubTypes.filter(st => weddingSubTypeSlugs.includes(st.slug)) || [];
-                const ringSubTypes = productOptions?.jewelrySubTypes.filter(st => !weddingSubTypeSlugs.includes(st.slug)) || [];
+                const ringSubTypes = productOptions?.jewelrySubTypes.filter(st => !hiddenFromRingTypes.includes(st.slug)) || [];
 
                 if (isWeddingCategory) {
                   return (
