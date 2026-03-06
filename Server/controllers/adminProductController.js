@@ -144,10 +144,10 @@ const getProducts = async (req, res) => {
         {
           model: ProductImage,
           as: 'images',
-          where: { is_primary: true },
           required: false,
           limit: 1,
-          attributes: ['id', 'image_url', 'alt_text']
+          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order'],
+          order: [['is_primary', 'DESC'], ['sort_order', 'ASC']]
         },
         {
           model: ProductVariant,
