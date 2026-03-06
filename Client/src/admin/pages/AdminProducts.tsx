@@ -1103,8 +1103,13 @@ const AdminProducts: React.FC = () => {
                           <p className="text-sm font-medium text-gray-900 truncate font-satoshi">
                             {product.name}
                           </p>
-                          <p className="text-xs text-gray-500 truncate font-satoshi mt-0.5">
-                            SKU: {product.sku}
+                          <p className="text-xs text-gray-500 font-satoshi mt-0.5 flex items-center gap-2">
+                            <span>SKU: {product.sku}</span>
+                            {product.category?.name?.toLowerCase().includes('wedding') && product.variants_count > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                                VR - {product.variants_count}
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -1142,7 +1147,10 @@ const AdminProducts: React.FC = () => {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           product.in_stock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {product.stock_quantity} {product.variants_count > 0 ? `(+${product.variants_count} variants)` : ''}
+                          {product.stock_quantity}
+                          {product.variants_count > 0 && !product.category?.name?.toLowerCase().includes('wedding') && (
+                            <span className="ml-1 text-gray-500">(+{product.variants_count} variants)</span>
+                          )}
                         </span>
                       </div>
                     </td>
