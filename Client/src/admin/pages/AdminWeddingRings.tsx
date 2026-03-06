@@ -9,7 +9,6 @@ import {
   PencilLine,
   Check,
   X,
-  ChevronDown,
   Layers,
   SlidersHorizontal,
   CheckSquare,
@@ -20,12 +19,20 @@ import API_BASE_URL from '../../config/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+interface SubType {
+  id: string;
+  name: string;
+  slug: string;
+  product_count: number;
+}
+
 interface Stats {
   total_designs: number;
   active_designs: number;
   total_variants: number;
   priced_variants: number;
   metals: Array<{ metal_type: string; cnt: number }>;
+  widths: string[];
 }
 
 interface Design {
@@ -48,6 +55,8 @@ interface Variant {
   metal_type: string | null;
   mm_width: string | null;
   size: string | null;
+  carat_weight: string | null;
+  ai_description: string | null;
   price: string | null;
   is_active: boolean;
 }
@@ -76,7 +85,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
   return (
     <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide font-satoshi">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-gray-900 font-satoshi">{value.toLocaleString()}</p>
+      <p className="mt-1 text-2xl font-semibold text-gray-900 font-satoshi">{typeof value === 'number' ? value.toLocaleString() : value}</p>
       {sub && <p className="text-xs text-gray-400 mt-0.5 font-satoshi">{sub}</p>}
     </div>
   );
@@ -150,6 +159,10 @@ function PriceCell({
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 const AdminWeddingRings: React.FC = () => {
+  // Sub-types
+  const [subTypes, setSubTypes] = useState<SubType[]>([]);
+  const [activeSubType, setActiveSubType] = useState<string>(''); // '' = All
+
   // Stats
   const [stats, setStats] = useState<Stats | null>(null);
 
@@ -186,14 +199,24 @@ const AdminWeddingRings: React.FC = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
+  // ── Fetch sub-types (once) ──────────────────────────────────────────────────
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/admin/wedding-rings/sub-types`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(d => { if (d.success) setSubTypes(d.data); })
+      .catch(() => {});
+  }, []);
+
   // ── Fetch stats ────────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
     try {
-      const r = await fetch(`${API_BASE_URL}/admin/wedding-rings/stats`, { headers: authHeaders() });
+      const params = new URLSearchParams();
+      if (activeSubType) params.set('subType', activeSubType);
+      const r = await fetch(`${API_BASE_URL}/admin/wedding-rings/stats?${params}`, { headers: authHeaders() });
       const d = await r.json();
       if (d.success) setStats(d.data);
     } catch { /* silent */ }
-  }, []);
+  }, [activeSubType]);
 
   // ── Fetch designs ──────────────────────────────────────────────────────────
   const fetchDesigns = useCallback(async (page = 1) => {
@@ -205,6 +228,7 @@ const AdminWeddingRings: React.FC = () => {
         search: designSearch,
         metal: designMetalFilter,
       });
+      if (activeSubType) params.set('subType', activeSubType);
       const r = await fetch(`${API_BASE_URL}/admin/wedding-rings?${params}`, { headers: authHeaders() });
       const d = await r.json();
       if (d.success) {
@@ -213,7 +237,7 @@ const AdminWeddingRings: React.FC = () => {
       }
     } catch { /* silent */ }
     setDesignsLoading(false);
-  }, [designSearch, designMetalFilter, designPagination.limit]);
+  }, [designSearch, designMetalFilter, designPagination.limit, activeSubType]);
 
   // ── Fetch variants ─────────────────────────────────────────────────────────
   const fetchVariants = useCallback(async (designId: string, page = 1) => {
@@ -240,7 +264,13 @@ const AdminWeddingRings: React.FC = () => {
   }, [variantMetalFilter, variantProfileFilter, variantWidthFilter, variantPagination.limit]);
 
   // ── Effects ────────────────────────────────────────────────────────────────
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => {
+    fetchStats();
+    fetchDesigns(1);
+    setSelectedDesign(null);
+    setVariants([]);
+  }, [activeSubType]);
+
   useEffect(() => { fetchDesigns(1); }, [designSearch, designMetalFilter]);
   useEffect(() => {
     if (selectedDesign) fetchVariants(selectedDesign.id, 1);
@@ -348,10 +378,9 @@ const AdminWeddingRings: React.FC = () => {
     setBulkSaving(false);
   };
 
-  // Unique metals from designs for filter dropdown
   const allMetals = stats?.metals.map(m => m.metal_type) ?? [];
-  const PROFILES = ['Concave', 'D-Shape', 'Flat', 'Flat Court', 'Soft Court', 'Traditional Court'];
-  const WIDTHS = ['2.5', '3', '4', '5', '6'];
+  const allWidths = stats?.widths ?? [];
+  const activeSubTypeName = subTypes.find(s => s.slug === activeSubType)?.name ?? 'All Categories';
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -367,19 +396,46 @@ const AdminWeddingRings: React.FC = () => {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Gem className="w-6 h-6 text-gray-700" />
-              <h1 className="text-2xl font-semibold text-gray-900 font-satoshi">Wedding Rings</h1>
-              <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full font-satoshi">
-                Diamond-cut
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 mt-0.5 font-satoshi">
-              Manage designs and their metal / width / profile variants
-            </p>
+        <div>
+          <div className="flex items-center gap-2">
+            <Gem className="w-6 h-6 text-gray-700" />
+            <h1 className="text-2xl font-semibold text-gray-900 font-satoshi">Wedding Rings</h1>
           </div>
+          <p className="text-sm text-gray-500 mt-0.5 font-satoshi">
+            Manage designs and their variants across all categories
+          </p>
+        </div>
+
+        {/* Sub-type tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setActiveSubType('')}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium font-satoshi transition-colors ${
+              activeSubType === ''
+                ? 'bg-gray-900 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            All
+          </button>
+          {subTypes.map(st => (
+            <button
+              key={st.slug}
+              onClick={() => setActiveSubType(st.slug)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium font-satoshi transition-colors flex items-center gap-1.5 ${
+                activeSubType === st.slug
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {st.name}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                activeSubType === st.slug ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                {st.product_count}
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* Stats */}
@@ -390,7 +446,9 @@ const AdminWeddingRings: React.FC = () => {
           <StatCard
             label="Priced Variants"
             value={stats?.priced_variants ?? '—'}
-            sub={stats ? `${Math.round((stats.priced_variants / stats.total_variants) * 100)}% complete` : undefined}
+            sub={stats && stats.total_variants > 0
+              ? `${Math.round((stats.priced_variants / stats.total_variants) * 100)}% complete`
+              : undefined}
           />
         </div>
 
@@ -425,6 +483,7 @@ const AdminWeddingRings: React.FC = () => {
             <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-100">
               <p className="text-xs text-gray-500 font-satoshi">
                 {designPagination.total.toLocaleString()} design{designPagination.total !== 1 ? 's' : ''}
+                {activeSubType ? ` · ${activeSubTypeName}` : ''}
               </p>
             </div>
 
@@ -572,21 +631,20 @@ const AdminWeddingRings: React.FC = () => {
                     {allMetals.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                   <select
-                    value={variantProfileFilter}
-                    onChange={e => setVariantProfileFilter(e.target.value)}
-                    className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-800 font-satoshi text-gray-700"
-                  >
-                    <option value="">All profiles</option>
-                    {PROFILES.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                  <select
                     value={variantWidthFilter}
                     onChange={e => setVariantWidthFilter(e.target.value)}
                     className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-800 font-satoshi text-gray-700"
                   >
                     <option value="">All widths</option>
-                    {WIDTHS.map(w => <option key={w} value={w}>{w}mm</option>)}
+                    {allWidths.map(w => <option key={w} value={w}>{w}mm</option>)}
                   </select>
+                  <input
+                    type="text"
+                    placeholder="Search variant…"
+                    value={variantProfileFilter}
+                    onChange={e => setVariantProfileFilter(e.target.value)}
+                    className="text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-800 font-satoshi w-36"
+                  />
                   {(variantMetalFilter || variantProfileFilter || variantWidthFilter) && (
                     <button
                       onClick={() => { setVariantMetalFilter(''); setVariantProfileFilter(''); setVariantWidthFilter(''); }}
@@ -616,8 +674,7 @@ const AdminWeddingRings: React.FC = () => {
                           </th>
                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide font-satoshi">Metal</th>
                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide font-satoshi">Width</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide font-satoshi">Profile</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide font-satoshi">Weight</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide font-satoshi">Variant</th>
                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide font-satoshi">Price</th>
                           <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wide font-satoshi">Active</th>
                         </tr>
@@ -641,12 +698,8 @@ const AdminWeddingRings: React.FC = () => {
                             <td className="px-3 py-2 font-satoshi text-gray-700 whitespace-nowrap">
                               {v.mm_width ? `${v.mm_width}mm` : '—'}
                             </td>
-                            <td className="px-3 py-2 font-satoshi text-gray-700">
-                              {/* variant_name is "Profile (Weight)" — strip the weight part */}
-                              {v.variant_name.replace(/\s*\([^)]*\)$/, '')}
-                            </td>
-                            <td className="px-3 py-2 font-satoshi text-gray-500">
-                              {v.size ?? '—'}
+                            <td className="px-3 py-2 font-satoshi text-gray-600 max-w-xs truncate" title={v.variant_name}>
+                              {v.variant_name}
                             </td>
                             <td className="px-3 py-2">
                               <PriceCell variant={v} onSave={saveVariantPrice} />

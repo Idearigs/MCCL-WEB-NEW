@@ -940,10 +940,10 @@ const AdminProducts: React.FC = () => {
               {(() => {
                 const selectedCategory = productOptions?.categories.find(c => c.id === filters.category);
                 const isWeddingCategory = selectedCategory?.slug === 'wedding-rings';
-                // Sub-types shown in the Wedding Types sub-filter (products use diamond-cut)
-                const weddingSubTypeSlugs = ['diamond-cut'];
-                // Sub-types that belong to wedding context — hidden from Ring Types either way
-                const hiddenFromRingTypes = ['diamond-cut', 'wedding-rings'];
+                // Sub-types shown in the Wedding Types filter
+                const weddingSubTypeSlugs = ['diamond-cut', 'diamond-set', 'two-colour'];
+                // Sub-types hidden from the generic Ring Types dropdown
+                const hiddenFromRingTypes = ['diamond-cut', 'diamond-set', 'two-colour', 'wedding-rings'];
                 const weddingSubTypes = productOptions?.jewelrySubTypes.filter(st => weddingSubTypeSlugs.includes(st.slug)) || [];
                 const ringSubTypes = productOptions?.jewelrySubTypes.filter(st => !hiddenFromRingTypes.includes(st.slug)) || [];
 

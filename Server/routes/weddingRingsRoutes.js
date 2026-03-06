@@ -6,6 +6,7 @@ const { adminAuth } = require('../middleware/adminAuth');
 router.use(adminAuth);
 
 router.get('/stats',                       ctrl.getStats);
+router.get('/sub-types',                   ctrl.getSubTypes);
 router.get('/',                            ctrl.getDesigns);
 router.get('/:id/variants',                ctrl.getVariants);
 router.patch('/variants/bulk',             ctrl.bulkUpdateVariants);

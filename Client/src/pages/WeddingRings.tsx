@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 import FavoriteButton from "../components/FavoriteButton";
 import AuthModal from "../components/AuthModal";
 import API_BASE_URL from '../config/api';
+
+interface RingVariant {
+  id: string;
+  sku: string;
+  variant_name: string;
+  mm_width: number | null;
+  price: number | null;
+  size: string | null;
+}
 
 interface RingProduct {
   id: string;
@@ -15,181 +24,82 @@ interface RingProduct {
   sale_price?: number;
   currency: string;
   description?: string;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  collection?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  ringTypes?: Array<{
-    id: string;
-    name: string;
-    slug: string;
-  }>;
-  primary_metal?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  gemstones?: Array<{
-    id: string;
-    name: string;
-    slug: string;
-  }>;
-  image?: {
-    url: string;
-    alt: string;
-  };
-  images: Array<{
-    id: string;
-    url: string;
-    alt: string;
-    is_primary: boolean;
-  }>;
+  category: { id: string; name: string; slug: string };
+  images: Array<{ id: string; url: string; alt: string; is_primary: boolean }>;
+  variants: RingVariant[];
   is_featured: boolean;
   in_stock: boolean;
 }
 
+// Parse metal from variant SKU: "DC115BC|9ct Yellow|3|Flat Court|Light" → "9ct Yellow"
+const getVariantMetal = (sku: string): string => sku.split('|')[1] ?? '';
+// Parse profile from variant_name: "Flat Court (Light)" → "Flat Court"
+const getVariantProfile = (name: string): string => name.replace(/\s*\(.*\)$/, '').trim();
+
 const WeddingRings = (): JSX.Element => {
-  const [searchParams] = useSearchParams();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('wedding');
   const [selectedFilters, setSelectedFilters] = useState<{
     price: string[];
-    ringType: string[];
-    gemstones: string[];
     metals: string[];
-    collections: string[];
+    widths: string[];
+    profiles: string[];
   }>({
     price: [],
-    ringType: [],
-    gemstones: [],
     metals: [],
-    collections: []
+    widths: [],
+    profiles: [],
   });
   const [ringProducts, setRingProducts] = useState<RingProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [collections, setCollections] = useState<Array<{id: string, name: string, slug: string}>>([]);
-  const [ringTypes, setRingTypes] = useState<Array<{id: string, name: string, slug: string}>>([]);
-  const [gemstones, setGemstones] = useState<Array<{id: string, name: string, slug: string, color?: string}>>([]);
-  const [metals, setMetals] = useState<Array<{id: string, name: string, color_code: string}>>([]);
 
-  // Initialize filters from URL parameters
-  useEffect(() => {
-    const ringType = searchParams.get('ringType');
-    const gemstone = searchParams.get('gemstone');
-    const metal = searchParams.get('metal');
-    const collection = searchParams.get('collection');
-
-    setSelectedFilters(prev => ({
-      ...prev,
-      ringType: ringType ? [ringType] : [],
-      gemstones: gemstone ? [gemstone] : [],
-      metals: metal ? [metal] : [],
-      collections: collection ? [collection] : []
-    }));
-  }, [searchParams]);
-
-  // Fetch ring products and collections from API
+  // Fetch ring products only — filter options are derived from variant data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // Fetch ring products and all filter data in parallel
-        const [
-          productsResponse,
-          collectionsResponse,
-          ringTypesResponse,
-          gemstonesResponse,
-          metalsResponse
-        ] = await Promise.all([
-          fetch(`${API_BASE_URL}/products?category=wedding-rings&limit=200`),
-          fetch(`${API_BASE_URL}/filters/collections`),
-          fetch(`${API_BASE_URL}/filters/ring-types`),
-          fetch(`${API_BASE_URL}/filters/gemstones`),
-          fetch(`${API_BASE_URL}/filters/metals`)
-        ]);
-
-        // Handle products data
-        if (!productsResponse.ok) {
-          console.error('Products API error:', productsResponse.status);
-          setRingProducts([]);
+        const response = await fetch(`${API_BASE_URL}/products?category=wedding-rings&limit=200`);
+        if (!response.ok) {
           setError('Unable to load wedding rings at the moment. Please try again later.');
+          setRingProducts([]);
+          return;
+        }
+        const data = await response.json();
+        if (data.success) {
+          setRingProducts(data.data.products || []);
         } else {
-          const productsData = await productsResponse.json();
-          if (productsData.success) {
-            setRingProducts(productsData.data.products || []);
-          } else {
-            setRingProducts([]);
-            setError(productsData.message || 'Failed to fetch ring products');
-          }
+          setError(data.message || 'Failed to fetch ring products');
+          setRingProducts([]);
         }
-
-        // Handle collections data
-        try {
-          if (collectionsResponse && collectionsResponse.ok) {
-            const collectionsData = await collectionsResponse.json();
-            setCollections(Array.isArray(collectionsData) ? collectionsData : []);
-          }
-        } catch (collectionsErr) {
-          console.warn('Failed to fetch collections:', collectionsErr);
-          setCollections([]);
-        }
-
-        // Handle ring types data
-        try {
-          if (ringTypesResponse && ringTypesResponse.ok) {
-            const ringTypesData = await ringTypesResponse.json();
-            setRingTypes(Array.isArray(ringTypesData) ? ringTypesData : []);
-          }
-        } catch (ringTypesErr) {
-          console.warn('Failed to fetch ring types:', ringTypesErr);
-        }
-
-        // Handle gemstones data
-        try {
-          if (gemstonesResponse && gemstonesResponse.ok) {
-            const gemstonesData = await gemstonesResponse.json();
-            setGemstones(Array.isArray(gemstonesData) ? gemstonesData : []);
-          }
-        } catch (gemstonesErr) {
-          console.warn('Failed to fetch gemstones:', gemstonesErr);
-        }
-
-        // Handle metals data
-        try {
-          if (metalsResponse && metalsResponse.ok) {
-            const metalsData = await metalsResponse.json();
-            setMetals(Array.isArray(metalsData) ? metalsData : []);
-          }
-        } catch (metalsErr) {
-          console.warn('Failed to fetch metals:', metalsErr);
-        }
-
       } catch (err) {
-        setRingProducts([]);
         setError('Failed to fetch ring products');
+        setRingProducts([]);
         console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
+
+  // Derive unique filter options from variants
+  const availableMetals = Array.from(new Set(
+    ringProducts.flatMap(p => p.variants.map(v => getVariantMetal(v.sku)).filter(Boolean))
+  )).sort();
+
+  const availableWidths = Array.from(new Set(
+    ringProducts.flatMap(p => p.variants.map(v => v.sku.split('|')[2]).filter(Boolean))
+  )).sort((a, b) => parseFloat(a) - parseFloat(b));
+
+  const availableProfiles = Array.from(new Set(
+    ringProducts.flatMap(p => p.variants.map(v => getVariantProfile(v.variant_name)).filter(Boolean))
+  )).sort();
 
   const toggleFilter = (filterName: string) => {
     setActiveFilter(activeFilter === filterName ? null : filterName);
   };
 
-  // Filter handlers
   const handleFilterChange = (filterType: keyof typeof selectedFilters, value: string, checked: boolean) => {
     setSelectedFilters(prev => ({
       ...prev,
@@ -200,13 +110,7 @@ const WeddingRings = (): JSX.Element => {
   };
 
   const clearFilters = () => {
-    setSelectedFilters({
-      price: [],
-      ringType: [],
-      gemstones: [],
-      metals: [],
-      collections: []
-    });
+    setSelectedFilters({ price: [], metals: [], widths: [], profiles: [] });
   };
 
   const parsePrice = (priceStr: string): number => {
@@ -235,70 +139,37 @@ const WeddingRings = (): JSX.Element => {
     }
   };
 
-  // Filter products based on selected filters
+  const priceOptions = [
+    'Under £500',
+    '£500 - £1,000',
+    '£1,000 - £2,500',
+    '£2,500 - £5,000',
+    '£5,000 - £10,000',
+    'Above £10,000'
+  ];
+
+  // Filter products: a product matches if it has at least one variant satisfying all active filters
   const filteredProducts = ringProducts.filter(product => {
-    // Price filter
+    // Price filter (checked against product base_price)
     if (selectedFilters.price.length > 0) {
-      const matchesPrice = selectedFilters.price.some(priceRange =>
-        isInPriceRange(product.base_price, priceRange)
-      );
-      if (!matchesPrice) return false;
+      if (!selectedFilters.price.some(r => isInPriceRange(product.base_price, r))) return false;
     }
 
-    // Ring type filter
-    if (selectedFilters.ringType.length > 0) {
-      const matchesRingType = selectedFilters.ringType.some(ringTypeName => {
-        if (!product.ringTypes || product.ringTypes.length === 0) return false;
-        return product.ringTypes.some(ringType => ringType.name === ringTypeName);
-      });
-      if (!matchesRingType) return false;
-    }
+    // Variant-based filters: product must have ≥1 variant matching all selected criteria
+    const hasMatchingVariant = product.variants.length === 0
+      ? (selectedFilters.metals.length === 0 && selectedFilters.widths.length === 0 && selectedFilters.profiles.length === 0)
+      : product.variants.some(v => {
+          const vMetal = getVariantMetal(v.sku);
+          const vWidth = v.sku.split('|')[2] ?? '';
+          const vProfile = getVariantProfile(v.variant_name);
+          if (selectedFilters.metals.length > 0 && !selectedFilters.metals.includes(vMetal)) return false;
+          if (selectedFilters.widths.length > 0 && !selectedFilters.widths.includes(vWidth)) return false;
+          if (selectedFilters.profiles.length > 0 && !selectedFilters.profiles.includes(vProfile)) return false;
+          return true;
+        });
 
-    // Gemstones filter
-    if (selectedFilters.gemstones.length > 0) {
-      const matchesGemstone = selectedFilters.gemstones.some(gemstoneName => {
-        if (!product.gemstones || product.gemstones.length === 0) return false;
-        return product.gemstones.some(gemstone => gemstone.name === gemstoneName);
-      });
-      if (!matchesGemstone) return false;
-    }
-
-    // Metals filter
-    if (selectedFilters.metals.length > 0) {
-      const matchesMetal = selectedFilters.metals.some(metalName => {
-        if (!product.primary_metal) return false;
-        return product.primary_metal.name === metalName;
-      });
-      if (!matchesMetal) return false;
-    }
-
-    // Collections filter
-    if (selectedFilters.collections.length > 0) {
-      const matchesCollection = selectedFilters.collections.some(collectionName => {
-        if (!product.collection) return false;
-        return product.collection.name === collectionName;
-      });
-      if (!matchesCollection) return false;
-    }
-
-    return true;
+    return hasMatchingVariant;
   });
-
-  // Ring-specific filter options - using database data only
-  const filterOptions = {
-    price: [
-      'Under £500',
-      '£500 - £1,000',
-      '£1,000 - £2,500',
-      '£2,500 - £5,000',
-      '£5,000 - £10,000',
-      'Above £10,000'
-    ],
-    ringType: ringTypes.map(type => type.name),
-    gemstones: gemstones.map(gemstone => gemstone.name),
-    metals: metals.map(metal => metal.name),
-    collections: collections.map(collection => collection.name)
-  };
 
   return (
     <div className="flex flex-col w-full bg-white min-h-screen">
@@ -337,283 +208,82 @@ const WeddingRings = (): JSX.Element => {
 
           {/* Filter Bar */}
           <div className="mb-6 lg:mb-8 pb-4 lg:pb-6 border-b border-gray-200 relative">
-            {/* Desktop Filter Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-6 text-sm font-inter relative">
+
                 {/* Price Filter */}
-                <div className="relative">
-                  <button
-                    onClick={() => toggleFilter('price')}
-                    className={`text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light transition-colors flex items-center gap-1 ${
-                      activeFilter === 'price' ? 'text-gray-900' : ''
-                    }`}
-                  >
-                    Price
-                    <svg className={`w-3 h-3 transition-transform ${activeFilter === 'price' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
-                  {activeFilter === 'price' && (
-                    <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-gray-200 shadow-xl rounded-none z-50 animate-fade-in">
-                      <div className="p-6">
-                        <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">Price Range</h3>
-                        <div className="space-y-3">
-                          {filterOptions.price.map((option, index) => (
-                            <label key={index} className="flex items-center group cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedFilters.price.includes(option)}
-                                onChange={(e) => handleFilterChange('price', option, e.target.checked)}
-                                className="w-3 h-3 border border-gray-300 rounded-none bg-white checked:bg-gray-900 checked:border-gray-900 transition-colors"
-                              />
-                              <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 font-inter font-light transition-colors">
-                                {option}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
-                          <button
-                            onClick={() => setActiveFilter(null)}
-                            className="text-xs text-gray-600 hover:text-gray-900 uppercase tracking-wider font-inter font-light transition-colors"
-                          >
-                            Clear
-                          </button>
-                          <button
-                            onClick={() => setActiveFilter(null)}
-                            className="bg-gray-900 text-white px-4 py-2 text-xs uppercase tracking-wider font-inter font-light hover:bg-gray-800 transition-colors"
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Ring Type Filter */}
-                <div className="relative">
-                  <button
-                    onClick={() => toggleFilter('ringType')}
-                    className={`text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light transition-colors flex items-center gap-1 ${
-                      activeFilter === 'ringType' ? 'text-gray-900' : ''
-                    }`}
-                  >
-                    Ring Type
-                    <svg className={`w-3 h-3 transition-transform ${activeFilter === 'ringType' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
-                  {activeFilter === 'ringType' && (
-                    <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-gray-200 shadow-xl rounded-none z-50 animate-fade-in">
-                      <div className="p-6">
-                        <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">Ring Type</h3>
-                        <div className="space-y-3">
-                          {filterOptions.ringType.map((option, index) => (
-                            <label key={index} className="flex items-center group cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedFilters.ringType.includes(option)}
-                                onChange={(e) => handleFilterChange('ringType', option, e.target.checked)}
-                                className="w-3 h-3 border border-gray-300 rounded-none bg-white checked:bg-gray-900 checked:border-gray-900 transition-colors"
-                              />
-                              <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 font-inter font-light transition-colors">
-                                {option}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedFilters(prev => ({ ...prev, ringType: [] }));
-                              setActiveFilter(null);
-                            }}
-                            className="text-xs text-gray-600 hover:text-gray-900 uppercase tracking-wider font-inter font-light transition-colors"
-                          >
-                            Clear
-                          </button>
-                          <button
-                            onClick={() => setActiveFilter(null)}
-                            className="bg-gray-900 text-white px-4 py-2 text-xs uppercase tracking-wider font-inter font-light hover:bg-gray-800 transition-colors"
-                          >
-                            Apply
-                          </button>
+                {([
+                  { key: 'price', label: 'Price', options: priceOptions },
+                  { key: 'metals', label: 'Metal', options: availableMetals },
+                  { key: 'widths', label: 'Width', options: availableWidths.map(w => w + 'mm'), rawOptions: availableWidths },
+                  { key: 'profiles', label: 'Profile', options: availableProfiles },
+                ] as Array<{ key: keyof typeof selectedFilters; label: string; options: string[]; rawOptions?: string[] }>).map(({ key, label, options, rawOptions }) => (
+                  <div key={key} className="relative">
+                    <button
+                      onClick={() => toggleFilter(key)}
+                      className={`text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light transition-colors flex items-center gap-1 ${
+                        activeFilter === key ? 'text-gray-900' : ''
+                      } ${selectedFilters[key].length > 0 ? 'font-medium' : ''}`}
+                    >
+                      {label}
+                      {selectedFilters[key].length > 0 && (
+                        <span className="ml-1 text-xs bg-gray-900 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                          {selectedFilters[key].length}
+                        </span>
+                      )}
+                      <svg className={`w-3 h-3 transition-transform ${activeFilter === key ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+                    {activeFilter === key && (
+                      <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-gray-200 shadow-xl rounded-none z-50">
+                        <div className="p-6">
+                          <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">{label}</h3>
+                          <div className="space-y-3 max-h-60 overflow-y-auto">
+                            {options.length === 0 ? (
+                              <p className="text-sm text-gray-500 font-inter">Loading...</p>
+                            ) : options.map((option, idx) => {
+                              const rawValue = rawOptions ? rawOptions[idx] : option;
+                              return (
+                                <label key={option} className="flex items-center group cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedFilters[key].includes(rawValue)}
+                                    onChange={(e) => handleFilterChange(key, rawValue, e.target.checked)}
+                                    className="w-3 h-3 border border-gray-300 rounded-none bg-white checked:bg-gray-900 checked:border-gray-900 transition-colors"
+                                  />
+                                  <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 font-inter font-light transition-colors">
+                                    {option}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
+                            <button
+                              onClick={() => { setSelectedFilters(prev => ({ ...prev, [key]: [] })); setActiveFilter(null); }}
+                              className="text-xs text-gray-600 hover:text-gray-900 uppercase tracking-wider font-inter font-light transition-colors"
+                            >
+                              Clear
+                            </button>
+                            <button
+                              onClick={() => setActiveFilter(null)}
+                              className="bg-gray-900 text-white px-4 py-2 text-xs uppercase tracking-wider font-inter font-light hover:bg-gray-800 transition-colors"
+                            >
+                              Apply
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Gemstones Filter */}
-                <div className="relative">
-                  <button
-                    onClick={() => toggleFilter('gemstones')}
-                    className={`text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light transition-colors flex items-center gap-1 ${
-                      activeFilter === 'gemstones' ? 'text-gray-900' : ''
-                    }`}
-                  >
-                    Gemstones
-                    <svg className={`w-3 h-3 transition-transform ${activeFilter === 'gemstones' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
-                  {activeFilter === 'gemstones' && (
-                    <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-gray-200 shadow-xl rounded-none z-50 animate-fade-in">
-                      <div className="p-6">
-                        <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">Gemstones</h3>
-                        <div className="space-y-3">
-                          {filterOptions.gemstones.map((option, index) => (
-                            <label key={index} className="flex items-center group cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedFilters.gemstones.includes(option)}
-                                onChange={(e) => handleFilterChange('gemstones', option, e.target.checked)}
-                                className="w-3 h-3 border border-gray-300 rounded-none bg-white checked:bg-gray-900 checked:border-gray-900 transition-colors"
-                              />
-                              <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 font-inter font-light transition-colors">
-                                {option}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedFilters(prev => ({ ...prev, gemstones: [] }));
-                              setActiveFilter(null);
-                            }}
-                            className="text-xs text-gray-600 hover:text-gray-900 uppercase tracking-wider font-inter font-light transition-colors"
-                          >
-                            Clear
-                          </button>
-                          <button
-                            onClick={() => setActiveFilter(null)}
-                            className="bg-gray-900 text-white px-4 py-2 text-xs uppercase tracking-wider font-inter font-light hover:bg-gray-800 transition-colors"
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Metals Filter */}
-                <div className="relative">
-                  <button
-                    onClick={() => toggleFilter('metals')}
-                    className={`text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light transition-colors flex items-center gap-1 ${
-                      activeFilter === 'metals' ? 'text-gray-900' : ''
-                    }`}
-                  >
-                    Metals
-                    <svg className={`w-3 h-3 transition-transform ${activeFilter === 'metals' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
-                  {activeFilter === 'metals' && (
-                    <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-gray-200 shadow-xl rounded-none z-50 animate-fade-in">
-                      <div className="p-6">
-                        <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">Metals</h3>
-                        <div className="space-y-3">
-                          {filterOptions.metals.map((option, index) => (
-                            <label key={index} className="flex items-center group cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedFilters.metals.includes(option)}
-                                onChange={(e) => handleFilterChange('metals', option, e.target.checked)}
-                                className="w-3 h-3 border border-gray-300 rounded-none bg-white checked:bg-gray-900 checked:border-gray-900 transition-colors"
-                              />
-                              <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 font-inter font-light transition-colors">
-                                {option}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedFilters(prev => ({ ...prev, metals: [] }));
-                              setActiveFilter(null);
-                            }}
-                            className="text-xs text-gray-600 hover:text-gray-900 uppercase tracking-wider font-inter font-light transition-colors"
-                          >
-                            Clear
-                          </button>
-                          <button
-                            onClick={() => setActiveFilter(null)}
-                            className="bg-gray-900 text-white px-4 py-2 text-xs uppercase tracking-wider font-inter font-light hover:bg-gray-800 transition-colors"
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Collection Filter */}
-                <div className="relative">
-                  <button
-                    onClick={() => toggleFilter('collections')}
-                    className={`text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light transition-colors flex items-center gap-1 ${
-                      activeFilter === 'collections' ? 'text-gray-900' : ''
-                    }`}
-                  >
-                    Collection
-                    <svg className={`w-3 h-3 transition-transform ${activeFilter === 'collections' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
-                  {activeFilter === 'collections' && (
-                    <div className="absolute top-full left-0 mt-3 w-64 bg-white border border-gray-200 shadow-xl rounded-none z-50 animate-fade-in">
-                      <div className="p-6">
-                        <h3 className="text-xs font-medium text-gray-900 uppercase tracking-wider mb-4 font-inter">Collections</h3>
-                        <div className="space-y-3">
-                          {filterOptions.collections.length > 0 ? filterOptions.collections.map((option, index) => (
-                            <label key={index} className="flex items-center group cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedFilters.collections.includes(option)}
-                                onChange={(e) => handleFilterChange('collections', option, e.target.checked)}
-                                className="w-3 h-3 border border-gray-300 rounded-none bg-white checked:bg-gray-900 checked:border-gray-900 transition-colors"
-                              />
-                              <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900 font-inter font-light transition-colors">
-                                {option}
-                              </span>
-                            </label>
-                          )) : (
-                            <p className="text-sm text-gray-500 font-inter">No collections available</p>
-                          )}
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end gap-3">
-                          <button
-                            onClick={() => {
-                              setSelectedFilters(prev => ({ ...prev, collections: [] }));
-                              setActiveFilter(null);
-                            }}
-                            className="text-xs text-gray-600 hover:text-gray-900 uppercase tracking-wider font-inter font-light transition-colors"
-                          >
-                            Clear
-                          </button>
-                          <button
-                            onClick={() => setActiveFilter(null)}
-                            className="bg-gray-900 text-white px-4 py-2 text-xs uppercase tracking-wider font-inter font-light hover:bg-gray-800 transition-colors"
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                ))}
 
                 <button
                   onClick={clearFilters}
                   className="text-gray-700 hover:text-gray-900 uppercase tracking-wider font-light"
                 >
-                  Clear All Filters
+                  Clear All
                 </button>
               </div>
               <div className="flex items-center gap-2 text-sm font-inter">

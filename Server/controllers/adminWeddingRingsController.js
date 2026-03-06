@@ -1,13 +1,9 @@
 /**
  * Admin Wedding Rings Controller
- * Manages Diamond-cut wedding ring designs (master products) and their variants.
- *
- * Products are identified by jewelry_sub_type slug = 'diamond-cut'.
- * Variants in product_variants table hold Profile, Width, Metal, Weight (size), Price.
+ * Supports all wedding ring sub-types: Diamond-cut, Diamond-set, Two Colour, etc.
+ * Pass ?subType=<slug> to filter by sub-type; omit to see all wedding rings.
  */
 
-const { getModels } = require('../models');
-const { Op } = require('sequelize');
 const { Pool } = require('pg');
 require('dotenv').config();
 
@@ -19,50 +15,88 @@ const pool = new Pool({
   password: process.env.PG_PASSWORD,
 });
 
-const DIAMOND_CUT_SLUG = 'diamond-cut';
-
-/** Resolve the Diamond-cut jewelry_sub_type id once per request. */
-async function getDiamondCutId() {
+/** Returns { column, id } used in WHERE p.<column> = $1 */
+async function buildProductFilter(subTypeSlug) {
+  if (subTypeSlug) {
+    const { rows } = await pool.query(
+      "SELECT id FROM jewelry_sub_types WHERE slug = $1 LIMIT 1",
+      [subTypeSlug]
+    );
+    if (!rows.length) throw new Error(`Sub-type '${subTypeSlug}' not found`);
+    return { column: 'jewelry_sub_type_id', id: rows[0].id };
+  }
+  // No sub-type: scope to the Wedding Rings category
   const { rows } = await pool.query(
-    "SELECT id FROM jewelry_sub_types WHERE slug = $1 LIMIT 1",
-    [DIAMOND_CUT_SLUG]
+    "SELECT id FROM categories WHERE slug = 'wedding-rings' LIMIT 1"
   );
-  if (!rows.length) throw new Error("'diamond-cut' jewelry_sub_type not found in DB");
-  return rows[0].id;
+  if (!rows.length) throw new Error("'wedding-rings' category not found");
+  return { column: 'category_id', id: rows[0].id };
 }
+
+// ── GET /admin/wedding-rings/sub-types ────────────────────────────────────────
+exports.getSubTypes = async (req, res) => {
+  try {
+    const { rows: catRows } = await pool.query(
+      "SELECT id FROM categories WHERE slug = 'wedding-rings' LIMIT 1"
+    );
+    if (!catRows.length) return res.json({ success: true, data: [] });
+    const catId = catRows[0].id;
+
+    const { rows } = await pool.query(
+      `SELECT jst.id, jst.name, jst.slug, COUNT(p.id)::int AS product_count
+       FROM jewelry_sub_types jst
+       JOIN products p ON p.jewelry_sub_type_id = jst.id
+       WHERE p.category_id = $1
+       GROUP BY jst.id, jst.name, jst.slug
+       ORDER BY jst.name`,
+      [catId]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('getSubTypes error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 // ── GET /admin/wedding-rings/stats ────────────────────────────────────────────
 exports.getStats = async (req, res) => {
   try {
-    const subTypeId = await getDiamondCutId();
+    const filter = await buildProductFilter(req.query.subType || '');
 
-    const [statsResult, metalResult] = await Promise.all([
+    const [statsResult, metalResult, widthResult] = await Promise.all([
       pool.query(
         `SELECT
-           COUNT(*)::int                                                          AS total_designs,
-           COUNT(*) FILTER (WHERE p.is_active)::int                              AS active_designs,
-           COALESCE(SUM(vc.variant_count), 0)::int                              AS total_variants,
-           COALESCE(SUM(vc.priced_count), 0)::int                               AS priced_variants
+           COUNT(*)::int                                         AS total_designs,
+           COUNT(*) FILTER (WHERE p.is_active)::int             AS active_designs,
+           COALESCE(SUM(vc.variant_count), 0)::int              AS total_variants,
+           COALESCE(SUM(vc.priced_count), 0)::int               AS priced_variants
          FROM products p
          LEFT JOIN (
            SELECT product_id,
-                  COUNT(*)::int          AS variant_count,
-                  COUNT(price)::int      AS priced_count
+                  COUNT(*)::int     AS variant_count,
+                  COUNT(price)::int AS priced_count
            FROM product_variants
            GROUP BY product_id
          ) vc ON vc.product_id = p.id
-         WHERE p.jewelry_sub_type_id = $1`,
-        [subTypeId]
+         WHERE p.${filter.column} = $1`,
+        [filter.id]
       ),
       pool.query(
         `SELECT pv.metal_type, COUNT(*)::int AS cnt
          FROM product_variants pv
          JOIN products p ON p.id = pv.product_id
-         WHERE p.jewelry_sub_type_id = $1
-           AND pv.metal_type IS NOT NULL
+         WHERE p.${filter.column} = $1 AND pv.metal_type IS NOT NULL
          GROUP BY pv.metal_type
          ORDER BY pv.metal_type`,
-        [subTypeId]
+        [filter.id]
+      ),
+      pool.query(
+        `SELECT DISTINCT pv.mm_width::text AS width
+         FROM product_variants pv
+         JOIN products p ON p.id = pv.product_id
+         WHERE p.${filter.column} = $1 AND pv.mm_width IS NOT NULL
+         ORDER BY pv.mm_width::text`,
+        [filter.id]
       ),
     ]);
 
@@ -71,6 +105,7 @@ exports.getStats = async (req, res) => {
       data: {
         ...statsResult.rows[0],
         metals: metalResult.rows,
+        widths: widthResult.rows.map(r => r.width),
       },
     });
   } catch (err) {
@@ -82,11 +117,11 @@ exports.getStats = async (req, res) => {
 // ── GET /admin/wedding-rings ───────────────────────────────────────────────────
 exports.getDesigns = async (req, res) => {
   try {
-    const subTypeId = await getDiamondCutId();
+    const filter = await buildProductFilter(req.query.subType || '');
     const { page = 1, limit = 20, search = '', metal = '' } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    const params = [subTypeId];
+    const params = [filter.id];
     let searchClause = '';
     if (search) {
       params.push(`%${search}%`);
@@ -105,40 +140,32 @@ exports.getDesigns = async (req, res) => {
     const countParams = [...params];
     const dataParams = [...params, parseInt(limit), offset];
 
-    const countSql = `
-      SELECT COUNT(*)::int AS total
-      FROM products p
-      WHERE p.jewelry_sub_type_id = $1 ${searchClause} ${metalClause}
-    `;
-
-    const dataSql = `
-      SELECT
-        p.id,
-        p.name,
-        p.sku,
-        p.is_active,
-        p.created_at,
-        COUNT(pv.id)::int                                   AS variants_count,
-        COUNT(pv.id) FILTER (WHERE pv.is_active)::int      AS active_variants,
-        COUNT(pv.price) FILTER (WHERE pv.price IS NOT NULL)::int AS priced_variants,
-        ARRAY_AGG(DISTINCT pv.metal_type ORDER BY pv.metal_type)
-          FILTER (WHERE pv.metal_type IS NOT NULL)         AS metals,
-        ARRAY_AGG(DISTINCT pv.mm_width::text ORDER BY pv.mm_width::text)
-          FILTER (WHERE pv.mm_width IS NOT NULL)           AS widths
-      FROM products p
-      LEFT JOIN product_variants pv ON pv.product_id = p.id
-      WHERE p.jewelry_sub_type_id = $1 ${searchClause} ${metalClause}
-      GROUP BY p.id
-      ORDER BY p.sku ASC
-      LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}
-    `;
-
     const [countResult, dataResult] = await Promise.all([
-      pool.query(countSql, countParams),
-      pool.query(dataSql, dataParams),
+      pool.query(
+        `SELECT COUNT(*)::int AS total
+         FROM products p
+         WHERE p.${filter.column} = $1 ${searchClause} ${metalClause}`,
+        countParams
+      ),
+      pool.query(
+        `SELECT
+           p.id, p.name, p.sku, p.is_active, p.created_at,
+           COUNT(pv.id)::int                                              AS variants_count,
+           COUNT(pv.id) FILTER (WHERE pv.is_active)::int                 AS active_variants,
+           COUNT(pv.price) FILTER (WHERE pv.price IS NOT NULL)::int      AS priced_variants,
+           ARRAY_AGG(DISTINCT pv.metal_type ORDER BY pv.metal_type)
+             FILTER (WHERE pv.metal_type IS NOT NULL)                    AS metals,
+           ARRAY_AGG(DISTINCT pv.mm_width::text ORDER BY pv.mm_width::text)
+             FILTER (WHERE pv.mm_width IS NOT NULL)                      AS widths
+         FROM products p
+         LEFT JOIN product_variants pv ON pv.product_id = p.id
+         WHERE p.${filter.column} = $1 ${searchClause} ${metalClause}
+         GROUP BY p.id
+         ORDER BY p.sku ASC
+         LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}`,
+        dataParams
+      ),
     ]);
-
-    const total = countResult.rows[0].total;
 
     res.json({
       success: true,
@@ -147,8 +174,8 @@ exports.getDesigns = async (req, res) => {
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
-          total,
-          totalPages: Math.ceil(total / parseInt(limit)),
+          total: countResult.rows[0].total,
+          totalPages: Math.ceil(countResult.rows[0].total / parseInt(limit)),
         },
       },
     });
@@ -161,15 +188,14 @@ exports.getDesigns = async (req, res) => {
 // ── GET /admin/wedding-rings/:id/variants ─────────────────────────────────────
 exports.getVariants = async (req, res) => {
   try {
-    const subTypeId = await getDiamondCutId();
     const { id } = req.params;
     const { page = 1, limit = 60, metal = '', profile = '', width = '' } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    // Verify the product belongs to Diamond-cut
+    // Verify product exists (any wedding ring sub-type)
     const { rows: productRows } = await pool.query(
-      "SELECT id, name, sku, is_active FROM products WHERE id = $1 AND jewelry_sub_type_id = $2 LIMIT 1",
-      [id, subTypeId]
+      "SELECT id, name, sku, is_active FROM products WHERE id = $1 LIMIT 1",
+      [id]
     );
     if (!productRows.length) {
       return res.status(404).json({ success: false, message: 'Design not found' });
@@ -192,7 +218,6 @@ exports.getVariants = async (req, res) => {
     }
 
     const whereExtra = clauses.length ? ' AND ' + clauses.join(' AND ') : '';
-
     const countParams = [...params];
     const dataParams = [...params, parseInt(limit), offset];
 
@@ -203,7 +228,7 @@ exports.getVariants = async (req, res) => {
       ),
       pool.query(
         `SELECT id, variant_name, sku, metal_type, metal_id, mm_width, size,
-                price, price_adjustment, is_active, ai_description, created_at
+                carat_weight, price, price_adjustment, is_active, ai_description, created_at
          FROM product_variants
          WHERE product_id = $1${whereExtra}
          ORDER BY metal_type ASC, mm_width ASC NULLS LAST, variant_name ASC
@@ -254,7 +279,7 @@ exports.updateVariant = async (req, res) => {
     }
 
     params.push(variantId);
-    sets.push(`updated_at = NOW()`);
+    sets.push('updated_at = NOW()');
 
     const { rows } = await pool.query(
       `UPDATE product_variants SET ${sets.join(', ')} WHERE id = $${params.length - 1} RETURNING *`,

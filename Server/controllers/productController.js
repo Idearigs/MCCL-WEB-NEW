@@ -73,7 +73,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     {
       model: ProductVariant,
       as: 'variants',
-      attributes: ['id', 'variant_name', 'price_adjustment', 'metal_type', 'size', 'stock_quantity', 'price', 'carat_weight', 'mm_width', 'metal_id', 'ai_description'],
+      attributes: ['id', 'sku', 'variant_name', 'price_adjustment', 'metal_type', 'size', 'stock_quantity', 'price', 'carat_weight', 'mm_width', 'metal_id', 'ai_description'],
       where: { is_active: true },
       required: false
     },
