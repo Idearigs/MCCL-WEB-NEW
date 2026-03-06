@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
 import { LoadingState } from '../components/LoadingSpinner';
 import API_BASE_URL from '../../config/api';
 import {
   Package,
-  FolderOpen,
+  ShoppingCart,
   TrendingUp,
   Star,
-  Calendar,
   ArrowUpRight,
-  ArrowDownRight,
   Eye,
-  Edit,
-  MoreHorizontal,
-  ShoppingCart,
-  DollarSign,
-  Clock
+  ExternalLink,
+  Gem,
+  Plus,
+  ChevronRight,
+  Clock,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -63,6 +64,20 @@ interface DashboardData {
   recent_orders: RecentOrder[];
 }
 
+const orderStatusConfig: Record<string, { label: string; className: string }> = {
+  pending:    { label: 'Pending',    className: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+  processing: { label: 'Processing', className: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200' },
+  shipped:    { label: 'Shipped',    className: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200' },
+  delivered:  { label: 'Delivered',  className: 'bg-green-50 text-green-700 ring-1 ring-green-200' },
+  cancelled:  { label: 'Cancelled',  className: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+};
+
+const paymentStatusConfig: Record<string, { className: string }> = {
+  paid:    { className: 'bg-green-50 text-green-700 ring-1 ring-green-200' },
+  pending: { className: 'bg-gray-100 text-gray-600 ring-1 ring-gray-200' },
+  failed:  { className: 'bg-red-50 text-red-700 ring-1 ring-red-200' },
+};
+
 const AdminDashboard: React.FC = () => {
   const { admin } = useAdminAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -74,61 +89,40 @@ const AdminDashboard: React.FC = () => {
       try {
         const token = localStorage.getItem('admin_token');
         const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to fetch dashboard data');
-        }
-
+        if (!response.ok) throw new Error(data.message || 'Failed to fetch dashboard data');
         setDashboardData(data.data);
-      } catch (error: any) {
-        setError(error.message);
-        console.error('Dashboard data fetch error:', error);
+      } catch (err: any) {
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchDashboardData();
   }, []);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
   const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
     return 'Good evening';
   };
 
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <LoadingState message="Loading dashboard..." size="lg" />
-      </AdminLayout>
-    );
-  }
+  const formatDate = (ds: string) =>
+    new Date(ds).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-  if (error) {
-    return (
-      <AdminLayout>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          Error loading dashboard: {error}
-        </div>
-      </AdminLayout>
-    );
-  }
+  const fmt = (n: number) => `£${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  if (isLoading) return <AdminLayout><LoadingState message="Loading dashboard..." size="lg" /></AdminLayout>;
+  if (error) return (
+    <AdminLayout>
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 font-satoshi">
+        Error loading dashboard: {error}
+      </div>
+    </AdminLayout>
+  );
 
   const stats = dashboardData?.stats;
   const recentProducts = dashboardData?.recent_products || [];
@@ -136,401 +130,282 @@ const AdminDashboard: React.FC = () => {
 
   const statCards = [
     {
-      title: 'Total Products',
-      value: stats?.total_products || 0,
-      subtitle: `${stats?.active_products || 0} active`,
+      label: 'Total Products',
+      value: (stats?.total_products || 0).toLocaleString(),
+      sub: `${stats?.active_products || 0} active`,
       icon: Package,
-      color: 'bg-blue-500',
-      change: '+12%',
-      changeType: 'increase'
+      accent: 'bg-gray-900',
+      href: '/admin/products',
     },
     {
-      title: 'Total Orders',
-      value: stats?.total_orders || 0,
-      subtitle: `${stats?.pending_orders || 0} pending`,
+      label: 'Total Orders',
+      value: (stats?.total_orders || 0).toLocaleString(),
+      sub: `${stats?.pending_orders || 0} pending`,
       icon: ShoppingCart,
-      color: 'bg-amber-500',
-      change: `${stats?.today_orders || 0} today`,
-      changeType: 'increase'
+      accent: 'bg-amber-500',
+      href: '/admin/orders',
     },
     {
-      title: 'Total Revenue',
-      value: `£${(stats?.total_revenue || 0).toFixed(2)}`,
-      subtitle: `£${(stats?.today_revenue || 0).toFixed(2)} today`,
-      icon: DollarSign,
-      color: 'bg-green-500',
-      change: `+£${(stats?.month_revenue || 0).toFixed(2)} this month`,
-      changeType: 'increase'
+      label: 'Total Revenue',
+      value: fmt(stats?.total_revenue || 0),
+      sub: `${fmt(stats?.month_revenue || 0)} this month`,
+      icon: TrendingUp,
+      accent: 'bg-emerald-600',
+      href: '/admin/orders',
     },
     {
-      title: 'Featured Items',
-      value: stats?.featured_products || 0,
-      subtitle: 'Featured products',
+      label: 'Featured Items',
+      value: (stats?.featured_products || 0).toLocaleString(),
+      sub: 'highlighted products',
       icon: Star,
-      color: 'bg-orange-500',
-      change: '+8%',
-      changeType: 'increase'
-    }
+      accent: 'bg-violet-600',
+      href: '/admin/products',
+    },
+  ];
+
+  const quickLinks = [
+    { label: 'Add New Product', icon: Plus, href: '/admin/products', desc: 'Create a product listing' },
+    { label: 'Wedding Rings', icon: Gem, href: '/admin/wedding-rings', desc: 'Manage ring variants & pricing' },
+    { label: 'View Orders', icon: ShoppingCart, href: '/admin/orders', desc: 'Process customer orders' },
+    { label: 'Storefront', icon: ExternalLink, href: '/', desc: 'Preview the live website', external: true },
   ];
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-light text-gray-900 font-cormorant">
-                {getGreeting()}, {admin?.first_name}
-              </h1>
-              <p className="text-gray-600 mt-1 font-satoshi">
-                Welcome back to your admin dashboard
-              </p>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 font-satoshi">
-              <Calendar className="h-4 w-4" />
-              <span>{new Date().toLocaleDateString('en-GB', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</span>
-            </div>
+      <div className="space-y-6">
+
+        {/* ── Hero Header ──────────────────────────────────────────────────── */}
+        <div className="bg-gray-900 rounded-2xl px-8 py-7 flex items-center justify-between">
+          <div>
+            <p className="text-gray-400 text-xs font-medium uppercase tracking-widest font-satoshi">
+              {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            <h1 className="text-2xl font-semibold text-white font-satoshi mt-1.5">
+              {getGreeting()}, {admin?.first_name}
+            </h1>
+            <p className="text-gray-400 text-sm font-satoshi mt-1">
+              Here's an overview of your store today
+            </p>
+          </div>
+          <div className="hidden sm:flex items-center gap-3">
+            <Link
+              to="/admin/products"
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-medium font-satoshi transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Product
+            </Link>
+            <Link
+              to="/admin/orders"
+              className="flex items-center gap-2 bg-white text-gray-900 px-4 py-2 rounded-xl text-sm font-medium font-satoshi hover:bg-gray-100 transition-colors"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              View Orders
+            </Link>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((stat, index) => {
-            const Icon = stat.icon;
+        {/* ── Stat Cards ───────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {statCards.map((card) => {
+            const Icon = card.icon;
             return (
-              <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-satoshi">{stat.title}</p>
-                    <p className="text-3xl font-light text-gray-900 font-cormorant">{stat.value}</p>
-                    <p className="text-xs text-gray-500 mt-1 font-satoshi">{stat.subtitle}</p>
+              <Link
+                key={card.label}
+                to={card.href}
+                className="bg-white rounded-2xl border border-gray-200 p-5 hover:border-gray-300 hover:shadow-sm transition-all group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-10 h-10 ${card.accent} rounded-xl flex items-center justify-center`}>
+                    <Icon className="w-5 h-5 text-white" />
                   </div>
-                  <div className={`p-3 rounded-lg ${stat.color}`}>
-                    <Icon className="h-6 w-6 text-white" />
-                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
                 </div>
-                <div className="mt-4 flex items-center space-x-2">
-                  {stat.changeType === 'increase' ? (
-                    <ArrowUpRight className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 text-red-500" />
-                  )}
-                  <span className={`text-sm font-medium ${
-                    stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                  } font-satoshi`}>
-                    {stat.change}
-                  </span>
-                  <span className="text-sm text-gray-500 font-satoshi">vs last month</span>
+                <p className="text-2xl font-semibold text-gray-900 font-satoshi">{card.value}</p>
+                <p className="text-xs font-medium text-gray-500 font-satoshi mt-0.5">{card.label}</p>
+                <p className="text-xs text-gray-400 font-satoshi mt-1">{card.sub}</p>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* ── Revenue Strip ─────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { label: "Today's Revenue", value: fmt(stats?.today_revenue || 0), sub: `${stats?.today_orders || 0} orders today`, icon: Clock, color: 'text-amber-500' },
+            { label: "This Month", value: fmt(stats?.month_revenue || 0), sub: `${stats?.month_orders || 0} orders`, icon: TrendingUp, color: 'text-emerald-500' },
+            { label: "Avg. Order Value", value: fmt(stats?.month_orders ? (stats.month_revenue / stats.month_orders) : 0), sub: 'based on this month', icon: CheckCircle, color: 'text-violet-500' },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.label} className="bg-white rounded-2xl border border-gray-200 px-5 py-4 flex items-center gap-4">
+                <div className="shrink-0">
+                  <Icon className={`w-5 h-5 ${item.color}`} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500 font-satoshi">{item.label}</p>
+                  <p className="text-lg font-semibold text-gray-900 font-satoshi truncate">{item.value}</p>
+                  <p className="text-xs text-gray-400 font-satoshi">{item.sub}</p>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Recent Products */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium text-gray-900 font-cormorant">Recent Products</h2>
-              <button className="text-sm text-gray-600 hover:text-gray-900 font-satoshi">
-                View all
-              </button>
-            </div>
-          </div>
+        {/* ── Main Grid: Orders + Quick Links ──────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          <div className="overflow-hidden">
-            {recentProducts.length > 0 ? (
-              <div className="divide-y divide-gray-200">
-                {recentProducts.map((product) => (
-                  <div key={product.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                          {product.image ? (
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Package className="h-6 w-6 text-gray-400" />
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-900 font-satoshi">
-                            {product.name}
-                          </h3>
-                          <p className="text-sm text-gray-600 font-satoshi">
-                            {product.price} • Added {formatDate(product.created_at)}
+          {/* Recent Orders */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide font-satoshi">Recent Orders</h2>
+              <Link to="/admin/orders" className="text-xs text-gray-500 hover:text-gray-900 font-satoshi flex items-center gap-1">
+                View all <ChevronRight className="w-3 h-3" />
+              </Link>
+            </div>
+            {recentOrders.length > 0 ? (
+              <div className="divide-y divide-gray-50">
+                {recentOrders.map((order) => {
+                  const statusCfg = orderStatusConfig[order.status] || { label: order.status, className: 'bg-gray-100 text-gray-600' };
+                  const payCfg = paymentStatusConfig[order.payment_status] || { className: 'bg-gray-100 text-gray-600' };
+                  return (
+                    <div key={order.id} className="px-6 py-3.5 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900 font-satoshi">{order.order_number}</span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium font-satoshi ${statusCfg.className}`}>
+                              {statusCfg.label}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 font-satoshi mt-0.5 truncate">
+                            {order.customer_name} · {order.customer_email}
                           </p>
                         </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="px-6 py-8 text-center text-gray-500">
-                <Package className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                <p className="font-satoshi">No recent products found</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Orders */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium text-gray-900 font-cormorant">Recent Orders</h2>
-              <button className="text-sm text-gray-600 hover:text-gray-900 font-satoshi">
-                View all
-              </button>
-            </div>
-          </div>
-
-          <div className="overflow-hidden">
-            {recentOrders.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
-                        Order Number
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
-                        Customer
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
-                        Amount
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
-                        Payment
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-satoshi">
-                        Date
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {recentOrders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900 font-satoshi">
-                            {order.order_number}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 font-satoshi">
-                              {order.customer_name}
-                            </p>
-                            <p className="text-xs text-gray-500 font-satoshi">
-                              {order.customer_email}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900 font-satoshi">
-                            £{order.total_amount.toFixed(2)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                            order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            order.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
-                            order.payment_status === 'pending' ? 'bg-gray-100 text-gray-800' :
-                            order.payment_status === 'failed' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-semibold text-gray-900 font-satoshi">£{order.total_amount.toFixed(2)}</p>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium font-satoshi ${payCfg.className}`}>
                             {order.payment_status}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-satoshi">
-                          {formatDate(order.created_at)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-gray-400 font-satoshi mt-1">{formatDate(order.created_at)}</p>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <div className="px-6 py-8 text-center text-gray-500">
-                <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                <p className="font-satoshi">No recent orders found</p>
+              <div className="px-6 py-12 text-center">
+                <ShoppingCart className="w-8 h-8 mx-auto text-gray-300 mb-2" />
+                <p className="text-sm text-gray-400 font-satoshi">No recent orders</p>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Income Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 font-cormorant">Today's Income</h3>
-              <Clock className="h-5 w-5 text-amber-500" />
+          {/* Quick Links */}
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide font-satoshi">Quick Links</h2>
             </div>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 font-satoshi">Total Revenue</p>
-                <p className="text-3xl font-light text-gray-900 font-cormorant">
-                  £{(stats?.today_revenue || 0).toFixed(2)}
-                </p>
-              </div>
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div>
-                  <p className="text-sm text-gray-600 font-satoshi">Orders</p>
-                  <p className="text-2xl font-semibold text-gray-900">{stats?.today_orders || 0}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600 font-satoshi">Average Order</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    £{stats?.today_orders ? (stats.today_revenue / stats.today_orders).toFixed(2) : '0.00'}
-                  </p>
-                </div>
-              </div>
+            <div className="divide-y divide-gray-50">
+              {quickLinks.map((link) => {
+                const Icon = link.icon;
+                const el = (
+                  <div className="px-5 py-4 hover:bg-gray-50 transition-colors flex items-center gap-3 group cursor-pointer">
+                    <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-gray-200 transition-colors shrink-0">
+                      <Icon className="w-4 h-4 text-gray-700" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 font-satoshi">{link.label}</p>
+                      <p className="text-xs text-gray-400 font-satoshi">{link.desc}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 shrink-0 transition-colors" />
+                  </div>
+                );
+                return link.external ? (
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer">{el}</a>
+                ) : (
+                  <Link key={link.label} to={link.href}>{el}</Link>
+                );
+              })}
             </div>
-          </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 font-cormorant">This Month's Income</h3>
-              <DollarSign className="h-5 w-5 text-green-500" />
-            </div>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 font-satoshi">Total Revenue</p>
-                <p className="text-3xl font-light text-gray-900 font-cormorant">
-                  £{(stats?.month_revenue || 0).toFixed(2)}
-                </p>
-              </div>
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div>
-                  <p className="text-sm text-gray-600 font-satoshi">Orders</p>
-                  <p className="text-2xl font-semibold text-gray-900">{stats?.month_orders || 0}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600 font-satoshi">Average Order</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    £{stats?.month_orders ? (stats.month_revenue / stats.month_orders).toFixed(2) : '0.00'}
-                  </p>
-                </div>
+            {/* Order status summary */}
+            <div className="px-5 py-4 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide font-satoshi mb-3">Order Status</p>
+              <div className="space-y-2">
+                {[
+                  { label: 'Pending', value: stats?.pending_orders || 0, color: 'bg-amber-400' },
+                  { label: 'Processing', value: stats?.processing_orders || 0, color: 'bg-blue-400' },
+                  { label: 'Delivered', value: stats?.delivered_orders || 0, color: 'bg-emerald-400' },
+                ].map((item) => {
+                  const total = stats?.total_orders || 1;
+                  const pct = Math.round((item.value / total) * 100);
+                  return (
+                    <div key={item.label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-gray-600 font-satoshi">{item.label}</span>
+                        <span className="text-xs font-medium text-gray-900 font-satoshi">{item.value}</span>
+                      </div>
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full ${item.color} rounded-full`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 font-cormorant">Quick Actions</h3>
-            <div className="space-y-3">
-              <button className="w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-                <div className="flex items-center space-x-3">
-                  <Package className="h-5 w-5 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-900 font-satoshi">Add New Product</span>
-                </div>
-              </button>
-              <button className="w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-                <div className="flex items-center space-x-3">
-                  <FolderOpen className="h-5 w-5 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-900 font-satoshi">Manage Categories</span>
-                </div>
-              </button>
-              <button className="w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-                <div className="flex items-center space-x-3">
-                  <Star className="h-5 w-5 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-900 font-satoshi">Update Featured</span>
-                </div>
-              </button>
-            </div>
+        {/* ── Recent Products ───────────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide font-satoshi">Recently Added Products</h2>
+            <Link to="/admin/products" className="text-xs text-gray-500 hover:text-gray-900 font-satoshi flex items-center gap-1">
+              View all <ChevronRight className="w-3 h-3" />
+            </Link>
           </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 font-cormorant">System Status</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 font-satoshi">Database</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-green-600 font-satoshi">Online</span>
+          {recentProducts.length > 0 ? (
+            <div className="divide-y divide-gray-50">
+              {recentProducts.map((product) => (
+                <div key={product.id} className="px-6 py-3.5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl overflow-hidden shrink-0">
+                    {product.image ? (
+                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-4 h-4 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 font-satoshi truncate">{product.name}</p>
+                    <p className="text-xs text-gray-400 font-satoshi">Added {formatDate(product.created_at)}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-semibold text-gray-900 font-satoshi">{product.price}</p>
+                  </div>
+                  <Link
+                    to={`/admin/products`}
+                    className="shrink-0 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Link>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 font-satoshi">API</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-green-600 font-satoshi">Healthy</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 font-satoshi">Cache</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-green-600 font-satoshi">Active</span>
-                </div>
-              </div>
+              ))}
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 font-cormorant">Recent Activity</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                <div>
-                  <p className="text-gray-900 font-satoshi">Product updated</p>
-                  <p className="text-gray-500 text-xs font-satoshi">2 minutes ago</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                <div>
-                  <p className="text-gray-900 font-satoshi">New category created</p>
-                  <p className="text-gray-500 text-xs font-satoshi">1 hour ago</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                <div>
-                  <p className="text-gray-900 font-satoshi">Collection updated</p>
-                  <p className="text-gray-500 text-xs font-satoshi">3 hours ago</p>
-                </div>
-              </div>
+          ) : (
+            <div className="px-6 py-12 text-center">
+              <Package className="w-8 h-8 mx-auto text-gray-300 mb-2" />
+              <p className="text-sm text-gray-400 font-satoshi">No products yet</p>
+              <Link to="/admin/products" className="mt-3 inline-flex items-center gap-1 text-xs text-gray-900 font-medium font-satoshi hover:underline">
+                <Plus className="w-3 h-3" /> Add your first product
+              </Link>
             </div>
-          </div>
+          )}
         </div>
+
       </div>
     </AdminLayout>
   );
