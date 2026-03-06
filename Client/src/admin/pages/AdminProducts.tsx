@@ -850,12 +850,22 @@ const AdminProducts: React.FC = () => {
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     });
+  };
+
+  const resolveImage = (path?: string) => {
+    if (!path) return undefined;
+    if (path.startsWith('http')) return path;
+    const origin = API_BASE_URL.replace(/\/api\/?$/, '');
+    return `${origin}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
   if (isLoading && products.length === 0) {
@@ -1134,11 +1144,12 @@ const AdminProducts: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center overflow-hidden shadow-sm ring-2 ring-gray-100">
-                          {product.primary_image ? (
+                          {resolveImage(product.primary_image) ? (
                             <img
-                              src={product.primary_image}
+                              src={resolveImage(product.primary_image)}
                               alt={product.name}
                               className="w-full h-full object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
                           ) : (
                             <Package className="h-6 w-6 text-gray-400" />
