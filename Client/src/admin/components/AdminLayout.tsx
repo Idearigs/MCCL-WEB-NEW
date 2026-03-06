@@ -39,7 +39,14 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-  { name: 'Products', href: '/admin/products', icon: Package },
+  {
+    name: 'Products',
+    icon: Package,
+    submenu: [
+      { name: 'All Products', href: '/admin/products', icon: Package },
+      { name: 'Wedding Rings', href: '/admin/wedding-rings', icon: Gem },
+    ]
+  },
   // { name: 'Categories', href: '/admin/categories', icon: FolderOpen }, // Hidden - use Jewelry Categories instead
   { name: 'Jewelry Categories', href: '/admin/jewelry-categories', icon: Layers },
   { name: 'Collections', href: '/admin/collections', icon: Diamond },
@@ -52,7 +59,6 @@ const navigation: NavItem[] = [
     ]
   },
   { name: 'Chats', href: '/admin/chats', icon: MessageCircle },
-  { name: 'Wedding Rings', href: '/admin/wedding-rings', icon: Gem },
   { name: 'Watches', href: '/admin/watches', icon: Watch },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
