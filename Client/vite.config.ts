@@ -36,34 +36,26 @@ export default defineConfig(({ mode }) => ({
           return 'assets/[name]-[hash][extname]';
         },
         // Split vendor libraries into separate cached chunks
+        // NOTE: React and react-router must NOT be in separate chunks from the
+        // libs that depend on them (framer-motion, radix, etc.) — Rollup's
+        // module evaluation order can leave React undefined when they init.
         manualChunks: (id) => {
-          // React core — smallest, most cached chunk
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'vendor-react';
-          }
-          // Router
-          if (id.includes('node_modules/react-router')) {
-            return 'vendor-router';
-          }
-          // Radix UI components
-          if (id.includes('node_modules/@radix-ui/')) {
-            return 'vendor-radix';
-          }
-          // Stripe (only used on checkout — big chunk)
+          // Stripe (only used on checkout — very large, truly independent)
           if (id.includes('node_modules/@stripe/') || id.includes('node_modules/stripe')) {
             return 'vendor-stripe';
           }
-          // Charts (only used in admin)
-          if (id.includes('node_modules/recharts')) {
+          // Charts (only used in admin — large, truly independent)
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-') || id.includes('node_modules/victory-')) {
             return 'vendor-recharts';
           }
-          // Socket.io (chat only)
+          // Socket.io (chat only — independent)
           if (id.includes('node_modules/socket.io-client') || id.includes('node_modules/engine.io-client')) {
             return 'vendor-socket';
           }
-          // Everything else in node_modules
+          // All other node_modules (React, router, radix, framer-motion, etc.)
+          // kept together so React initialises before its dependents
           if (id.includes('node_modules/')) {
-            return 'vendor-misc';
+            return 'vendor';
           }
         },
       },
