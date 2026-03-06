@@ -273,7 +273,12 @@ const AdminProducts: React.FC = () => {
   };
 
   const handleFilterChange = (filterName: string, value: string) => {
-    setFilters(prev => ({ ...prev, [filterName]: value }));
+    setFilters(prev => ({
+      ...prev,
+      [filterName]: value,
+      // Reset the sub-type filter when category changes (context changes)
+      ...(filterName === 'category' ? { jewelryCategory: '' } : {})
+    }));
     setPagination(prev => ({ ...prev, currentPage: 1 }));
   };
 
@@ -929,18 +934,46 @@ const AdminProducts: React.FC = () => {
                 ))}
               </select>
 
-              <select
-                value={filters.jewelryCategory}
-                onChange={(e) => handleFilterChange('jewelryCategory', e.target.value)}
-                className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
-              >
-                <option value="">All Ring Types</option>
-                {productOptions?.jewelrySubTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
+              {(() => {
+                const selectedCategory = productOptions?.categories.find(c => c.id === filters.category);
+                const isWeddingCategory = selectedCategory?.name?.toLowerCase().includes('wedding');
+                // Sub-types specific to wedding rings (diamond cut patterns etc.)
+                const weddingSubTypeSlugs = ['diamond-cut'];
+                const weddingSubTypes = productOptions?.jewelrySubTypes.filter(st => weddingSubTypeSlugs.includes(st.slug)) || [];
+                const ringSubTypes = productOptions?.jewelrySubTypes.filter(st => !weddingSubTypeSlugs.includes(st.slug)) || [];
+
+                if (isWeddingCategory) {
+                  return (
+                    <select
+                      value={filters.jewelryCategory}
+                      onChange={(e) => handleFilterChange('jewelryCategory', e.target.value)}
+                      className="border-2 border-purple-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent font-satoshi text-sm bg-white hover:border-purple-400 transition-all duration-200"
+                    >
+                      <option value="">All Wedding Types</option>
+                      {weddingSubTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </select>
+                  );
+                }
+
+                return (
+                  <select
+                    value={filters.jewelryCategory}
+                    onChange={(e) => handleFilterChange('jewelryCategory', e.target.value)}
+                    className="border-2 border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-satoshi text-sm bg-white hover:border-gray-300 transition-all duration-200"
+                  >
+                    <option value="">All Ring Types</option>
+                    {ringSubTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                );
+              })()}
 
               <select
                 value={filters.status}
