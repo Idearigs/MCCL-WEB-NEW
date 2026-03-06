@@ -13,6 +13,7 @@ import AdminOrders from './pages/AdminOrders';
 import AdminMarketing from './pages/AdminMarketing';
 import AdminPromotions from './pages/AdminPromotions';
 import AdminChats from './pages/AdminChats';
+import AdminWeddingRings from './pages/AdminWeddingRings';
 
 const AdminApp: React.FC = () => {
   return (
@@ -108,6 +109,15 @@ const AdminApp: React.FC = () => {
           element={
             <ProtectedRoute>
               <AdminChats />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/wedding-rings"
+          element={
+            <ProtectedRoute>
+              <AdminWeddingRings />
             </ProtectedRoute>
           }
         />

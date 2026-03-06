@@ -285,66 +285,10 @@ const initializeModels = () => {
         key: 'id'
       }
     },
-    ring_type_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'ring_types',
-        key: 'id'
-      }
-    },
-    stone_shape_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'stone_shapes',
-        key: 'id'
-      }
-    },
-    stone_type_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'stone_types',
-        key: 'id'
-      }
-    },
     metal_id: {
       type: DataTypes.UUID,
       references: {
         model: 'product_metals',
-        key: 'id'
-      }
-    },
-    ring_style_1_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'ring_types',
-        key: 'id'
-      }
-    },
-    ring_style_2_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'ring_types',
-        key: 'id'
-      }
-    },
-    ring_style_3_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'ring_types',
-        key: 'id'
-      }
-    },
-    ring_style_4_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'ring_types',
-        key: 'id'
-      }
-    },
-    ring_style_5_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'ring_types',
         key: 'id'
       }
     },
@@ -524,6 +468,27 @@ const initializeModels = () => {
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true
+    },
+    carat_weight: {
+      type: DataTypes.DECIMAL(5, 3),
+      allowNull: true
+    },
+    mm_width: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: true
+    },
+    metal_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: { model: 'product_metals', key: 'id' }
+    },
+    ai_description: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     tableName: 'product_variants',
@@ -1252,27 +1217,13 @@ const initializeModels = () => {
   Category.hasMany(ProductSizes, { foreignKey: 'category_id', as: 'sizes' });
   ProductSizes.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
 
-  // Ring-specific associations (keeping for backward compatibility)
-  RingTypes.hasMany(Product, { foreignKey: 'ring_type_id', as: 'products' });
-  Product.belongsTo(RingTypes, { foreignKey: 'ring_type_id', as: 'ringType' });
-
-  // Stone associations
-  StoneShapes.hasMany(Product, { foreignKey: 'stone_shape_id', as: 'products' });
-  Product.belongsTo(StoneShapes, { foreignKey: 'stone_shape_id', as: 'stoneShape' });
-
-  StoneTypes.hasMany(Product, { foreignKey: 'stone_type_id', as: 'products' });
-  Product.belongsTo(StoneTypes, { foreignKey: 'stone_type_id', as: 'stoneType' });
-
   // Metal associations
   ProductMetals.hasMany(Product, { foreignKey: 'metal_id', as: 'products' });
   Product.belongsTo(ProductMetals, { foreignKey: 'metal_id', as: 'metal' });
 
-  // Ring Style associations (5 styles per product)
-  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_1_id', as: 'ringStyle1' });
-  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_2_id', as: 'ringStyle2' });
-  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_3_id', as: 'ringStyle3' });
-  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_4_id', as: 'ringStyle4' });
-  Product.belongsTo(RingTypes, { foreignKey: 'ring_style_5_id', as: 'ringStyle5' });
+  // ProductVariant → ProductMetals association
+  ProductVariant.belongsTo(ProductMetals, { foreignKey: 'metal_id', as: 'metal' });
+  ProductMetals.hasMany(ProductVariant, { foreignKey: 'metal_id', as: 'variants' });
 
   // Many-to-Many Associations through Junction Tables
   Product.belongsToMany(RingTypes, {

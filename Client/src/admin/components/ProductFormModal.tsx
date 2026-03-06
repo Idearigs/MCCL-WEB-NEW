@@ -18,11 +18,6 @@ interface ProductFormData {
   ring_type_ids: string[];
   stone_shape_ids: string[];
   stone_type_id: string;
-  ring_style_1_ids: string[];
-  ring_style_2_ids: string[];
-  ring_style_3_ids: string[];
-  ring_style_4_ids: string[];
-  ring_style_5_ids: string[];
   metal_ids: string[];
   diamond_size_ids: string[]; // Diamond sizes for Engagement Rings
   is_active: boolean;
@@ -117,11 +112,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     ring_type_ids: [],
     stone_shape_ids: [],
     stone_type_id: '',
-    ring_style_1_ids: [],
-    ring_style_2_ids: [],
-    ring_style_3_ids: [],
-    ring_style_4_ids: [],
-    ring_style_5_ids: [],
     metal_ids: [],
     diamond_size_ids: [],
     is_active: true,
@@ -224,7 +214,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         category_id: initialData.category_id || '',
         collection_id: initialData.collection_id || '',
         jewelry_sub_type_id: initialData.jewelry_sub_type_id || '',
-        stone_type_id: initialData.stone_type_id || '',
+        stone_type_id: initialData.gemstones?.[0]?.id || '',
         certificate: initialData.certificate || '',
         description: initialData.description || '',
         short_description: initialData.short_description || '',
@@ -266,11 +256,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         ring_type_ids: [],
         stone_shape_ids: [],
         stone_type_id: '',
-        ring_style_1_ids: [],
-        ring_style_2_ids: [],
-        ring_style_3_ids: [],
-        ring_style_4_ids: [],
-        ring_style_5_ids: [],
         metal_ids: [],
         diamond_size_ids: [],
         is_active: true,
@@ -633,88 +618,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     </select>
                     <p className="text-xs text-gray-500 mt-1 font-satoshi">
                       Choose whether this is an Engagement Ring or Wedding Ring. This determines which categories are available.
-                    </p>
-                  </div>
-
-                  {/* Ring Styles - 5 Separate Multi-Select Fields */}
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3 font-satoshi">
-                      Ring Styles
-                      <span className="text-xs text-gray-500 ml-2 font-normal">(You can select multiple styles for each field)</span>
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Ring Style 1 */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1 font-satoshi">
-                          Ring Style 1
-                        </label>
-                        <MultiSelect
-                          options={ringTypes}
-                          selectedIds={formData.ring_style_1_ids}
-                          onChange={(selectedIds) => handleInputChange('ring_style_1_ids', selectedIds)}
-                          placeholder="Select styles for field 1..."
-                          className="font-satoshi text-sm"
-                        />
-                      </div>
-
-                      {/* Ring Style 2 */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1 font-satoshi">
-                          Ring Style 2
-                        </label>
-                        <MultiSelect
-                          options={ringTypes}
-                          selectedIds={formData.ring_style_2_ids}
-                          onChange={(selectedIds) => handleInputChange('ring_style_2_ids', selectedIds)}
-                          placeholder="Select styles for field 2..."
-                          className="font-satoshi text-sm"
-                        />
-                      </div>
-
-                      {/* Ring Style 3 */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1 font-satoshi">
-                          Ring Style 3
-                        </label>
-                        <MultiSelect
-                          options={ringTypes}
-                          selectedIds={formData.ring_style_3_ids}
-                          onChange={(selectedIds) => handleInputChange('ring_style_3_ids', selectedIds)}
-                          placeholder="Select styles for field 3..."
-                          className="font-satoshi text-sm"
-                        />
-                      </div>
-
-                      {/* Ring Style 4 */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1 font-satoshi">
-                          Ring Style 4
-                        </label>
-                        <MultiSelect
-                          options={ringTypes}
-                          selectedIds={formData.ring_style_4_ids}
-                          onChange={(selectedIds) => handleInputChange('ring_style_4_ids', selectedIds)}
-                          placeholder="Select styles for field 4..."
-                          className="font-satoshi text-sm"
-                        />
-                      </div>
-
-                      {/* Ring Style 5 */}
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1 font-satoshi">
-                          Ring Style 5
-                        </label>
-                        <MultiSelect
-                          options={ringTypes}
-                          selectedIds={formData.ring_style_5_ids}
-                          onChange={(selectedIds) => handleInputChange('ring_style_5_ids', selectedIds)}
-                          placeholder="Select styles for field 5..."
-                          className="font-satoshi text-sm"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2 font-satoshi">
-                      Each field can have multiple ring style selections. Assign styles based on priority or grouping.
                     </p>
                   </div>
 

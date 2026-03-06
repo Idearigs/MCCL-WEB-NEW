@@ -270,38 +270,9 @@ const getProductById = async (req, res) => {
         },
         {
           model: StoneTypes,
-          as: 'stoneType',
+          as: 'gemstones',
           attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle1',
-          attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle2',
-          attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle3',
-          attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle4',
-          attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle5',
-          attributes: ['id', 'name', 'slug'],
+          through: { attributes: [] },
           required: false
         },
         {
@@ -378,11 +349,6 @@ const createProduct = async (req, res) => {
       ring_type_ids = [],
       stone_shape_ids = [],
       stone_type_id = null,
-      ring_style_1_id = null,
-      ring_style_2_id = null,
-      ring_style_3_id = null,
-      ring_style_4_id = null,
-      ring_style_5_id = null,
       metal_ids = [],
       diamond_size_ids = [],
       jewelry_sub_type_id = null,
@@ -454,12 +420,6 @@ const createProduct = async (req, res) => {
       category_id,
       collection_id: collection_id || null,
       jewelry_sub_type_id: jewelry_sub_type_id || null,
-      stone_type_id: stone_type_id || null,
-      ring_style_1_id: ring_style_1_id || null,
-      ring_style_2_id: ring_style_2_id || null,
-      ring_style_3_id: ring_style_3_id || null,
-      ring_style_4_id: ring_style_4_id || null,
-      ring_style_5_id: ring_style_5_id || null,
       is_active,
       is_featured,
       in_stock,
@@ -532,6 +492,16 @@ const createProduct = async (req, res) => {
       relationshipPromises.push(...stoneShapePromises);
     }
 
+    // Stone type (gemstone) — single selection stored via junction
+    if (stone_type_id) {
+      relationshipPromises.push(
+        ProductStoneTypes.create({
+          product_id: product.id,
+          stone_type_id
+        }).catch(() => {}) // ignore duplicate if already exists
+      );
+    }
+
     // Metal relationships
     if (metal_ids && metal_ids.length > 0) {
       const metalPromises = metal_ids.map(metalId =>
@@ -581,12 +551,7 @@ const createProduct = async (req, res) => {
         { model: ProductVariant, as: 'variants' },
         { model: RingTypes, as: 'ringTypes' },
         { model: StoneShapes, as: 'stoneShapes' },
-        { model: StoneTypes, as: 'stoneType', required: false },
-        { model: RingTypes, as: 'ringStyle1', required: false },
-        { model: RingTypes, as: 'ringStyle2', required: false },
-        { model: RingTypes, as: 'ringStyle3', required: false },
-        { model: RingTypes, as: 'ringStyle4', required: false },
-        { model: RingTypes, as: 'ringStyle5', required: false },
+        { model: StoneTypes, as: 'gemstones', required: false },
         { model: ProductMetals, as: 'metals' }
       ]
     });
@@ -640,6 +605,7 @@ const updateProduct = async (req, res) => {
     const {
       ring_type_ids = [],
       stone_shape_ids = [],
+      stone_type_id,
       metal_ids = [],
       diamond_size_ids = [],
       nivoda_options_config,
@@ -728,6 +694,14 @@ const updateProduct = async (req, res) => {
           })
         );
         relationshipPromises.push(...stoneShapePromises);
+      }
+    }
+
+    // Update stone type (gemstone) relationship — via junction
+    if (stone_type_id !== undefined) {
+      await ProductStoneTypes.destroy({ where: { product_id: id } });
+      if (stone_type_id) {
+        await ProductStoneTypes.create({ product_id: id, stone_type_id }).catch(() => {});
       }
     }
 
@@ -852,38 +826,9 @@ const updateProduct = async (req, res) => {
         },
         {
           model: StoneTypes,
-          as: 'stoneType',
+          as: 'gemstones',
           attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle1',
-          attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle2',
-          attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle3',
-          attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle4',
-          attributes: ['id', 'name', 'slug'],
-          required: false
-        },
-        {
-          model: RingTypes,
-          as: 'ringStyle5',
-          attributes: ['id', 'name', 'slug'],
+          through: { attributes: [] },
           required: false
         },
         {
@@ -1093,11 +1038,6 @@ const updateProductWithMedia = async (req, res) => {
         { model: RingTypes, as: 'ringTypes' },
         { model: StoneShapes, as: 'stoneShapes' },
         { model: StoneTypes, as: 'stoneType', required: false },
-        { model: RingTypes, as: 'ringStyle1', required: false },
-        { model: RingTypes, as: 'ringStyle2', required: false },
-        { model: RingTypes, as: 'ringStyle3', required: false },
-        { model: RingTypes, as: 'ringStyle4', required: false },
-        { model: RingTypes, as: 'ringStyle5', required: false },
         { model: ProductMetals, as: 'metals' }
       ]
     });
@@ -1388,11 +1328,6 @@ const createProductWithMedia = async (req, res) => {
       ring_type_ids,
       stone_shape_ids,
       stone_type_id,
-      ring_style_1_id,
-      ring_style_2_id,
-      ring_style_3_id,
-      ring_style_4_id,
-      ring_style_5_id,
       metal_ids,
       diamond_size_ids,
       jewelry_sub_type_id,
@@ -1434,69 +1369,6 @@ const createProductWithMedia = async (req, res) => {
     const parsedStoneShapeIds = stone_shape_ids ? JSON.parse(stone_shape_ids) : [];
     const parsedMetalIds = metal_ids ? JSON.parse(metal_ids) : [];
     const parsedDiamondSizeIds = diamond_size_ids ? JSON.parse(diamond_size_ids) : [];
-
-    // Handle ring style arrays - extract first element from each array or convert empty to null
-    // Frontend sends arrays (ring_style_1_ids, ring_style_2_ids, etc.)
-    // Database expects single IDs (ring_style_1_id, ring_style_2_id, etc.)
-    let finalRingStyle1Id = null;
-    let finalRingStyle2Id = null;
-    let finalRingStyle3Id = null;
-    let finalRingStyle4Id = null;
-    let finalRingStyle5Id = null;
-
-    // Try to parse as arrays first (new format from frontend)
-    try {
-      if (ring_style_1_id) {
-        const parsed1 = typeof ring_style_1_id === 'string' ? JSON.parse(ring_style_1_id) : ring_style_1_id;
-        finalRingStyle1Id = Array.isArray(parsed1) && parsed1.length > 0 ? parsed1[0] : (parsed1 || null);
-      }
-    } catch (e) {
-      // If parsing fails, treat as single ID
-      finalRingStyle1Id = ring_style_1_id === '' ? null : ring_style_1_id;
-    }
-
-    try {
-      if (ring_style_2_id) {
-        const parsed2 = typeof ring_style_2_id === 'string' ? JSON.parse(ring_style_2_id) : ring_style_2_id;
-        finalRingStyle2Id = Array.isArray(parsed2) && parsed2.length > 0 ? parsed2[0] : (parsed2 || null);
-      }
-    } catch (e) {
-      finalRingStyle2Id = ring_style_2_id === '' ? null : ring_style_2_id;
-    }
-
-    try {
-      if (ring_style_3_id) {
-        const parsed3 = typeof ring_style_3_id === 'string' ? JSON.parse(ring_style_3_id) : ring_style_3_id;
-        finalRingStyle3Id = Array.isArray(parsed3) && parsed3.length > 0 ? parsed3[0] : (parsed3 || null);
-      }
-    } catch (e) {
-      finalRingStyle3Id = ring_style_3_id === '' ? null : ring_style_3_id;
-    }
-
-    try {
-      if (ring_style_4_id) {
-        const parsed4 = typeof ring_style_4_id === 'string' ? JSON.parse(ring_style_4_id) : ring_style_4_id;
-        finalRingStyle4Id = Array.isArray(parsed4) && parsed4.length > 0 ? parsed4[0] : (parsed4 || null);
-      }
-    } catch (e) {
-      finalRingStyle4Id = ring_style_4_id === '' ? null : ring_style_4_id;
-    }
-
-    try {
-      if (ring_style_5_id) {
-        const parsed5 = typeof ring_style_5_id === 'string' ? JSON.parse(ring_style_5_id) : ring_style_5_id;
-        finalRingStyle5Id = Array.isArray(parsed5) && parsed5.length > 0 ? parsed5[0] : (parsed5 || null);
-      }
-    } catch (e) {
-      finalRingStyle5Id = ring_style_5_id === '' ? null : ring_style_5_id;
-    }
-
-    // Reassign to original variable names for use in product creation
-    ring_style_1_id = finalRingStyle1Id;
-    ring_style_2_id = finalRingStyle2Id;
-    ring_style_3_id = finalRingStyle3Id;
-    ring_style_4_id = finalRingStyle4Id;
-    ring_style_5_id = finalRingStyle5Id;
 
     // Validation
     if (!name || !base_price || !category_id) {
@@ -1542,12 +1414,6 @@ const createProductWithMedia = async (req, res) => {
       category_id,
       collection_id: collection_id || null,
       jewelry_sub_type_id: jewelry_sub_type_id || null,
-      stone_type_id: stone_type_id || null,
-      ring_style_1_id: ring_style_1_id || null,
-      ring_style_2_id: ring_style_2_id || null,
-      ring_style_3_id: ring_style_3_id || null,
-      ring_style_4_id: ring_style_4_id || null,
-      ring_style_5_id: ring_style_5_id || null,
       is_active,
       is_featured,
       in_stock,
@@ -1690,6 +1556,16 @@ const createProductWithMedia = async (req, res) => {
       });
     }
 
+    // Stone type (gemstone) — single selection stored via junction
+    if (stone_type_id) {
+      promises.push(
+        ProductStoneTypes.create({
+          product_id: product.id,
+          stone_type_id
+        }).catch(() => {}) // ignore duplicate
+      );
+    }
+
     // Execute all promises
     await Promise.all(promises);
 
@@ -1703,12 +1579,7 @@ const createProductWithMedia = async (req, res) => {
         { model: ProductVariant, as: 'variants' },
         { model: RingTypes, as: 'ringTypes' },
         { model: StoneShapes, as: 'stoneShapes' },
-        { model: StoneTypes, as: 'stoneType', required: false },
-        { model: RingTypes, as: 'ringStyle1', required: false },
-        { model: RingTypes, as: 'ringStyle2', required: false },
-        { model: RingTypes, as: 'ringStyle3', required: false },
-        { model: RingTypes, as: 'ringStyle4', required: false },
-        { model: RingTypes, as: 'ringStyle5', required: false },
+        { model: StoneTypes, as: 'gemstones', through: { attributes: [] }, required: false },
         { model: ProductMetals, as: 'metals' },
         { model: DiamondSizes, as: 'diamondSizes', required: false }
       ]

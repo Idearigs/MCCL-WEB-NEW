@@ -19,7 +19,8 @@ import {
   ShoppingCart,
   Megaphone,
   Zap,
-  MessageCircle
+  MessageCircle,
+  Gem
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -50,6 +51,7 @@ const navigation: NavItem[] = [
     ]
   },
   { name: 'Chats', href: '/admin/chats', icon: MessageCircle },
+  { name: 'Wedding Rings', href: '/admin/wedding-rings', icon: Gem },
   { name: 'Watches', href: '/admin/watches', icon: Watch },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },

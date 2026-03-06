@@ -773,12 +773,6 @@ const AdminProducts: React.FC = () => {
         metal_ids: data.data.metals?.map((m: any) => m.id) || [],
         // Transform single stone type relationship
         stone_type_id: data.data.stoneType?.id || '',
-        // Transform 5 ring style relationships to arrays for multi-select
-        ring_style_1_ids: data.data.ringStyle1?.id ? [data.data.ringStyle1.id] : [],
-        ring_style_2_ids: data.data.ringStyle2?.id ? [data.data.ringStyle2.id] : [],
-        ring_style_3_ids: data.data.ringStyle3?.id ? [data.data.ringStyle3.id] : [],
-        ring_style_4_ids: data.data.ringStyle4?.id ? [data.data.ringStyle4.id] : [],
-        ring_style_5_ids: data.data.ringStyle5?.id ? [data.data.ringStyle5.id] : [],
         // Transform images to include both url and alt_text with proper structure
         // Only include general product images (without metal_id) in the images array
         images: data.data.images

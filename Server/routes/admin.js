@@ -20,6 +20,7 @@ const adminCategoriesRoutes = require('./adminCategories');
 const adminJewelryCategoriesRoutes = require('./adminJewelryCategories');
 const uploadRoutes = require('./upload');
 const watchRoutes = require('./watchRoutes');
+const weddingRingsRoutes = require('./weddingRingsRoutes');
 const { validateProduct, validateBulkUpdate } = require('../validators/productValidator');
 
 const { adminAuth, requireAdmin, requireSuperAdmin } = require('../middleware/adminAuth');
@@ -77,6 +78,9 @@ router.use('/jewelry-categories', adminJewelryCategoriesRoutes);
 
 // Watch Management Routes
 router.use('/watches', watchRoutes);
+
+// Wedding Rings (Diamond-cut) Management Routes
+router.use('/wedding-rings', weddingRingsRoutes);
 
 // Upload Routes
 router.use('/upload', uploadRoutes);

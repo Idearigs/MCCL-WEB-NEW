@@ -39,7 +39,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     sort = 'created_at',
     order = 'desc',
     page = 1,
-    limit = 1000
+    limit = 24
   } = req.query;
 
   const offset = (page - 1) * limit;
@@ -73,7 +73,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     {
       model: ProductVariant,
       as: 'variants',
-      attributes: ['id', 'variant_name', 'price_adjustment', 'metal_type', 'size', 'stock_quantity'],
+      attributes: ['id', 'variant_name', 'price_adjustment', 'metal_type', 'size', 'stock_quantity', 'price', 'carat_weight', 'mm_width', 'metal_id', 'ai_description'],
       where: { is_active: true },
       required: false
     },
@@ -84,11 +84,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
       through: { attributes: [] },
       required: false
     },
-    { model: RingTypes, as: 'ringStyle1', attributes: ['id', 'name', 'slug'], required: false },
-    { model: RingTypes, as: 'ringStyle2', attributes: ['id', 'name', 'slug'], required: false },
-    { model: RingTypes, as: 'ringStyle3', attributes: ['id', 'name', 'slug'], required: false },
-    { model: RingTypes, as: 'ringStyle4', attributes: ['id', 'name', 'slug'], required: false },
-    { model: RingTypes, as: 'ringStyle5', attributes: ['id', 'name', 'slug'], required: false },
     {
       model: ProductMetals,
       as: 'metals',
@@ -175,14 +170,31 @@ const getAllProducts = asyncHandler(async (req, res) => {
   if (featured !== undefined) whereClause.is_featured = featured === 'true';
   if (in_stock !== undefined) whereClause.in_stock = in_stock === 'true';
 
-  // Metal and gemstone filters (through variants)
-  if (metal || gemstone) {
-    const variantWhere = {};
-    if (metal) variantWhere.metal_type = { [Op.iLike]: `%${metal}%` };
-    if (gemstone) variantWhere.gemstone_type = { [Op.iLike]: `%${gemstone}%` };
+  // Metal filter — via metals junction table
+  if (metal) {
+    const metalsIdx = include.findIndex(inc => inc.model === ProductMetals);
+    if (metalsIdx !== -1) {
+      include[metalsIdx].where = { name: { [Op.iLike]: `%${metal}%` } };
+      include[metalsIdx].required = true;
+    }
+  }
 
-    include[3].where = { ...include[3].where, ...variantWhere };
-    include[3].required = true;
+  // Ring type filter — via ringTypes junction table
+  if (req.query.ringType) {
+    const ringTypesIdx = include.findIndex(inc => inc.as === 'ringTypes');
+    if (ringTypesIdx !== -1) {
+      include[ringTypesIdx].where = { name: { [Op.iLike]: `%${req.query.ringType}%` } };
+      include[ringTypesIdx].required = true;
+    }
+  }
+
+  // Gemstone filter (through gemstones junction)
+  if (gemstone && models.StoneTypes) {
+    const gemstoneIdx = include.findIndex(inc => inc.as === 'gemstones');
+    if (gemstoneIdx !== -1) {
+      include[gemstoneIdx].where = { name: { [Op.iLike]: `%${gemstone}%` } };
+      include[gemstoneIdx].required = true;
+    }
   }
 
   // Sorting
@@ -225,14 +237,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
       description: product.short_description || product.description || '',
       category: product.category || null,
       collection: product.collection || null,
-      ringTypes: (() => {
-        // Merge junction-table ringTypes with direct ring_style_1..5 columns
-        const merged = [...(product.ringTypes || [])];
-        [product.ringStyle1, product.ringStyle2, product.ringStyle3, product.ringStyle4, product.ringStyle5]
-          .filter(Boolean)
-          .forEach(rs => { if (!merged.some(rt => rt.id === rs.id)) merged.push(rs); });
-        return merged;
-      })(),
+      ringTypes: product.ringTypes || [],
       primary_metal: product.metals && product.metals.length > 0 ? product.metals[0] : null,
       available_metals: product.metals && product.metals.length > 0 ? product.metals : [],
       gemstones: product.gemstones || [],

@@ -218,6 +218,8 @@ const EngagementRings = (): JSX.Element => {
   const [ringTypes, setRingTypes] = useState<Array<{id: string, name: string, slug: string}>>([]);
   const [gemstones, setGemstones] = useState<Array<{id: string, name: string, slug: string, color?: string}>>([]);
   const [metals, setMetals] = useState<Array<{id: string, name: string, color_code: string}>>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Save shopping category for post-purchase redirect
   useEffect(() => {
@@ -240,93 +242,123 @@ const EngagementRings = (): JSX.Element => {
     }));
   }, [searchParams]);
 
-  // Fetch ring products and collections from API
+  // Fetch filter reference data once on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFilterData = async () => {
       try {
-        setLoading(true);
-
-        // Fetch ring products and all filter data in parallel
-        const [
-          productsResponse,
-          collectionsResponse,
-          ringTypesResponse,
-          gemstonesResponse,
-          metalsResponse
-        ] = await Promise.all([
-          fetch(`${API_BASE_URL}/products/category/rings?limit=500`),
+        const [collectionsResponse, ringTypesResponse, gemstonesResponse, metalsResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/filters/collections`),
           fetch(`${API_BASE_URL}/filters/ring-types`),
           fetch(`${API_BASE_URL}/filters/gemstones`),
           fetch(`${API_BASE_URL}/filters/metals`)
         ]);
 
-        // Handle products data
-        const productsData = await productsResponse.json();
-        if (productsData.success) {
-          setRingProducts(productsData.data.products || []);
-        } else {
-          setError(productsData.message || 'Failed to fetch ring products');
-        }
-
-        // Handle collections data
         try {
           if (collectionsResponse && collectionsResponse.ok) {
-            const collectionsData = await collectionsResponse.json();
-            setCollections(Array.isArray(collectionsData) ? collectionsData : []);
+            const data = await collectionsResponse.json();
+            setCollections(Array.isArray(data) ? data : []);
           }
-        } catch (collectionsErr) {
-          console.warn('Failed to fetch collections:', collectionsErr);
-          setCollections([]);
-        }
+        } catch (e) { console.warn('Failed to fetch collections:', e); }
 
-        // Handle ring types data
         try {
           if (ringTypesResponse && ringTypesResponse.ok) {
-            const ringTypesData = await ringTypesResponse.json();
-            setRingTypes(Array.isArray(ringTypesData) ? ringTypesData : []);
+            const data = await ringTypesResponse.json();
+            setRingTypes(Array.isArray(data) ? data : []);
           }
-        } catch (ringTypesErr) {
-          console.warn('Failed to fetch ring types:', ringTypesErr);
-        }
+        } catch (e) { console.warn('Failed to fetch ring types:', e); }
 
-        // Handle gemstones data
         try {
           if (gemstonesResponse && gemstonesResponse.ok) {
-            const gemstonesData = await gemstonesResponse.json();
-            setGemstones(Array.isArray(gemstonesData) ? gemstonesData : []);
+            const data = await gemstonesResponse.json();
+            setGemstones(Array.isArray(data) ? data : []);
           }
-        } catch (gemstonesErr) {
-          console.warn('Failed to fetch gemstones:', gemstonesErr);
-        }
+        } catch (e) { console.warn('Failed to fetch gemstones:', e); }
 
-        // Handle metals data
         try {
           if (metalsResponse && metalsResponse.ok) {
-            const metalsData = await metalsResponse.json();
-            setMetals(Array.isArray(metalsData) ? metalsData : []);
+            const data = await metalsResponse.json();
+            setMetals(Array.isArray(data) ? data : []);
           }
-        } catch (metalsErr) {
-          console.warn('Failed to fetch metals:', metalsErr);
+        } catch (e) { console.warn('Failed to fetch metals:', e); }
+      } catch (err) {
+        console.error('Error fetching filter data:', err);
+      }
+    };
+    fetchFilterData();
+  }, []);
+
+  // Fetch ring products — re-runs when page or filters change
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+
+        // Build server-side filter params
+        const params = new URLSearchParams();
+        params.set('category', 'rings');
+        params.set('page', String(currentPage));
+        params.set('limit', '24');
+
+        if (selectedFilters.metals.length > 0) {
+          params.set('metal', selectedFilters.metals[0]);
+        }
+        if (selectedFilters.ringType.length > 0) {
+          params.set('ringType', selectedFilters.ringType[0]);
+        }
+        if (selectedFilters.gemstones.length > 0) {
+          params.set('gemstone', selectedFilters.gemstones[0]);
+        }
+        if (selectedFilters.collections.length > 0) {
+          params.set('collection', selectedFilters.collections[0]);
+        }
+        // Price range → server-side min/max
+        if (selectedFilters.price.length > 0) {
+          const priceRangeMap: Record<string, { min?: number; max?: number }> = {
+            'Under £500': { max: 500 },
+            '£500 - £1,000': { min: 500, max: 1000 },
+            '£1,000 - £2,500': { min: 1000, max: 2500 },
+            '£2,500 - £5,000': { min: 2500, max: 5000 },
+            '£5,000 - £10,000': { min: 5000, max: 10000 },
+            'Above £10,000': { min: 10000 }
+          };
+          const mins: number[] = [];
+          const maxs: number[] = [];
+          selectedFilters.price.forEach(range => {
+            const r = priceRangeMap[range];
+            if (r?.min !== undefined) mins.push(r.min);
+            if (r?.max !== undefined) maxs.push(r.max);
+          });
+          if (mins.length > 0) params.set('price_min', String(Math.min(...mins)));
+          if (maxs.length > 0) params.set('price_max', String(Math.max(...maxs)));
         }
 
+        const response = await fetch(`${API_BASE_URL}/products?${params.toString()}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setRingProducts(data.data.products || []);
+          setTotalPages(data.data.pagination?.total_pages || 1);
+        } else {
+          setError(data.message || 'Failed to fetch ring products');
+        }
       } catch (err) {
         setError('Failed to fetch ring products');
-        console.error('Error fetching data:', err);
+        console.error('Error fetching products:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchProducts();
+  }, [currentPage, selectedFilters]);
 
   const toggleFilter = (filterName: string) => {
     setActiveFilter(activeFilter === filterName ? null : filterName);
   };
 
-  // Filter handlers
+  // Filter handlers — reset to page 1 on any filter change
   const handleFilterChange = (filterType: keyof typeof selectedFilters, value: string, checked: boolean) => {
+    setCurrentPage(1);
     setSelectedFilters(prev => ({
       ...prev,
       [filterType]: checked
@@ -336,6 +368,7 @@ const EngagementRings = (): JSX.Element => {
   };
 
   const clearFilters = () => {
+    setCurrentPage(1);
     setSelectedFilters({
       price: [],
       ringType: [],
@@ -345,89 +378,15 @@ const EngagementRings = (): JSX.Element => {
     });
   };
 
-  const parsePrice = (priceStr: string): number => {
-    const match = priceStr.replace(/[£,]/g, '').match(/\d+/);
-    return match ? parseInt(match[0]) : 0;
-  };
-
-  const isInPriceRange = (productPrice: number | string, priceRange: string): boolean => {
-    const price = typeof productPrice === 'number' ? productPrice : parsePrice(productPrice);
-
-    switch (priceRange) {
-      case 'Under £500':
-        return price < 500;
-      case '£500 - £1,000':
-        return price >= 500 && price <= 1000;
-      case '£1,000 - £2,500':
-        return price >= 1000 && price <= 2500;
-      case '£2,500 - £5,000':
-        return price >= 2500 && price <= 5000;
-      case '£5,000 - £10,000':
-        return price >= 5000 && price <= 10000;
-      case 'Above £10,000':
-        return price > 10000;
-      default:
-        return true;
-    }
-  };
-
-  // Filter products based on selected filters
+  // Server handles all filters except the dev search term
   const filteredProducts = ringProducts.filter(product => {
-    // Search filter (dev)
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       const nameMatch = product.name?.toLowerCase().includes(term);
       const skuMatch = (product as any).sku?.toLowerCase().includes(term);
       if (!nameMatch && !skuMatch) return false;
     }
-
-    // Price filter
-    if (selectedFilters.price.length > 0) {
-      const matchesPrice = selectedFilters.price.some(priceRange =>
-        isInPriceRange(product.base_price, priceRange)
-      );
-      if (!matchesPrice) return false;
-    }
-
-    // Ring type filter
-    if (selectedFilters.ringType.length > 0) {
-      if (!product.ringTypes || product.ringTypes.length === 0) return false;
-      const matchesRingType = selectedFilters.ringType.some(ringTypeName =>
-        product.ringTypes!.some(rt => rt.name.toLowerCase() === ringTypeName.toLowerCase())
-      );
-      if (!matchesRingType) return false;
-    }
-
-    // Gemstones filter
-    if (selectedFilters.gemstones.length > 0) {
-      if (!product.gemstones || product.gemstones.length === 0) return false;
-      const matchesGemstone = selectedFilters.gemstones.some(gemstoneName =>
-        product.gemstones!.some(g => g.name.toLowerCase() === gemstoneName.toLowerCase())
-      );
-      if (!matchesGemstone) return false;
-    }
-
-    // Metals filter — check ALL available metals, not just primary
-    if (selectedFilters.metals.length > 0) {
-      const allMetals = product.available_metals || [];
-      if (allMetals.length === 0) return false;
-      const matchesMetal = selectedFilters.metals.some(metalName =>
-        allMetals.some(m => m.name.toLowerCase() === metalName.toLowerCase())
-      );
-      if (!matchesMetal) return false;
-    }
-
-    // Collections filter
-    if (selectedFilters.collections.length > 0) {
-      if (!product.collection) return false;
-      const matchesCollection = selectedFilters.collections.some(collectionName =>
-        product.collection!.name.toLowerCase() === collectionName.toLowerCase()
-      );
-      if (!matchesCollection) return false;
-    }
-
     return true;
-  // Sort: products with images come first
   }).sort((a, b) => {
     const aHasImage = !!(a.image?.url);
     const bHasImage = !!(b.image?.url);
@@ -504,7 +463,7 @@ const EngagementRings = (): JSX.Element => {
               </button>
             )}
             <span className="text-xs text-gray-400 font-inter">
-              {filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''}
+              {filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''}{totalPages > 1 ? ` (page ${currentPage}/${totalPages})` : ''}
             </span>
           </div>
 
@@ -906,6 +865,29 @@ const EngagementRings = (): JSX.Element => {
               ))
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 py-10">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-5 py-2 border border-gray-300 text-sm font-inter text-gray-700 hover:border-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm font-inter text-gray-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-5 py-2 border border-gray-300 text-sm font-inter text-gray-700 hover:border-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          )}
 
           {/* Call to Action */}
           <div className="text-center bg-gray-50 rounded-lg p-12">
