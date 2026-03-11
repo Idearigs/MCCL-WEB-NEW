@@ -15,8 +15,24 @@ FROM nginx:alpine AS production
 COPY --from=frontend-build /app/dist /usr/share/nginx/html
 
 # Copy custom nginx config
-COPY Client/nginx.conf /etc/nginx/conf.d/default.conf
+COPY <<EOF /etc/nginx/conf.d/default.conf
+server {
+    listen 3000;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
 
-EXPOSE 80
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+EOF
+
+EXPOSE 3000
 
 CMD ["nginx", "-g", "daemon off;"]
