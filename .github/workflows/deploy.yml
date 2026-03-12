@@ -38,21 +38,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-check
     steps:
-      - name: Trigger Frontend redeploy on Coolify
+      - name: Trigger redeploy on Coolify
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ secrets.COOLIFY_FRONTEND_WEBHOOK }}
-          method: 'GET'
-          customHeaders: '{"Authorization": "Bearer ${{ secrets.COOLIFY_TOKEN }}"}'
-          timeout: 30000
-
-      - name: Trigger Backend redeploy on Coolify
-        uses: fjogeleit/http-request-action@v1
-        with:
-          url: ${{ secrets.COOLIFY_BACKEND_WEBHOOK }}
+          url: ${{ secrets.COOLIFY_WEBHOOK }}
           method: 'GET'
           customHeaders: '{"Authorization": "Bearer ${{ secrets.COOLIFY_TOKEN }}"}'
           timeout: 30000
 
       - name: Done
-        run: echo "Frontend and backend deploys triggered on Coolify"
+        run: echo "Deploy triggered on Coolify"
