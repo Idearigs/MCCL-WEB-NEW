@@ -1,6 +1,6 @@
 name: Deploy to Coolify
 
-# Automatically runs every time you push to main
+# Automatically runs every time you push to main branch
 on:
   push:
     branches: [ main ]
