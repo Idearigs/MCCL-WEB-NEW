@@ -285,6 +285,31 @@ const startServer = async () => {
       logger.warn('⚠️  Some API endpoints may not work until database is connected');
     }
 
+    // Ensure Engagement Rings category exists in the categories table
+    if (dbConnected) {
+      try {
+        const { getModelInstance } = require('./models');
+        const { Category } = getModelInstance();
+        const rings = await Category.findOne({ where: { slug: 'rings' } });
+        const [, created] = await Category.findOrCreate({
+          where: { slug: 'engagement-rings' },
+          defaults: {
+            name: 'Engagement Rings',
+            slug: 'engagement-rings',
+            description: 'Celebrate your love with our stunning engagement ring collection',
+            parent_id: rings ? rings.id : null,
+            category_type: 'main',
+            level: 1,
+            is_active: true,
+            sort_order: 1,
+          },
+        });
+        if (created) logger.info('✅ Engagement Rings category created');
+      } catch (err) {
+        logger.warn('Could not ensure Engagement Rings category:', err.message);
+      }
+    }
+
     // Start HTTP server regardless of database status
     server.listen(config.PORT, () => {
       logger.info(`🚀 Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);
