@@ -1,16 +1,16 @@
 const axios = require('axios');
 
 const NIVODA_STAGING_URL = 'https://intg-customer-staging.nivodaapi.net/api/diamonds';
-const NIVODA_PROD_URL = 'https://integrations.nivoda.net/api/diamonds';
+const NIVODA_PROD_URL    = 'https://integrations.nivoda.net/api/diamonds';
 
-// Using STAGING for now - switch to PROD_URL when you have correct production credentials
-const NIVODA_API_URL = NIVODA_STAGING_URL;
-const STAGING_EMAIL = 'testaccount@sample.com';
+// Switch to NIVODA_PROD_URL + real credentials once Nivoda enables production access
+const NIVODA_API_URL   = NIVODA_STAGING_URL;
+const STAGING_EMAIL    = 'testaccount@sample.com';
 const STAGING_PASSWORD = 'staging-nivoda-22';
 
 class NivodaService {
   constructor() {
-    this.token = null;
+    this.token       = null;
     this.tokenExpiry = null;
   }
 
@@ -19,8 +19,8 @@ class NivodaService {
       const query = `{authenticate{username_and_password(username:"${email}", password:"${password}") {token}}}`;
       const response = await axios.post(NIVODA_API_URL, { query });
       if (response.data.errors) throw new Error(response.data.errors[0].message);
-      this.token = response.data.data.authenticate.username_and_password.token;
-      this.tokenExpiry = Date.now() + (6 * 60 * 60 * 1000);
+      this.token       = response.data.data.authenticate.username_and_password.token;
+      this.tokenExpiry = Date.now() + (6 * 60 * 60 * 1000); // 6 hours
       console.log('✅ Nivoda Auth Success');
       return this.token;
     } catch (error) {
@@ -36,67 +36,77 @@ class NivodaService {
     return this.token;
   }
 
+  /**
+   * Search diamonds.
+   * Prices returned are in GBP cents (e.g. 295000 = £2,950.00).
+   * Divide by 100 in the controller to get pounds.
+   */
   async searchDiamonds(filters = {}, email = STAGING_EMAIL, password = STAGING_PASSWORD) {
     try {
       const token = await this.ensureToken(email, password);
-      const colorArray = (filters.color && filters.color.length > 0) 
-        ? filters.color.map(c => c.toUpperCase()).join(',')
-        : 'D,E,F,G,H,I';
-      const clarityArray = (filters.clarity && filters.clarity.length > 0)
-        ? filters.clarity.map(c => c.toUpperCase()).join(',')
-        : 'VS1,VS2,VVS1,VVS2,IF';
-      const cutArray = (filters.cut && filters.cut.length > 0)
-        ? filters.cut.map(c => c.toUpperCase()).join(',')
-        : 'EX,VG,G';
 
-      const query = `query ($token:String!) {
-        as(token:$token) {
+      const colorArray   = filters.color?.length   ? filters.color.map(c => c.toUpperCase()).join(',')   : 'D,E,F,G,H,I';
+      const clarityArray = filters.clarity?.length  ? filters.clarity.map(c => c.toUpperCase()).join(',') : 'VS1,VS2,VVS1,VVS2,IF';
+      const cutArray     = filters.cut?.length      ? filters.cut.map(c => c.toUpperCase()).join(',')     : 'EX,VG,G';
+
+      // dollar_value is in GBP cents when preferredCurrency = GBP
+      // £500 → 50000 cents   |   £50,000 → 5000000 cents
+      const minPriceCents = Math.round((filters.minPrice || 0) * 100);
+      const maxPriceCents = Math.round((filters.maxPrice || 5000000) * 100); // default max £50,000
+
+      const query = `query ($token: String!) {
+        as(token: $token) {
           diamonds_by_query(
             query: {
               labgrown: false
-              color: [${colorArray}]
-              clarity: [${clarityArray}]
-              cut: [${cutArray}]
-              sizes: {from: ${filters.minCarat || 0.5}, to: ${filters.maxCarat || 10}}
-              dollar_value: {from: ${filters.minPrice || 0}, to: ${filters.maxPrice || 500000}}
+              color:    [${colorArray}]
+              clarity:  [${clarityArray}]
+              cut:      [${cutArray}]
+              sizes:    { from: ${filters.minCarat || 0.5}, to: ${filters.maxCarat || 10} }
+              dollar_value: { from: ${minPriceCents}, to: ${maxPriceCents} }
+              preferredCurrency: [GBP]
+              availability: [AVAILABLE]
             }
-            limit: ${filters.limit || 20}
+            limit:  ${Math.min(filters.limit || 20, 50)}
             offset: ${filters.offset || 0}
+            order:  { type: price, direction: ASC }
           ) {
             items {
               id
+              price
               diamond {
                 id
                 image
                 video
-                mine_of_origin
+                availability
                 certificate {
                   id
                   lab
                   shape
                   certNumber
+                  carats
+                  clarity
+                  color
+                  cut
                 }
               }
-              price
             }
             total_count
           }
         }
       }`;
 
-      const response = await axios.post(NIVODA_API_URL, {
-        query: query,
-        variables: { token }
-      });
+      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } });
 
       if (response.data.errors) {
         console.error('Nivoda GraphQL Errors:', JSON.stringify(response.data.errors, null, 2));
         throw new Error(response.data.errors[0].message);
       }
+
       return response.data.data.as.diamonds_by_query;
     } catch (error) {
       console.error('❌ Diamond Search Failed:', error.message);
-      if (error.response && error.response.data) {
+      if (error.response?.data) {
         console.error('Nivoda Response:', JSON.stringify(error.response.data, null, 2));
       }
       throw error;
@@ -106,32 +116,32 @@ class NivodaService {
   async getDiamondById(diamondId, email = STAGING_EMAIL, password = STAGING_PASSWORD) {
     try {
       const token = await this.ensureToken(email, password);
-      const query = `query ($token:String!) {
-        as(token:$token) {
+      const query = `query ($token: String!) {
+        as(token: $token) {
           get_diamond_by_id(diamond_id: "${diamondId}") {
             id
+            price
             diamond {
               id
               image
               video
-              mine_of_origin
+              availability
               certificate {
                 id
                 lab
                 shape
                 certNumber
+                carats
+                clarity
+                color
+                cut
               }
             }
-            price
           }
         }
       }`;
 
-      const response = await axios.post(NIVODA_API_URL, {
-        query: query,
-        variables: { token }
-      });
-
+      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } });
       if (response.data.errors) throw new Error(response.data.errors[0].message);
       return response.data.data.as.get_diamond_by_id;
     } catch (error) {
@@ -143,37 +153,33 @@ class NivodaService {
   async searchGemstones(filters = {}, email = STAGING_EMAIL, password = STAGING_PASSWORD) {
     try {
       const token = await this.ensureToken(email, password);
-      const colorArray = (filters.color && filters.color.length > 0)
+      const colorArray = filters.color?.length
         ? filters.color.join('","')
         : 'Red","Pink","Blue","Green","Yellow';
 
-      const query = `query ($token:String!) {
-        as(token:$token) {
+      const query = `query ($token: String!) {
+        as(token: $token) {
           gemstones_by_query(
             query: {
               color: ["${colorArray}"]
-              sizes: {from: ${filters.minCarat || 0.5}, to: ${filters.maxCarat || 10}}
+              sizes: { from: ${filters.minCarat || 0.5}, to: ${filters.maxCarat || 10} }
             }
-            limit: ${filters.limit || 20}
+            limit: ${Math.min(filters.limit || 20, 50)}
           ) {
             items {
               id
+              price
               gemstone {
                 id
                 image
               }
-              price
             }
             total_count
           }
         }
       }`;
 
-      const response = await axios.post(NIVODA_API_URL, {
-        query: query,
-        variables: { token }
-      });
-
+      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } });
       if (response.data.errors) throw new Error(response.data.errors[0].message);
       return response.data.data.as.gemstones_by_query;
     } catch (error) {

@@ -147,8 +147,11 @@ async function getDiamondPriceBySuggestions(req, res) {
     }
 
     if (filteredDiamonds.length > 0) {
-      // Calculate average price from matching diamonds
-      const prices = filteredDiamonds.map(d => d.price);
+      // Nivoda returns price in GBP cents (we request preferredCurrency: GBP)
+      // Divide by 100 to get pounds sterling
+      const toPounds = (cents) => Math.round(cents / 100);
+
+      const prices = filteredDiamonds.map(d => toPounds(d.price));
       const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
