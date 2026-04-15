@@ -48,6 +48,7 @@ const Bracelets         = lazy(() => import("./pages/Bracelets"));
 // Product detail pages (heaviest pages — always lazy)
 const ProductDetail     = lazy(() => import("./pages/ProductDetail"));
 const WatchDetail       = lazy(() => import("./pages/WatchDetail"));
+const WeddingRingDetail = lazy(() => import("./pages/WeddingRingDetail"));
 
 // Info / account pages
 const Contact           = lazy(() => import("./pages/Contact"));
@@ -69,6 +70,7 @@ const AdminApp          = lazy(() => import("./admin/AdminApp"));
 
 // Testing
 const NivodaTestingPage = lazy(() => import("./pages/NivodaTestingPage"));
+const RingPricingTestPage = lazy(() => import("./pages/RingPricingTestPage"));
 
 // ── Loading fallback ───────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -141,8 +143,8 @@ const App = () => (
 
                   {/* Product detail pages */}
                   <Route path="/engagement-rings/:productId" element={<ProductDetail />} />
-                  <Route path="/wedding-rings/:productId" element={<ProductDetail />} />
-                  <Route path="/wedding/:productId" element={<ProductDetail />} />
+                  <Route path="/wedding-rings/:productId" element={<WeddingRingDetail />} />
+                  <Route path="/wedding/:productId" element={<WeddingRingDetail />} />
                   <Route path="/rings/:productId" element={<ProductDetail />} />
                   <Route path="/earrings/:productId" element={<ProductDetail />} />
                   <Route path="/necklaces/:productId" element={<ProductDetail />} />
@@ -175,6 +177,7 @@ const App = () => (
 
                   {/* Testing */}
                   <Route path="/test/nivoda" element={<NivodaTestingPage />} />
+                  <Route path="/test/ring-pricing" element={<RingPricingTestPage />} />
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>
