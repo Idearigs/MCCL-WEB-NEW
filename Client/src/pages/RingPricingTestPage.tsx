@@ -67,7 +67,8 @@ const RingPricingTestPage: React.FC = () => {
         setLoadingRings(true);
         const res = await fetch(`${API_BASE_URL}/products?category=engagement-rings&limit=200`);
         const data = await res.json();
-        const items: Ring[] = (data.products || data.data || []).filter(
+        const list = data.data?.products || data.products || data.data || [];
+        const items: Ring[] = (Array.isArray(list) ? list : []).filter(
           (p: Ring) => p.sku && p.sku.startsWith('BJ-')
         );
         items.sort((a, b) => a.sku.localeCompare(b.sku, undefined, { numeric: true }));
