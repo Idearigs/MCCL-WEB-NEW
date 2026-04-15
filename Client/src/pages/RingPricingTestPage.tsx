@@ -70,7 +70,7 @@ const RingPricingTestPage: React.FC = () => {
         console.log('[RingPricing] API response:', JSON.stringify(data).slice(0, 300));
         const list: Ring[] = data?.data?.products ?? [];
         const items: Ring[] = Array.isArray(list) ? list : [];
-        items.sort((a, b) => a.sku.localeCompare(b.sku, undefined, { numeric: true }));
+        items.sort((a, b) => (a.sku || '').localeCompare(b.sku || '', undefined, { numeric: true }));
         setRings(items);
       } catch (err: any) {
         setRingsError(err.message);
