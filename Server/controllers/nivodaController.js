@@ -147,9 +147,9 @@ async function getDiamondPriceBySuggestions(req, res) {
     }
 
     if (filteredDiamonds.length > 0) {
-      // Nivoda returns price in GBP cents (we request preferredCurrency: GBP)
-      // Divide by 100 to get pounds sterling
-      const toPounds = (cents) => Math.round(cents / 100);
+      // Nivoda returns price in USD cents — divide by 100 for USD, multiply by 0.79 for GBP
+      const USD_TO_GBP = 0.79;
+      const toPounds = (cents) => Math.round((cents / 100) * USD_TO_GBP);
 
       const prices = filteredDiamonds.map(d => toPounds(d.price));
       const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;

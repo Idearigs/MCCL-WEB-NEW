@@ -49,10 +49,9 @@ class NivodaService {
       const clarityArray = filters.clarity?.length  ? filters.clarity.map(c => c.toUpperCase()).join(',') : 'VS1,VS2,VVS1,VVS2,IF';
       const cutArray     = filters.cut?.length      ? filters.cut.map(c => c.toUpperCase()).join(',')     : 'EX,VG,G';
 
-      // dollar_value is in GBP cents when preferredCurrency = GBP
-      // £500 → 50000 cents   |   £50,000 → 5000000 cents
+      // dollar_value is in USD cents — $500 = 50000, $50,000 = 5000000
       const minPriceCents = Math.round((filters.minPrice || 0) * 100);
-      const maxPriceCents = Math.round((filters.maxPrice || 5000000) * 100); // default max £50,000
+      const maxPriceCents = Math.round((filters.maxPrice || 5000000) * 100); // default max $50,000
 
       const query = `query ($token: String!) {
         as(token: $token) {
@@ -64,8 +63,6 @@ class NivodaService {
               cut:      [${cutArray}]
               sizes:    { from: ${filters.minCarat || 0.5}, to: ${filters.maxCarat || 10} }
               dollar_value: { from: ${minPriceCents}, to: ${maxPriceCents} }
-              preferredCurrency: [GBP]
-              availability: [AVAILABLE]
             }
             limit:  ${Math.min(filters.limit || 20, 50)}
             offset: ${filters.offset || 0}
