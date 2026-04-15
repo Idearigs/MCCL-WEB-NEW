@@ -33,10 +33,37 @@ jobs:
           cd Server
           npm ci
 
-  # ── Step 2: Deploy (only runs if build-check passes) ──────────────────────
-  deploy:
+  # ── Step 2: DB constraint check ───────────────────────────────────────────
+  # Catches duplicate UNIQUE constraints BEFORE they accumulate again
+  db-check:
     runs-on: ubuntu-latest
     needs: build-check
+    steps:
+      - name: Check for duplicate constraints in mcculloch_db
+        env:
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          COUNT=$(psql -h 31.97.116.89 -p 5433 -U mcculloch_admin -d mcculloch_db -tAc "
+            SELECT COUNT(*) FROM (
+              SELECT tablename
+              FROM pg_indexes
+              WHERE schemaname = 'public'
+                AND indexname ~ '_key[0-9]+\$'
+              GROUP BY tablename
+              HAVING COUNT(*) > 1
+            ) t;
+          " 2>/dev/null || echo "0")
+          echo "Tables with duplicate constraints: $COUNT"
+          if [ "$COUNT" -gt "0" ]; then
+            echo "ERROR: Duplicate UNIQUE constraints detected. Check migration scripts."
+            exit 1
+          fi
+          echo "OK: No duplicate constraints found"
+
+  # ── Step 3: Deploy (only runs if build-check and db-check pass) ───────────
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-check, db-check]
     steps:
       - name: Trigger Frontend redeploy on Coolify
         uses: fjogeleit/http-request-action@v1

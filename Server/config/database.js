@@ -144,14 +144,19 @@ const connectPostgreSQL = async () => {
       logger.debug('Chat tables setup completed');
     }
 
-    // Only sync database if explicitly enabled via environment variable
-    // This prevents the database from being modified on every server restart
+    // NEVER run sync({ alter: true }) in production — it recreates duplicate
+    // UNIQUE constraints on every deploy, causing catastrophic index bloat.
+    // Use SQL migration files for schema changes instead.
     if (process.env.SYNC_DATABASE === 'true') {
-      logger.info('Database sync enabled via SYNC_DATABASE=true');
-      await postgresDB.sync({ alter: true });
-      logger.info('PostgreSQL models synchronized');
-    } else if (process.env.NODE_ENV === 'development') {
-      logger.info('Database sync disabled (set SYNC_DATABASE=true to enable)');
+      if (process.env.NODE_ENV === 'production') {
+        logger.warn('SYNC_DATABASE=true is set but NODE_ENV=production — sync blocked to prevent duplicate constraint bloat. Remove SYNC_DATABASE from production env vars.');
+      } else {
+        logger.info('Database sync enabled via SYNC_DATABASE=true (development only)');
+        await postgresDB.sync({ alter: true });
+        logger.info('PostgreSQL models synchronized');
+      }
+    } else {
+      logger.info('Database sync disabled — schema managed via migrations');
     }
 
     return postgresDB;
