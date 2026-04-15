@@ -65,11 +65,11 @@ const RingPricingTestPage: React.FC = () => {
     const fetchRings = async () => {
       try {
         setLoadingRings(true);
-        const res = await fetch(`${API_BASE_URL}/products?category=engagement-rings&limit=200`);
+        const res = await fetch(`${API_BASE_URL}/products?limit=500`);
         const data = await res.json();
-        const list = data.data?.products || data.products || data.data || [];
+        const list = data.data?.products || data.products || (Array.isArray(data.data) ? data.data : []);
         const items: Ring[] = (Array.isArray(list) ? list : []).filter(
-          (p: Ring) => p.sku && p.sku.startsWith('BJ-')
+          (p: Ring) => p.sku && p.sku.toUpperCase().startsWith('BJ-')
         );
         items.sort((a, b) => a.sku.localeCompare(b.sku, undefined, { numeric: true }));
         setRings(items);
