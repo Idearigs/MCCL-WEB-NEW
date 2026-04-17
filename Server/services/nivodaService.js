@@ -3,10 +3,9 @@ const axios = require('axios');
 const NIVODA_STAGING_URL = 'https://intg-customer-staging.nivodaapi.net/api/diamonds';
 const NIVODA_PROD_URL    = 'https://integrations.nivoda.net/api/diamonds';
 
-// Switch to NIVODA_PROD_URL + real credentials once Nivoda enables production access
-const NIVODA_API_URL   = NIVODA_STAGING_URL;
-const STAGING_EMAIL    = 'testaccount@sample.com';
-const STAGING_PASSWORD = 'staging-nivoda-22';
+const NIVODA_API_URL   = NIVODA_PROD_URL;
+const STAGING_EMAIL    = 'has@mccullochjeweilers.co.uk';
+const STAGING_PASSWORD = '31Ashana';
 
 class NivodaService {
   constructor() {
