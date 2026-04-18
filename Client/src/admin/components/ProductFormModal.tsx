@@ -170,6 +170,46 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [nivodaLoading, setNivodaLoading] = useState(false);
   const [nivodaError, setNivodaError] = useState<string | null>(null);
 
+  // Live market price state
+  const [marketPrice, setMarketPrice] = useState<{
+    min: number; avg: number; max: number; count: number;
+    specs: { carat: string; clarity: string; color: string; cut: string };
+  } | null>(null);
+  const [marketPriceLoading, setMarketPriceLoading] = useState(false);
+  const [marketPriceError, setMarketPriceError] = useState<string | null>(null);
+
+  const checkMarketPrice = async () => {
+    const cfg = formData.nivoda_options_config;
+    const carat = cfg?.caratRange
+      ? ((cfg.caratRange.min + cfg.caratRange.max) / 2).toFixed(2)
+      : '1.00';
+    const clarity = cfg?.clarityOptions?.[0] || 'VS1';
+    const color   = cfg?.colourOptions?.[0]  || 'G';
+    const cut     = cfg?.cutOptions?.[0]     || 'EX';
+
+    setMarketPriceLoading(true);
+    setMarketPriceError(null);
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/nivoda/diamonds/price-suggestions?carat=${carat}&clarity=${clarity}&color=${color}&cut=${cut}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'Failed to fetch prices');
+      setMarketPrice({
+        min: json.data.prices.min,
+        avg: json.data.prices.avg,
+        max: json.data.prices.max,
+        count: json.data.count,
+        specs: { carat, clarity, color, cut },
+      });
+    } catch (e: any) {
+      setMarketPriceError(e.message);
+    } finally {
+      setMarketPriceLoading(false);
+    }
+  };
+
   // Function to fetch available Nivoda options
   const fetchNivodaOptions = async () => {
     setNivodaLoading(true);
@@ -2195,6 +2235,82 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       </p>
                     </div>
                   )}
+
+                  {/* Live Market Price */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900 font-satoshi">Live Market Price</h4>
+                        <p className="text-xs text-gray-500 font-satoshi mt-0.5">
+                          Check current Nivoda prices using this ring's configured specs
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={checkMarketPrice}
+                        disabled={marketPriceLoading}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-satoshi rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                      >
+                        {marketPriceLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        )}
+                        {marketPriceLoading ? 'Fetching...' : 'Check Live Price'}
+                      </button>
+                    </div>
+
+                    {marketPriceError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-satoshi">
+                        {marketPriceError}
+                      </div>
+                    )}
+
+                    {marketPrice && !marketPriceLoading && (
+                      <div className="space-y-3">
+                        {/* Specs used */}
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(marketPrice.specs).map(([k, v]) => (
+                            <span key={k} className="px-2 py-1 bg-gray-100 rounded text-xs font-satoshi text-gray-600 capitalize">
+                              {k}: <strong>{v}</strong>
+                            </span>
+                          ))}
+                          <span className="px-2 py-1 bg-blue-50 rounded text-xs font-satoshi text-blue-700">
+                            {marketPrice.count} matching diamond{marketPrice.count !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+
+                        {/* Price cards */}
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                            <p className="text-xs text-gray-500 font-satoshi mb-1">From</p>
+                            <p className="text-xl font-bold text-gray-900 font-satoshi">£{marketPrice.min.toLocaleString()}</p>
+                          </div>
+                          <div className="bg-gray-900 border border-gray-900 rounded-xl p-4 text-center">
+                            <p className="text-xs text-gray-400 font-satoshi mb-1">Average</p>
+                            <p className="text-xl font-bold text-white font-satoshi">£{marketPrice.avg.toLocaleString()}</p>
+                          </div>
+                          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                            <p className="text-xs text-gray-500 font-satoshi mb-1">Up to</p>
+                            <p className="text-xl font-bold text-gray-900 font-satoshi">£{marketPrice.max.toLocaleString()}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400 font-satoshi">
+                          Prices converted from USD · Updated live from Nivoda production API
+                        </p>
+                      </div>
+                    )}
+
+                    {!marketPrice && !marketPriceLoading && !marketPriceError && (
+                      <div className="p-6 border-2 border-dashed border-gray-200 rounded-xl text-center">
+                        <p className="text-sm text-gray-400 font-satoshi">
+                          Click "Check Live Price" to see current market prices for this ring's diamond specs
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </div>
