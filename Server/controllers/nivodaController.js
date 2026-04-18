@@ -11,59 +11,21 @@ const { centsToGBP, summarisePrices } = require('../services/pricingService');
  * Returns available carat weights, clarities, colors, cuts based on Nivoda API documentation
  * Note: The Nivoda API doesn't return spec values in the response, so we use documented filter values
  */
-async function getAvailableOptions(req, res) {
-  try {
-    // Test API connectivity by making a simple query
-    await nivodaService.searchDiamonds({
-      minCarat: 0.5,
-      maxCarat: 1,
-      limit: 1,
-      offset: 0
-    });
+function getAvailableOptions(req, res) {
+  const availableOptions = {
+    carats: ['0.5', '0.75', '1.0', '1.25', '1.5', '1.75', '2.0', '2.5', '3.0', '5.0', '10.0'],
+    clarities: ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'SI3', 'I1', 'I2', 'I3'],
+    colours: ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'],
+    cuts: ['EX', 'VG', 'G', 'F'],
+    stoneTypes: ['Natural', 'Lab-Grown']
+  };
 
-    // Return available options based on Nivoda API documentation
-    const availableOptions = {
-      // Carat weights - common options
-      carats: ['0.5', '0.75', '1.0', '1.25', '1.5', '1.75', '2.0', '2.5', '3.0', '5.0', '10.0'],
-
-      // Diamond Clarity grades (from GIA scale)
-      clarities: ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'SI3', 'I1', 'I2', 'I3'],
-
-      // Diamond Color grades (from GIA scale)
-      colours: ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'],
-
-      // Diamond Cut grades (VALID Nivoda values only)
-      cuts: ['EX', 'VG', 'G', 'F'],
-
-      // Stone type
-      stoneTypes: ['Natural', 'Lab-Grown']
-    };
-
-    return res.json({
-      success: true,
-      data: availableOptions,
-      message: 'Available Nivoda diamond options (based on API documentation)',
-      source: 'nivoda_documentation'
-    });
-  } catch (error) {
-    console.error('Error fetching available options from Nivoda API:', error);
-    // Fallback to standard options if API fails
-    const fallbackOptions = {
-      carats: ['0.5', '0.75', '1.0', '1.25', '1.5', '1.75', '2.0', '2.5', '3.0', '5.0'],
-      clarities: ['IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'],
-      colours: ['D', 'E', 'F', 'G', 'H', 'I', 'J'],
-      cuts: ['EX', 'VG', 'G', 'F'],
-      stoneTypes: ['Natural', 'Lab-Grown']
-    };
-
-    return res.json({
-      success: true,
-      data: fallbackOptions,
-      message: 'Using fallback standard diamond options',
-      source: 'fallback',
-      error: error.message
-    });
-  }
+  return res.json({
+    success: true,
+    data: availableOptions,
+    message: 'Available Nivoda diamond options (based on GIA documentation)',
+    source: 'nivoda_documentation'
+  });
 }
 
 /**
