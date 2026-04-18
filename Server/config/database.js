@@ -44,7 +44,7 @@ const connectPostgreSQL = async () => {
 
     // Initialize models BEFORE sync so all models are defined
     const { initializeModels } = require('../models');
-    initializeModels();
+    initializeModels(postgresDB);
     logger.info('Database models initialized');
 
     // Create promotions table if it doesn't exist

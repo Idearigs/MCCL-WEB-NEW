@@ -1,4 +1,5 @@
 const axios = require('axios');
+const cache = require('./cacheService');
 
 const NIVODA_STAGING_URL = 'https://intg-customer-staging.nivodaapi.net/api/diamonds';
 const NIVODA_PROD_URL    = 'https://integrations.nivoda.net/api/diamonds';
@@ -41,6 +42,11 @@ class NivodaService {
    * Divide by 100 in the controller to get pounds.
    */
   async searchDiamonds(filters = {}, email = STAGING_EMAIL, password = STAGING_PASSWORD) {
+    // Cache key based on all filter params — 2 hour TTL (prices refresh daily)
+    const cacheKey = `nivoda:diamonds:${JSON.stringify(filters)}`;
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
+
     try {
       const token = await this.ensureToken(email, password);
 
@@ -99,7 +105,9 @@ class NivodaService {
         throw new Error(response.data.errors[0].message);
       }
 
-      return response.data.data.as.diamonds_by_query;
+      const result = response.data.data.as.diamonds_by_query;
+      await cache.set(cacheKey, result, 2 * 60 * 60); // 2 hours
+      return result;
     } catch (error) {
       console.error('❌ Diamond Search Failed:', error.message);
       if (error.response?.data) {

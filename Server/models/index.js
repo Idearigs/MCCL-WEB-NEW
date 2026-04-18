@@ -1,11 +1,9 @@
 const { DataTypes } = require('sequelize');
-const { postgresDB } = require('../config/database');
 
 let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage, DiamondSizes, ProductDiamondSizes, ChatLabel, ChatLabelAssignment;
 
-const initializeModels = () => {
-  const sequelize = postgresDB();
-
+// Accepts the sequelize instance directly so models never need to require config/database
+const initializeModels = (sequelize) => {
   if (!sequelize) {
     throw new Error('Database connection not available');
   }
@@ -1330,6 +1328,14 @@ const initializeModels = () => {
   if (jewelryModels && jewelryModels.JewelrySubType) {
     jewelryModels.JewelrySubType.hasMany(Product, { foreignKey: 'jewelry_sub_type_id', as: 'products' });
     Product.belongsTo(jewelryModels.JewelrySubType, { foreignKey: 'jewelry_sub_type_id', as: 'jewelrySubType' });
+  }
+
+  // Set up OrderItem <-> Product association (after all models are defined)
+  const { getOrderModels } = require('./orderModels');
+  const orderModelsRef = getOrderModels();
+  if (orderModelsRef.OrderItem && Product && !orderModelsRef.OrderItem.associations?.product) {
+    orderModelsRef.OrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+    Product.hasMany(orderModelsRef.OrderItem, { foreignKey: 'product_id', as: 'orderItems' });
   }
 
   return {

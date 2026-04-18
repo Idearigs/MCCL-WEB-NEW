@@ -68,9 +68,9 @@ const AuthCallback      = lazy(() => import("./pages/AuthCallback"));
 // Admin (largest chunk — always lazy)
 const AdminApp          = lazy(() => import("./admin/AdminApp"));
 
-// Testing
-const NivodaTestingPage = lazy(() => import("./pages/NivodaTestingPage"));
-const RingPricingTestPage = lazy(() => import("./pages/RingPricingTestPage"));
+// Dev-only test pages — not included in production bundle
+const NivodaTestingPage = import.meta.env.DEV ? lazy(() => import("./pages/NivodaTestingPage")) : null;
+const RingPricingTestPage = import.meta.env.DEV ? lazy(() => import("./pages/RingPricingTestPage")) : null;
 
 // ── Loading fallback ───────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -176,8 +176,8 @@ const App = () => (
                   <Route path="/admin/*" element={<AdminApp />} />
 
                   {/* Testing */}
-                  <Route path="/test/nivoda" element={<NivodaTestingPage />} />
-                  <Route path="/test/ring-pricing" element={<RingPricingTestPage />} />
+                  {import.meta.env.DEV && NivodaTestingPage && <Route path="/test/nivoda" element={<NivodaTestingPage />} />}
+                  {import.meta.env.DEV && RingPricingTestPage && <Route path="/test/ring-pricing" element={<RingPricingTestPage />} />}
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>
