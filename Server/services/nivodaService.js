@@ -4,7 +4,7 @@ const NIVODA_STAGING_URL = 'https://intg-customer-staging.nivodaapi.net/api/diam
 const NIVODA_PROD_URL    = 'https://integrations.nivoda.net/api/diamonds';
 
 const NIVODA_API_URL   = NIVODA_PROD_URL;
-const STAGING_EMAIL    = 'has@mccullochjeweilers.co.uk';
+const STAGING_EMAIL    = 'has@mccullochjewellers.co.uk';
 const STAGING_PASSWORD = '31Ashana';
 
 class NivodaService {
