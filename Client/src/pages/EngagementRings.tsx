@@ -68,13 +68,11 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
   const [selectedMetalId, setSelectedMetalId] = useState<string | null>(null);
   const metals = product.available_metals || [];
 
-  // Get the active metal id (selected or from primary image)
   const activeMetalId = selectedMetalId
     || (product.images?.find(img => img.is_primary)?.metal_id)
     || (product.images?.[0]?.metal_id)
     || null;
 
-  // Get images filtered by the active metal
   const metalImages = activeMetalId
     ? (product.images?.filter(img => img.metal_id === activeMetalId) || [])
         .sort((a, b) => {
@@ -88,25 +86,18 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
   const hoverImage = metalImages.length > 1 ? metalImages[1] : primaryImage;
 
   return (
-    <div className="bg-white transition-all duration-300">
-      <Link
-        to={`/${product.category.slug}/${product.slug}`}
-        className="group cursor-pointer block"
-      >
-        <div className="relative bg-gray-50 overflow-hidden mx-1 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
-          <div className="absolute top-3 right-3 z-20">
-            <FavoriteButton
-              productId={product.id}
-              productName={product.name}
-              size="sm"
-            />
+    <div className="bg-white transition-all duration-300 pb-2">
+      <Link to={`/${product.category.slug}/${product.slug}`} className="group cursor-pointer block">
+        <div className="relative bg-white overflow-hidden" style={{ aspectRatio: '1', height: 'auto' }}>
+          <div className="absolute top-2 right-2 lg:top-3 lg:right-3 z-20">
+            <FavoriteButton productId={product.id} productName={product.name} size="sm" />
           </div>
 
           {/* Default Image */}
           <img
             src={primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png"}
             alt={primaryImage?.alt || product.name}
-            className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
+            className="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-0"
             loading="lazy"
           />
 
@@ -114,76 +105,59 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
           <img
             src={hoverImage?.url ? getMediaUrl(hoverImage.url) : (primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png")}
             alt={hoverImage?.alt || `${product.name} - Alternative View`}
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100"
             loading="lazy"
           />
 
-          {/* Hover Overlay */}
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-            <div className="absolute top-1/2 right-4 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0 translate-x-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
-              </svg>
-            </div>
+          {/* Hover Overlay — desktop only */}
+          <div className="hidden lg:flex absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-col justify-end p-4">
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              className="w-full bg-white/95 backdrop-blur-sm text-gray-700 hover:text-white hover:bg-black py-3 px-4 font-inter font-light text-sm tracking-wider uppercase transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              className="w-full bg-white/95 backdrop-blur-sm text-gray-700 hover:text-white hover:bg-black py-3 px-4 font-inter font-light text-sm tracking-wider uppercase transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 delay-75"
             >
               ADD TO BAG
             </button>
           </div>
         </div>
       </Link>
-      <div className="p-4">
+
+      {/* Card info */}
+      <div className="pt-3 pb-4 px-1 lg:px-2">
         <Link to={`/${product.category.slug}/${product.slug}`}>
-          <h3 className="text-base font-cormorant font-normal text-gray-700 mb-2 leading-tight">{product.name}</h3>
+          <h3 className="text-base lg:text-lg font-cormorant font-normal text-gray-800 mb-1 leading-snug">{product.name}</h3>
         </Link>
-        {/* Metal Options - Thumbnail Selector */}
+        <p className="text-base lg:text-lg font-cormorant font-light text-gray-600 mb-2 lg:mb-3">{product.price}</p>
+
+        {/* Metal swatches — desktop only */}
         {metals.length > 0 && (
-          <div className="mb-2">
-            <p className="text-[9px] font-inter font-light tracking-[0.15em] text-gray-500 uppercase mb-2">
-              Metal:{' '}
-              <span className="text-gray-700">
-                {(metals.find(m => m.id === activeMetalId) || metals[0])?.name || ''}
-              </span>
-            </p>
-            <div className="flex items-center gap-1.5">
-              {metals.map((metal) => {
-                const thumbImg = product.images?.find(
-                  img => img.is_metal_preview === true && img.metal_id === metal.id
-                ) || product.images?.find(img => img.is_primary) || product.images?.[0];
-                const isActive = activeMetalId === metal.id;
-                return (
-                  <button
-                    key={metal.id}
-                    onClick={() => setSelectedMetalId(metal.id)}
-                    title={metal.name}
-                    className={`w-12 h-12 overflow-hidden flex-shrink-0 transition-all duration-200 ${
-                      isActive
-                        ? 'ring-2 ring-gray-800 ring-offset-1'
-                        : 'ring-1 ring-gray-200 opacity-60 hover:opacity-100 hover:ring-gray-400'
-                    }`}
-                  >
-                    {thumbImg ? (
-                      <img
-                        src={getMediaUrl(thumbImg.url)}
-                        alt={metal.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full" style={{ backgroundColor: metal.color_code || '#ccc' }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="hidden lg:flex items-center gap-1.5">
+            {metals.map((metal) => {
+              const thumbImg = product.images?.find(
+                img => img.is_metal_preview === true && img.metal_id === metal.id
+              ) || product.images?.find(img => img.is_primary) || product.images?.[0];
+              const isActive = activeMetalId === metal.id;
+              return (
+                <button
+                  key={metal.id}
+                  onClick={() => setSelectedMetalId(metal.id)}
+                  title={metal.name}
+                  className={`flex-shrink-0 overflow-hidden transition-all duration-200 w-10 h-10 ${
+                    isActive ? 'ring-2 ring-gray-800 ring-offset-1' : 'ring-1 ring-gray-200 opacity-50 hover:opacity-100 hover:ring-gray-400'
+                  }`}
+                >
+                  {thumbImg ? (
+                    <img src={getMediaUrl(thumbImg.url)} alt={metal.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full" style={{ backgroundColor: metal.color_code || '#ccc' }} />
+                  )}
+                </button>
+              );
+            })}
+            <span className="ml-1 text-[9px] font-inter font-light tracking-widest text-gray-400 uppercase">
+              {(metals.find(m => m.id === activeMetalId) || metals[0])?.name || ''}
+            </span>
           </div>
         )}
-        <p className="text-lg font-cormorant font-medium text-gray-600">{product.price}</p>
-        <p className="text-sm text-gray-500 font-cormorant">{product.description || 'Exquisite Engagement Ring'}</p>
       </div>
     </div>
   );
@@ -295,7 +269,9 @@ const EngagementRings = (): JSX.Element => {
 
         // Build server-side filter params
         const params = new URLSearchParams();
-        params.set('category', 'rings');
+        params.set('category', 'engagement-rings');
+        params.set('sort', 'sort_order');
+        params.set('order', 'asc');
         params.set('page', String(currentPage));
         params.set('limit', '24');
 

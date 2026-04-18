@@ -125,10 +125,18 @@ const getAllProducts = asyncHandler(async (req, res) => {
     });
   }
 
-  // Category filter
+  // Category filter — include products from child categories too
   if (category) {
-    include[0].where = { slug: category };
-    include[0].required = true;
+    const catRow = await Category.findOne({ where: { slug: category, is_active: true }, attributes: ['id'] });
+    if (catRow) {
+      const children = await Category.findAll({ where: { parent_id: catRow.id, is_active: true }, attributes: ['id'] });
+      const categoryIds = [catRow.id, ...children.map(c => c.id)];
+      whereClause.category_id = { [Op.in]: categoryIds };
+    } else {
+      // slug not found — force empty result
+      whereClause.category_id = null;
+    }
+    include[0].required = false;
   }
 
   // Collection filter
@@ -200,15 +208,17 @@ const getAllProducts = asyncHandler(async (req, res) => {
   // Sorting
   const orderBy = [];
   if (sort === 'price') {
-    orderBy.push(['base_price', order.toUpperCase()]);
+    orderBy.push(['base_price', order.toUpperCase()], ['slug', 'ASC']);
   } else if (sort === 'name') {
     orderBy.push(['name', order.toUpperCase()]);
   } else if (sort === 'featured') {
-    orderBy.push(['is_featured', 'DESC'], ['created_at', 'DESC']);
+    orderBy.push(['is_featured', 'DESC'], ['sort_order', 'ASC'], ['slug', 'ASC']);
   } else if (sort === 'sort_order') {
-    orderBy.push(['sort_order', order.toUpperCase()]);
+    orderBy.push(['sort_order', order.toUpperCase()], ['slug', 'ASC']);
+  } else if (sort === 'updated_at') {
+    orderBy.push(['updated_at', order.toUpperCase()], ['sort_order', 'ASC'], ['slug', 'ASC']);
   } else {
-    orderBy.push(['created_at', order.toUpperCase()]);
+    orderBy.push(['created_at', order.toUpperCase()], ['sort_order', 'ASC'], ['slug', 'ASC']);
   }
 
   const { count, rows: products } = await Product.findAndCountAll({
@@ -326,7 +336,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       {
         model: ProductVariant,
         as: 'variants',
-        attributes: ['id', 'variant_name', 'price_adjustment', 'metal_type', 'metal_color', 'size', 'gemstone_type', 'gemstone_carat', 'stock_quantity'],
+        attributes: ['id', 'sku', 'variant_name', 'price', 'price_adjustment', 'metal_type', 'metal_id', 'metal_color', 'size', 'mm_width', 'carat_weight', 'ai_description', 'gemstone_type', 'gemstone_carat', 'stock_quantity'],
         where: { is_active: true },
         required: false
       },
@@ -494,13 +504,21 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     certificate: product.certificate,
     nivoda_options_config: product.nivoda_options_config,
     images: mediaItems,
+    jewelry_sub_type_id: product.jewelry_sub_type_id || null,
     variants: product.variants.map(variant => ({
       id: variant.id,
+      sku: variant.sku,
       name: variant.variant_name,
+      variant_name: variant.variant_name,
+      price: variant.price ? parseFloat(variant.price) : null,
       price_adjustment: parseFloat(variant.price_adjustment),
       metal_type: variant.metal_type,
+      metal_id: variant.metal_id,
       metal_color: variant.metal_color,
       size: variant.size,
+      mm_width: variant.mm_width ? parseFloat(variant.mm_width) : null,
+      carat_weight: variant.carat_weight ? parseFloat(variant.carat_weight) : null,
+      ai_description: variant.ai_description || null,
       gemstone_type: variant.gemstone_type,
       gemstone_carat: variant.gemstone_carat,
       stock_quantity: variant.stock_quantity
