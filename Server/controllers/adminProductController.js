@@ -1,79 +1,14 @@
 const { getModels } = require('../models');
 const { Op } = require('sequelize');
-const { generateFileUrl } = require('../middleware/upload');
-const path = require('path');
+const { generateUniqueSlug, generateSKU, parseNivodaConfig } = require('../services/productHelpers');
+const { processUploadedFiles, applyMetalPreviewUpdates } = require('../services/imageService');
 
-// Helper function to get models
 const getModelInstance = () => {
   const models = getModels();
   if (!models.Product || !models.Category || !models.Collection || !models.ProductImage || !models.ProductVideo || !models.ProductVariant || !models.ProductMetals || !models.ProductSizes || !models.RingTypes || !models.StoneShapes || !models.StoneTypes) {
     throw new Error('Models not initialized properly');
   }
   return models;
-};
-
-// Helper function to generate slug
-const generateSlug = (name) => {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
-};
-
-// Helper function to generate unique slug
-const generateUniqueSlug = async (name, Product) => {
-  let baseSlug = generateSlug(name);
-  let uniqueSlug = baseSlug;
-  let counter = 1;
-
-  while (true) {
-    const existingProduct = await Product.findOne({ where: { slug: uniqueSlug } });
-    if (!existingProduct) {
-      return uniqueSlug;
-    }
-    uniqueSlug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-};
-
-// Helper function to generate SKU
-const generateSKU = (name, categorySlug) => {
-  const prefix = categorySlug.substring(0, 3).toUpperCase();
-  const namePart = name.substring(0, 5).toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const timestamp = Date.now().toString().slice(-6);
-  return `${prefix}-${namePart}-${timestamp}`;
-};
-
-// Helper function to validate and sanitize Nivoda options
-const validateNivodaOptions = (config) => {
-  if (!config) return null;
-
-  // Valid Nivoda grades based on API documentation
-  const VALID_CUTS = ['EX', 'VG', 'G', 'F'];
-  const VALID_CLARITIES = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'SI3', 'I1', 'I2', 'I3'];
-  const VALID_COLOURS = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
-
-  // Sanitize cut options - remove invalid ones
-  if (config.cutOptions && Array.isArray(config.cutOptions)) {
-    const validCuts = config.cutOptions.filter(cut => VALID_CUTS.includes(cut.toUpperCase()));
-    config.cutOptions = validCuts.map(cut => cut.toUpperCase());
-  }
-
-  // Sanitize clarity options - remove invalid ones
-  if (config.clarityOptions && Array.isArray(config.clarityOptions)) {
-    const validClarities = config.clarityOptions.filter(clarity => VALID_CLARITIES.includes(clarity.toUpperCase()));
-    config.clarityOptions = validClarities.map(clarity => clarity.toUpperCase());
-  }
-
-  // Sanitize colour options - remove invalid ones
-  if (config.colourOptions && Array.isArray(config.colourOptions)) {
-    const validColours = config.colourOptions.filter(colour => VALID_COLOURS.includes(colour.toUpperCase()));
-    config.colourOptions = validColours.map(colour => colour.toUpperCase());
-  }
-
-  return config;
 };
 
 // Get all products with pagination and filters for admin
@@ -145,9 +80,10 @@ const getProducts = async (req, res) => {
           model: ProductImage,
           as: 'images',
           required: false,
-          limit: 1,
-          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order'],
-          order: [['is_primary', 'DESC'], ['sort_order', 'ASC']]
+          separate: true,
+          attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'product_id'],
+          order: [['is_primary', 'DESC'], ['sort_order', 'ASC']],
+          limit: 1
         },
         {
           model: ProductVariant,
@@ -397,15 +333,7 @@ const createProduct = async (req, res) => {
     const slug = await generateUniqueSlug(name, Product);
     const sku = providedSku && providedSku.trim() !== '' ? providedSku.trim() : generateSKU(name, category.slug);
 
-    // Process and validate Nivoda configuration
-    let processedNivodaConfig = null;
-    if (nivoda_options_config) {
-      processedNivodaConfig = typeof nivoda_options_config === 'string'
-        ? JSON.parse(nivoda_options_config)
-        : nivoda_options_config;
-      // Sanitize invalid options
-      processedNivodaConfig = validateNivodaOptions(processedNivodaConfig);
-    }
+    const processedNivodaConfig = parseNivodaConfig(nivoda_options_config);
 
     // Create product
     const product = await Product.create({
@@ -645,13 +573,8 @@ const updateProduct = async (req, res) => {
       updateData.made_on_request_message = null;
     }
 
-    // Handle Nivoda options configuration - convert to JSON if provided and validate
     if (nivoda_options_config) {
-      let parsedConfig = typeof nivoda_options_config === 'string'
-        ? JSON.parse(nivoda_options_config)
-        : nivoda_options_config;
-      // Sanitize invalid options
-      updateData.nivoda_options_config = validateNivodaOptions(parsedConfig);
+      updateData.nivoda_options_config = parseNivodaConfig(nivoda_options_config);
     }
 
     await product.update(updateData);
@@ -748,51 +671,7 @@ const updateProduct = async (req, res) => {
       await Promise.all(relationshipPromises);
     }
 
-    // Handle metal preview updates for existing images
-    if (req.body.metalPreviewUpdates) {
-      const metalPreviewUpdates = req.body.metalPreviewUpdates;
-      console.log('[DEBUG] Received metalPreviewUpdates:', JSON.stringify(metalPreviewUpdates, null, 2));
-
-      for (const metalId of Object.keys(metalPreviewUpdates)) {
-        const imagesToUpdate = metalPreviewUpdates[metalId];
-        console.log(`[DEBUG] Processing metal ${metalId} with ${imagesToUpdate.length} images`);
-
-        // First, reset ALL images for this metal to not be preview
-        await ProductImage.update(
-          { is_metal_preview: false },
-          {
-            where: {
-              product_id: id,
-              metal_id: metalId
-            }
-          }
-        );
-
-        // Then set the selected one as preview
-        for (const imageUpdate of imagesToUpdate) {
-          console.log(`[DEBUG] Image ${imageUpdate.id}: is_metal_preview=${imageUpdate.is_metal_preview}`);
-          if (imageUpdate.is_metal_preview === true && imageUpdate.id) {
-            // First verify the image exists
-            const existingImage = await ProductImage.findByPk(imageUpdate.id);
-            console.log(`[DEBUG] Image ${imageUpdate.id} exists in DB:`, !!existingImage);
-
-            if (existingImage) {
-              const updateResult = await ProductImage.update(
-                { is_metal_preview: true },
-                {
-                  where: {
-                    id: imageUpdate.id
-                  }
-                }
-              );
-              console.log(`[DEBUG] Updated image ${imageUpdate.id} to preview. Rows affected: ${updateResult[0]}`);
-            } else {
-              console.log(`[DEBUG] ERROR: Image ${imageUpdate.id} NOT FOUND in database!`);
-            }
-          }
-        }
-      }
-    }
+    await applyMetalPreviewUpdates(ProductImage, id, req.body.metalPreviewUpdates);
 
     // Fetch updated product with relationships
     const updatedProduct = await Product.findByPk(id, {
@@ -950,81 +829,21 @@ const updateProductWithMedia = async (req, res) => {
       updateData.made_on_request_message = null;
     }
 
-    // Handle Nivoda options configuration - convert to JSON if provided and validate
     if (nivoda_options_config) {
-      let parsedConfig = typeof nivoda_options_config === 'string'
-        ? JSON.parse(nivoda_options_config)
-        : nivoda_options_config;
-      // Sanitize invalid options
-      updateData.nivoda_options_config = validateNivodaOptions(parsedConfig);
+      updateData.nivoda_options_config = parseNivodaConfig(nivoda_options_config);
     }
 
     // Update basic product info
     await product.update(updateData);
 
     // Process uploaded files if any
-    if (req.files && req.files.length > 0) {
-      const promises = [];
-      let imageIndex = 0;
-      let videoIndex = 0;
-
-      // Get current max sort orders
-      const maxImageSort = await ProductImage.max('sort_order', {
-        where: { product_id: product.id }
-      }) || -1;
-
-      const maxVideoSort = await ProductVideo.max('sort_order', {
-        where: { product_id: product.id }
-      }) || -1;
-
-      req.files.forEach(file => {
-        const fileUrl = generateFileUrl(req, path.join('products', file.filename));
-
-        // Extract metal_id from file fieldname if it contains metal-specific data
-        // Format: media_metal_[metalId] for metal-specific uploads
-        let metalId = null;
-        if (file.fieldname && file.fieldname.includes('media_metal_')) {
-          // Extract everything after 'media_metal_'
-          const parts = file.fieldname.split('media_metal_');
-          if (parts.length > 1) {
-            // Clean up the metalId - remove any trailing special characters
-            metalId = parts[1].trim() || null;
-            // Validate it looks like a UUID (basic check)
-            if (metalId && !metalId.match(/^[a-f0-9-]{36}$/i)) {
-              console.warn(`Invalid metal_id format: ${metalId}, treating as general media`);
-              metalId = null;
-            }
-          }
-        }
-
-        if (file.mimetype.startsWith('image/')) {
-          promises.push(
-            ProductImage.create({
-              product_id: product.id,
-              image_url: fileUrl,
-              alt_text: product.name,
-              is_primary: false, // Don't auto-set as primary when updating
-              sort_order: maxImageSort + 1 + imageIndex,
-              metal_id: metalId || null
-            })
-          );
-          imageIndex++;
-        } else if (file.mimetype.startsWith('video/')) {
-          promises.push(
-            ProductVideo.create({
-              product_id: product.id,
-              video_url: fileUrl,
-              title: product.name,
-              sort_order: maxVideoSort + 1 + videoIndex,
-              metal_id: metalId || null
-            })
-          );
-          videoIndex++;
-        }
+    if (req.files?.length) {
+      const imageOffset = (await ProductImage.max('sort_order', { where: { product_id: product.id } }) ?? -1) + 1;
+      const videoOffset = (await ProductVideo.max('sort_order', { where: { product_id: product.id } }) ?? -1) + 1;
+      await processUploadedFiles({
+        req, files: req.files, productId: product.id, productName: product.name,
+        ProductImage, ProductVideo, imageOffset, videoOffset, firstIsMain: false,
       });
-
-      // Execute all media creation promises
-      await Promise.all(promises);
     }
 
     // Fetch updated product with relationships
@@ -1429,86 +1248,10 @@ const createProductWithMedia = async (req, res) => {
 
     // Process uploaded files
     const promises = [];
-
-    if (req.files && req.files.length > 0) {
-      let imageIndex = 0;
-      let videoIndex = 0;
-      const metalImageIndices = {}; // Track image indices for each metal
-
-      console.log(`DEBUG: Processing ${req.files.length} files for product ${product.id}`);
-
-      req.files.forEach(file => {
-        const fileUrl = generateFileUrl(req, path.join('products', file.filename));
-
-        // Extract metal_id from file fieldname if it contains metal-specific data
-        // Format: media_metal_[metalId] for metal-specific uploads
-        let metalId = null;
-        console.log(`DEBUG: Processing file: ${file.originalname}, fieldname: ${file.fieldname}, mimetype: ${file.mimetype}`);
-
-        if (file.fieldname && file.fieldname.includes('media_metal_')) {
-          // Extract everything after 'media_metal_'
-          const parts = file.fieldname.split('media_metal_');
-          console.log(`DEBUG: Split result - parts.length: ${parts.length}, parts[1]: ${parts[1]}`);
-
-          if (parts.length > 1) {
-            // Clean up the metalId - remove any trailing special characters
-            metalId = parts[1].trim() || null;
-            console.log(`DEBUG: Extracted metalId: ${metalId}`);
-
-            // Validate it looks like a UUID (basic check)
-            if (metalId && !metalId.match(/^[a-f0-9-]{36}$/i)) {
-              console.warn(`Invalid metal_id format: ${metalId}, treating as general media`);
-              metalId = null;
-            } else if (metalId) {
-              console.log(`DEBUG: Valid metal_id format: ${metalId}`);
-            }
-          }
-        } else {
-          console.log(`DEBUG: This is a general file (no metal_id)`);
-        }
-
-        if (file.mimetype.startsWith('image/')) {
-          // Initialize metal image index tracker if needed
-          if (metalId && !metalImageIndices[metalId]) {
-            metalImageIndices[metalId] = 0;
-          }
-
-          // Look for is_metal_preview flag in request body
-          let isMetalPreview = false;
-          if (metalId) {
-            const currentMetalImageIndex = metalImageIndices[metalId];
-            const previewFlagKey = `image_metal_${metalId}_${currentMetalImageIndex}_is_metal_preview`;
-            isMetalPreview = req.body[previewFlagKey] === 'true' || req.body[previewFlagKey] === true;
-            console.log(`DEBUG: Checking for ${previewFlagKey} = ${req.body[previewFlagKey]} => ${isMetalPreview}`);
-            metalImageIndices[metalId]++;
-          }
-
-          promises.push(
-            ProductImage.create({
-              product_id: product.id,
-              image_url: fileUrl,
-              alt_text: name,
-              is_primary: imageIndex === 0,
-              sort_order: imageIndex,
-              metal_id: metalId || null,
-              is_metal_preview: isMetalPreview
-            })
-          );
-          imageIndex++;
-        } else if (file.mimetype.startsWith('video/')) {
-          promises.push(
-            ProductVideo.create({
-              product_id: product.id,
-              video_url: fileUrl,
-              title: name,
-              sort_order: videoIndex,
-              metal_id: metalId || null
-            })
-          );
-          videoIndex++;
-        }
-      });
-    }
+    await processUploadedFiles({
+      req, files: req.files, productId: product.id, productName: name,
+      ProductImage, ProductVideo, firstIsMain: true,
+    });
 
     // Create many-to-many relationships
     if (parsedRingTypeIds.length > 0) {

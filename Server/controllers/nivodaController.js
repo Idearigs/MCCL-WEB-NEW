@@ -4,6 +4,7 @@
  */
 
 const nivodaService = require('../services/nivodaService');
+const { centsToGBP, summarisePrices } = require('../services/pricingService');
 
 /**
  * Get available Nivoda diamond options
@@ -147,14 +148,7 @@ async function getDiamondPriceBySuggestions(req, res) {
     }
 
     if (filteredDiamonds.length > 0) {
-      // Nivoda returns price in USD cents — divide by 100 for USD, multiply by 0.79 for GBP
-      const USD_TO_GBP = 0.79;
-      const toPounds = (cents) => Math.round((cents / 100) * USD_TO_GBP);
-
-      const prices = filteredDiamonds.map(d => toPounds(d.price));
-      const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
+      const { min: minPrice, avg: avgPrice, max: maxPrice } = summarisePrices(filteredDiamonds);
 
       return res.json({
         success: true,
@@ -166,11 +160,7 @@ async function getDiamondPriceBySuggestions(req, res) {
             cut: cut || 'N/A',
             certificate: certificate || 'Any'
           },
-          prices: {
-            min: minPrice,
-            avg: Math.round(avgPrice),
-            max: maxPrice
-          },
+          prices: { min: minPrice, avg: avgPrice, max: maxPrice },
           matchingDiamonds: filteredDiamonds,
           count: filteredDiamonds.length
         },
