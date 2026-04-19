@@ -21,7 +21,8 @@ import {
   Megaphone,
   Zap,
   MessageCircle,
-  Gem
+  Gem,
+  FlaskConical
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -62,6 +63,14 @@ const navigation: NavItem[] = [
   { name: 'Watches', href: '/admin/watches', icon: Watch },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
+  {
+    name: 'Tools',
+    icon: FlaskConical,
+    submenu: [
+      { name: 'Nivoda Diamond Search', href: '/admin/tools/nivoda', icon: Diamond },
+      { name: 'Ring Pricing Test', href: '/admin/tools/ring-pricing', icon: Gem },
+    ]
+  },
 ];
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {

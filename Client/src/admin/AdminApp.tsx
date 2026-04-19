@@ -15,6 +15,8 @@ import AdminPromotions from './pages/AdminPromotions';
 import AdminChats from './pages/AdminChats';
 import AdminWeddingRings from './pages/AdminWeddingRings';
 import AdminSettings from './pages/AdminSettings';
+import NivodaTestingPage from '../../pages/NivodaTestingPage';
+import RingPricingTestPage from '../../pages/RingPricingTestPage';
 
 const AdminApp: React.FC = () => {
   return (
@@ -128,6 +130,24 @@ const AdminApp: React.FC = () => {
           element={
             <ProtectedRoute>
               <AdminSettings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tools/nivoda"
+          element={
+            <ProtectedRoute>
+              <NivodaTestingPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tools/ring-pricing"
+          element={
+            <ProtectedRoute>
+              <RingPricingTestPage />
             </ProtectedRoute>
           }
         />
