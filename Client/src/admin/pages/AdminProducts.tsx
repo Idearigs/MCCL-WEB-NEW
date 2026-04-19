@@ -8,6 +8,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import ProductFormModal from '../components/ProductFormModal';
 import ProductViewModal from '../components/ProductViewModal';
 import API_BASE_URL from '../../config/api';
+import { Link } from 'react-router-dom';
 import {
   Package,
   Plus,
@@ -24,6 +25,8 @@ import {
   X,
   Check,
   AlertCircle,
+  Diamond,
+  Gem,
 } from 'lucide-react';
 
 interface Product {
@@ -864,7 +867,7 @@ const AdminProducts: React.FC = () => {
   const resolveImage = (path?: string) => {
     if (!path) return undefined;
     if (path.startsWith('http')) return path;
-    const origin = API_BASE_URL.replace(/\/api\/?$/, '');
+    const origin = API_BASE_URL.replace(/\/api\/.*$/, '').replace(/\/api$/, '');
     return `${origin}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
@@ -893,13 +896,29 @@ const AdminProducts: React.FC = () => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={openCreateForm}
-              className="bg-white text-gray-900 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2 font-satoshi font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <Plus className="h-5 w-5" />
-              <span>Add Product</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              <Link
+                to="/admin/tools/nivoda"
+                className="bg-white/10 text-white border border-white/20 px-4 py-2.5 rounded-xl hover:bg-white/20 transition-all duration-200 flex items-center space-x-2 font-satoshi text-sm"
+              >
+                <Diamond className="h-4 w-4" />
+                <span>Nivoda Search</span>
+              </Link>
+              <Link
+                to="/admin/tools/ring-pricing"
+                className="bg-white/10 text-white border border-white/20 px-4 py-2.5 rounded-xl hover:bg-white/20 transition-all duration-200 flex items-center space-x-2 font-satoshi text-sm"
+              >
+                <Gem className="h-4 w-4" />
+                <span>Ring Pricing</span>
+              </Link>
+              <button
+                onClick={openCreateForm}
+                className="bg-white text-gray-900 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2 font-satoshi font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Add Product</span>
+              </button>
+            </div>
           </div>
         </div>
 
