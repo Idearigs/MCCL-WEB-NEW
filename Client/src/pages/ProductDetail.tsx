@@ -1495,23 +1495,23 @@ const ProductDetail = () => {
             {/* YOUR STONE Section */}
             {(productData?.nivoda_enabled || isEngagementRing) && (
               <div className="mb-5 2xl:mb-6 border-t border-gray-200 pt-4 2xl:pt-5">
-                <h2 className="text-[10px] 2xl:text-xs font-futura-pt font-normal text-gray-500 uppercase tracking-widest mb-4 2xl:mb-5">
+                <h2 className="text-[10px] 2xl:text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-4 2xl:mb-5">
                   Customise Your Stone
                 </h2>
 
                 {/* Stone Type — large pill toggles */}
                 {(productData?.show_stone_type || isEngagementRing) && stoneOptions.stoneType.length > 0 && (
                   <div className="mb-4 2xl:mb-5">
-                    <p className="text-[9px] 2xl:text-[10px] font-futura-pt uppercase tracking-widest text-gray-400 mb-2">Stone Type</p>
+                    <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Stone Type</p>
                     <div className="flex gap-2">
                       {stoneOptions.stoneType.map((option) => (
                         <button
                           key={option.value}
                           onClick={() => handleStoneTypeSelect(option.value as 'natural' | 'lab-grown')}
-                          className={`flex-1 py-2.5 2xl:py-3 text-[10px] 2xl:text-xs font-futura-pt font-normal uppercase tracking-wider border transition-all duration-200 ${
+                          className={`flex-1 py-2.5 2xl:py-3 text-xs 2xl:text-sm font-futura-pt font-normal uppercase tracking-wider border transition-all duration-200 ${
                             selectedStoneType === option.value
                               ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900'
-                              : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-800'
+                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'
                           }`}
                         >
                           {option.label}
@@ -1524,8 +1524,8 @@ const ProductDetail = () => {
                 {/* Carat — range slider */}
                 {(productData?.show_carat || isEngagementRing) && stoneOptions.carat.length > 0 && (
                   <div className="mb-5 2xl:mb-6">
-                    <div className="flex items-baseline justify-between mb-2">
-                      <p className="text-[9px] 2xl:text-[10px] font-futura-pt uppercase tracking-widest text-gray-400">Carat</p>
+                    <div className="flex items-baseline justify-between mb-3">
+                      <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500">Carat</p>
                       <span className="text-sm 2xl:text-base font-futura-pt font-normal text-gray-900">
                         {selectedCarat ? `${selectedCarat} ct` : `${stoneOptions.carat[0]?.value} ct`}
                       </span>
@@ -1538,14 +1538,14 @@ const ProductDetail = () => {
                         step={1}
                         value={stoneOptions.carat.findIndex(c => c.value === selectedCarat) < 0 ? 0 : stoneOptions.carat.findIndex(c => c.value === selectedCarat)}
                         onChange={(e) => handleCaratSelect(stoneOptions.carat[Number(e.target.value)].value)}
-                        className="w-full h-0.5 appearance-none bg-gray-200 rounded-full outline-none cursor-pointer"
+                        className="w-full h-0.5 appearance-none rounded-full outline-none cursor-pointer"
                         style={{
                           background: `linear-gradient(to right, #D4A574 0%, #D4A574 ${(Math.max(0, stoneOptions.carat.findIndex(c => c.value === selectedCarat)) / Math.max(1, stoneOptions.carat.length - 1)) * 100}%, #e5e7eb ${(Math.max(0, stoneOptions.carat.findIndex(c => c.value === selectedCarat)) / Math.max(1, stoneOptions.carat.length - 1)) * 100}%, #e5e7eb 100%)`
                         }}
                       />
-                      <div className="flex justify-between mt-1.5">
-                        <span className="text-[8px] 2xl:text-[9px] font-futura-pt text-gray-400">{stoneOptions.carat[0]?.value} ct</span>
-                        <span className="text-[8px] 2xl:text-[9px] font-futura-pt text-gray-400">{stoneOptions.carat[stoneOptions.carat.length - 1]?.value} ct</span>
+                      <div className="flex justify-between mt-2">
+                        <span className="text-[10px] 2xl:text-xs font-futura-pt text-gray-400">{stoneOptions.carat[0]?.value} ct</span>
+                        <span className="text-[10px] 2xl:text-xs font-futura-pt text-gray-400">{stoneOptions.carat[stoneOptions.carat.length - 1]?.value} ct</span>
                       </div>
                     </div>
                   </div>
@@ -1554,19 +1554,16 @@ const ProductDetail = () => {
                 {/* Clarity — compact chip row */}
                 {(productData?.show_clarity || isEngagementRing) && stoneOptions.clarity.length > 0 && (
                   <div className="mb-4 2xl:mb-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[9px] 2xl:text-[10px] font-futura-pt uppercase tracking-widest text-gray-400">Clarity</p>
-                      {selectedClarity && <span className="text-[10px] 2xl:text-xs font-futura-pt text-[#D4A574]">{selectedClarity}</span>}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 2xl:gap-2">
+                    <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Clarity</p>
+                    <div className="flex flex-wrap gap-2 2xl:gap-2">
                       {stoneOptions.clarity.map((option) => (
                         <button
                           key={option.value}
                           onClick={() => handleClaritySelect(option.value)}
-                          className={`px-2.5 2xl:px-3 py-1 2xl:py-1.5 text-[9px] 2xl:text-[10px] font-futura-pt border transition-all duration-200 ${
+                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs 2xl:text-xs font-futura-pt not-italic border transition-all duration-200 ${
                             selectedClarity === option.value
-                              ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900'
-                              : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-800'
+                              ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium'
+                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'
                           }`}
                         >
                           {option.label}
@@ -1579,19 +1576,16 @@ const ProductDetail = () => {
                 {/* Colour — compact chip row */}
                 {(productData?.show_colour || isEngagementRing) && stoneOptions.colour.length > 0 && (
                   <div className="mb-4 2xl:mb-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[9px] 2xl:text-[10px] font-futura-pt uppercase tracking-widest text-gray-400">Colour</p>
-                      {selectedColour && <span className="text-[10px] 2xl:text-xs font-futura-pt text-[#D4A574]">{selectedColour}</span>}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 2xl:gap-2">
+                    <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Colour</p>
+                    <div className="flex flex-wrap gap-2 2xl:gap-2">
                       {stoneOptions.colour.map((option) => (
                         <button
                           key={option.value}
                           onClick={() => handleColourSelect(option.value)}
-                          className={`px-2.5 2xl:px-3 py-1 2xl:py-1.5 text-[9px] 2xl:text-[10px] font-futura-pt border transition-all duration-200 ${
+                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs 2xl:text-xs font-futura-pt not-italic border transition-all duration-200 ${
                             selectedColour === option.value
-                              ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900'
-                              : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-800'
+                              ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium'
+                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'
                           }`}
                         >
                           {option.label}
@@ -1604,19 +1598,16 @@ const ProductDetail = () => {
                 {/* Cut — compact chip row */}
                 {(productData?.show_cut || isEngagementRing) && stoneOptions.cut.length > 0 && (
                   <div className="mb-4 2xl:mb-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[9px] 2xl:text-[10px] font-futura-pt uppercase tracking-widest text-gray-400">Cut</p>
-                      {selectedCut && <span className="text-[10px] 2xl:text-xs font-futura-pt text-[#D4A574]">{selectedCut}</span>}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 2xl:gap-2">
+                    <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Cut</p>
+                    <div className="flex flex-wrap gap-2 2xl:gap-2">
                       {stoneOptions.cut.map((option) => (
                         <button
                           key={option.value}
                           onClick={() => handleCutSelect(option.value)}
-                          className={`px-2.5 2xl:px-3 py-1 2xl:py-1.5 text-[9px] 2xl:text-[10px] font-futura-pt border transition-all duration-200 ${
+                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs 2xl:text-xs font-futura-pt border transition-all duration-200 ${
                             selectedCut === option.value
-                              ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900'
-                              : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-800'
+                              ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium'
+                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'
                           }`}
                         >
                           {option.label}
@@ -1630,14 +1621,14 @@ const ProductDetail = () => {
                 {productData?.nivoda_enabled && (
                   <div className="mb-4 2xl:mb-5 p-3 2xl:p-4 bg-[#F5EFE6] border border-[#e8d5b7]">
                     {nivodaPriceLoading && (
-                      <div className="text-[10px] 2xl:text-xs font-futura-pt text-gray-500 animate-pulse uppercase tracking-wider">
+                      <div className="text-xs 2xl:text-sm font-futura-pt text-gray-500 animate-pulse uppercase tracking-wider">
                         Calculating price…
                       </div>
                     )}
                     {nivodaPrice && !nivodaPriceLoading && (
                       <div className="space-y-1.5 2xl:space-y-2">
-                        <p className="text-[9px] 2xl:text-[10px] font-futura-pt uppercase tracking-widest text-gray-400 mb-2">Estimated Price</p>
-                        <div className="flex justify-between text-[10px] 2xl:text-xs font-futura-pt">
+                        <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Estimated Price</p>
+                        <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
                           <span className="text-gray-500">From</span>
                           <span className="text-gray-900">£{nivodaPrice.min.toLocaleString()}</span>
                         </div>
@@ -1645,14 +1636,14 @@ const ProductDetail = () => {
                           <span className="text-gray-500">Average</span>
                           <span className="font-medium text-[#D4A574]">£{nivodaPrice.avg.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between text-[10px] 2xl:text-xs font-futura-pt">
+                        <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
                           <span className="text-gray-500">Up to</span>
                           <span className="text-gray-900">£{nivodaPrice.max.toLocaleString()}</span>
                         </div>
                       </div>
                     )}
                     {nivodaPriceError && (
-                      <div className="text-[10px] 2xl:text-xs font-futura-pt text-red-500">
+                      <div className="text-xs 2xl:text-sm font-futura-pt text-red-500">
                         {nivodaPriceError}
                       </div>
                     )}
@@ -1662,8 +1653,8 @@ const ProductDetail = () => {
                 {/* Certificate */}
                 {productData?.show_certificate && productData?.certificate && (
                   <div className="mb-4 2xl:mb-5 flex items-center justify-between">
-                    <span className="text-[9px] 2xl:text-[10px] font-futura-pt uppercase tracking-widest text-gray-400">Certificate</span>
-                    <span className="text-[10px] 2xl:text-xs font-futura-pt text-gray-900">{productData.certificate}</span>
+                    <span className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500">Certificate</span>
+                    <span className="text-xs 2xl:text-sm font-futura-pt text-gray-900">{productData.certificate}</span>
                   </div>
                 )}
               </div>
