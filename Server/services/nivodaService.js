@@ -17,7 +17,7 @@ class NivodaService {
   async authenticate(email = STAGING_EMAIL, password = STAGING_PASSWORD) {
     try {
       const query = `{authenticate{username_and_password(username:"${email}", password:"${password}") {token}}}`;
-      const response = await axios.post(NIVODA_API_URL, { query });
+      const response = await axios.post(NIVODA_API_URL, { query }, { timeout: 15000 });
       if (response.data.errors) throw new Error(response.data.errors[0].message);
       this.token       = response.data.data.authenticate.username_and_password.token;
       this.tokenExpiry = Date.now() + (6 * 60 * 60 * 1000); // 6 hours
@@ -102,7 +102,7 @@ class NivodaService {
         }
       }`;
 
-      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } });
+      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } }, { timeout: 30000 });
 
       if (response.data.errors) {
         console.error('Nivoda GraphQL Errors:', JSON.stringify(response.data.errors, null, 2));

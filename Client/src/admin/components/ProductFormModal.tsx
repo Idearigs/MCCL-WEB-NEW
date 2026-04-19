@@ -209,8 +209,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     setMarketPriceError(null);
     try {
       const res = await fetch(
-        `${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+        `${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params.toString()}`
       );
       if (!res.ok) {
         const errText = await res.text();
