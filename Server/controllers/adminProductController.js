@@ -517,6 +517,7 @@ const updateProduct = async (req, res) => {
       ProductMetals,
       ProductRingTypes,
       ProductStoneShapes,
+      ProductStoneTypes,
       ProductMetalsJunction,
       DiamondSizes,
       ProductDiamondSizes
