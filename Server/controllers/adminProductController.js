@@ -283,6 +283,7 @@ const createProduct = async (req, res) => {
       category_id,
       collection_id,
       ring_type_ids = [],
+      ring_styles = [],
       stone_shape_ids = [],
       stone_type_id = null,
       metal_ids = [],
@@ -362,7 +363,8 @@ const createProduct = async (req, res) => {
       warranty_info,
       meta_title: meta_title || name,
       meta_description: meta_description || short_description,
-      nivoda_options_config: processedNivodaConfig
+      nivoda_options_config: processedNivodaConfig,
+      ring_styles: Array.isArray(ring_styles) ? ring_styles : []
     });
 
     // Create product images if provided

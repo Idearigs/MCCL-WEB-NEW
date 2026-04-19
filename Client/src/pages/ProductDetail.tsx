@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, ChevronUp, Plus, X, Minus, ZoomIn, ZoomOut, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
@@ -48,6 +48,8 @@ const ringSizes = [
 
 const ProductDetail = () => {
   const { productId } = useParams();
+  const location = useLocation();
+  const isEngagementRing = location.pathname.includes('engagement-ring');
   const [selectedMetal, setSelectedMetal] = useState('platinum');
   const [selectedMetalType, setSelectedMetalType] = useState('');
   const [selectedDiamondSize, setSelectedDiamondSize] = useState<string>('');
@@ -195,13 +197,10 @@ const ProductDetail = () => {
           { value: 'natural', label: 'Natural' },
           { value: 'lab-grown', label: 'Lab-Grown' }
         ],
-        carat: allCarats.map(c => ({
-          value: c.toFixed(2),
-          label: c.toFixed(2)
-        })),
-        clarity: [],
-        colour: [],
-        cut: []
+        carat: allCarats.map(c => ({ value: c.toFixed(2), label: `${c.toFixed(2)} ct` })),
+        clarity: ['FL','IF','VVS1','VVS2','VS1','VS2','SI1','SI2'].map(c => ({ value: c, label: c })),
+        colour: ['D','E','F','G','H','I','J','K'].map(c => ({ value: c, label: c })),
+        cut: ['Excellent','Very Good','Good','Fair'].map(c => ({ value: c, label: c }))
       };
     }
 
@@ -965,7 +964,7 @@ const ProductDetail = () => {
         </div>
 
         {/* Mobile YOUR STONE Section */}
-        {productData?.nivoda_enabled && (
+        {(productData?.nivoda_enabled || isEngagementRing) && (
           <div className="mb-4 border-t pt-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider">
@@ -982,7 +981,7 @@ const ProductDetail = () => {
             {expandedSections.yourStone && (
               <div className="space-y-3">
                 {/* Stone Type */}
-                {productData?.show_stone_type && (
+                {(productData?.show_stone_type || isEngagementRing) && (
                   <div>
                     <span className="text-xs font-futura-pt font-medium text-gray-900">Stone Type:</span>
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -1494,7 +1493,7 @@ const ProductDetail = () => {
             </div>
 
             {/* YOUR STONE Section */}
-            {productData?.nivoda_enabled && (
+            {(productData?.nivoda_enabled || isEngagementRing) && (
               <div className="mb-5 2xl:mb-6 border-t border-b border-gray-200 py-4 2xl:py-5">
                 <div className="flex items-center justify-between mb-3 2xl:mb-4">
                   <h2 className="text-[10px] 2xl:text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider">
@@ -1512,7 +1511,7 @@ const ProductDetail = () => {
                 <div>
 
                 {/* Stone Type */}
-                {productData?.show_stone_type && (
+                {(productData?.show_stone_type || isEngagementRing) && (
                   <div className="mb-3 2xl:mb-4">
                     <div className="flex items-center justify-between mb-2 2xl:mb-2">
                       <div className="flex items-center space-x-2">
@@ -1546,7 +1545,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Carat */}
-                {productData?.show_carat && (
+                {(productData?.show_carat || isEngagementRing) && (
                   <div className="mb-3 2xl:mb-4">
                     <div className="flex items-center justify-between mb-2 2xl:mb-2">
                       <div className="flex items-center space-x-2">
@@ -1578,7 +1577,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Clarity */}
-                {productData?.show_clarity && (
+                {(productData?.show_clarity || isEngagementRing) && (
                   <div className="mb-3 2xl:mb-4">
                     <div className="flex items-center justify-between mb-2 2xl:mb-2">
                       <div className="flex items-center space-x-2">
@@ -1610,7 +1609,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Colour */}
-                {productData?.show_colour && (
+                {(productData?.show_colour || isEngagementRing) && (
                   <div className="mb-3 2xl:mb-4">
                     <div className="flex items-center justify-between mb-2 2xl:mb-2">
                       <div className="flex items-center space-x-2">
@@ -1642,7 +1641,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Cut */}
-                {productData?.show_cut && (
+                {(productData?.show_cut || isEngagementRing) && (
                   <div className="mb-3 2xl:mb-4">
                     <div className="flex items-center justify-between mb-2 2xl:mb-2">
                       <div className="flex items-center space-x-2">

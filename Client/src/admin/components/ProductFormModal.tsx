@@ -16,6 +16,7 @@ interface ProductFormData {
   collection_id: string;
   jewelry_sub_type_id: string; // Engagement or Wedding rings
   ring_type_ids: string[];
+  ring_styles: string[];
   stone_shape_ids: string[];
   stone_type_id: string;
   metal_ids: string[];
@@ -110,6 +111,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     collection_id: '',
     jewelry_sub_type_id: '',
     ring_type_ids: [],
+    ring_styles: [],
     stone_shape_ids: [],
     stone_type_id: '',
     metal_ids: [],
@@ -254,6 +256,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         category_id: initialData.category_id || '',
         collection_id: initialData.collection_id || '',
         jewelry_sub_type_id: initialData.jewelry_sub_type_id || '',
+        ring_styles: initialData.ring_styles || [],
         stone_type_id: initialData.gemstones?.[0]?.id || '',
         certificate: initialData.certificate || '',
         description: initialData.description || '',
@@ -294,6 +297,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         collection_id: '',
         jewelry_sub_type_id: '',
         ring_type_ids: [],
+        ring_styles: [],
         stone_shape_ids: [],
         stone_type_id: '',
         metal_ids: [],
@@ -687,6 +691,36 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       <p className="text-xs text-gray-500 mt-1 font-satoshi">
                         Choose the primary stone material (e.g., Natural Diamond, Sapphire, etc.)
                       </p>
+                    </div>
+
+                    {/* Ring Styles */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                        Ring Styles
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {['Solitaire', 'Halo', 'Vintage', 'Modern/Contemporary', 'Bridal Set', 'Shoulder Set', 'Cross Over', 'Wed-fit', '5 Stones', 'Three Stone', 'Cluster', 'Pavé'].map((style) => (
+                          <button
+                            key={style}
+                            type="button"
+                            onClick={() => {
+                              const current = formData.ring_styles || [];
+                              const updated = current.includes(style)
+                                ? current.filter(s => s !== style)
+                                : [...current, style];
+                              handleInputChange('ring_styles', updated);
+                            }}
+                            className={`px-3 py-1.5 text-xs font-satoshi rounded-full border transition-all ${
+                              (formData.ring_styles || []).includes(style)
+                                ? 'bg-gray-900 text-white border-gray-900'
+                                : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'
+                            }`}
+                          >
+                            {style}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 font-satoshi">Select all ring style categories that apply</p>
                     </div>
 
                     {/* Stone Shapes and Metals */}

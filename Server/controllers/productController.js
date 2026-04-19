@@ -493,6 +493,8 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     is_made_on_request: product.is_made_on_request || false,
     made_on_request_lead_time: product.made_on_request_lead_time,
     made_on_request_message: product.made_on_request_message,
+    // Ring Styles
+    ring_styles: product.ring_styles || [],
     // Nivoda Integration Fields
     nivoda_enabled: product.nivoda_enabled,
     show_stone_type: product.show_stone_type,

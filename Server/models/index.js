@@ -259,6 +259,11 @@ const initializeModels = (sequelize) => {
       defaultValue: null,
       comment: 'Nivoda configuration: {stoneType, caratRange, clarityOptions, colourOptions, cutOptions}'
     },
+    ring_styles: {
+      type: DataTypes.ARRAY(DataTypes.TEXT),
+      defaultValue: [],
+      comment: 'Ring style tags: Solitaire, Halo, Vintage, Shoulder Set, etc.'
+    },
     meta_title: {
       type: DataTypes.STRING(200)
     },
