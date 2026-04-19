@@ -84,7 +84,12 @@ async function searchDiamonds(req, res) {
  */
 async function getDiamondPriceBySuggestions(req, res) {
   try {
-    const { carat, clarity, color, cut, certificate } = req.query;
+    const { carat, clarity, color, cut, certificate, stoneType, shape } = req.query;
+
+    const labgrown = stoneType === 'lab-grown';
+
+    // Map our shape name to Nivoda enum (e.g. "Round" -> "ROUND", "Princess" -> "PRINCESS")
+    const shapeNivoda = shape ? shape.toUpperCase().replace(/[\s-]/g, '_') : undefined;
 
     // Build filter with specific specs
     const filters = {
@@ -96,7 +101,9 @@ async function getDiamondPriceBySuggestions(req, res) {
       color: color ? [color] : undefined,
       cut: cut ? [cut] : undefined,
       certificate: certificate ? certificate : undefined,
-      limit: 5
+      labgrown,
+      shape: shapeNivoda,
+      limit: 10
     };
 
     const diamonds = await nivodaService.searchDiamonds(filters);
@@ -120,6 +127,8 @@ async function getDiamondPriceBySuggestions(req, res) {
             clarity: clarity || 'N/A',
             color: color || 'N/A',
             cut: cut || 'N/A',
+            shape: shape || 'Any',
+            stoneType: stoneType || 'natural',
             certificate: certificate || 'Any'
           },
           prices: { min: minPrice, avg: avgPrice, max: maxPrice },

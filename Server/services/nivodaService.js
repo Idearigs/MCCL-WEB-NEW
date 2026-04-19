@@ -58,16 +58,20 @@ class NivodaService {
       const minPriceCents = Math.round((filters.minPrice || 0) * 100);
       const maxPriceCents = Math.round((filters.maxPrice || 5000000) * 100); // default max $50,000
 
+      const labgrown = filters.labgrown === true ? 'true' : 'false';
+      const shapeFilter = filters.shape ? `shape: [${filters.shape.toUpperCase()}]` : '';
+
       const query = `query ($token: String!) {
         as(token: $token) {
           diamonds_by_query(
             query: {
-              labgrown: false
+              labgrown: ${labgrown}
               color:    [${colorArray}]
               clarity:  [${clarityArray}]
               cut:      [${cutArray}]
               sizes:    { from: ${filters.minCarat || 0.5}, to: ${filters.maxCarat || 10} }
               dollar_value: { from: ${minPriceCents}, to: ${maxPriceCents} }
+              ${shapeFilter}
             }
             limit:  ${Math.min(filters.limit || 20, 50)}
             offset: ${filters.offset || 0}

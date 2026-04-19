@@ -184,7 +184,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   // Live market price state
   const [marketPrice, setMarketPrice] = useState<{
     min: number; avg: number; max: number; count: number;
-    specs: { carat: string; clarity: string; color: string; cut: string };
+    specs: Record<string, string>;
   } | null>(null);
   const [marketPriceLoading, setMarketPriceLoading] = useState(false);
   const [marketPriceError, setMarketPriceError] = useState<string | null>(null);
@@ -192,19 +192,30 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const checkMarketPrice = async () => {
     const cfg = formData.nivoda_options_config;
     const ds = cfg?.defaultSpecs;
-    // Prefer admin-configured defaultSpecs; fall back to first available option
-    const carat   = ds?.carat   || (cfg?.caratRange ? cfg.caratRange.min.toFixed(2) : '1.00');
-    const clarity = ds?.clarity || cfg?.clarityOptions?.[0] || 'VS1';
-    const color   = ds?.colour  || cfg?.colourOptions?.[0]  || 'G';
-    const cut     = ds?.cut     || cfg?.cutOptions?.[0]     || 'Excellent';
+    const carat     = ds?.carat   || (cfg?.caratRange ? cfg.caratRange.min.toFixed(2) : '1.00');
+    const clarity   = ds?.clarity || cfg?.clarityOptions?.[0] || 'VS1';
+    const color     = ds?.colour  || cfg?.colourOptions?.[0]  || 'G';
+    const cut       = ds?.cut     || cfg?.cutOptions?.[0]     || 'Excellent';
+    const stoneType = cfg?.stoneType || 'natural';
+
+    // Get first selected stone shape name (if any)
+    const shapeObj = stoneShapes.find(s => formData.stone_shape_ids.includes(s.id));
+    const shape = shapeObj?.name || '';
+
+    const params = new URLSearchParams({ carat, clarity, color, cut, stoneType });
+    if (shape) params.set('shape', shape);
 
     setMarketPriceLoading(true);
     setMarketPriceError(null);
     try {
       const res = await fetch(
-        `${API_BASE_URL}/nivoda/diamonds/price-suggestions?carat=${carat}&clarity=${clarity}&color=${color}&cut=${cut}`,
+        `${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params.toString()}`,
         { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
       );
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Server error ${res.status}: ${errText.slice(0, 200)}`);
+      }
       const json = await res.json();
       if (!json.success) throw new Error(json.error || 'Failed to fetch prices');
       setMarketPrice({
@@ -212,7 +223,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         avg: json.data.prices.avg,
         max: json.data.prices.max,
         count: json.data.count,
-        specs: { carat, clarity, color, cut },
+        specs: json.data.specs,
       });
     } catch (e: any) {
       setMarketPriceError(e.message);
