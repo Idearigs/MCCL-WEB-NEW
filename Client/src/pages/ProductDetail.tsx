@@ -273,17 +273,18 @@ const ProductDetail = () => {
     }
   }, [productData?.nivoda_enabled]);
 
-  // Calculate total price - use Nivoda API price if available, otherwise use base price
-  const calculateTotalPrice = () => {
+  // Mount price parsed from base_price field (the ring without diamond)
+  const mountPrice = (() => {
     if (!productData?.price) return 0;
+    return parseFloat(productData.price.replace(/[^\d.,]/g, '').replace(/,/g, '')) || 0;
+  })();
 
-    if (productData.nivoda_enabled && nivodaPrice) {
-      return nivodaPrice.avg; // Use average price from Nivoda
+  // Calculate total price = mount price + diamond price
+  const calculateTotalPrice = () => {
+    if (productData?.nivoda_enabled && nivodaPrice) {
+      return mountPrice + nivodaPrice.min; // "from" uses minimum diamond price
     }
-
-    // Fallback to base price
-    const priceString = productData.price.replace(/[^\d.,]/g, '').replace(/,/g, '');
-    return parseFloat(priceString) || 0;
+    return mountPrice;
   };
 
   // Fetch user's country based on IP
@@ -353,36 +354,36 @@ const ProductDetail = () => {
 
   // Initialize stone options with default selections when product loads
   useEffect(() => {
-    if (!productData?.nivoda_enabled || !productData?.nivoda_options_config) return;
+    if (!productData) return;
 
     const config = productData.nivoda_options_config;
+    const defaults = config?.defaultSpecs;
 
-    // Set stone type default
-    if (config.stoneType) {
-      setSelectedStoneType(config.stoneType);
-    }
+    if (productData.nivoda_enabled && config) {
+      if (config.stoneType) setSelectedStoneType(config.stoneType);
 
-    // Set default carat (middle of range)
-    if (config.caratRange) {
-      const midCarat = ((config.caratRange.min + config.caratRange.max) / 2).toFixed(2);
-      setSelectedCarat(midCarat);
-    }
+      // Prefer admin-configured defaultSpecs, fall back to first/middle option
+      const carat = defaults?.carat || (config.caratRange
+        ? config.caratRange.min.toFixed(2)
+        : '');
+      if (carat) setSelectedCarat(carat);
 
-    // Set default clarity (first available option)
-    if (config.clarityOptions && config.clarityOptions.length > 0) {
-      setSelectedClarity(config.clarityOptions[0]);
-    }
+      const clarity = defaults?.clarity || (config.clarityOptions?.[0] ?? '');
+      if (clarity) setSelectedClarity(clarity);
 
-    // Set default colour (first available option)
-    if (config.colourOptions && config.colourOptions.length > 0) {
-      setSelectedColour(config.colourOptions[0]);
-    }
+      const colour = defaults?.colour || (config.colourOptions?.[0] ?? '');
+      if (colour) setSelectedColour(colour);
 
-    // Set default cut (first available option)
-    if (config.cutOptions && config.cutOptions.length > 0) {
-      setSelectedCut(config.cutOptions[0]);
+      const cut = defaults?.cut || (config.cutOptions?.[0] ?? '');
+      if (cut) setSelectedCut(cut);
+    } else if (isEngagementRing) {
+      // Non-Nivoda engagement ring: initialise with lowest-cost defaults so section isn't blank
+      setSelectedCarat('0.50');
+      setSelectedClarity('SI2');
+      setSelectedColour('J');
+      setSelectedCut('Good');
     }
-  }, [productData?.nivoda_enabled, productData?.nivoda_options_config]);
+  }, [productData?.id, productData?.nivoda_enabled, isEngagementRing]);
 
   // Fetch price when any selection changes
   useEffect(() => {
@@ -1338,20 +1339,38 @@ const ProductDetail = () => {
                 {productData.name}
               </h1>
               <div className="mb-2 2xl:mb-2">
-                <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
-                  {productData.nivoda_enabled && nivodaPrice
-                    ? `£${nivodaPrice.avg.toLocaleString()}`
-                    : productData.price}
-                </div>
-                {nivodaPriceLoading && (
-                  <div className="text-xs text-gray-500 mb-1">Calculating price...</div>
+                {productData.nivoda_enabled ? (
+                  <div>
+                    {nivodaPriceLoading ? (
+                      <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-400 animate-pulse mb-1">
+                        Calculating…
+                      </div>
+                    ) : nivodaPrice ? (
+                      <div>
+                        <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
+                          From £{(mountPrice + nivodaPrice.min).toLocaleString()}
+                        </div>
+                        <div className="flex flex-col gap-0.5 text-[10px] 2xl:text-xs font-futura-pt text-gray-500">
+                          <span>Ring from £{mountPrice.toLocaleString()} · Diamond from £{nivodaPrice.min.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
+                        {productData.price}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
+                    {productData.price}
+                  </div>
                 )}
                 {userCountry && userCountry !== 'GB' && userCountryName && (
-                  <div className="flex items-start space-x-1.5 text-[11px] 2xl:text-xs text-gray-500 leading-snug">
+                  <div className="flex items-start space-x-1.5 text-[11px] 2xl:text-xs text-gray-500 leading-snug mt-1">
                     <svg className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
-                    <span>We've detected you are browsing from {userCountryName}, please note the UK price for this piece is {productData.nivoda_enabled && nivodaPrice ? `£${nivodaPrice.avg.toLocaleString()}` : productData.price}</span>
+                    <span>We've detected you are browsing from {userCountryName}, please note the UK price for this piece is {productData.nivoda_enabled && nivodaPrice ? `from £${(mountPrice + nivodaPrice.min).toLocaleString()}` : productData.price}</span>
                   </div>
                 )}
               </div>
@@ -1627,18 +1646,23 @@ const ProductDetail = () => {
                     )}
                     {nivodaPrice && !nivodaPriceLoading && (
                       <div className="space-y-1.5 2xl:space-y-2">
-                        <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Estimated Price</p>
+                        <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-3">Price Breakdown</p>
+                        {/* Ring mount price */}
                         <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
-                          <span className="text-gray-500">From</span>
-                          <span className="text-gray-900">£{nivodaPrice.min.toLocaleString()}</span>
+                          <span className="text-gray-500">Ring</span>
+                          <span className="text-gray-700">£{mountPrice.toLocaleString()}</span>
                         </div>
+                        {/* Diamond price range */}
                         <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
-                          <span className="text-gray-500">Average</span>
-                          <span className="font-medium text-[#D4A574]">£{nivodaPrice.avg.toLocaleString()}</span>
+                          <span className="text-gray-500">Diamond (your specs)</span>
+                          <span className="text-gray-700">£{nivodaPrice.min.toLocaleString()} – £{nivodaPrice.max.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
-                          <span className="text-gray-500">Up to</span>
-                          <span className="text-gray-900">£{nivodaPrice.max.toLocaleString()}</span>
+                        {/* Divider */}
+                        <div className="border-t border-[#e8d5b7] pt-1.5 mt-1.5">
+                          <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt font-medium">
+                            <span className="text-gray-900">Total (from)</span>
+                            <span className="text-[#D4A574]">£{(mountPrice + nivodaPrice.min).toLocaleString()}</span>
+                          </div>
                         </div>
                       </div>
                     )}

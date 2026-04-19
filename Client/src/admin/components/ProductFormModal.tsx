@@ -46,11 +46,17 @@ interface ProductFormData {
   certificate: string;
   // Nivoda Options Configuration - CUSTOMER-SELECTABLE RANGES & OPTIONS
   nivoda_options_config?: {
-    stoneType?: 'natural' | 'lab-grown'; // Single selection for customer
-    caratRange?: { min: number; max: number }; // Range slider for customer
-    clarityOptions?: string[]; // Available clarity grades for customer to choose from
-    colourOptions?: string[]; // Available colors for customer to choose from
-    cutOptions?: string[]; // Available cuts for customer to choose from
+    stoneType?: 'natural' | 'lab-grown';
+    caratRange?: { min: number; max: number };
+    clarityOptions?: string[];
+    colourOptions?: string[];
+    cutOptions?: string[];
+    defaultSpecs?: {
+      carat?: string;
+      clarity?: string;
+      colour?: string;
+      cut?: string;
+    };
   };
   images: Array<{ file: File | null; url: string; alt_text: string }>;
   videos: Array<{ file: File | null; url: string; title: string }>;
@@ -145,7 +151,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       caratRange: { min: 0.5, max: 2.0 },
       clarityOptions: [],
       colourOptions: [],
-      cutOptions: []
+      cutOptions: [],
+      defaultSpecs: { carat: '', clarity: '', colour: '', cut: '' }
     },
     images: [],
     videos: [],
@@ -280,7 +287,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           caratRange: initialData.nivoda_options_config?.caratRange || { min: 0.5, max: 2.0 },
           clarityOptions: initialData.nivoda_options_config?.clarityOptions || [],
           colourOptions: initialData.nivoda_options_config?.colourOptions || [],
-          cutOptions: initialData.nivoda_options_config?.cutOptions || []
+          cutOptions: initialData.nivoda_options_config?.cutOptions || [],
+          defaultSpecs: initialData.nivoda_options_config?.defaultSpecs || { carat: '', clarity: '', colour: '', cut: '' }
         }
       });
     } else {
@@ -2202,6 +2210,88 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             </p>
                           </div>
                         )}
+
+                        {/* Default Diamond Specs — Base Price Configuration */}
+                        <div className="border border-amber-200 rounded-lg p-4 bg-amber-50">
+                          <label className="text-sm font-semibold text-gray-900 mb-1 block font-satoshi">
+                            Base Price Configuration
+                          </label>
+                          <p className="text-xs text-gray-600 mb-4 font-satoshi">
+                            Choose the default diamond specs shown to customers before they customise. Pick the lowest-priced combination (e.g. Good cut, J colour, SI2 clarity, smallest carat) — this sets the "starting from" price on the product page.
+                          </p>
+                          <div className="grid grid-cols-2 gap-3">
+                            {formData.show_carat && (
+                              <div>
+                                <label className="text-xs text-gray-600 font-satoshi mb-1 block">Default Carat</label>
+                                <select
+                                  value={formData.nivoda_options_config?.defaultSpecs?.carat || ''}
+                                  onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, defaultSpecs: { ...formData.nivoda_options_config?.defaultSpecs, carat: e.target.value } } })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                >
+                                  <option value="">Select carat</option>
+                                  {[0.5,0.75,1.0,1.25,1.5,1.75,2.0,2.5,3.0,5.0,10.0]
+                                    .filter(c => {
+                                      const r = formData.nivoda_options_config?.caratRange;
+                                      return r ? c >= r.min && c <= r.max : true;
+                                    })
+                                    .map(c => (
+                                      <option key={c} value={c.toFixed(2)}>{c.toFixed(2)} ct</option>
+                                    ))}
+                                </select>
+                              </div>
+                            )}
+                            {formData.show_clarity && (formData.nivoda_options_config?.clarityOptions || []).length > 0 && (
+                              <div>
+                                <label className="text-xs text-gray-600 font-satoshi mb-1 block">Default Clarity</label>
+                                <select
+                                  value={formData.nivoda_options_config?.defaultSpecs?.clarity || ''}
+                                  onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, defaultSpecs: { ...formData.nivoda_options_config?.defaultSpecs, clarity: e.target.value } } })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                >
+                                  <option value="">Select clarity</option>
+                                  {(formData.nivoda_options_config?.clarityOptions || []).map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                            {formData.show_colour && (formData.nivoda_options_config?.colourOptions || []).length > 0 && (
+                              <div>
+                                <label className="text-xs text-gray-600 font-satoshi mb-1 block">Default Colour</label>
+                                <select
+                                  value={formData.nivoda_options_config?.defaultSpecs?.colour || ''}
+                                  onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, defaultSpecs: { ...formData.nivoda_options_config?.defaultSpecs, colour: e.target.value } } })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                >
+                                  <option value="">Select colour</option>
+                                  {(formData.nivoda_options_config?.colourOptions || []).map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                            {formData.show_cut && (formData.nivoda_options_config?.cutOptions || []).length > 0 && (
+                              <div>
+                                <label className="text-xs text-gray-600 font-satoshi mb-1 block">Default Cut</label>
+                                <select
+                                  value={formData.nivoda_options_config?.defaultSpecs?.cut || ''}
+                                  onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, defaultSpecs: { ...formData.nivoda_options_config?.defaultSpecs, cut: e.target.value } } })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                >
+                                  <option value="">Select cut</option>
+                                  {(formData.nivoda_options_config?.cutOptions || []).map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                          </div>
+                          {formData.nivoda_options_config?.defaultSpecs?.carat && (
+                            <p className="text-xs text-amber-700 mt-3 font-satoshi">
+                              Base price will be: Ring price + Nivoda price for {formData.nivoda_options_config.defaultSpecs.carat}ct / {formData.nivoda_options_config.defaultSpecs.clarity || '—'} / {formData.nivoda_options_config.defaultSpecs.colour || '—'} / {formData.nivoda_options_config.defaultSpecs.cut || '—'}
+                            </p>
+                          )}
+                        </div>
 
                         {/* Nivoda Configuration Summary */}
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
