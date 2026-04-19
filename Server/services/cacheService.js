@@ -3,21 +3,26 @@ const { logger } = require('../config/database');
 
 let client = null;
 let connected = false;
+let unavailableUntil = 0; // circuit breaker timestamp
 
 const connect = async () => {
   if (connected) return client;
+  // Circuit breaker: if Redis failed recently, skip for 60s
+  if (Date.now() < unavailableUntil) return null;
   try {
     client = createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379',
-      socket: { connectTimeout: 5000, reconnectStrategy: (retries) => Math.min(retries * 500, 5000) }
+      socket: { connectTimeout: 3000, reconnectStrategy: false }
     });
     client.on('error', (err) => logger.warn('Redis error:', err.message));
     await client.connect();
     connected = true;
+    unavailableUntil = 0;
     logger.info('Redis connected');
   } catch (err) {
-    logger.warn('Redis unavailable — caching disabled:', err.message);
+    logger.warn('Redis unavailable — caching disabled for 60s:', err.message);
     client = null;
+    unavailableUntil = Date.now() + 60000;
   }
   return client;
 };
