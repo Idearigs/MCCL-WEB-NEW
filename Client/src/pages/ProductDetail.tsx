@@ -910,7 +910,7 @@ const ProductDetail = () => {
               <button
                 key={option.value}
                 onClick={() => setSelectedMetalType(option.value)}
-                className={`px-4 py-2 border transition-all font-futura-pt text-xs font-medium ${
+                className={`px-4 py-2 border transition-all font-futura-pt text-xs font-light ${
                   selectedMetalType === option.value
                     ? 'border-gray-800 bg-gray-100'
                     : 'border-gray-300'
@@ -1408,7 +1408,7 @@ const ProductDetail = () => {
                   <button
                     key={option.value}
                     onClick={() => setSelectedMetalType(option.value)}
-                    className={`px-4 py-2 border transition-all duration-200 font-futura-pt text-sm font-medium ${
+                    className={`px-4 py-2 border transition-all duration-200 font-futura-pt text-sm font-light ${
                       selectedMetalType === option.value
                         ? 'border-gray-800 bg-gray-100'
                         : 'border-gray-300 hover:border-gray-500'
