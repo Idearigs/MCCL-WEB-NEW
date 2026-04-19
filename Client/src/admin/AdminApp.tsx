@@ -15,8 +15,8 @@ import AdminPromotions from './pages/AdminPromotions';
 import AdminChats from './pages/AdminChats';
 import AdminWeddingRings from './pages/AdminWeddingRings';
 import AdminSettings from './pages/AdminSettings';
-import NivodaTestingPage from '../../pages/NivodaTestingPage';
-import RingPricingTestPage from '../../pages/RingPricingTestPage';
+import NivodaTestingPage from '../pages/NivodaTestingPage';
+import RingPricingTestPage from '../pages/RingPricingTestPage';
 
 const AdminApp: React.FC = () => {
   return (
