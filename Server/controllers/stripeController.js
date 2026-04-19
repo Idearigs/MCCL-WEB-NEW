@@ -3,6 +3,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 const asyncHandler = require('../middleware/asyncHandler');
 const { getModels } = require('../models');
+const { Sequelize } = require('sequelize');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 const { generateOrderNumber } = require('../utils/orderUtils');
 
@@ -225,13 +226,35 @@ const getOrder = asyncHandler(async (req, res) => {
   try {
     const { Order, OrderItem } = getModels();
 
-    // Get order with items (simplified to avoid relationship issues)
+    // Get order with items + first product image via subquery (no association needed)
     const order = await Order.findByPk(orderId, {
       include: [
         {
           model: OrderItem,
           as: 'items',
-          attributes: ['id', 'product_id', 'product_name', 'product_type', 'quantity', 'unit_price', 'total_price']
+          attributes: [
+            'id', 'product_id', 'product_name', 'product_type',
+            'quantity', 'unit_price', 'total_price', 'attributes',
+            [
+              Sequelize.literal(`(
+                CASE
+                  WHEN "items".product_type = 'watch' THEN (
+                    SELECT image_url FROM watch_images
+                    WHERE watch_id = "items".product_id
+                    ORDER BY is_primary DESC, sort_order ASC
+                    LIMIT 1
+                  )
+                  ELSE (
+                    SELECT image_url FROM product_images
+                    WHERE product_id = "items".product_id
+                    ORDER BY is_primary DESC, sort_order ASC
+                    LIMIT 1
+                  )
+                END
+              )`),
+              'image_url'
+            ]
+          ]
         }
       ]
     });

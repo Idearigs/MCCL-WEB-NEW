@@ -4,7 +4,7 @@ import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
 import FavoriteButton from "../components/FavoriteButton";
 import AuthModal from "../components/AuthModal";
-import API_BASE_URL from '../config/api';
+import API_BASE_URL, { getMediaUrl } from '../config/api';
 
 interface RingVariant {
   id: string;
@@ -53,6 +53,7 @@ const WeddingRings = (): JSX.Element => {
   const [ringProducts, setRingProducts] = useState<RingProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [mobileColumns, setMobileColumns] = useState<1 | 2>(2);
 
   // Fetch ring products only — filter options are derived from variant data
   useEffect(() => {
@@ -208,6 +209,27 @@ const WeddingRings = (): JSX.Element => {
 
           {/* Filter Bar */}
           <div className="mb-6 lg:mb-8 pb-4 lg:pb-6 border-b border-gray-200 relative">
+
+            {/* Mobile: filter label + layout toggle */}
+            <div className="flex lg:hidden items-center justify-between mb-4">
+              <span className="text-[11px] font-inter font-light uppercase tracking-[0.2em] text-gray-700">
+                Filter &amp; Sort
+              </span>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setMobileColumns(2)} className={mobileColumns === 2 ? 'text-gray-900' : 'text-gray-300'} aria-label="2-column grid">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/>
+                    <rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/>
+                  </svg>
+                </button>
+                <button onClick={() => setMobileColumns(1)} className={mobileColumns === 1 ? 'text-gray-900' : 'text-gray-300'} aria-label="Single column">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="3" width="18" height="8"/><rect x="3" y="13" width="18" height="8"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-6 text-sm font-inter relative">
 
@@ -299,12 +321,12 @@ const WeddingRings = (): JSX.Element => {
           </div>
 
           {/* Engagement Ring Product Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
+          <div className={`grid gap-3 lg:gap-6 mb-16 ${mobileColumns === 2 ? 'grid-cols-2' : 'grid-cols-1'} md:grid-cols-2 lg:grid-cols-4`}>
             {loading ? (
               // Loading skeleton
               Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="bg-white">
-                  <div className="bg-gray-200 animate-pulse mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}></div>
+                <div key={index} className="bg-white pb-2">
+                  <div className="bg-gray-200 animate-pulse" style={{ aspectRatio: '1', height: 'auto' }}></div>
                   <div className="p-4">
                     <div className="h-4 bg-gray-200 animate-pulse rounded mb-3"></div>
                     <div className="h-4 bg-gray-200 animate-pulse rounded w-20"></div>
@@ -348,64 +370,53 @@ const WeddingRings = (): JSX.Element => {
                 const hoverImage = product.images?.[1] || primaryImage;
 
                 return (
-                  <Link
-                    key={product.id}
-                    to={`/${product.category.slug}/${product.slug}`}
-                    className="group cursor-pointer bg-white transition-all duration-300 block"
-                  >
-                    <div className="relative bg-gray-50 overflow-hidden mx-2 lg:mx-4" style={{ aspectRatio: '0.8', height: 'auto' }}>
-                      <div className="absolute top-3 right-3 z-20">
-                        <FavoriteButton
-                          productId={product.id}
-                          productName={product.name}
-                          size="sm"
-                        />
-                      </div>
-
-                      {/* Default Image */}
-                      <img
-                        src={primaryImage?.url || "/images/Rings.png"}
-                        alt={primaryImage?.alt || product.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
-                      />
-
-                      {/* Hover Image */}
-                      <img
-                        src={hoverImage?.url || primaryImage?.url || "/images/Rings.png"}
-                        alt={hoverImage?.alt || `${product.name} - Alternative View`}
-                        loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
-                      />
-
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                        {/* Arrow Icon */}
-                        <div className="absolute top-1/2 right-4 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0 translate-x-4">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
-                          </svg>
+                  <div key={product.id} className="bg-white transition-all duration-300 pb-2">
+                    <Link to={`/${product.category.slug}/${product.slug}`} className="group cursor-pointer block">
+                      <div className="relative bg-white overflow-hidden" style={{ aspectRatio: '1', height: 'auto' }}>
+                        <div className="absolute top-2 right-2 lg:top-3 lg:right-3 z-20">
+                          <FavoriteButton
+                            productId={product.id}
+                            productName={product.name}
+                            size="sm"
+                          />
                         </div>
 
-                        {/* Add to Bag Button */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Add to bag logic here
-                          }}
-                          className="w-full bg-white/95 backdrop-blur-sm text-gray-700 hover:text-white hover:bg-black py-3 px-4 font-inter font-light text-sm tracking-wider uppercase transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 delay-75"
-                        >
-                          ADD TO BAG
-                        </button>
+                        {/* Default Image */}
+                        <img
+                          src={primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png"}
+                          alt={primaryImage?.alt || product.name}
+                          loading="lazy"
+                          className="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-0"
+                        />
+
+                        {/* Hover Image */}
+                        <img
+                          src={hoverImage?.url ? getMediaUrl(hoverImage.url) : (primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png")}
+                          alt={hoverImage?.alt || `${product.name} - Alternative View`}
+                          loading="lazy"
+                          className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                        />
+
+                        {/* Hover Overlay — desktop only */}
+                        <div className="hidden lg:flex absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-col justify-end p-4">
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            className="w-full bg-white/95 backdrop-blur-sm text-gray-700 hover:text-white hover:bg-black py-3 px-4 font-inter font-light text-sm tracking-wider uppercase transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 delay-75"
+                          >
+                            ADD TO BAG
+                          </button>
+                        </div>
                       </div>
+                    </Link>
+
+                    {/* Card info */}
+                    <div className="pt-3 pb-4 px-1 lg:px-2">
+                      <Link to={`/${product.category.slug}/${product.slug}`}>
+                        <h3 className="text-base lg:text-lg font-cormorant font-normal text-gray-800 mb-1 leading-snug">{product.name}</h3>
+                      </Link>
+                      <p className="text-base lg:text-lg font-cormorant font-light text-gray-600">{product.price}</p>
                     </div>
-                    <div className="p-4">
-                      <h3 className="text-base font-cormorant font-normal text-gray-700 mb-3 leading-tight">{product.name}</h3>
-                      <p className="text-lg font-cormorant font-medium text-gray-600">{product.price}</p>
-                      <p className="text-sm text-gray-500 font-cormorant">{product.description || 'Exquisite Wedding Ring'}</p>
-                    </div>
-                  </Link>
+                  </div>
                 );
               })
             )}

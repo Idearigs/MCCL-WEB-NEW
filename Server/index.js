@@ -288,8 +288,8 @@ const startServer = async () => {
     // Ensure Engagement Rings category exists in the categories table
     if (dbConnected) {
       try {
-        const { getModelInstance } = require('./models');
-        const { Category } = getModelInstance();
+        const { getModels } = require('./models');
+        const { Category } = getModels();
         const rings = await Category.findOne({ where: { slug: 'rings' } });
         const [, created] = await Category.findOrCreate({
           where: { slug: 'engagement-rings' },

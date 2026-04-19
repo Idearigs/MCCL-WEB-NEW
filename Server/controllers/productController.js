@@ -88,7 +88,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
       model: ProductMetals,
       as: 'metals',
       attributes: ['id', 'name', 'color_code'],
-      through: { attributes: [] },
+      through: { attributes: ['mount_price'] },
       required: false
     }
   ];

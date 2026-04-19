@@ -1103,6 +1103,11 @@ const initializeModels = (sequelize) => {
         model: 'product_metals',
         key: 'id'
       }
+    },
+    mount_price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      defaultValue: null
     }
   }, {
     tableName: 'product_metals_junction',

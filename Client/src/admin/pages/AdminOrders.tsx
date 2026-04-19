@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
-import API_BASE_URL from '../../config/api';
+import API_BASE_URL, { getMediaUrl } from '../../config/api';
 
 interface OrderItem {
   id: string;
@@ -32,6 +32,8 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  attributes?: Record<string, unknown>;
+  image_url?: string;
 }
 
 interface Order {
@@ -578,9 +580,20 @@ const AdminOrders: React.FC = () => {
 
                           const attributeLines = renderAttributes();
 
+                          const itemImageUrl = item.image_url ? getMediaUrl(item.image_url) : null;
+
                           return (
                             <div key={item.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                               <div className="flex justify-between items-start mb-3">
+                                {itemImageUrl && (
+                                  <div className="flex-shrink-0 mr-3">
+                                    <img
+                                      src={itemImageUrl}
+                                      alt={item.product_name}
+                                      className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                                    />
+                                  </div>
+                                )}
                                 <div className="flex-1">
                                   <div className="font-medium text-gray-900 mb-1">{item.product_name}</div>
                                   <div className="text-sm text-gray-600 mb-2">

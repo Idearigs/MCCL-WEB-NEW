@@ -215,7 +215,7 @@ const getProductById = async (req, res) => {
           model: ProductMetals,
           as: 'metals',
           attributes: ['id', 'name', 'color_code'],
-          through: { attributes: [] }
+          through: { attributes: ['mount_price'] }
         },
         {
           model: DiamondSizes,
@@ -539,6 +539,7 @@ const updateProduct = async (req, res) => {
       metal_ids = [],
       diamond_size_ids = [],
       nivoda_options_config,
+      metal_mount_prices,        // { [metalId]: price } — per-metal mount prices
       ...productData
     } = req.body;
 
@@ -549,31 +550,34 @@ const updateProduct = async (req, res) => {
     }
 
     // Convert empty strings to null for numeric fields
-    if (updateData.sale_price === '') {
-      updateData.sale_price = null;
+    if (updateData.sale_price === '') updateData.sale_price = null;
+    if (updateData.base_price === '') updateData.base_price = null;
+    if (updateData.stock_quantity === '') updateData.stock_quantity = null;
+    if (updateData.weight === '') updateData.weight = null;
+    if (updateData.collection_id === '') updateData.collection_id = null;
+
+    // Explicitly parse boolean fields from FormData strings
+    const booleanFields = ['nivoda_enabled', 'show_stone_type', 'show_carat', 'show_clarity', 'show_colour', 'show_cut', 'show_certificate', 'is_active', 'is_featured', 'in_stock', 'is_made_on_request'];
+    for (const field of booleanFields) {
+      if (updateData[field] === 'true') updateData[field] = true;
+      else if (updateData[field] === 'false') updateData[field] = false;
     }
-    if (updateData.base_price === '') {
-      updateData.base_price = null;
-    }
-    if (updateData.stock_quantity === '') {
-      updateData.stock_quantity = null;
-    }
-    if (updateData.weight === '') {
-      updateData.weight = null;
-    }
-    if (updateData.collection_id === '') {
-      updateData.collection_id = null;
+
+    // When Nivoda is enabled, auto-enable all stone display options
+    if (updateData.nivoda_enabled === true) {
+      updateData.show_stone_type = true;
+      updateData.show_carat = true;
+      updateData.show_clarity = true;
+      updateData.show_colour = true;
+      updateData.show_cut = true;
     }
 
     // Handle Made on Request fields
-    if (updateData.is_made_on_request === false || updateData.is_made_on_request === 'false') {
-      updateData.is_made_on_request = false;
+    if (updateData.is_made_on_request === false) {
       updateData.made_on_request_lead_time = null;
       updateData.made_on_request_message = null;
     }
-    if (updateData.made_on_request_message === '') {
-      updateData.made_on_request_message = null;
-    }
+    if (updateData.made_on_request_message === '') updateData.made_on_request_message = null;
 
     if (nivoda_options_config) {
       updateData.nivoda_options_config = parseNivodaConfig(nivoda_options_config);
@@ -630,19 +634,20 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // Update metal relationships
+    // Update metal relationships (with per-metal mount prices)
     if (metal_ids !== undefined) {
-      // Delete existing metal relationships
-      await ProductMetalsJunction.destroy({
-        where: { product_id: id }
-      });
+      await ProductMetalsJunction.destroy({ where: { product_id: id } });
 
-      // Create new metal relationships
       if (metal_ids && metal_ids.length > 0) {
+        const parsedMountPrices = metal_mount_prices
+          ? (typeof metal_mount_prices === 'string' ? JSON.parse(metal_mount_prices) : metal_mount_prices)
+          : {};
+
         const metalPromises = metal_ids.map(metalId =>
           ProductMetalsJunction.create({
             product_id: id,
-            metal_id: metalId
+            metal_id: metalId,
+            mount_price: parsedMountPrices[metalId] ? parseFloat(parsedMountPrices[metalId]) : null
           })
         );
         relationshipPromises.push(...metalPromises);
@@ -716,7 +721,7 @@ const updateProduct = async (req, res) => {
           model: ProductMetals,
           as: 'metals',
           attributes: ['id', 'name', 'color_code'],
-          through: { attributes: [] }
+          through: { attributes: ['mount_price'] }
         },
         {
           model: DiamondSizes,

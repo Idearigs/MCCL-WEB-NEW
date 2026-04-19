@@ -431,6 +431,12 @@ const AdminProducts: React.FC = () => {
         delete basicData.images;
         delete basicData.videos;
         delete basicData.metalMediaState;
+        delete basicData.metalMountPrices;
+
+        // Send metal mount prices separately as JSON
+        if (productData.metalMountPrices && Object.keys(productData.metalMountPrices).length > 0) {
+          formData.append('metal_mount_prices', JSON.stringify(productData.metalMountPrices));
+        }
 
         Object.keys(basicData).forEach(key => {
           if (basicData[key] !== undefined && basicData[key] !== null) {
@@ -573,6 +579,11 @@ const AdminProducts: React.FC = () => {
         delete basicData.images;
         delete basicData.videos;
         delete basicData.metalMediaState;
+        delete basicData.metalMountPrices;
+
+        if (productData.metalMountPrices && Object.keys(productData.metalMountPrices).length > 0) {
+          formData.append('metal_mount_prices', JSON.stringify(productData.metalMountPrices));
+        }
 
         Object.keys(basicData).forEach(key => {
           if (basicData[key] !== undefined && basicData[key] !== null) {
