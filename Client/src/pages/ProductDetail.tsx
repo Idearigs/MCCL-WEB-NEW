@@ -68,6 +68,9 @@ const ProductDetail = () => {
   const [selectedClarity, setSelectedClarity] = useState('');
   const [selectedColour, setSelectedColour] = useState('');
   const [selectedCut, setSelectedCut] = useState('');
+  const [selectedPolish, setSelectedPolish] = useState('');
+  const [selectedSymmetry, setSelectedSymmetry] = useState('');
+  const [selectedFluorescence, setSelectedFluorescence] = useState('');
 
   // Nivoda API price calculation
   const [nivodaPrice, setNivodaPrice] = useState<{ min: number; avg: number; max: number } | null>(null);
@@ -230,7 +233,13 @@ const ProductDetail = () => {
       cut: (config.cutOptions || []).map(c => ({
         value: c,
         label: c
-      }))
+      })),
+      polish: (config.polishOptions || []).map(p => ({ value: p, label: p })),
+      symmetry: (config.symmetryOptions || []).map(s => ({ value: s, label: s })),
+      fluorescence: (config.fluorescenceOptions || []).map(f => ({
+        value: f,
+        label: f === 'NONE' ? 'None' : f === 'VERY_STRONG' ? 'Very Strong' : f.charAt(0) + f.slice(1).toLowerCase()
+      })),
     };
   };
 
@@ -239,22 +248,24 @@ const ProductDetail = () => {
   // Fetch price from Nivoda API based on selected specs
   const fetchNivodaPrice = useCallback(async (carat?: string, clarity?: string, colour?: string, cut?: string) => {
     if (!productData?.nivoda_enabled) return;
-
-    // Only fetch if we have the key specs selected
     if (!carat || !clarity || !colour || !cut) return;
 
     setNivodaPriceLoading(true);
     setNivodaPriceError(null);
 
     try {
-      const params = new URLSearchParams({
-        carat,
-        clarity,
-        color: colour,
-        cut
-      });
+      const config = productData.nivoda_options_config;
+      const params = new URLSearchParams({ carat, clarity, color: colour, cut });
 
-      console.log('API URL:', `${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params}`);
+      params.set('stoneType', selectedStoneType);
+      const shapeName = productData.stone_shapes?.[0]?.name;
+      if (shapeName) params.set('shape', shapeName);
+      if (selectedPolish) params.set('polish', selectedPolish);
+      if (selectedSymmetry) params.set('symmetry', selectedSymmetry);
+      if (selectedFluorescence) params.set('fluorescence', selectedFluorescence);
+      const certs = config?.certificateOptions || [];
+      if (certs.length) params.set('certificate', certs.join(','));
+
       const response = await fetch(`${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params}`);
       const data = await response.json();
 
@@ -271,7 +282,7 @@ const ProductDetail = () => {
     } finally {
       setNivodaPriceLoading(false);
     }
-  }, [productData?.nivoda_enabled]);
+  }, [productData, selectedStoneType, selectedPolish, selectedSymmetry, selectedFluorescence]);
 
   // Mount price parsed from base_price field (the ring without diamond)
   const mountPrice = (() => {
@@ -376,6 +387,13 @@ const ProductDetail = () => {
 
       const cut = defaults?.cut || (config.cutOptions?.[0] ?? '');
       if (cut) setSelectedCut(cut);
+
+      const polish = (defaults as any)?.polish || (config.polishOptions?.[0] ?? '');
+      if (polish) setSelectedPolish(polish);
+      const symmetry = (defaults as any)?.symmetry || (config.symmetryOptions?.[0] ?? '');
+      if (symmetry) setSelectedSymmetry(symmetry);
+      const fluorescence = (defaults as any)?.fluorescence || (config.fluorescenceOptions?.[0] ?? '');
+      if (fluorescence) setSelectedFluorescence(fluorescence);
     } else if (isEngagementRing) {
       // Non-Nivoda engagement ring: initialise with lowest-cost defaults so section isn't blank
       setSelectedCarat('0.50');
@@ -391,7 +409,7 @@ const ProductDetail = () => {
       console.log('Fetching Nivoda price for:', { selectedCarat, selectedClarity, selectedColour, selectedCut });
       fetchNivodaPrice(selectedCarat, selectedClarity, selectedColour, selectedCut);
     }
-  }, [selectedCarat, selectedClarity, selectedColour, selectedCut, productData?.nivoda_enabled, fetchNivodaPrice]);
+  }, [selectedCarat, selectedClarity, selectedColour, selectedCut, selectedPolish, selectedSymmetry, selectedFluorescence, selectedStoneType, productData?.nivoda_enabled, fetchNivodaPrice]);
 
   // Facebook Pixel: Track ViewContent when product loads
   useEffect(() => {
@@ -447,6 +465,10 @@ const ProductDetail = () => {
   const handleStoneTypeSelect = (value: 'natural' | 'lab-grown') => {
     setSelectedStoneType(value);
   };
+
+  const handlePolishSelect = (value: string) => setSelectedPolish(value);
+  const handleSymmetrySelect = (value: string) => setSelectedSymmetry(value);
+  const handleFluorescenceSelect = (value: string) => setSelectedFluorescence(value);
 
   const handleAddToCart = () => {
     // Start loading animation
@@ -1075,15 +1097,53 @@ const ProductDetail = () => {
                     <span className="text-xs font-futura-pt font-medium text-gray-900">Cut:</span>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {stoneOptions.cut.map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => handleCutSelect(option.value)}
-                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${
-                            selectedCut === option.value
-                              ? 'bg-amber-50 border-amber-200'
-                              : 'bg-white border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
+                        <button key={option.value} onClick={() => handleCutSelect(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${selectedCut === option.value ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Polish */}
+                {(stoneOptions as any).polish?.length > 0 && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Polish:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(stoneOptions as any).polish.map((option: any) => (
+                        <button key={option.value} onClick={() => handlePolishSelect(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${selectedPolish === option.value ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Symmetry */}
+                {(stoneOptions as any).symmetry?.length > 0 && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Symmetry:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(stoneOptions as any).symmetry.map((option: any) => (
+                        <button key={option.value} onClick={() => handleSymmetrySelect(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${selectedSymmetry === option.value ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Fluorescence */}
+                {(stoneOptions as any).fluorescence?.length > 0 && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Fluorescence:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(stoneOptions as any).fluorescence.map((option: any) => (
+                        <button key={option.value} onClick={() => handleFluorescenceSelect(option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${selectedFluorescence === option.value ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
                           {option.label}
                         </button>
                       ))}
@@ -1620,15 +1680,53 @@ const ProductDetail = () => {
                     <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Cut</p>
                     <div className="flex flex-wrap gap-2 2xl:gap-2">
                       {stoneOptions.cut.map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => handleCutSelect(option.value)}
-                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs 2xl:text-xs font-futura-pt border transition-all duration-200 ${
-                            selectedCut === option.value
-                              ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium'
-                              : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'
-                          }`}
-                        >
+                        <button key={option.value} onClick={() => handleCutSelect(option.value)}
+                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs 2xl:text-xs font-futura-pt border transition-all duration-200 ${selectedCut === option.value ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'}`}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Polish */}
+                {(stoneOptions as any).polish?.length > 0 && (
+                  <div className="mb-4 2xl:mb-5">
+                    <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Polish</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(stoneOptions as any).polish.map((option: any) => (
+                        <button key={option.value} onClick={() => handlePolishSelect(option.value)}
+                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs font-futura-pt border transition-all duration-200 ${selectedPolish === option.value ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'}`}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Symmetry */}
+                {(stoneOptions as any).symmetry?.length > 0 && (
+                  <div className="mb-4 2xl:mb-5">
+                    <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Symmetry</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(stoneOptions as any).symmetry.map((option: any) => (
+                        <button key={option.value} onClick={() => handleSymmetrySelect(option.value)}
+                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs font-futura-pt border transition-all duration-200 ${selectedSymmetry === option.value ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'}`}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Fluorescence */}
+                {(stoneOptions as any).fluorescence?.length > 0 && (
+                  <div className="mb-4 2xl:mb-5">
+                    <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Fluorescence</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(stoneOptions as any).fluorescence.map((option: any) => (
+                        <button key={option.value} onClick={() => handleFluorescenceSelect(option.value)}
+                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs font-futura-pt border transition-all duration-200 ${selectedFluorescence === option.value ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'}`}>
                           {option.label}
                         </button>
                       ))}

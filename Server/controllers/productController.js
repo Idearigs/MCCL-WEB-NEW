@@ -304,7 +304,8 @@ const getAllProducts = asyncHandler(async (req, res) => {
 });
 
 const getProductBySlug = asyncHandler(async (req, res) => {
-  const { Category, Collection, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, RingTypes, DiamondSizes } = getModelInstance();
+  const models = getModelInstance();
+  const { Category, Collection, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, RingTypes, DiamondSizes, StoneShapes } = models;
   const { slug } = req.params;
 
   const product = await Product.findOne({
@@ -359,7 +360,14 @@ const getProductBySlug = asyncHandler(async (req, res) => {
         attributes: ['id', 'name', 'display_name', 'sort_order'],
         through: { attributes: [] },
         required: false
-      }
+      },
+      ...(StoneShapes ? [{
+        model: StoneShapes,
+        as: 'stoneShapes',
+        attributes: ['id', 'name', 'slug'],
+        through: { attributes: [] },
+        required: false
+      }] : [])
     ]
   });
 
@@ -505,6 +513,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     show_certificate: product.show_certificate,
     certificate: product.certificate,
     nivoda_options_config: product.nivoda_options_config,
+    stone_shapes: (product.stoneShapes || []).map((s: any) => ({ id: s.id, name: s.name, slug: s.slug })),
     images: mediaItems,
     jewelry_sub_type_id: product.jewelry_sub_type_id || null,
     variants: product.variants.map(variant => ({

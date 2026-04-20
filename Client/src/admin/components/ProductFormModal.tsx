@@ -60,6 +60,10 @@ interface ProductFormData {
       clarity?: string;
       colour?: string;
       cut?: string;
+      polish?: string;
+      symmetry?: string;
+      fluorescence?: string;
+      certificate?: string;
     };
   };
   metalMountPrices: Record<string, string>;
@@ -210,16 +214,18 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     const shapeObj = stoneShapes.find(s => formData.stone_shape_ids.includes(s.id));
     const shape = shapeObj?.name || '';
 
+    // Use defaultSpecs first, then fall back to first configured option
+    const polish      = ds?.polish      || cfg?.polishOptions?.[0]      || '';
+    const symmetry    = ds?.symmetry    || cfg?.symmetryOptions?.[0]    || '';
+    const fluorescence = ds?.fluorescence || cfg?.fluorescenceOptions?.[0] || '';
+    const certificate = ds?.certificate || (cfg?.certificateOptions || []).join(',') || '';
+
     const params = new URLSearchParams({ carat, clarity, color, cut, stoneType });
     if (shape) params.set('shape', shape);
-    const certs = cfg?.certificateOptions || [];
-    if (certs.length) params.set('certificate', certs.join(','));
-    const polishes = cfg?.polishOptions || [];
-    if (polishes.length) params.set('polish', polishes.join(','));
-    const symmetries = cfg?.symmetryOptions || [];
-    if (symmetries.length) params.set('symmetry', symmetries.join(','));
-    const fluors = cfg?.fluorescenceOptions || [];
-    if (fluors.length) params.set('fluorescence', fluors.join(','));
+    if (polish) params.set('polish', polish);
+    if (symmetry) params.set('symmetry', symmetry);
+    if (fluorescence) params.set('fluorescence', fluorescence);
+    if (certificate) params.set('certificate', certificate);
 
     setMarketPriceLoading(true);
     setMarketPriceError(null);
@@ -2420,6 +2426,62 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                 ).map(c => (
                                   <option key={c} value={c}>{c}</option>
                                 ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 font-satoshi mb-1 block">Default Polish</label>
+                              <select
+                                value={formData.nivoda_options_config?.defaultSpecs?.polish || ''}
+                                onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, defaultSpecs: { ...formData.nivoda_options_config?.defaultSpecs, polish: e.target.value } } })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-amber-400"
+                              >
+                                <option value="">Any / Not set</option>
+                                {((formData.nivoda_options_config?.polishOptions || []).length > 0
+                                  ? formData.nivoda_options_config!.polishOptions!
+                                  : ['EX', 'VG', 'G', 'F', 'P']
+                                ).map(p => <option key={p} value={p}>{p}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 font-satoshi mb-1 block">Default Symmetry</label>
+                              <select
+                                value={formData.nivoda_options_config?.defaultSpecs?.symmetry || ''}
+                                onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, defaultSpecs: { ...formData.nivoda_options_config?.defaultSpecs, symmetry: e.target.value } } })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-amber-400"
+                              >
+                                <option value="">Any / Not set</option>
+                                {((formData.nivoda_options_config?.symmetryOptions || []).length > 0
+                                  ? formData.nivoda_options_config!.symmetryOptions!
+                                  : ['EX', 'VG', 'G', 'F', 'P']
+                                ).map(s => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 font-satoshi mb-1 block">Default Fluorescence</label>
+                              <select
+                                value={formData.nivoda_options_config?.defaultSpecs?.fluorescence || ''}
+                                onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, defaultSpecs: { ...formData.nivoda_options_config?.defaultSpecs, fluorescence: e.target.value } } })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-amber-400"
+                              >
+                                <option value="">Any / Not set</option>
+                                {((formData.nivoda_options_config?.fluorescenceOptions || []).length > 0
+                                  ? formData.nivoda_options_config!.fluorescenceOptions!
+                                  : ['NONE', 'FAINT', 'MEDIUM', 'STRONG', 'VERY_STRONG']
+                                ).map(f => <option key={f} value={f}>{f === 'NONE' ? 'None' : f === 'VERY_STRONG' ? 'Very Strong' : f.charAt(0) + f.slice(1).toLowerCase()}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 font-satoshi mb-1 block">Default Certificate</label>
+                              <select
+                                value={formData.nivoda_options_config?.defaultSpecs?.certificate || ''}
+                                onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, defaultSpecs: { ...formData.nivoda_options_config?.defaultSpecs, certificate: e.target.value } } })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-amber-400"
+                              >
+                                <option value="">Any lab</option>
+                                {((formData.nivoda_options_config?.certificateOptions || []).length > 0
+                                  ? formData.nivoda_options_config!.certificateOptions!
+                                  : ['GIA', 'IGI', 'HRD', 'GCAL']
+                                ).map(c => <option key={c} value={c}>{c}</option>)}
                               </select>
                             </div>
                           </div>
