@@ -40,16 +40,21 @@ async function searchDiamonds(req, res) {
   try {
     // Build filters from query params
     const filters = {
-      minCarat: parseFloat(req.query.minCarat) || 0.5,
-      maxCarat: parseFloat(req.query.maxCarat) || 10,
-      minPrice: parseFloat(req.query.minPrice) || 0,
-      maxPrice: parseFloat(req.query.maxPrice) || 500000,
-      color: req.query.color ? req.query.color.split(',') : undefined,
-      clarity: req.query.clarity ? req.query.clarity.split(',') : undefined,
-      cut: req.query.cut ? req.query.cut.split(',') : undefined,
-      certificate: req.query.certificate ? req.query.certificate : undefined,
-      limit: parseInt(req.query.limit) || 20,
-      offset: parseInt(req.query.offset) || 0
+      minCarat:     parseFloat(req.query.minCarat) || 0.5,
+      maxCarat:     parseFloat(req.query.maxCarat) || 10,
+      minPrice:     parseFloat(req.query.minPrice) || 0,
+      maxPrice:     parseFloat(req.query.maxPrice) || 500000,
+      color:        req.query.color        ? req.query.color.split(',')        : undefined,
+      clarity:      req.query.clarity      ? req.query.clarity.split(',')      : undefined,
+      cut:          req.query.cut          ? req.query.cut.split(',')          : undefined,
+      polish:       req.query.polish       ? req.query.polish.split(',')       : undefined,
+      symmetry:     req.query.symmetry     ? req.query.symmetry.split(',')     : undefined,
+      fluorescence: req.query.fluorescence ? req.query.fluorescence.split(',') : undefined,
+      labs:         req.query.certificate  ? req.query.certificate.split(',')  : undefined,
+      shape:        req.query.shape        ? req.query.shape.toUpperCase().replace(/[\s-]/g, '_') : undefined,
+      labgrown:     req.query.labgrown === 'true',
+      limit:        parseInt(req.query.limit) || 20,
+      offset:       parseInt(req.query.offset) || 0,
     };
 
     const diamonds = await nivodaService.searchDiamonds(filters);

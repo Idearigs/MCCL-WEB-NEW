@@ -17,6 +17,7 @@ import AdminWeddingRings from './pages/AdminWeddingRings';
 import AdminSettings from './pages/AdminSettings';
 import NivodaTestingPage from '../pages/NivodaTestingPage';
 import RingPricingTestPage from '../pages/RingPricingTestPage';
+import AdminNivoda from './pages/AdminNivoda';
 
 const AdminApp: React.FC = () => {
   return (
@@ -130,6 +131,15 @@ const AdminApp: React.FC = () => {
           element={
             <ProtectedRoute>
               <AdminSettings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/nivoda"
+          element={
+            <ProtectedRoute>
+              <AdminNivoda />
             </ProtectedRoute>
           }
         />

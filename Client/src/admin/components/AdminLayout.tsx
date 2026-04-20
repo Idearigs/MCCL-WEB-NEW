@@ -61,6 +61,7 @@ const navigation: NavItem[] = [
   },
   { name: 'Chats', href: '/admin/chats', icon: MessageCircle },
   { name: 'Watches', href: '/admin/watches', icon: Watch },
+  { name: 'Nivoda', href: '/admin/nivoda', icon: Diamond },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
   {
