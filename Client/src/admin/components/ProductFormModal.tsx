@@ -559,6 +559,34 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       .catch(() => {});
   }, [(initialData as any)?.id, mode]);
 
+  // Auto-recalculate when Ring Specs tab opens if stored prices have 0 diamond cost but center stone exists
+  useEffect(() => {
+    if (activeTab !== 'ring_pricing') return;
+    const productId = (initialData as any)?.id;
+    if (!productId || mode !== 'edit') return;
+    if (!ringSpecs.cs1_shape || !ringSpecs.cs1_carats) return;
+    const hasStaleDiamondCost = !calculatedPrices || Object.values(calculatedPrices).every(
+      (v: any) => !v?.available || !v?.diamond_cost
+    );
+    if (!hasStaleDiamondCost) return;
+    // Silent recalculate — don't save specs, just fetch fresh calculation from DB
+    const run = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/ring-pricing/${productId}/calculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nivodaDiamondPriceGBP: 0 }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setCalculatedPrices(data.data.prices);
+          if (data.data.meta) setCalcMeta(data.data.meta);
+        }
+      } catch {}
+    };
+    run();
+  }, [activeTab]);
+
   const fetchMetalPrices = async () => {
     setMetalPricesLoading(true);
     try {
