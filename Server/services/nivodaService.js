@@ -117,6 +117,11 @@ class NivodaService {
       if (error.response?.data) {
         console.error('Nivoda Response:', JSON.stringify(error.response.data, null, 2));
       }
+      // Re-throw with the actual Nivoda error message so it surfaces in the API response
+      if (error.response?.data?.errors?.length) {
+        const nivodaMsg = error.response.data.errors.map(e => e.message).join('; ');
+        throw new Error(`Nivoda: ${nivodaMsg}`);
+      }
       throw error;
     }
   }
