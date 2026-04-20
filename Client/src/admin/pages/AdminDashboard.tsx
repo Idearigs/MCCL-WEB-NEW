@@ -18,6 +18,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Percent,
+  Loader2,
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -84,6 +86,12 @@ const AdminDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Bulk price adjustment state
+  const [adjustPct, setAdjustPct] = useState('');
+  const [adjustScope, setAdjustScope] = useState<'all' | 'engagement'>('engagement');
+  const [adjusting, setAdjusting] = useState(false);
+  const [adjustResult, setAdjustResult] = useState<{ message: string; ok: boolean } | null>(null);
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -112,6 +120,28 @@ const AdminDashboard: React.FC = () => {
 
   const formatDate = (ds: string) =>
     new Date(ds).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const applyPriceAdjust = async () => {
+    const pct = parseFloat(adjustPct);
+    if (isNaN(pct) || pct === 0) return;
+    setAdjusting(true);
+    setAdjustResult(null);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const res = await fetch(`${API_BASE_URL}/admin/products/bulk/price-adjust`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ percentage: pct, scope: adjustScope }),
+      });
+      const data = await res.json();
+      setAdjustResult({ message: data.message || 'Done', ok: data.success });
+      if (data.success) setAdjustPct('');
+    } catch {
+      setAdjustResult({ message: 'Request failed', ok: false });
+    } finally {
+      setAdjusting(false);
+    }
+  };
 
   const fmt = (n: number) => `£${n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -250,6 +280,57 @@ const AdminDashboard: React.FC = () => {
               </div>
             );
           })}
+        </div>
+
+        {/* ── Bulk Price Adjustment ────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-gray-200 px-6 py-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+              <Percent className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900 font-satoshi">Bulk Price Adjustment</h2>
+              <p className="text-xs text-gray-400 font-satoshi">Increase or decrease product prices by a percentage</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1 font-satoshi">Percentage (%)</label>
+              <div className="relative">
+                <input
+                  type="number" step="0.1" placeholder="e.g. 5 or -3"
+                  value={adjustPct}
+                  onChange={e => { setAdjustPct(e.target.value); setAdjustResult(null); }}
+                  className="w-36 pl-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1 font-satoshi">Apply to</label>
+              <select value={adjustScope} onChange={e => setAdjustScope(e.target.value as any)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
+                <option value="engagement">Engagement Rings only</option>
+                <option value="all">All Products</option>
+              </select>
+            </div>
+            <button
+              onClick={applyPriceAdjust}
+              disabled={adjusting || !adjustPct || parseFloat(adjustPct) === 0}
+              className="px-5 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 font-satoshi flex items-center gap-2"
+            >
+              {adjusting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {adjusting ? 'Applying…' : parseFloat(adjustPct || '0') >= 0 ? '↑ Increase Prices' : '↓ Decrease Prices'}
+            </button>
+            {adjustResult && (
+              <p className={`text-sm font-satoshi ${adjustResult.ok ? 'text-green-600' : 'text-red-600'}`}>
+                {adjustResult.ok ? '✓ ' : '✗ '}{adjustResult.message}
+              </p>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mt-3 font-satoshi">
+            Positive % = increase · Negative % = decrease · Example: <span className="font-medium">5</span> raises all selected prices by 5%
+          </p>
         </div>
 
         {/* ── Main Grid: Orders + Quick Links ──────────────────────────────── */}

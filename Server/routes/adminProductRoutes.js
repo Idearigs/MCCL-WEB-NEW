@@ -41,4 +41,7 @@ router.patch('/:id/toggle-featured', adminProductController.toggleFeaturedStatus
 // Bulk update products
 router.patch('/bulk/update', adminProductController.bulkUpdateProducts);
 
+// Bulk price adjustment by percentage
+router.post('/bulk/price-adjust', adminProductController.bulkPriceAdjust);
+
 module.exports = router;

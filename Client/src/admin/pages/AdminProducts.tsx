@@ -1241,6 +1241,19 @@ const AdminProducts: React.FC = () => {
                             {formatPrice(product.base_price, product.currency)}
                           </span>
                         )}
+                        {(product as any).price_change_pct !== null && (product as any).price_change_pct !== undefined && (
+                          <div className="mt-0.5">
+                            {(product as any).price_change_pct > 0 ? (
+                              <span className="inline-flex items-center gap-0.5 text-xs font-medium text-red-600">
+                                ↑ {Math.abs((product as any).price_change_pct)}% market up
+                              </span>
+                            ) : (product as any).price_change_pct < 0 ? (
+                              <span className="inline-flex items-center gap-0.5 text-xs font-medium text-green-600">
+                                ↓ {Math.abs((product as any).price_change_pct)}% market down
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">

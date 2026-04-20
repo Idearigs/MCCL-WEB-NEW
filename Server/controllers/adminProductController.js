@@ -136,6 +136,18 @@ const getProducts = async (req, res) => {
         primary_image: primaryImage ? primaryImage.image_url : null,
         created_at: product.created_at,
         updated_at: product.updated_at,
+        price_change_pct: (() => {
+          const cp = product.pricingConfig?.calculated_prices;
+          if (!cp) return null;
+          const base = parseFloat(product.base_price);
+          if (!base) return null;
+          // Prefer 18kt → 14kt → 9kt → silver → platinum
+          const preferred = ['gold_18kt', 'gold_14kt', 'gold_9kt', 'silver', 'platinum'];
+          const metal = preferred.find(k => cp[k]?.available && cp[k]?.final_price > 0);
+          if (!metal) return null;
+          const calc = cp[metal].final_price;
+          return parseFloat(((calc - base) / base * 100).toFixed(1));
+        })(),
         ring_spec_status: (() => {
           const s = product.ringSpecs;
           const p = product.pricingConfig;
@@ -1376,6 +1388,52 @@ const createProductWithMedia = async (req, res) => {
   }
 };
 
+// Bulk price adjustment by percentage
+const bulkPriceAdjust = async (req, res) => {
+  try {
+    const { Product } = getModelInstance();
+    const { percentage, scope, category_id, jewelry_sub_type_id } = req.body;
+
+    const pct = parseFloat(percentage);
+    if (isNaN(pct) || pct === 0) {
+      return res.status(400).json({ success: false, message: 'Valid non-zero percentage required' });
+    }
+
+    const where = {};
+    if (scope === 'category' && category_id)         where.category_id = category_id;
+    if (scope === 'engagement' && jewelry_sub_type_id) where.jewelry_sub_type_id = jewelry_sub_type_id;
+
+    // Fetch matching products
+    const products = await Product.findAll({ where, attributes: ['id', 'base_price', 'sale_price'] });
+    if (!products.length) {
+      return res.status(404).json({ success: false, message: 'No products matched the scope' });
+    }
+
+    const multiplier = 1 + pct / 100;
+    let updated = 0;
+
+    for (const p of products) {
+      const newBase = parseFloat((parseFloat(p.base_price) * multiplier).toFixed(2));
+      const updateData = { base_price: newBase, updated_at: new Date() };
+      if (p.sale_price) {
+        updateData.sale_price = parseFloat((parseFloat(p.sale_price) * multiplier).toFixed(2));
+      }
+      await p.update(updateData);
+      updated++;
+    }
+
+    return res.json({
+      success: true,
+      message: `${pct > 0 ? 'Increased' : 'Decreased'} prices by ${Math.abs(pct)}% for ${updated} product${updated !== 1 ? 's' : ''}`,
+      updated_count: updated,
+      percentage: pct,
+    });
+  } catch (error) {
+    console.error('Bulk price adjust error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to adjust prices', error: error.message });
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
@@ -1387,5 +1445,6 @@ module.exports = {
   toggleProductStatus,
   toggleFeaturedStatus,
   getProductOptions,
-  bulkUpdateProducts
+  bulkUpdateProducts,
+  bulkPriceAdjust,
 };
