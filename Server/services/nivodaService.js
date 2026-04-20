@@ -59,7 +59,7 @@ class NivodaService {
       const maxPriceCents = Math.round((filters.maxPrice || 5000000) * 100); // default max $50,000
 
       const labgrown = filters.labgrown === true ? 'true' : 'false';
-      const shapeFilter = filters.shape ? `shapes: [${filters.shape.toUpperCase().replace(/[\s-]/g, '_')}]` : '';
+      const shapeFilter = filters.shape ? `shapes: ["${filters.shape.toUpperCase().replace(/[\s-]/g, '_')}"]` : '';
 
       const query = `query ($token: String!) {
         as(token: $token) {
