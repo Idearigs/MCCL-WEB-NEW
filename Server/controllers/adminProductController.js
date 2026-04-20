@@ -14,7 +14,7 @@ const getModelInstance = () => {
 // Get all products with pagination and filters for admin
 const getProducts = async (req, res) => {
   try {
-    const { Product, Category, Collection, ProductImage, ProductVariant } = getModelInstance();
+    const { Product, Category, Collection, ProductImage, ProductVariant, ProductRingSpecs, ProductPricingConfig } = getModelInstance();
 
     const {
       page = 1,
@@ -90,7 +90,19 @@ const getProducts = async (req, res) => {
           as: 'variants',
           required: false,
           attributes: ['id', 'variant_name', 'price_adjustment', 'stock_quantity']
-        }
+        },
+        ...(ProductRingSpecs ? [{
+          model: ProductRingSpecs,
+          as: 'ringSpecs',
+          required: false,
+          attributes: ['silver_wt', 'gold_9kt_wt', 'gold_14kt_wt', 'gold_18kt_wt', 'platinum_wt', 'cs1_carats', 'cs1_shape']
+        }] : []),
+        ...(ProductPricingConfig ? [{
+          model: ProductPricingConfig,
+          as: 'pricingConfig',
+          required: false,
+          attributes: ['last_calculated_at', 'calculated_prices']
+        }] : []),
       ],
       order: [[sortBy, sortOrder.toUpperCase()]],
       limit: parseInt(limit),
@@ -123,7 +135,20 @@ const getProducts = async (req, res) => {
         variants_count: totalVariants,
         primary_image: primaryImage ? primaryImage.image_url : null,
         created_at: product.created_at,
-        updated_at: product.updated_at
+        updated_at: product.updated_at,
+        ring_spec_status: (() => {
+          const s = product.ringSpecs;
+          const p = product.pricingConfig;
+          if (!s) return 'no_specs';
+          const hasWeights = s.silver_wt || s.gold_9kt_wt || s.gold_14kt_wt || s.gold_18kt_wt || s.platinum_wt;
+          const hasDiamond = s.cs1_carats;
+          const hasPricing = p?.last_calculated_at;
+          if (hasWeights && hasDiamond && hasPricing) return 'complete';
+          if (hasWeights && hasDiamond) return 'needs_pricing';
+          if (hasWeights) return 'missing_diamond';
+          if (hasDiamond) return 'missing_weights';
+          return 'incomplete';
+        })(),
       };
     });
 

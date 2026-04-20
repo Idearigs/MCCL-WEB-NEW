@@ -1189,12 +1189,27 @@ const AdminProducts: React.FC = () => {
                           <p className="text-sm font-medium text-gray-900 truncate font-satoshi">
                             {product.name}
                           </p>
-                          <p className="text-xs text-gray-500 font-satoshi mt-0.5 flex items-center gap-2">
+                          <p className="text-xs text-gray-500 font-satoshi mt-0.5 flex items-center gap-2 flex-wrap">
                             <span>SKU: {product.sku}</span>
                             {product.category?.name?.toLowerCase().includes('wedding') && product.variants_count > 0 && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
                                 VR - {product.variants_count}
                               </span>
+                            )}
+                            {(product as any).ring_spec_status === 'complete' && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">✓ Pricing</span>
+                            )}
+                            {(product as any).ring_spec_status === 'needs_pricing' && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Needs Calc</span>
+                            )}
+                            {(product as any).ring_spec_status === 'missing_diamond' && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">⚠ No Diamond</span>
+                            )}
+                            {(product as any).ring_spec_status === 'missing_weights' && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">⚠ No Weights</span>
+                            )}
+                            {(product as any).ring_spec_status === 'incomplete' && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">⚠ Specs Incomplete</span>
                             )}
                           </p>
                         </div>

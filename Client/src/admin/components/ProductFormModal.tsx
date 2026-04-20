@@ -201,6 +201,27 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [marketPriceLoading, setMarketPriceLoading] = useState(false);
   const [marketPriceError, setMarketPriceError] = useState<string | null>(null);
 
+  // ── Ring Specs & Pricing state ─────────────────────────────────────────────
+  const [ringSpecs, setRingSpecs] = useState({
+    silver_wt: '', gold_9kt_wt: '', gold_14kt_wt: '', gold_18kt_wt: '', platinum_wt: '',
+    cs1_shape: '', cs1_size: '', cs1_carats: '', cs1_pieces: '',
+    cs2_shape: '', cs2_size: '', cs2_carats: '', cs2_pieces: '',
+    stone_shape: '', stone_type: '', ring_styles: '',
+  });
+  const [sideStones, setSideStones] = useState<Array<{
+    shape: string; dimensions: string; pieces: string; carats: string; raw_entry: string;
+  }>>([]);
+  const [pricingConfig, setPricingConfig] = useState({
+    metal_premium_pct: '5', side_stone_rate_per_ct: '500',
+    margin_type: 'percent', margin_value: '0',
+  });
+  const [metalPrices, setMetalPrices] = useState<Record<string, number> | null>(null);
+  const [metalPricesLoading, setMetalPricesLoading] = useState(false);
+  const [calculatedPrices, setCalculatedPrices] = useState<Record<string, any> | null>(null);
+  const [pricingCalcLoading, setPricingCalcLoading] = useState(false);
+  const [ringSpecsSaving, setRingSpecsSaving] = useState(false);
+  const [ringSpecsMessage, setRingSpecsMessage] = useState<string | null>(null);
+
   const checkMarketPrice = async () => {
     const cfg = formData.nivoda_options_config;
     const ds = cfg?.defaultSpecs;
@@ -479,6 +500,141 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     }
   }, [formData.nivoda_enabled]);
 
+  // Load ring specs when editing an existing product
+  useEffect(() => {
+    const productId = (initialData as any)?.id;
+    if (!productId || mode !== 'edit') return;
+    fetch(`${API_BASE_URL}/ring-pricing/${productId}/specs`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data) {
+          const { specs, side_stones, pricing_config } = res.data;
+          if (specs) {
+            setRingSpecs({
+              silver_wt:    specs.silver_wt    ?? '',
+              gold_9kt_wt:  specs.gold_9kt_wt  ?? '',
+              gold_14kt_wt: specs.gold_14kt_wt ?? '',
+              gold_18kt_wt: specs.gold_18kt_wt ?? '',
+              platinum_wt:  specs.platinum_wt  ?? '',
+              cs1_shape:    specs.cs1_shape    || '',
+              cs1_size:     specs.cs1_size     || '',
+              cs1_carats:   specs.cs1_carats   ?? '',
+              cs1_pieces:   specs.cs1_pieces   ?? '',
+              cs2_shape:    specs.cs2_shape    || '',
+              cs2_size:     specs.cs2_size     || '',
+              cs2_carats:   specs.cs2_carats   ?? '',
+              cs2_pieces:   specs.cs2_pieces   ?? '',
+              stone_shape:  specs.stone_shape  || '',
+              stone_type:   specs.stone_type   || '',
+              ring_styles:  specs.ring_styles  || '',
+            });
+          }
+          if (side_stones?.length) {
+            setSideStones(side_stones.map((s: any) => ({
+              shape: s.shape || '', dimensions: s.dimensions || '',
+              pieces: s.pieces ?? '', carats: s.carats ?? '', raw_entry: s.raw_entry || '',
+            })));
+          }
+          if (pricing_config) {
+            setPricingConfig({
+              metal_premium_pct:      String(pricing_config.metal_premium_pct ?? '5'),
+              side_stone_rate_per_ct: String(pricing_config.side_stone_rate_per_ct ?? '500'),
+              margin_type:            pricing_config.margin_type  || 'percent',
+              margin_value:           String(pricing_config.margin_value ?? '0'),
+            });
+            if (pricing_config.calculated_prices) {
+              setCalculatedPrices(pricing_config.calculated_prices);
+            }
+          }
+        }
+      })
+      .catch(() => {});
+  }, [(initialData as any)?.id, mode]);
+
+  const fetchMetalPrices = async () => {
+    setMetalPricesLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/ring-pricing/metal-prices`);
+      const data = await res.json();
+      if (data.success) setMetalPrices(data.data);
+    } catch (e) {
+      console.error('Metal prices fetch failed', e);
+    } finally {
+      setMetalPricesLoading(false);
+    }
+  };
+
+  const saveRingSpecs = async () => {
+    const productId = (initialData as any)?.id;
+    if (!productId) return;
+    setRingSpecsSaving(true);
+    setRingSpecsMessage(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/ring-pricing/${productId}/specs`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          specs: {
+            silver_wt:    ringSpecs.silver_wt    !== '' ? Number(ringSpecs.silver_wt)    : null,
+            gold_9kt_wt:  ringSpecs.gold_9kt_wt  !== '' ? Number(ringSpecs.gold_9kt_wt)  : null,
+            gold_14kt_wt: ringSpecs.gold_14kt_wt !== '' ? Number(ringSpecs.gold_14kt_wt) : null,
+            gold_18kt_wt: ringSpecs.gold_18kt_wt !== '' ? Number(ringSpecs.gold_18kt_wt) : null,
+            platinum_wt:  ringSpecs.platinum_wt  !== '' ? Number(ringSpecs.platinum_wt)  : null,
+            cs1_shape:   ringSpecs.cs1_shape   || null,
+            cs1_size:    ringSpecs.cs1_size    || null,
+            cs1_carats:  ringSpecs.cs1_carats  !== '' ? Number(ringSpecs.cs1_carats)  : null,
+            cs1_pieces:  ringSpecs.cs1_pieces  !== '' ? Number(ringSpecs.cs1_pieces)  : null,
+            cs2_shape:   ringSpecs.cs2_shape   || null,
+            cs2_size:    ringSpecs.cs2_size    || null,
+            cs2_carats:  ringSpecs.cs2_carats  !== '' ? Number(ringSpecs.cs2_carats)  : null,
+            cs2_pieces:  ringSpecs.cs2_pieces  !== '' ? Number(ringSpecs.cs2_pieces)  : null,
+            stone_shape: ringSpecs.stone_shape || null,
+            stone_type:  ringSpecs.stone_type  || null,
+            ring_styles: ringSpecs.ring_styles || null,
+          },
+          side_stones: sideStones.map(s => ({
+            shape: s.shape || null, dimensions: s.dimensions || null,
+            pieces: s.pieces !== '' ? Number(s.pieces) : null,
+            carats: s.carats !== '' ? Number(s.carats) : null,
+            raw_entry: s.raw_entry || null,
+          })),
+          pricing_config: {
+            metal_premium_pct:      Number(pricingConfig.metal_premium_pct) || 5,
+            side_stone_rate_per_ct: Number(pricingConfig.side_stone_rate_per_ct) || 500,
+            margin_type:            pricingConfig.margin_type,
+            margin_value:           Number(pricingConfig.margin_value) || 0,
+          },
+        }),
+      });
+      const data = await res.json();
+      setRingSpecsMessage(data.success ? '✓ Saved' : `Error: ${data.error}`);
+    } catch {
+      setRingSpecsMessage('Save failed');
+    } finally {
+      setRingSpecsSaving(false);
+    }
+  };
+
+  const calculateRingPrice = async () => {
+    const productId = (initialData as any)?.id;
+    if (!productId) return;
+    setPricingCalcLoading(true);
+    try {
+      await saveRingSpecs();
+      const res = await fetch(`${API_BASE_URL}/ring-pricing/${productId}/calculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nivodaDiamondPriceGBP: 0 }),
+      });
+      const data = await res.json();
+      if (data.success) setCalculatedPrices(data.data.prices);
+    } catch (e) {
+      console.error('Price calc failed', e);
+    } finally {
+      setPricingCalcLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -608,6 +764,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     { id: 'variants', label: 'Variants' },
     { id: 'details', label: 'Details' },
     { id: 'nivoda', label: 'Nivoda Integration' },
+    { id: 'ring_pricing', label: 'Ring Specs & Pricing' },
     { id: 'seo', label: 'SEO' }
   ];
 
@@ -2591,6 +2748,255 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* Ring Specs & Pricing Tab */}
+          {activeTab === 'ring_pricing' && (
+            <div className="space-y-6">
+
+              {/* ── Metal Weights ─────────────────────────────────── */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 font-satoshi">Mount Metal Weights (grams)</h3>
+                <div className="grid grid-cols-5 gap-3">
+                  {[
+                    { key: 'silver_wt',    label: 'Silver' },
+                    { key: 'gold_9kt_wt',  label: '9kt Gold' },
+                    { key: 'gold_14kt_wt', label: '14kt Gold' },
+                    { key: 'gold_18kt_wt', label: '18kt Gold' },
+                    { key: 'platinum_wt',  label: 'Platinum' },
+                  ].map(({ key, label }) => (
+                    <div key={key}>
+                      <label className="block text-xs text-gray-500 mb-1 font-satoshi">{label}</label>
+                      <input
+                        type="number" step="0.001" min="0"
+                        value={(ringSpecs as any)[key]}
+                        onChange={e => setRingSpecs(p => ({ ...p, [key]: e.target.value }))}
+                        placeholder="–"
+                        className={`w-full px-2 py-1.5 border rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900 ${!(ringSpecs as any)[key] ? 'border-amber-300 bg-amber-50' : 'border-gray-300'}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-amber-600 mt-1 font-satoshi">
+                  {['silver_wt','gold_9kt_wt','gold_14kt_wt','gold_18kt_wt','platinum_wt'].every(k => !(ringSpecs as any)[k])
+                    ? '⚠ No metal weights — mount cost cannot be calculated'
+                    : ''}
+                </p>
+              </div>
+
+              {/* ── Center Stone 1 ────────────────────────────────── */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 font-satoshi">Center Stone 1</h3>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { key: 'cs1_shape',  label: 'Shape',   type: 'text',   placeholder: 'e.g. Round' },
+                    { key: 'cs1_size',   label: 'Size (mm)', type: 'text', placeholder: 'e.g. 6.50 x 6.50' },
+                    { key: 'cs1_carats', label: 'Carats',  type: 'number', placeholder: 'e.g. 1.00' },
+                    { key: 'cs1_pieces', label: 'Pieces',  type: 'number', placeholder: '1' },
+                  ].map(({ key, label, type, placeholder }) => (
+                    <div key={key}>
+                      <label className="block text-xs text-gray-500 mb-1 font-satoshi">{label}</label>
+                      <input
+                        type={type} step={type === 'number' ? '0.0001' : undefined} min={type === 'number' ? '0' : undefined}
+                        value={(ringSpecs as any)[key]}
+                        onChange={e => setRingSpecs(p => ({ ...p, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className={`w-full px-2 py-1.5 border rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900 ${!(ringSpecs as any)[key] ? 'border-amber-300 bg-amber-50' : 'border-gray-300'}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Center Stone 2 (optional) ─────────────────────── */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 font-satoshi">
+                  Center Stone 2 <span className="text-xs font-normal text-gray-400">(optional — for rings with 2 center stones)</span>
+                </h3>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { key: 'cs2_shape',  label: 'Shape',     type: 'text' },
+                    { key: 'cs2_size',   label: 'Size (mm)', type: 'text' },
+                    { key: 'cs2_carats', label: 'Carats',    type: 'number' },
+                    { key: 'cs2_pieces', label: 'Pieces',    type: 'number' },
+                  ].map(({ key, label, type }) => (
+                    <div key={key}>
+                      <label className="block text-xs text-gray-500 mb-1 font-satoshi">{label}</label>
+                      <input
+                        type={type} step={type === 'number' ? '0.0001' : undefined} min={type === 'number' ? '0' : undefined}
+                        value={(ringSpecs as any)[key]}
+                        onChange={e => setRingSpecs(p => ({ ...p, [key]: e.target.value }))}
+                        placeholder="–"
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Side Stones ───────────────────────────────────── */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900 font-satoshi">Side Stones</h3>
+                  <button type="button" onClick={() => setSideStones(p => [...p, { shape: '', dimensions: '', pieces: '', carats: '', raw_entry: '' }])}
+                    className="text-xs px-2 py-1 bg-gray-900 text-white rounded-lg font-satoshi hover:bg-gray-700">
+                    + Add Row
+                  </button>
+                </div>
+                {sideStones.length === 0 ? (
+                  <p className="text-xs text-gray-400 font-satoshi">No side stones added</p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-5 gap-2 text-xs text-gray-500 font-satoshi px-1">
+                      <span>Shape</span><span>Dimensions (mm)</span><span>Pieces</span><span>Carats</span><span></span>
+                    </div>
+                    {sideStones.map((stone, i) => (
+                      <div key={i} className="grid grid-cols-5 gap-2 items-center">
+                        {(['shape','dimensions','pieces','carats'] as const).map(field => (
+                          <input key={field} type={field === 'pieces' || field === 'carats' ? 'number' : 'text'}
+                            step={field === 'carats' ? '0.0001' : undefined}
+                            value={(stone as any)[field]}
+                            onChange={e => setSideStones(p => p.map((s, j) => j === i ? { ...s, [field]: e.target.value } : s))}
+                            placeholder={field}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs font-satoshi focus:outline-none focus:ring-1 focus:ring-gray-900"
+                          />
+                        ))}
+                        <button type="button" onClick={() => setSideStones(p => p.filter((_, j) => j !== i))}
+                          className="p-1 text-red-500 hover:text-red-700">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Pricing Config ────────────────────────────────── */}
+              <div className="border-t pt-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 font-satoshi">Pricing Configuration</h3>
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Metal Premium %</label>
+                    <input type="number" step="0.1" min="0" max="100"
+                      value={pricingConfig.metal_premium_pct}
+                      onChange={e => setPricingConfig(p => ({ ...p, metal_premium_pct: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                    <p className="text-xs text-gray-400 mt-0.5 font-satoshi">Over spot price</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Side Stone Rate (£/ct)</label>
+                    <input type="number" step="1" min="0"
+                      value={pricingConfig.side_stone_rate_per_ct}
+                      onChange={e => setPricingConfig(p => ({ ...p, side_stone_rate_per_ct: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Margin Type</label>
+                    <select value={pricingConfig.margin_type}
+                      onChange={e => setPricingConfig(p => ({ ...p, margin_type: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900">
+                      <option value="percent">Percent (%)</option>
+                      <option value="fixed">Fixed (£)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">
+                      Margin {pricingConfig.margin_type === 'percent' ? '(%)' : '(£)'}
+                    </label>
+                    <input type="number" step={pricingConfig.margin_type === 'percent' ? '0.1' : '1'} min="0"
+                      value={pricingConfig.margin_value}
+                      onChange={e => setPricingConfig(p => ({ ...p, margin_value: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <button type="button" onClick={saveRingSpecs} disabled={ringSpecsSaving || !((initialData as any)?.id)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-gray-700 rounded-lg hover:bg-gray-600 disabled:opacity-50 font-satoshi flex items-center gap-2">
+                    {ringSpecsSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+                    Save Specs
+                  </button>
+                  <button type="button" onClick={calculateRingPrice} disabled={pricingCalcLoading || !((initialData as any)?.id)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 font-satoshi flex items-center gap-2">
+                    {pricingCalcLoading && <Loader2 className="h-3 w-3 animate-spin" />}
+                    Calculate Live Price
+                  </button>
+                  <button type="button" onClick={fetchMetalPrices} disabled={metalPricesLoading}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 font-satoshi flex items-center gap-2">
+                    {metalPricesLoading && <Loader2 className="h-3 w-3 animate-spin" />}
+                    Refresh Metal Prices
+                  </button>
+                  {ringSpecsMessage && (
+                    <span className={`text-sm font-satoshi ${ringSpecsMessage.startsWith('✓') ? 'text-green-600' : 'text-red-600'}`}>
+                      {ringSpecsMessage}
+                    </span>
+                  )}
+                </div>
+
+                {/* Live metal prices */}
+                {metalPrices && (
+                  <div className="bg-gray-50 rounded-lg p-3 mb-4 text-xs font-satoshi text-gray-600">
+                    <p className="font-semibold mb-1 text-gray-800">Live Spot Prices (GBP/gram)</p>
+                    <div className="grid grid-cols-6 gap-2">
+                      {[
+                        { label: 'Gold', val: metalPrices.gold_per_gram },
+                        { label: '9kt', val: metalPrices.gold_9kt_per_gram },
+                        { label: '14kt', val: metalPrices.gold_14kt_per_gram },
+                        { label: '18kt', val: metalPrices.gold_18kt_per_gram },
+                        { label: 'Silver', val: metalPrices.silver_per_gram },
+                        { label: 'Platinum', val: metalPrices.platinum_per_gram },
+                      ].map(({ label, val }) => (
+                        <div key={label} className="text-center">
+                          <p className="text-gray-500">{label}</p>
+                          <p className="font-semibold text-gray-800">£{Number(val).toFixed(2)}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-gray-400 mt-1">Source: Stooq.com · {metalPrices.fetched_at ? new Date(metalPrices.fetched_at).toLocaleString() : ''}</p>
+                  </div>
+                )}
+
+                {/* Calculated prices table */}
+                {calculatedPrices && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs font-satoshi border border-gray-200 rounded-lg overflow-hidden">
+                      <thead className="bg-gray-900 text-white">
+                        <tr>
+                          {['Metal', 'Weight (g)', 'Mount Cost', 'Diamond Cost', 'Side Stones', 'Total Cost', 'Final Price'].map(h => (
+                            <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(calculatedPrices).map(([key, v]: [string, any], i) => (
+                          <tr key={key} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="px-3 py-2 font-medium">{v.label || key}</td>
+                            {v.available ? (
+                              <>
+                                <td className="px-3 py-2">{v.weight_g}g</td>
+                                <td className="px-3 py-2">£{v.mount_cost}</td>
+                                <td className="px-3 py-2">{v.diamond_cost > 0 ? `£${v.diamond_cost}` : <span className="text-amber-500">—</span>}</td>
+                                <td className="px-3 py-2">{v.side_stones_cost > 0 ? `£${v.side_stones_cost}` : '—'}</td>
+                                <td className="px-3 py-2">£{v.total_cost}</td>
+                                <td className="px-3 py-2 font-semibold text-green-700">£{v.final_price}</td>
+                              </>
+                            ) : (
+                              <td colSpan={6} className="px-3 py-2 text-amber-600">⚠ {v.reason}</td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="text-xs text-gray-400 mt-1 font-satoshi">
+                      Diamond cost is £0 until set from Nivoda. Prices update automatically when metals refresh.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

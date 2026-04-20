@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 
-let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage, DiamondSizes, ProductDiamondSizes, ChatLabel, ChatLabelAssignment;
+let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage, DiamondSizes, ProductDiamondSizes, ChatLabel, ChatLabelAssignment, ProductRingSpecs, ProductSideStones, ProductPricingConfig;
 
 // Accepts the sequelize instance directly so models never need to require config/database
 const initializeModels = (sequelize) => {
@@ -1188,6 +1188,51 @@ const initializeModels = (sequelize) => {
     ]
   });
 
+  // ── Ring Specs & Pricing Models ──────────────────────────────────────────
+
+  ProductRingSpecs = sequelize.define('ProductRingSpecs', {
+    id:           { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+    product_id:   { type: DataTypes.UUID, allowNull: false },
+    silver_wt:    DataTypes.DECIMAL(8, 3),
+    gold_9kt_wt:  DataTypes.DECIMAL(8, 3),
+    gold_14kt_wt: DataTypes.DECIMAL(8, 3),
+    gold_18kt_wt: DataTypes.DECIMAL(8, 3),
+    platinum_wt:  DataTypes.DECIMAL(8, 3),
+    cs1_shape:    DataTypes.STRING(50),
+    cs1_size:     DataTypes.STRING(50),
+    cs1_carats:   DataTypes.DECIMAL(8, 4),
+    cs1_pieces:   DataTypes.INTEGER,
+    cs2_shape:    DataTypes.STRING(50),
+    cs2_size:     DataTypes.STRING(50),
+    cs2_carats:   DataTypes.DECIMAL(8, 4),
+    cs2_pieces:   DataTypes.INTEGER,
+    stone_shape:  DataTypes.STRING(50),
+    stone_type:   DataTypes.STRING(50),
+    ring_styles:  DataTypes.TEXT,
+  }, { tableName: 'product_ring_specs', underscored: true, timestamps: true });
+
+  ProductSideStones = sequelize.define('ProductSideStones', {
+    id:         { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+    product_id: { type: DataTypes.UUID, allowNull: false },
+    shape:      DataTypes.STRING(100),
+    dimensions: DataTypes.STRING(50),
+    pieces:     DataTypes.INTEGER,
+    carats:     DataTypes.DECIMAL(8, 4),
+    raw_entry:  DataTypes.TEXT,
+    sort_order: { type: DataTypes.INTEGER, defaultValue: 0 },
+  }, { tableName: 'product_side_stones', underscored: true, timestamps: true });
+
+  ProductPricingConfig = sequelize.define('ProductPricingConfig', {
+    id:                     { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+    product_id:             { type: DataTypes.UUID, allowNull: false },
+    metal_premium_pct:      { type: DataTypes.DECIMAL(5, 2), defaultValue: 5.00 },
+    side_stone_rate_per_ct: { type: DataTypes.DECIMAL(8, 2), defaultValue: 500.00 },
+    margin_type:            { type: DataTypes.STRING(10), defaultValue: 'percent' },
+    margin_value:           { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
+    calculated_prices:      DataTypes.JSONB,
+    last_calculated_at:     DataTypes.DATE,
+  }, { tableName: 'product_pricing_config', underscored: true, timestamps: true });
+
   // Define Associations
 
   // Self-referencing hierarchy for categories
@@ -1318,6 +1363,16 @@ const initializeModels = (sequelize) => {
   ChatLabel.hasMany(ChatLabelAssignment, { foreignKey: 'label_id', as: 'assignments', onDelete: 'CASCADE' });
   ChatLabelAssignment.belongsTo(ChatLabel, { foreignKey: 'label_id', as: 'label' });
 
+  // Ring specs + pricing associations
+  Product.hasOne(ProductRingSpecs,    { foreignKey: 'product_id', as: 'ringSpecs' });
+  ProductRingSpecs.belongsTo(Product, { foreignKey: 'product_id' });
+
+  Product.hasMany(ProductSideStones,    { foreignKey: 'product_id', as: 'sideStones' });
+  ProductSideStones.belongsTo(Product,  { foreignKey: 'product_id' });
+
+  Product.hasOne(ProductPricingConfig,    { foreignKey: 'product_id', as: 'pricingConfig' });
+  ProductPricingConfig.belongsTo(Product, { foreignKey: 'product_id' });
+
   // Get admin models to establish Chat-AdminUser relationship
   const { getAdminModels } = require('./adminModels');
   const adminModels = getAdminModels();
@@ -1369,6 +1424,9 @@ const initializeModels = (sequelize) => {
     ProductDiamondSizes,
     ChatLabel,
     ChatLabelAssignment,
+    ProductRingSpecs,
+    ProductSideStones,
+    ProductPricingConfig,
     ...watchModels,
     ...jewelryModels
   };
@@ -1410,6 +1468,9 @@ module.exports = {
       ProductDiamondSizes,
       ChatLabel,
       ChatLabelAssignment,
+      ProductRingSpecs,
+      ProductSideStones,
+      ProductPricingConfig,
       ...watchModels,
       ...jewelryModels,
       ...orderModels

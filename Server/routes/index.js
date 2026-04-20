@@ -16,6 +16,7 @@ const webhookRoutes = require('./webhookRoutes');
 const marketingRoutes = require('./marketing');
 const promotionRoutes = require('./promotions');
 const chatRoutes = require('./chats');
+const ringPricingRoutes = require('./ringPricing');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -43,6 +44,7 @@ router.use('/webhooks', webhookRoutes);
 router.use('/marketing', marketingRoutes);
 router.use('/promotions', promotionRoutes);
 router.use('/chats', chatRoutes);
+router.use('/ring-pricing', ringPricingRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {

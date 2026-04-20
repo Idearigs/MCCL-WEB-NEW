@@ -1,0 +1,14 @@
+const express = require('express');
+const router = express.Router();
+const ctrl = require('../controllers/ringPricingController');
+
+// Metal price endpoints (no auth needed for now — data is public)
+router.get('/metal-prices',         ctrl.getMetalPrices);
+router.post('/metal-prices/refresh', ctrl.refreshMetalPrices);
+
+// Per-product ring spec endpoints
+router.get('/:productId/specs',     ctrl.getRingSpecs);
+router.put('/:productId/specs',     ctrl.saveRingSpecs);
+router.post('/:productId/calculate', ctrl.calculatePrice);
+
+module.exports = router;
