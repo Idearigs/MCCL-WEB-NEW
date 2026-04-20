@@ -215,6 +215,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     metal_premium_pct: '5', side_stone_rate_per_ct: '500',
     diamond_rate_per_ct: '2000', margin_type: 'percent', margin_value: '0',
   });
+  const [ringPriceOverrides, setRingPriceOverrides] = useState<Record<string,string>>({});
   const [metalPrices, setMetalPrices] = useState<Record<string, number> | null>(null);
   const [metalPricesLoading, setMetalPricesLoading] = useState(false);
   const [calculatedPrices, setCalculatedPrices] = useState<Record<string, any> | null>(null);
@@ -544,6 +545,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               margin_type:            pricing_config.margin_type  || 'percent',
               margin_value:           String(pricing_config.margin_value ?? '0'),
             });
+            if (pricing_config.price_overrides) {
+              const ov: Record<string,string> = {};
+              Object.entries(pricing_config.price_overrides).forEach(([k,v]) => { ov[k] = String(v); });
+              setRingPriceOverrides(ov);
+            }
             if (pricing_config.calculated_prices) {
               setCalculatedPrices(pricing_config.calculated_prices);
             }
@@ -606,6 +612,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             diamond_rate_per_ct:    Number(pricingConfig.diamond_rate_per_ct) || 2000,
             margin_type:            pricingConfig.margin_type,
             margin_value:           Number(pricingConfig.margin_value) || 0,
+            price_overrides:        Object.fromEntries(
+              Object.entries(ringPriceOverrides)
+                .filter(([,v]) => v !== '' && !isNaN(Number(v)))
+                .map(([k,v]) => [k, Number(v)])
+            ),
           },
         }),
       });
@@ -1053,85 +1064,66 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Mount Price per Metal — populated from Ring Specs calculator */}
-                  <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="text-sm font-semibold text-gray-900 font-satoshi">Price per Metal</h4>
-                      {calculatedPrices && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const keyMap = (name: string) => {
-                              const n = name.toLowerCase();
-                              if (n.includes('silver')) return 'silver';
-                              if (n.includes('platinum')) return 'platinum';
-                              if (n.includes('gold')) return 'gold_18kt';
-                              return null;
-                            };
-                            const next: Record<string, string> = { ...formData.metalMountPrices };
-                            metals.filter(m => formData.metal_ids.includes(m.id)).forEach(m => {
-                              const k = keyMap(m.name);
-                              const v = k && (calculatedPrices as any)[k];
-                              if (v?.available && v.final_price) next[m.id] = String(v.final_price);
-                            });
-                            setFormData(prev => ({ ...prev, metalMountPrices: next }));
-                          }}
-                          className="text-xs px-2 py-1 bg-blue-600 text-white rounded font-satoshi hover:bg-blue-700"
-                        >
-                          Sync from Calculator
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-600 mb-3 font-satoshi">
-                      Calculated from live metal prices × ring weight. Click "Sync from Calculator" to auto-fill, or enter manually.
-                    </p>
-
-                    {/* Calculated reference prices */}
-                    {calculatedPrices && (
-                      <div className="mb-3 p-2 bg-white border border-blue-100 rounded-lg">
-                        <p className="text-xs font-medium text-gray-600 mb-1.5 font-satoshi">Live calculated prices (Ring Specs):</p>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5">
-                          {(['silver','gold_9kt','gold_14kt','gold_18kt','platinum'] as const).map(k => {
-                            const v = (calculatedPrices as any)[k];
-                            if (!v?.available) return null;
-                            const labels: Record<string, string> = { silver: 'Silver', gold_9kt: '9kt Gold', gold_14kt: '14kt Gold', gold_18kt: '18kt Gold', platinum: 'Platinum' };
+                  {/* Price per Metal — 5 fixed ring-spec weight types */}
+                  {(() => {
+                    const RING_METALS = [
+                      { key: 'silver',    label: 'Silver',    color: '#C0C0C0', wtField: 'silver_wt' },
+                      { key: 'gold_9kt',  label: '9kt Gold',  color: '#E8C97A', wtField: 'gold_9kt_wt' },
+                      { key: 'gold_14kt', label: '14kt Gold', color: '#E5B84C', wtField: 'gold_14kt_wt' },
+                      { key: 'gold_18kt', label: '18kt Gold', color: '#D4A017', wtField: 'gold_18kt_wt' },
+                      { key: 'platinum',  label: 'Platinum',  color: '#A8A9AD', wtField: 'platinum_wt' },
+                    ];
+                    return (
+                      <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="text-sm font-semibold text-gray-900 font-satoshi">Price per Metal</h4>
+                          {calculatedPrices && (
+                            <button type="button"
+                              onClick={() => {
+                                const next: Record<string,string> = {};
+                                RING_METALS.forEach(({ key }) => {
+                                  const v = (calculatedPrices as any)[key];
+                                  if (v?.available && v.final_price) next[key] = String(v.final_price);
+                                });
+                                setRingPriceOverrides(next);
+                              }}
+                              className="text-xs px-2 py-1 bg-blue-600 text-white rounded font-satoshi hover:bg-blue-700">
+                              Sync from Calculator
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 mb-3 font-satoshi">
+                          Final selling price per metal weight type. Sync from Ring Specs calculator or enter manually.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {RING_METALS.map(({ key, label, color, wtField }) => {
+                            const calcVal = (calculatedPrices as any)?.[key];
+                            const hasWeight = ringSpecs[wtField as keyof typeof ringSpecs] !== '';
                             return (
-                              <div key={k} className="flex justify-between text-xs font-satoshi">
-                                <span className="text-gray-500">{labels[k]}</span>
-                                <span className="font-semibold text-gray-900">£{v.final_price?.toFixed(2)}</span>
+                              <div key={key} className={`flex items-center gap-3 bg-white border rounded-lg px-3 py-2 ${hasWeight ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
+                                <div className="w-5 h-5 rounded-full border border-gray-300 flex-shrink-0" style={{ backgroundColor: color }} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-700 font-satoshi">{label}</p>
+                                  {calcVal?.available && (
+                                    <p className="text-[10px] text-blue-500 font-satoshi">Calc: £{calcVal.final_price?.toFixed(2)}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-sm text-gray-500 font-satoshi">£</span>
+                                  <input type="number" step="0.01"
+                                    value={ringPriceOverrides[key] || ''}
+                                    onChange={e => setRingPriceOverrides(p => ({ ...p, [key]: e.target.value }))}
+                                    className="w-28 px-2 py-1 border border-gray-300 rounded text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    placeholder={calcVal?.final_price?.toFixed(2) || '0.00'}
+                                  />
+                                </div>
                               </div>
                             );
                           })}
                         </div>
                       </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {metals.filter(m => formData.metal_ids.includes(m.id)).map((metal) => (
-                        <div key={metal.id} className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                          <div
-                            className="w-5 h-5 rounded-full border border-gray-300 flex-shrink-0"
-                            style={{ backgroundColor: metal.color_code || '#cccccc' }}
-                          />
-                          <label className="text-sm text-gray-700 font-satoshi flex-1">{metal.name}</label>
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm text-gray-500 font-satoshi">£</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={formData.metalMountPrices[metal.id] || ''}
-                              onChange={(e) => setFormData(prev => ({
-                                ...prev,
-                                metalMountPrices: { ...prev.metalMountPrices, [metal.id]: e.target.value }
-                              }))}
-                              className="w-28 px-2 py-1 border border-gray-300 rounded text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-400"
-                              placeholder="0.00"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </>
               ) : (
                 /* Non-ring products: show standard price fields */

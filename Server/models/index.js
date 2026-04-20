@@ -1231,6 +1231,7 @@ const initializeModels = (sequelize) => {
     margin_type:            { type: DataTypes.STRING(10), defaultValue: 'percent' },
     margin_value:           { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
     calculated_prices:      DataTypes.JSONB,
+    price_overrides:        DataTypes.JSONB,
     last_calculated_at:     DataTypes.DATE,
   }, { tableName: 'product_pricing_config', underscored: true, timestamps: true });
 
