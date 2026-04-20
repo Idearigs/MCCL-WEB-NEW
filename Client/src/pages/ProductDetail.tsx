@@ -10,11 +10,17 @@ import API_BASE_URL, { getMediaUrl } from '../config/api';
 import { trackViewContent, trackAddToCart } from '../services/pixelService';
 
 const metalTypeOptions = [
-  { value: '9ct-white-gold', label: '9ct White Gold' },
-  { value: '18ct-white-gold', label: '18ct White Gold' },
-  { value: '9ct-yellow-gold', label: '9ct Yellow Gold' },
-  { value: '18ct-yellow-gold', label: '18ct Yellow Gold' },
-  { value: 'platinum', label: 'Platinum' },
+  { value: 'silver',          label: 'Silver',          overrideKey: 'silver' },
+  { value: '9ct-white-gold',  label: '9ct White Gold',  overrideKey: 'gold_9kt' },
+  { value: '9ct-yellow-gold', label: '9ct Yellow Gold', overrideKey: 'gold_9kt' },
+  { value: '9ct-rose-gold',   label: '9ct Rose Gold',   overrideKey: 'gold_9kt' },
+  { value: '14ct-white-gold', label: '14ct White Gold', overrideKey: 'gold_14kt' },
+  { value: '14ct-yellow-gold',label: '14ct Yellow Gold',overrideKey: 'gold_14kt' },
+  { value: '14ct-rose-gold',  label: '14ct Rose Gold',  overrideKey: 'gold_14kt' },
+  { value: '18ct-white-gold', label: '18ct White Gold', overrideKey: 'gold_18kt' },
+  { value: '18ct-yellow-gold',label: '18ct Yellow Gold',overrideKey: 'gold_18kt' },
+  { value: '18ct-rose-gold',  label: '18ct Rose Gold',  overrideKey: 'gold_18kt' },
+  { value: 'platinum',        label: 'Platinum',        overrideKey: 'platinum' },
 ];
 
 const ringSizes = [
@@ -290,13 +296,32 @@ const ProductDetail = () => {
     return parseFloat(productData.price.replace(/[^\d.,]/g, '').replace(/,/g, '')) || 0;
   })();
 
+  // Live price from ring price overrides based on selected metal type
+  const liveMountPrice = (() => {
+    const overrides = productData?.ring_price_overrides;
+    if (!overrides || !selectedMetalType) return null;
+    const opt = metalTypeOptions.find(m => m.value === selectedMetalType);
+    if (!opt) return null;
+    const v = overrides[opt.overrideKey];
+    return v ? parseFloat(v) : null;
+  })();
+
   // Calculate total price = mount price + diamond price
   const calculateTotalPrice = () => {
+    const base = liveMountPrice ?? mountPrice;
     if (productData?.nivoda_enabled && nivodaPrice) {
-      return mountPrice + nivodaPrice.min; // "from" uses minimum diamond price
+      return base + nivodaPrice.min;
     }
-    return mountPrice;
+    return base;
   };
+
+  // Display price for non-Nivoda products (updates when metal type changes)
+  const displayPrice = (() => {
+    if (liveMountPrice !== null) {
+      return `£${liveMountPrice.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    }
+    return productData?.price || '';
+  })();
 
   // Fetch user's country based on IP
   useEffect(() => {
@@ -343,6 +368,17 @@ const ProductDetail = () => {
           // Set initial metal selection to first available metal
           if (data.data.product.available_metals && data.data.product.available_metals.length > 0) {
             setSelectedMetal(data.data.product.available_metals[0].id);
+          }
+
+          // Set initial metal type to first option that has a price override (preferring 18kt gold)
+          const overrides = data.data.product.ring_price_overrides;
+          if (overrides) {
+            const preferred = ['18ct-white-gold', '14ct-white-gold', '9ct-white-gold', 'platinum', 'silver'];
+            const first = preferred.find(v => {
+              const opt = metalTypeOptions.find(m => m.value === v);
+              return opt && overrides[opt.overrideKey];
+            });
+            if (first) setSelectedMetalType(first);
           }
 
           // Set initial diamond size selection to first available diamond size (for Engagement Rings)
@@ -881,7 +917,7 @@ const ProductDetail = () => {
           {productData.name}
         </h1>
         <div className="text-xl font-futura-pt font-normal text-gray-900 mb-6">
-          {productData.price}
+          {displayPrice}
         </div>
 
         {/* Mobile Metal Selection */}
@@ -924,12 +960,21 @@ const ProductDetail = () => {
         )}
 
         {/* Mobile Metal Type Selection */}
+        {(() => {
+          const overrides = productData?.ring_price_overrides;
+          const visibleOptions = overrides
+            ? metalTypeOptions.filter((o, idx, arr) =>
+                overrides[o.overrideKey] && arr.findIndex(x => x.overrideKey === o.overrideKey) === idx
+              )
+            : metalTypeOptions;
+          if (visibleOptions.length === 0) return null;
+          return (
         <div className="mb-4">
           <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2">
             Metal Type: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
           </h3>
           <div className="flex flex-wrap gap-2">
-            {metalTypeOptions.map((option) => (
+            {visibleOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => setSelectedMetalType(option.value)}
@@ -944,6 +989,8 @@ const ProductDetail = () => {
             ))}
           </div>
         </div>
+          );
+        })()}
 
         {/* Mobile Diamond Size Selection - Only for Engagement Rings */}
         {productData.available_diamond_sizes && productData.available_diamond_sizes.length > 0 && (
@@ -1408,21 +1455,21 @@ const ProductDetail = () => {
                     ) : nivodaPrice ? (
                       <div>
                         <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
-                          From £{(mountPrice + nivodaPrice.min).toLocaleString()}
+                          From £{((liveMountPrice ?? mountPrice) + nivodaPrice.min).toLocaleString()}
                         </div>
                         <div className="flex flex-col gap-0.5 text-[10px] 2xl:text-xs font-futura-pt text-gray-500">
-                          <span>Ring from £{mountPrice.toLocaleString()} · Diamond from £{nivodaPrice.min.toLocaleString()}</span>
+                          <span>Ring from £{(liveMountPrice ?? mountPrice).toLocaleString()} · Diamond from £{nivodaPrice.min.toLocaleString()}</span>
                         </div>
                       </div>
                     ) : (
                       <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
-                        {productData.price}
+                        {displayPrice}
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
-                    {productData.price}
+                    {displayPrice}
                   </div>
                 )}
                 {userCountry && userCountry !== 'GB' && userCountryName && (
@@ -1430,7 +1477,7 @@ const ProductDetail = () => {
                     <svg className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
-                    <span>We've detected you are browsing from {userCountryName}, please note the UK price for this piece is {productData.nivoda_enabled && nivodaPrice ? `from £${(mountPrice + nivodaPrice.min).toLocaleString()}` : productData.price}</span>
+                    <span>We've detected you are browsing from {userCountryName}, please note the UK price for this piece is {productData.nivoda_enabled && nivodaPrice ? `from £${((liveMountPrice ?? mountPrice) + nivodaPrice.min).toLocaleString()}` : displayPrice}</span>
                   </div>
                 )}
               </div>
@@ -1478,12 +1525,21 @@ const ProductDetail = () => {
             )}
 
             {/* Metal Type Selection */}
+            {(() => {
+              const overrides = productData?.ring_price_overrides;
+              const visibleOptions = overrides
+                ? metalTypeOptions.filter((o, idx, arr) =>
+                    overrides[o.overrideKey] && arr.findIndex(x => x.overrideKey === o.overrideKey) === idx
+                  )
+                : metalTypeOptions;
+              if (visibleOptions.length === 0) return null;
+              return (
             <div className="mb-4 2xl:mb-5">
               <h3 className="text-[10px] 2xl:text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2 2xl:mb-2">
                 Metal Type: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
               </h3>
               <div className="flex flex-wrap gap-2">
-                {metalTypeOptions.map((option) => (
+                {visibleOptions.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => setSelectedMetalType(option.value)}
@@ -1498,6 +1554,8 @@ const ProductDetail = () => {
                 ))}
               </div>
             </div>
+              );
+            })()}
 
             {/* Diamond Size Selection - Only for Engagement Rings */}
             {productData.available_diamond_sizes && productData.available_diamond_sizes.length > 0 && (

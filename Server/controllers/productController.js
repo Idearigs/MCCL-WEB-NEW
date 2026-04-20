@@ -305,7 +305,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
 const getProductBySlug = asyncHandler(async (req, res) => {
   const models = getModelInstance();
-  const { Category, Collection, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, RingTypes, DiamondSizes, StoneShapes } = models;
+  const { Category, Collection, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, RingTypes, DiamondSizes, StoneShapes, ProductPricingConfig } = models;
   const { slug } = req.params;
 
   const product = await Product.findOne({
@@ -367,7 +367,13 @@ const getProductBySlug = asyncHandler(async (req, res) => {
         attributes: ['id', 'name', 'slug'],
         through: { attributes: [] },
         required: false
-      }] : [])
+      }] : []),
+      ...(ProductPricingConfig ? [{
+        model: ProductPricingConfig,
+        as: 'pricingConfig',
+        required: false,
+        attributes: ['price_overrides'],
+      }] : []),
     ]
   });
 
@@ -513,6 +519,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     show_certificate: product.show_certificate,
     certificate: product.certificate,
     nivoda_options_config: product.nivoda_options_config,
+    ring_price_overrides: product.pricingConfig?.price_overrides || null,
     stone_shapes: (product.stoneShapes || []).map((s) => ({ id: s.id, name: s.name, slug: s.slug })),
     images: mediaItems,
     jewelry_sub_type_id: product.jewelry_sub_type_id || null,
