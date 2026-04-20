@@ -1015,89 +1015,153 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Pricing & Stock Tab */}
           {activeTab === 'pricing' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
-                    {formData.nivoda_enabled ? 'Mount Price — Ring Only (£)' : 'Base Price * (£)'}
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.base_price}
-                    onChange={(e) => handleInputChange('base_price', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi ${
-                      errors.base_price ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="0.00"
-                  />
-                  {formData.metal_ids.length > 0 && (
-                    <p className="text-xs text-blue-600 mt-1 font-satoshi">Default mount price (used when no per-metal price is set)</p>
-                  )}
-                  {errors.base_price && <p className="text-red-500 text-xs mt-1 font-satoshi">{errors.base_price}</p>}
-                </div>
+              {/* For ring products (has metals): hide single price, show margin + per-metal */}
+              {formData.metal_ids.length > 0 ? (
+                <>
+                  {/* Margin + Stock row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                        Margin (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={pricingConfig.margin_value}
+                        onChange={e => setPricingConfig(p => ({ ...p, margin_value: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
+                        placeholder="0"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 font-satoshi">Applied on top of calculated ring cost</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                        Stock Quantity
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.stock_quantity}
+                        onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
-                    Sale Price (£)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.sale_price}
-                    onChange={(e) => handleInputChange('sale_price', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi ${
-                      errors.sale_price ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="0.00"
-                  />
-                  {errors.sale_price && <p className="text-red-500 text-xs mt-1 font-satoshi">{errors.sale_price}</p>}
-                </div>
+                  {/* Mount Price per Metal — populated from Ring Specs calculator */}
+                  <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-sm font-semibold text-gray-900 font-satoshi">Price per Metal</h4>
+                      {calculatedPrices && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const keyMap = (name: string) => {
+                              const n = name.toLowerCase();
+                              if (n.includes('silver')) return 'silver';
+                              if (n.includes('platinum')) return 'platinum';
+                              if (n.includes('gold')) return 'gold_18kt';
+                              return null;
+                            };
+                            const next: Record<string, string> = { ...formData.metalMountPrices };
+                            metals.filter(m => formData.metal_ids.includes(m.id)).forEach(m => {
+                              const k = keyMap(m.name);
+                              const v = k && (calculatedPrices as any)[k];
+                              if (v?.available && v.final_price) next[m.id] = String(v.final_price);
+                            });
+                            setFormData(prev => ({ ...prev, metalMountPrices: next }));
+                          }}
+                          className="text-xs px-2 py-1 bg-blue-600 text-white rounded font-satoshi hover:bg-blue-700"
+                        >
+                          Sync from Calculator
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3 font-satoshi">
+                      Calculated from live metal prices × ring weight. Click "Sync from Calculator" to auto-fill, or enter manually.
+                    </p>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
-                    Stock Quantity
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.stock_quantity}
-                    onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              {/* Metal Mount Prices — shown for any product with metals assigned */}
-              {formData.metal_ids.length > 0 && (
-                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-1 font-satoshi">Mount Price per Metal</h4>
-                  <p className="text-xs text-gray-600 mb-4 font-satoshi">
-                    Set the ring mount price for each metal type. Leave blank to use the default mount price above.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {metals.filter(m => formData.metal_ids.includes(m.id)).map((metal) => (
-                      <div key={metal.id} className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                        <div
-                          className="w-5 h-5 rounded-full border border-gray-300 flex-shrink-0"
-                          style={{ backgroundColor: metal.color_code || '#cccccc' }}
-                        />
-                        <label className="text-sm text-gray-700 font-satoshi flex-1">{metal.name}</label>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-gray-500 font-satoshi">£</span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={formData.metalMountPrices[metal.id] || ''}
-                            onChange={(e) => setFormData(prev => ({
-                              ...prev,
-                              metalMountPrices: { ...prev.metalMountPrices, [metal.id]: e.target.value }
-                            }))}
-                            className="w-28 px-2 py-1 border border-gray-300 rounded text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            placeholder={formData.base_price || '0.00'}
-                          />
+                    {/* Calculated reference prices */}
+                    {calculatedPrices && (
+                      <div className="mb-3 p-2 bg-white border border-blue-100 rounded-lg">
+                        <p className="text-xs font-medium text-gray-600 mb-1.5 font-satoshi">Live calculated prices (Ring Specs):</p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5">
+                          {(['silver','gold_9kt','gold_14kt','gold_18kt','platinum'] as const).map(k => {
+                            const v = (calculatedPrices as any)[k];
+                            if (!v?.available) return null;
+                            const labels: Record<string, string> = { silver: 'Silver', gold_9kt: '9kt Gold', gold_14kt: '14kt Gold', gold_18kt: '18kt Gold', platinum: 'Platinum' };
+                            return (
+                              <div key={k} className="flex justify-between text-xs font-satoshi">
+                                <span className="text-gray-500">{labels[k]}</span>
+                                <span className="font-semibold text-gray-900">£{v.final_price?.toFixed(2)}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    ))}
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {metals.filter(m => formData.metal_ids.includes(m.id)).map((metal) => (
+                        <div key={metal.id} className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                          <div
+                            className="w-5 h-5 rounded-full border border-gray-300 flex-shrink-0"
+                            style={{ backgroundColor: metal.color_code || '#cccccc' }}
+                          />
+                          <label className="text-sm text-gray-700 font-satoshi flex-1">{metal.name}</label>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm text-gray-500 font-satoshi">£</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={formData.metalMountPrices[metal.id] || ''}
+                              onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                metalMountPrices: { ...prev.metalMountPrices, [metal.id]: e.target.value }
+                              }))}
+                              className="w-28 px-2 py-1 border border-gray-300 rounded text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-blue-400"
+                              placeholder="0.00"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Non-ring products: show standard price fields */
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">Base Price * (£)</label>
+                    <input
+                      type="number" step="0.01"
+                      value={formData.base_price}
+                      onChange={(e) => handleInputChange('base_price', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi ${errors.base_price ? 'border-red-300' : 'border-gray-300'}`}
+                      placeholder="0.00"
+                    />
+                    {errors.base_price && <p className="text-red-500 text-xs mt-1 font-satoshi">{errors.base_price}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">Sale Price (£)</label>
+                    <input
+                      type="number" step="0.01"
+                      value={formData.sale_price}
+                      onChange={(e) => handleInputChange('sale_price', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">Stock Quantity</label>
+                    <input
+                      type="number"
+                      value={formData.stock_quantity}
+                      onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
+                      placeholder="0"
+                    />
                   </div>
                 </div>
               )}
@@ -2853,23 +2917,29 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     <div className="grid grid-cols-5 gap-2 text-xs text-gray-500 font-satoshi px-1">
                       <span>Shape</span><span>Dimensions (mm)</span><span>Pieces</span><span>Carats</span><span></span>
                     </div>
-                    {sideStones.map((stone, i) => (
-                      <div key={i} className="grid grid-cols-5 gap-2 items-center">
-                        {(['shape','dimensions','pieces','carats'] as const).map(field => (
-                          <input key={field} type={field === 'pieces' || field === 'carats' ? 'number' : 'text'}
-                            step={field === 'carats' ? '0.0001' : undefined}
-                            value={(stone as any)[field]}
-                            onChange={e => setSideStones(p => p.map((s, j) => j === i ? { ...s, [field]: e.target.value } : s))}
-                            placeholder={field}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs font-satoshi focus:outline-none focus:ring-1 focus:ring-gray-900"
-                          />
-                        ))}
-                        <button type="button" onClick={() => setSideStones(p => p.filter((_, j) => j !== i))}
-                          className="p-1 text-red-500 hover:text-red-700">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
+                    {sideStones.map((stone, i) => {
+                      const isComplete = stone.carats !== '' && Number(stone.carats) > 0 && stone.pieces !== '' && Number(stone.pieces) > 0;
+                      return (
+                        <div key={i} className={`grid grid-cols-5 gap-2 items-center rounded-lg px-1 py-0.5 ${!isComplete ? 'bg-amber-50 border border-amber-200' : ''}`}>
+                          {(['shape','dimensions','pieces','carats'] as const).map(field => (
+                            <input key={field} type={field === 'pieces' || field === 'carats' ? 'number' : 'text'}
+                              step={field === 'carats' ? '0.0001' : undefined}
+                              value={(stone as any)[field]}
+                              onChange={e => setSideStones(p => p.map((s, j) => j === i ? { ...s, [field]: e.target.value } : s))}
+                              placeholder={field}
+                              className={`w-full px-2 py-1 border rounded text-xs font-satoshi focus:outline-none focus:ring-1 focus:ring-gray-900 ${!isComplete ? 'border-amber-300' : 'border-gray-300'}`}
+                            />
+                          ))}
+                          <div className="flex items-center gap-1">
+                            {!isComplete && <span title="Missing pieces or carats — excluded from pricing" className="text-amber-500 text-xs">⚠</span>}
+                            <button type="button" onClick={() => setSideStones(p => p.filter((_, j) => j !== i))}
+                              className="p-1 text-red-500 hover:text-red-700">
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

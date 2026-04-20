@@ -16,7 +16,9 @@ async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = 
   const marginType      = pricingConfig.margin_type  || 'percent';
   const marginValue     = parseFloat(pricingConfig.margin_value ?? 0);
 
-  const totalSideStoneCt = sideStones.reduce((sum, s) => sum + (parseFloat(s.carats) || 0), 0);
+  // Only price rows where both carats and pieces are present
+  const completeSideStones = sideStones.filter(s => parseFloat(s.carats) > 0 && parseFloat(s.pieces) > 0);
+  const totalSideStoneCt = completeSideStones.reduce((sum, s) => sum + (parseFloat(s.carats) || 0), 0);
   const sideStoneCost    = parseFloat((totalSideStoneCt * sideStoneRate).toFixed(2));
 
   // Use Nivoda price if provided, otherwise estimate from center stone carats × rate
