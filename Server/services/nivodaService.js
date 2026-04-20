@@ -207,6 +207,53 @@ class NivodaService {
       throw error;
     }
   }
+  // Estimate center stone price from Nivoda by shape + carat.
+  // Returns the median GBP price from the cheapest 5 matching diamonds, or null on failure.
+  async estimateDiamondPrice(shape, carats, labgrown = false, email = STAGING_EMAIL, password = STAGING_PASSWORD) {
+    try {
+      const token = await this.ensureToken(email, password);
+      const ct = parseFloat(carats) || 0;
+      if (ct <= 0) return null;
+
+      const margin = Math.max(ct * 0.08, 0.03);
+      const caratMin = parseFloat((ct - margin).toFixed(2));
+      const caratMax = parseFloat((ct + margin).toFixed(2));
+      const nivodaShape = shape?.toUpperCase().replace(/[\s-]/g, '_') || '';
+
+      const query = `query ($token: String!) {
+        as(token: $token) {
+          diamonds_by_query(
+            query: {
+              labgrown: ${labgrown ? 'true' : 'false'}
+              sizes: { from: ${caratMin}, to: ${caratMax} }
+              ${nivodaShape ? `shapes: ["${nivodaShape}"]` : ''}
+              color: [D,E,F,G,H,I]
+              clarity: [VS1,VS2,VVS1,VVS2]
+              cut: [EX,VG]
+            }
+            limit: 5
+            offset: 0
+            order: { type: price, direction: ASC }
+          ) {
+            items { id price }
+          }
+        }
+      }`;
+
+      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } }, { timeout: 15000 });
+      if (response.data.errors) return null;
+
+      const items = response.data.data?.as?.diamonds_by_query?.items || [];
+      if (!items.length) return null;
+
+      // Prices from Nivoda are in GBP cents — convert to pounds, return median
+      const prices = items.map(d => d.price / 100).sort((a, b) => a - b);
+      const mid = Math.floor(prices.length / 2);
+      return prices[mid] || prices[0];
+    } catch {
+      return null;
+    }
+  }
 }
 
 module.exports = new NivodaService();

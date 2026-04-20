@@ -1,4 +1,5 @@
 const metalPriceService = require('./metalPriceService');
+const nivodaService     = require('./nivodaService');
 
 const METALS = [
   { key: 'silver',    label: 'Silver',      weightField: 'silver_wt',    priceField: 'silver_per_gram'    },
@@ -16,16 +17,29 @@ async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = 
   const marginType      = pricingConfig.margin_type  || 'percent';
   const marginValue     = parseFloat(pricingConfig.margin_value ?? 0);
 
-  // Only price rows where both carats and pieces are present
-  const completeSideStones = sideStones.filter(s => parseFloat(s.carats) > 0 && parseFloat(s.pieces) > 0);
+  // Only price rows where ALL 4 fields are complete (shape, dimensions, pieces, carats)
+  const completeSideStones = sideStones.filter(s =>
+    s.shape && s.dimensions && parseFloat(s.carats) > 0 && parseFloat(s.pieces) > 0
+  );
   const totalSideStoneCt = completeSideStones.reduce((sum, s) => sum + (parseFloat(s.carats) || 0), 0);
   const sideStoneCost    = parseFloat((totalSideStoneCt * sideStoneRate).toFixed(2));
 
-  // Use Nivoda price if provided, otherwise estimate from center stone carats × rate
+  // Diamond cost: use Nivoda price if provided, else try Nivoda lookup by shape+carat, else flat rate
   const centerStoneCt = (parseFloat(ringSpecs.cs1_carats) || 0) + (parseFloat(ringSpecs.cs2_carats) || 0);
-  const diamondCost   = nivodaDiamondPriceGBP > 0
-    ? parseFloat(nivodaDiamondPriceGBP.toFixed(2))
-    : parseFloat((centerStoneCt * diamondRate).toFixed(2));
+  let diamondCost;
+  if (nivodaDiamondPriceGBP > 0) {
+    diamondCost = parseFloat(nivodaDiamondPriceGBP.toFixed(2));
+  } else if (centerStoneCt > 0 && ringSpecs.cs1_shape) {
+    const labgrown = (ringSpecs.stone_type || '').toLowerCase().includes('lab');
+    const nivodaEstimate = await nivodaService.estimateDiamondPrice(
+      ringSpecs.cs1_shape, ringSpecs.cs1_carats, labgrown
+    );
+    diamondCost = nivodaEstimate !== null
+      ? parseFloat(nivodaEstimate.toFixed(2))
+      : parseFloat((centerStoneCt * diamondRate).toFixed(2));
+  } else {
+    diamondCost = parseFloat((centerStoneCt * diamondRate).toFixed(2));
+  }
 
   const result = {};
 
@@ -62,11 +76,13 @@ async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = 
   return {
     prices: result,
     meta: {
-      metal_prices_snapshot: metalPrices,
-      side_stones_total_ct:  parseFloat(totalSideStoneCt.toFixed(4)),
+      metal_prices_snapshot:  metalPrices,
+      side_stones_total_ct:   parseFloat(totalSideStoneCt.toFixed(4)),
+      complete_side_stones:   completeSideStones.length,
       side_stone_rate_per_ct: sideStoneRate,
-      diamond_cost:          diamondCost,
-      calculated_at:         new Date().toISOString(),
+      diamond_cost:           diamondCost,
+      diamond_source:         nivodaDiamondPriceGBP > 0 ? 'nivoda_selected' : (ringSpecs.cs1_shape && centerStoneCt > 0 ? 'nivoda_estimate' : 'flat_rate'),
+      calculated_at:          new Date().toISOString(),
     },
   };
 }

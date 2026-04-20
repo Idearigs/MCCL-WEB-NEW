@@ -218,6 +218,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [metalPrices, setMetalPrices] = useState<Record<string, number> | null>(null);
   const [metalPricesLoading, setMetalPricesLoading] = useState(false);
   const [calculatedPrices, setCalculatedPrices] = useState<Record<string, any> | null>(null);
+  const [calcMeta, setCalcMeta] = useState<Record<string, any> | null>(null);
   const [pricingCalcLoading, setPricingCalcLoading] = useState(false);
   const [ringSpecsSaving, setRingSpecsSaving] = useState(false);
   const [ringSpecsMessage, setRingSpecsMessage] = useState<string | null>(null);
@@ -629,7 +630,10 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         body: JSON.stringify({ nivodaDiamondPriceGBP: 0 }),
       });
       const data = await res.json();
-      if (data.success) setCalculatedPrices(data.data.prices);
+      if (data.success) {
+        setCalculatedPrices(data.data.prices);
+        if (data.data.meta) setCalcMeta(data.data.meta);
+      }
     } catch (e) {
       console.error('Price calc failed', e);
     } finally {
@@ -3073,7 +3077,12 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       </tbody>
                     </table>
                     <p className="text-xs text-gray-400 mt-1 font-satoshi">
-                      Diamond cost estimated from center stone carats × Diamond Rate. Overridden by Nivoda price when available.
+                      {calcMeta?.diamond_source === 'nivoda_estimate'
+                        ? `Diamond cost fetched from Nivoda (${ringSpecs.cs1_shape} ${ringSpecs.cs1_carats}ct estimate).`
+                        : calcMeta?.diamond_source === 'nivoda_selected'
+                          ? 'Diamond cost from selected Nivoda stone.'
+                          : 'Diamond cost estimated from center stone carats × Diamond Rate (Nivoda lookup unavailable).'}
+                      {calcMeta && ` Side stones priced: ${calcMeta.complete_side_stones ?? 0} complete row(s).`}
                     </p>
                   </div>
                 )}
