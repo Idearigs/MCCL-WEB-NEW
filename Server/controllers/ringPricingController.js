@@ -66,7 +66,12 @@ async function saveRingSpecs(req, res) {
     const { ProductRingSpecs, ProductSideStones, ProductPricingConfig } = models();
 
     if (specs) {
-      await ProductRingSpecs.upsert({ ...specs, product_id: productId, updated_at: new Date() });
+      const existingSpecs = await ProductRingSpecs.findOne({ where: { product_id: productId } });
+      if (existingSpecs) {
+        await existingSpecs.update({ ...specs, updated_at: new Date() });
+      } else {
+        await ProductRingSpecs.create({ ...specs, product_id: productId });
+      }
     }
 
     if (Array.isArray(side_stones)) {
@@ -85,11 +90,12 @@ async function saveRingSpecs(req, res) {
     }
 
     if (pricing_config) {
-      await ProductPricingConfig.upsert({
-        ...pricing_config,
-        product_id: productId,
-        updated_at: new Date(),
-      });
+      const existingConfig = await ProductPricingConfig.findOne({ where: { product_id: productId } });
+      if (existingConfig) {
+        await existingConfig.update({ ...pricing_config, updated_at: new Date() });
+      } else {
+        await ProductPricingConfig.create({ ...pricing_config, product_id: productId });
+      }
     }
 
     return res.json({ success: true, message: 'Ring specs saved' });
