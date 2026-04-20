@@ -1028,7 +1028,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     }`}
                     placeholder="0.00"
                   />
-                  {formData.nivoda_enabled && (
+                  {formData.metal_ids.length > 0 && (
                     <p className="text-xs text-blue-600 mt-1 font-satoshi">Default mount price (used when no per-metal price is set)</p>
                   )}
                   {errors.base_price && <p className="text-red-500 text-xs mt-1 font-satoshi">{errors.base_price}</p>}
@@ -1065,12 +1065,12 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 </div>
               </div>
 
-              {/* Metal Mount Prices — only shown when Nivoda is enabled */}
-              {formData.nivoda_enabled && formData.metal_ids.length > 0 && (
+              {/* Metal Mount Prices — shown for any product with metals assigned */}
+              {formData.metal_ids.length > 0 && (
                 <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
                   <h4 className="text-sm font-semibold text-gray-900 mb-1 font-satoshi">Mount Price per Metal</h4>
                   <p className="text-xs text-gray-600 mb-4 font-satoshi">
-                    Set the ring mount price for each metal type. This is added to the Nivoda diamond price to calculate the total. Leave blank to use the default mount price above.
+                    Set the ring mount price for each metal type. Leave blank to use the default mount price above.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {metals.filter(m => formData.metal_ids.includes(m.id)).map((metal) => (
