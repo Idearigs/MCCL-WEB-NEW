@@ -51,6 +51,10 @@ interface ProductFormData {
     clarityOptions?: string[];
     colourOptions?: string[];
     cutOptions?: string[];
+    polishOptions?: string[];
+    symmetryOptions?: string[];
+    fluorescenceOptions?: string[];
+    certificateOptions?: string[];
     defaultSpecs?: {
       carat?: string;
       clarity?: string;
@@ -177,6 +181,10 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     colours: string[];
     cuts: string[];
     stoneTypes: string[];
+    certificates: string[];
+    polishes: string[];
+    symmetries: string[];
+    fluorescences: string[];
   } | null>(null);
   const [nivodaLoading, setNivodaLoading] = useState(false);
   const [nivodaError, setNivodaError] = useState<string | null>(null);
@@ -204,6 +212,14 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
     const params = new URLSearchParams({ carat, clarity, color, cut, stoneType });
     if (shape) params.set('shape', shape);
+    const certs = cfg?.certificateOptions || [];
+    if (certs.length) params.set('certificate', certs.join(','));
+    const polishes = cfg?.polishOptions || [];
+    if (polishes.length) params.set('polish', polishes.join(','));
+    const symmetries = cfg?.symmetryOptions || [];
+    if (symmetries.length) params.set('symmetry', symmetries.join(','));
+    const fluors = cfg?.fluorescenceOptions || [];
+    if (fluors.length) params.set('fluorescence', fluors.join(','));
 
     setMarketPriceLoading(true);
     setMarketPriceError(null);
@@ -253,7 +269,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         clarities: data.data?.clarities || [],
         colours: data.data?.colours || [],
         cuts: data.data?.cuts || [],
-        stoneTypes: data.data?.stoneTypes || []
+        stoneTypes: data.data?.stoneTypes || [],
+        certificates: data.data?.certificates || [],
+        polishes: data.data?.polishes || [],
+        symmetries: data.data?.symmetries || [],
+        fluorescences: data.data?.fluorescences || [],
       });
     } catch (error: any) {
       setNivodaError(error.message || 'Failed to load Nivoda options');
@@ -300,6 +320,10 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           clarityOptions: initialData.nivoda_options_config?.clarityOptions || [],
           colourOptions: initialData.nivoda_options_config?.colourOptions || [],
           cutOptions: initialData.nivoda_options_config?.cutOptions || [],
+          polishOptions: initialData.nivoda_options_config?.polishOptions || [],
+          symmetryOptions: initialData.nivoda_options_config?.symmetryOptions || [],
+          fluorescenceOptions: initialData.nivoda_options_config?.fluorescenceOptions || [],
+          certificateOptions: initialData.nivoda_options_config?.certificateOptions || [],
           defaultSpecs: initialData.nivoda_options_config?.defaultSpecs || { carat: '', clarity: '', colour: '', cut: '' }
         },
         // Load per-metal mount prices from junction data
@@ -357,7 +381,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           caratRange: { min: 0.5, max: 2.0 },
           clarityOptions: [],
           colourOptions: [],
-          cutOptions: []
+          cutOptions: [],
+          polishOptions: [],
+          symmetryOptions: [],
+          fluorescenceOptions: [],
+          certificateOptions: [],
         },
         images: [],
         videos: [],
@@ -2234,6 +2262,90 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                           </p>
                         </div>
 
+                        {/* Polish */}
+                        <div className="border border-gray-200 rounded-lg p-4">
+                          <label className="text-sm font-semibold text-gray-900 mb-1 block font-satoshi">Available Polish Grades</label>
+                          {(nivodaAvailableOptions?.polishes || []).length === 0 ? (
+                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available polish grades</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {(nivodaAvailableOptions?.polishes || []).map((p) => {
+                                const isSelected = (formData.nivoda_options_config?.polishOptions || []).includes(p);
+                                return (
+                                  <label key={p} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                    <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, polishOptions: e.target.checked ? [...(formData.nivoda_options_config?.polishOptions || []), p] : (formData.nivoda_options_config?.polishOptions || []).filter(x => x !== p) } })} />
+                                    {p}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 mt-3 font-satoshi">Leave empty to accept any polish grade</p>
+                        </div>
+
+                        {/* Symmetry */}
+                        <div className="border border-gray-200 rounded-lg p-4">
+                          <label className="text-sm font-semibold text-gray-900 mb-1 block font-satoshi">Available Symmetry Grades</label>
+                          {(nivodaAvailableOptions?.symmetries || []).length === 0 ? (
+                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available symmetry grades</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {(nivodaAvailableOptions?.symmetries || []).map((s) => {
+                                const isSelected = (formData.nivoda_options_config?.symmetryOptions || []).includes(s);
+                                return (
+                                  <label key={s} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                    <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, symmetryOptions: e.target.checked ? [...(formData.nivoda_options_config?.symmetryOptions || []), s] : (formData.nivoda_options_config?.symmetryOptions || []).filter(x => x !== s) } })} />
+                                    {s}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 mt-3 font-satoshi">Leave empty to accept any symmetry grade</p>
+                        </div>
+
+                        {/* Fluorescence */}
+                        <div className="border border-gray-200 rounded-lg p-4">
+                          <label className="text-sm font-semibold text-gray-900 mb-1 block font-satoshi">Fluorescence</label>
+                          {(nivodaAvailableOptions?.fluorescences || []).length === 0 ? (
+                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available fluorescence options</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {(nivodaAvailableOptions?.fluorescences || []).map((f) => {
+                                const isSelected = (formData.nivoda_options_config?.fluorescenceOptions || []).includes(f);
+                                const label = f === 'NONE' ? 'None' : f === 'VERY_STRONG' ? 'Very Strong' : f.charAt(0) + f.slice(1).toLowerCase();
+                                return (
+                                  <label key={f} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                    <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, fluorescenceOptions: e.target.checked ? [...(formData.nivoda_options_config?.fluorescenceOptions || []), f] : (formData.nivoda_options_config?.fluorescenceOptions || []).filter(x => x !== f) } })} />
+                                    {label}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 mt-3 font-satoshi">Leave empty to accept any fluorescence level</p>
+                        </div>
+
+                        {/* Certificate / Lab */}
+                        <div className="border border-gray-200 rounded-lg p-4">
+                          <label className="text-sm font-semibold text-gray-900 mb-1 block font-satoshi">Certificate Labs</label>
+                          {(nivodaAvailableOptions?.certificates || []).length === 0 ? (
+                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available certificate labs</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {(nivodaAvailableOptions?.certificates || []).map((cert) => {
+                                const isSelected = (formData.nivoda_options_config?.certificateOptions || []).includes(cert);
+                                return (
+                                  <label key={cert} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                    <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, certificateOptions: e.target.checked ? [...(formData.nivoda_options_config?.certificateOptions || []), cert] : (formData.nivoda_options_config?.certificateOptions || []).filter(x => x !== cert) } })} />
+                                    {cert}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 mt-3 font-satoshi">Leave empty to accept any certificate lab</p>
+                        </div>
 
                         {/* Default Diamond Specs — Base Price Configuration */}
                         <div className="border border-amber-200 rounded-lg p-4 bg-amber-50">

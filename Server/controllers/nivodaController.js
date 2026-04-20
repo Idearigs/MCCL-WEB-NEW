@@ -14,10 +14,14 @@ const { centsToGBP, summarisePrices } = require('../services/pricingService');
 function getAvailableOptions(req, res) {
   const availableOptions = {
     carats: ['0.5', '0.75', '1.0', '1.25', '1.5', '1.75', '2.0', '2.5', '3.0', '5.0', '10.0'],
-    clarities: ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'SI3', 'I1', 'I2', 'I3'],
+    clarities: ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1', 'I2', 'I3'],
     colours: ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'],
-    cuts: ['EX', 'VG', 'G', 'F'],
-    stoneTypes: ['Natural', 'Lab-Grown']
+    cuts: ['EX', 'VG', 'G', 'F', 'P'],
+    stoneTypes: ['Natural', 'Lab-Grown'],
+    certificates: ['GIA', 'IGI', 'HRD', 'GCAL', 'EGL', 'DBIOD', 'GSI', 'SGL', 'AGS', 'EGLISR'],
+    polishes: ['EX', 'VG', 'G', 'F', 'P'],
+    symmetries: ['EX', 'VG', 'G', 'F', 'P'],
+    fluorescences: ['NONE', 'FAINT', 'MEDIUM', 'STRONG', 'VERY_STRONG'],
   };
 
   return res.json({
@@ -84,14 +88,11 @@ async function searchDiamonds(req, res) {
  */
 async function getDiamondPriceBySuggestions(req, res) {
   try {
-    const { carat, clarity, color, cut, certificate, stoneType, shape } = req.query;
+    const { carat, clarity, color, cut, certificate, stoneType, shape, polish, symmetry, fluorescence } = req.query;
 
     const labgrown = stoneType === 'lab-grown';
-
-    // Map our shape name to Nivoda enum (e.g. "Round" -> "ROUND", "Princess" -> "PRINCESS")
     const shapeNivoda = shape ? shape.toUpperCase().replace(/[\s-]/g, '_') : undefined;
 
-    // Build filter with specific specs
     const filters = {
       minCarat: Math.max(0.1, (parseFloat(carat) || 1.0) - 0.25),
       maxCarat: (parseFloat(carat) || 1.0) + 0.25,
@@ -99,10 +100,13 @@ async function getDiamondPriceBySuggestions(req, res) {
       maxPrice: 500000,
       clarity: clarity ? [clarity] : undefined,
       color: color ? [color] : undefined,
-      cut: cut ? [cut] : undefined,
-      certificate: certificate ? certificate : undefined,
+      cut: cut ? cut.split(',') : undefined,
       labgrown,
       shape: shapeNivoda,
+      labs: certificate ? certificate.split(',') : undefined,
+      polish: polish ? polish.split(',') : undefined,
+      symmetry: symmetry ? symmetry.split(',') : undefined,
+      fluorescence: fluorescence ? fluorescence.split(',') : undefined,
       limit: 10
     };
 

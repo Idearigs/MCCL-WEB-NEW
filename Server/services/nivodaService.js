@@ -54,12 +54,15 @@ class NivodaService {
       const clarityArray = filters.clarity?.length  ? filters.clarity.map(c => c.toUpperCase()).join(',') : 'VS1,VS2,VVS1,VVS2,IF';
       const cutArray     = filters.cut?.length      ? filters.cut.map(c => c.toUpperCase()).join(',')     : 'EX,VG,G';
 
-      // dollar_value is in USD cents — $500 = 50000, $50,000 = 5000000
       const minPriceCents = Math.round((filters.minPrice || 0) * 100);
-      const maxPriceCents = Math.round((filters.maxPrice || 5000000) * 100); // default max $50,000
+      const maxPriceCents = Math.round((filters.maxPrice || 5000000) * 100);
 
       const labgrown = filters.labgrown === true ? 'true' : 'false';
-      const shapeFilter = filters.shape ? `shapes: ["${filters.shape.toUpperCase().replace(/[\s-]/g, '_')}"]` : '';
+      const shapeFilter      = filters.shape?.length      ? `shapes:      ["${filters.shape.toUpperCase().replace(/[\s-]/g, '_')}"]` : '';
+      const polishFilter     = filters.polish?.length     ? `polish:      [${filters.polish.map(p => `"${p.toUpperCase()}"`).join(',')}]` : '';
+      const symmetryFilter   = filters.symmetry?.length   ? `symmetry:    [${filters.symmetry.map(s => `"${s.toUpperCase()}"`).join(',')}]` : '';
+      const fluorFilter      = filters.fluorescence?.length ? `fluorescence: [${filters.fluorescence.map(f => `"${f.toUpperCase()}"`).join(',')}]` : '';
+      const labFilter        = filters.labs?.length       ? `lab:         [${filters.labs.map(l => `"${l.toUpperCase()}"`).join(',')}]` : '';
 
       const query = `query ($token: String!) {
         as(token: $token) {
@@ -72,6 +75,10 @@ class NivodaService {
               sizes:    { from: ${filters.minCarat || 0.5}, to: ${filters.maxCarat || 10} }
               dollar_value: { from: ${minPriceCents}, to: ${maxPriceCents} }
               ${shapeFilter}
+              ${polishFilter}
+              ${symmetryFilter}
+              ${fluorFilter}
+              ${labFilter}
             }
             limit:  ${Math.min(filters.limit || 20, 50)}
             offset: ${filters.offset || 0}
