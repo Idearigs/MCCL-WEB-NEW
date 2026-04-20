@@ -195,7 +195,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     const carat     = ds?.carat   || (cfg?.caratRange ? cfg.caratRange.min.toFixed(2) : '1.00');
     const clarity   = ds?.clarity || cfg?.clarityOptions?.[0] || 'VS1';
     const color     = ds?.colour  || cfg?.colourOptions?.[0]  || 'G';
-    const cut       = ds?.cut     || cfg?.cutOptions?.[0]     || 'Excellent';
+    const cut       = ds?.cut     || cfg?.cutOptions?.[0]     || 'EX';
     const stoneType = cfg?.stoneType || 'natural';
 
     // Get first selected stone shape name (if any)
