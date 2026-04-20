@@ -12,12 +12,18 @@ async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = 
   const metalPrices     = await metalPriceService.fetchMetalPrices();
   const premiumMult     = 1 + (parseFloat(pricingConfig.metal_premium_pct ?? 5) / 100);
   const sideStoneRate   = parseFloat(pricingConfig.side_stone_rate_per_ct ?? 500);
+  const diamondRate     = parseFloat(pricingConfig.diamond_rate_per_ct ?? 2000);
   const marginType      = pricingConfig.margin_type  || 'percent';
   const marginValue     = parseFloat(pricingConfig.margin_value ?? 0);
 
   const totalSideStoneCt = sideStones.reduce((sum, s) => sum + (parseFloat(s.carats) || 0), 0);
   const sideStoneCost    = parseFloat((totalSideStoneCt * sideStoneRate).toFixed(2));
-  const diamondCost      = parseFloat((nivodaDiamondPriceGBP || 0).toFixed(2));
+
+  // Use Nivoda price if provided, otherwise estimate from center stone carats × rate
+  const centerStoneCt = (parseFloat(ringSpecs.cs1_carats) || 0) + (parseFloat(ringSpecs.cs2_carats) || 0);
+  const diamondCost   = nivodaDiamondPriceGBP > 0
+    ? parseFloat(nivodaDiamondPriceGBP.toFixed(2))
+    : parseFloat((centerStoneCt * diamondRate).toFixed(2));
 
   const result = {};
 

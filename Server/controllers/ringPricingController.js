@@ -130,16 +130,22 @@ async function calculatePrice(req, res) {
     });
 
     // Persist calculated prices
-    await ProductPricingConfig.upsert({
-      product_id:         productId,
-      metal_premium_pct:  pricingConfig?.metal_premium_pct   ?? 5,
+    const existingConfig2 = await ProductPricingConfig.findOne({ where: { product_id: productId } });
+    const configData = {
+      metal_premium_pct:      pricingConfig?.metal_premium_pct      ?? 5,
       side_stone_rate_per_ct: pricingConfig?.side_stone_rate_per_ct ?? 500,
-      margin_type:        pricingConfig?.margin_type          ?? 'percent',
-      margin_value:       pricingConfig?.margin_value         ?? 0,
-      calculated_prices:  result.prices,
-      last_calculated_at: new Date(),
-      updated_at:         new Date(),
-    });
+      diamond_rate_per_ct:    pricingConfig?.diamond_rate_per_ct    ?? 2000,
+      margin_type:            pricingConfig?.margin_type             ?? 'percent',
+      margin_value:           pricingConfig?.margin_value            ?? 0,
+      calculated_prices:      result.prices,
+      last_calculated_at:     new Date(),
+      updated_at:             new Date(),
+    };
+    if (existingConfig2) {
+      await existingConfig2.update(configData);
+    } else {
+      await ProductPricingConfig.create({ ...configData, product_id: productId });
+    }
 
     return res.json({ success: true, data: result });
   } catch (err) {

@@ -213,7 +213,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   }>>([]);
   const [pricingConfig, setPricingConfig] = useState({
     metal_premium_pct: '5', side_stone_rate_per_ct: '500',
-    margin_type: 'percent', margin_value: '0',
+    diamond_rate_per_ct: '2000', margin_type: 'percent', margin_value: '0',
   });
   const [metalPrices, setMetalPrices] = useState<Record<string, number> | null>(null);
   const [metalPricesLoading, setMetalPricesLoading] = useState(false);
@@ -539,6 +539,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             setPricingConfig({
               metal_premium_pct:      String(pricing_config.metal_premium_pct ?? '5'),
               side_stone_rate_per_ct: String(pricing_config.side_stone_rate_per_ct ?? '500'),
+              diamond_rate_per_ct:    String(pricing_config.diamond_rate_per_ct ?? '2000'),
               margin_type:            pricing_config.margin_type  || 'percent',
               margin_value:           String(pricing_config.margin_value ?? '0'),
             });
@@ -601,6 +602,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           pricing_config: {
             metal_premium_pct:      Number(pricingConfig.metal_premium_pct) || 5,
             side_stone_rate_per_ct: Number(pricingConfig.side_stone_rate_per_ct) || 500,
+            diamond_rate_per_ct:    Number(pricingConfig.diamond_rate_per_ct) || 2000,
             margin_type:            pricingConfig.margin_type,
             margin_value:           Number(pricingConfig.margin_value) || 0,
           },
@@ -2894,6 +2896,15 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     />
                   </div>
                   <div>
+                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Diamond Rate (£/ct)</label>
+                    <input type="number" step="50" min="0"
+                      value={pricingConfig.diamond_rate_per_ct}
+                      onChange={e => setPricingConfig(p => ({ ...p, diamond_rate_per_ct: e.target.value }))}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                    <p className="text-xs text-gray-400 mt-0.5 font-satoshi">Used when no Nivoda price</p>
+                  </div>
+                  <div>
                     <label className="block text-xs text-gray-500 mb-1 font-satoshi">Margin Type</label>
                     <select value={pricingConfig.margin_type}
                       onChange={e => setPricingConfig(p => ({ ...p, margin_type: e.target.value }))}
@@ -2992,7 +3003,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       </tbody>
                     </table>
                     <p className="text-xs text-gray-400 mt-1 font-satoshi">
-                      Diamond cost is £0 until set from Nivoda. Prices update automatically when metals refresh.
+                      Diamond cost estimated from center stone carats × Diamond Rate. Overridden by Nivoda price when available.
                     </p>
                   </div>
                 )}

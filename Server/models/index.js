@@ -1227,6 +1227,7 @@ const initializeModels = (sequelize) => {
     product_id:             { type: DataTypes.UUID, allowNull: false },
     metal_premium_pct:      { type: DataTypes.DECIMAL(5, 2), defaultValue: 5.00 },
     side_stone_rate_per_ct: { type: DataTypes.DECIMAL(8, 2), defaultValue: 500.00 },
+    diamond_rate_per_ct:    { type: DataTypes.DECIMAL(10, 2), defaultValue: 2000.00 },
     margin_type:            { type: DataTypes.STRING(10), defaultValue: 'percent' },
     margin_value:           { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
     calculated_prices:      DataTypes.JSONB,
