@@ -117,6 +117,10 @@ const ProductDetail = () => {
   const [currentRecommendationIndex, setCurrentRecommendationIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  // Carousel swipe state
+  const [carouselDragStart, setCarouselDragStart] = useState<number | null>(null);
+  const [carouselDragOffset, setCarouselDragOffset] = useState(0);
+  const [carouselDragging, setCarouselDragging] = useState(false);
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
     about: false,
     delivery: false,
@@ -679,9 +683,9 @@ const ProductDetail = () => {
     );
   };
 
-  // Touch handlers for swipe functionality
+  // Touch handlers for swipe functionality (recommendations)
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(0); // Reset touchEnd
+    setTouchEnd(0);
     setTouchStart(e.targetTouches[0].clientX);
   };
 
@@ -691,17 +695,29 @@ const ProductDetail = () => {
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
+    if (distance > 50) nextRecommendation();
+    if (distance < -50) prevRecommendation();
+  };
 
-    if (isLeftSwipe) {
-      nextRecommendation();
-    }
-    if (isRightSwipe) {
-      prevRecommendation();
-    }
+  // Carousel swipe handlers
+  const handleCarouselTouchStart = (e: React.TouchEvent) => {
+    setCarouselDragStart(e.targetTouches[0].clientX);
+    setCarouselDragOffset(0);
+    setCarouselDragging(true);
+  };
+
+  const handleCarouselTouchMove = (e: React.TouchEvent) => {
+    if (carouselDragStart === null) return;
+    setCarouselDragOffset(e.targetTouches[0].clientX - carouselDragStart);
+  };
+
+  const handleCarouselTouchEnd = () => {
+    if (carouselDragOffset < -50) nextImage();
+    else if (carouselDragOffset > 50) prevImage();
+    setCarouselDragOffset(0);
+    setCarouselDragStart(null);
+    setCarouselDragging(false);
   };
 
   // Static fallback data will be replaced by API data
@@ -780,135 +796,114 @@ const ProductDetail = () => {
 
       {/* Mobile Image Carousel - Full Width, Large & Clean */}
       <div className="block lg:hidden w-full bg-white">
-        <div
-          className="relative w-full"
-          style={{ minHeight: '400px' }}
-        >
-          {isVideoFile(displayImages[currentImageIndex]?.url) ? (
-            /* Custom Video Player for Mobile */
-            <div
-              className="relative w-full bg-black"
-              onClick={toggleVideoPlay}
-              onMouseEnter={() => setShowVideoControls(true)}
-              onMouseLeave={() => setShowVideoControls(false)}
-            >
-              <video
-                ref={videoRef}
-                src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-                className="w-full h-auto object-cover"
-                style={{ maxHeight: '500px' }}
-                onTimeUpdate={handleVideoTimeUpdate}
-                onPlay={() => setIsVideoPlaying(true)}
-                onPause={() => setIsVideoPlaying(false)}
-              />
+        <div className="relative w-full overflow-hidden" style={{ height: '450px' }}>
 
-              {/* Custom Minimal Controls Overlay */}
-              <div className={`absolute inset-0 flex flex-col justify-between transition-opacity duration-300 ${showVideoControls ? 'opacity-100' : 'opacity-0'}`}>
-                {/* Center Play/Pause Button */}
-                <div className="flex-1 flex items-center justify-center">
-                  <button
-                    onClick={toggleVideoPlay}
-                    className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-white/30 hover:scale-110"
-                  >
-                    {isVideoPlaying ? (
-                      <Pause className="w-8 h-8 text-white" fill="white" />
-                    ) : (
-                      <Play className="w-8 h-8 text-white ml-1" fill="white" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Bottom Controls Bar */}
-                <div className="px-4 pb-4">
-                  {/* Progress Bar */}
+          {/* Sliding strip — all images side by side */}
+          <div
+            className="flex h-full"
+            style={{
+              transform: `translateX(calc(-${currentImageIndex * 100}% + ${carouselDragOffset}px))`,
+              transition: carouselDragging ? 'none' : 'transform 0.3s ease-out',
+              willChange: 'transform',
+            }}
+            onTouchStart={handleCarouselTouchStart}
+            onTouchMove={handleCarouselTouchMove}
+            onTouchEnd={handleCarouselTouchEnd}
+          >
+            {displayImages.map((img, idx) => (
+              <div key={idx} className="w-full flex-shrink-0 h-full">
+                {isVideoFile(img?.url) ? (
                   <div
-                    className="w-full h-1 bg-white/30 rounded-full cursor-pointer mb-3"
-                    onClick={handleVideoSeek}
+                    className="relative w-full h-full bg-black"
+                    onClick={toggleVideoPlay}
+                    onMouseEnter={() => setShowVideoControls(true)}
+                    onMouseLeave={() => setShowVideoControls(false)}
                   >
-                    <div
-                      className="h-full bg-white rounded-full transition-all duration-100"
-                      style={{ width: `${videoProgress}%` }}
+                    <video
+                      ref={idx === currentImageIndex ? videoRef : undefined}
+                      src={getMediaUrl(img?.url || '')}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                      className="w-full h-full object-cover"
+                      onTimeUpdate={handleVideoTimeUpdate}
+                      onPlay={() => setIsVideoPlaying(true)}
+                      onPause={() => setIsVideoPlaying(false)}
                     />
+                    <div className={`absolute inset-0 flex flex-col justify-between transition-opacity duration-300 ${showVideoControls ? 'opacity-100' : 'opacity-0'}`}>
+                      <div className="flex-1 flex items-center justify-center">
+                        <button
+                          onClick={toggleVideoPlay}
+                          className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-white/30 hover:scale-110"
+                        >
+                          {isVideoPlaying ? (
+                            <Pause className="w-8 h-8 text-white" fill="white" />
+                          ) : (
+                            <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="px-4 pb-4">
+                        <div className="w-full h-1 bg-white/30 rounded-full cursor-pointer mb-3" onClick={handleVideoSeek}>
+                          <div className="h-full bg-white rounded-full transition-all duration-100" style={{ width: `${videoProgress}%` }} />
+                        </div>
+                        <div className="flex justify-end">
+                          <button onClick={toggleVideoMute} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-white/30">
+                            {isVideoMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-
-                  {/* Mute Button */}
-                  <div className="flex justify-end">
-                    <button
-                      onClick={toggleVideoMute}
-                      className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-white/30"
-                    >
-                      {isVideoMuted ? (
-                        <VolumeX className="w-5 h-5 text-white" />
-                      ) : (
-                        <Volume2 className="w-5 h-5 text-white" />
-                      )}
-                    </button>
-                  </div>
-                </div>
+                ) : (
+                  <img
+                    src={getMediaUrl(img?.url || '')}
+                    alt={img?.alt || productData.name}
+                    className="w-full h-full object-cover cursor-pointer"
+                    fetchPriority={idx === 0 ? 'high' : 'auto'}
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                    onClick={() => openLightbox(idx)}
+                    draggable={false}
+                  />
+                )}
               </div>
-            </div>
-          ) : (
-            <div
-              className="w-full cursor-pointer overflow-hidden"
-              style={{ height: '450px' }}
-              onClick={() => openLightbox(currentImageIndex)}
-            >
-              <img
-                src={getMediaUrl(displayImages[currentImageIndex]?.url || '')}
-                alt={displayImages[currentImageIndex]?.alt || productData.name}
-                className="w-full h-full object-cover"
-                fetchPriority="high"
-                loading="eager"
-              />
-            </div>
-          )}
+            ))}
+          </div>
 
-          {/* Navigation Arrows - Only for images, not videos */}
+          {/* Navigation Arrows */}
           {displayImages.length > 1 && !isVideoFile(displayImages[currentImageIndex]?.url) && (
             <>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  prevImage();
-                }}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10 shadow-md"
+                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10 shadow-md"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-700" />
               </button>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  nextImage();
-                }}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10 shadow-md"
+                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center transition-colors z-10 shadow-md"
               >
                 <ChevronRight className="w-5 h-5 text-gray-700" />
               </button>
             </>
           )}
 
-          {/* Dots Pagination - Overlaid on bottom of image */}
-          <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-3 pt-4 space-x-1.5 z-10">
+          {/* Dots */}
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center space-x-1.5 z-10">
             {displayImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToImage(index)}
                 className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  index === currentImageIndex
-                    ? 'bg-gray-900'
-                    : 'bg-gray-300 hover:bg-gray-500'
+                  index === currentImageIndex ? 'bg-gray-900' : 'bg-gray-300 hover:bg-gray-500'
                 }`}
               />
             ))}
           </div>
-          {/* Divider line flush with image */}
-          <div className="w-full border-b border-gray-200" />
         </div>
+        <div className="w-full border-b border-gray-200" />
       </div>
 
       {/* Mobile Product Details Section */}
@@ -968,12 +963,12 @@ const ProductDetail = () => {
           <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2">
             Metal Type: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
           </h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {visibleOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => setSelectedMetalType(option.value)}
-                className={`px-4 py-2 border transition-all font-futura-pt text-xs font-light ${
+                className={`flex-shrink-0 px-4 py-2 border transition-all font-futura-pt text-xs font-light ${
                   selectedMetalType === option.value
                     ? 'border-gray-800 bg-gray-100'
                     : 'border-gray-300'
