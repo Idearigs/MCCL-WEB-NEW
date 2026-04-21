@@ -117,11 +117,12 @@ async function getDiamondPriceBySuggestions(req, res) {
 
     const diamonds = await nivodaService.searchDiamonds(filters);
 
-    // Filter by certificate if specified (client-side filtering as backup)
+    // Filter by certificate client-side (lab filter removed from Nivoda GraphQL)
     let filteredDiamonds = diamonds.items || [];
     if (certificate) {
+      const certList = certificate.split(',').map(c => c.trim().toUpperCase());
       filteredDiamonds = filteredDiamonds.filter(d =>
-        d.diamond?.certificate?.lab?.toUpperCase() === certificate.toUpperCase()
+        certList.includes(d.diamond?.certificate?.lab?.toUpperCase())
       );
     }
 

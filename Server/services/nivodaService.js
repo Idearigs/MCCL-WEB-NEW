@@ -62,7 +62,7 @@ class NivodaService {
       const polishFilter     = filters.polish?.length     ? `polish:      [${filters.polish.map(p => `"${p.toUpperCase()}"`).join(',')}]` : '';
       const symmetryFilter   = filters.symmetry?.length   ? `symmetry:    [${filters.symmetry.map(s => `"${s.toUpperCase()}"`).join(',')}]` : '';
       const fluorFilter      = filters.fluorescence?.length ? `fluorescence: [${filters.fluorescence.map(f => `"${f.toUpperCase()}"`).join(',')}]` : '';
-      const labFilter        = filters.labs?.length       ? `lab:         [${filters.labs.map(l => `"${l.toUpperCase()}"`).join(',')}]` : '';
+      // lab filter removed — Nivoda deprecated this GraphQL field; filter by certificate client-side
 
       const query = `query ($token: String!) {
         as(token: $token) {
@@ -78,7 +78,6 @@ class NivodaService {
               ${polishFilter}
               ${symmetryFilter}
               ${fluorFilter}
-              ${labFilter}
             }
             limit:  ${Math.min(filters.limit || 20, 50)}
             offset: ${filters.offset || 0}
