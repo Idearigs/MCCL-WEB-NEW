@@ -96,6 +96,20 @@ async function saveRingSpecs(req, res) {
       } else {
         await ProductPricingConfig.create({ ...pricing_config, product_id: productId });
       }
+
+      // Sync best price from price_overrides back to products table
+      const overrides = pricing_config.price_overrides;
+      if (overrides && typeof overrides === 'object') {
+        const preferred = ['gold_18kt', 'gold_14kt', 'gold_9kt', 'platinum', 'silver'];
+        const bestKey = preferred.find(k => overrides[k] && parseFloat(overrides[k]) > 0);
+        if (bestKey) {
+          const { Product } = getModels();
+          await Product.update(
+            { base_price: parseFloat(overrides[bestKey]), currency: 'GBP', updated_at: new Date() },
+            { where: { id: productId } }
+          );
+        }
+      }
     }
 
     return res.json({ success: true, message: 'Ring specs saved' });
@@ -154,4 +168,16 @@ async function calculatePrice(req, res) {
   }
 }
 
-module.exports = { getMetalPrices, refreshMetalPrices, getRingSpecs, saveRingSpecs, calculatePrice };
+// POST /api/ring-pricing/refresh-all-prices
+async function refreshAllProductPrices(req, res) {
+  try {
+    const { refreshAllRingPrices } = require('../jobs/dailyPriceRefresh');
+    const result = await refreshAllRingPrices();
+    return res.json({ success: true, data: result, message: `${result.updated} products updated, ${result.skipped} unchanged` });
+  } catch (err) {
+    console.error('Refresh all prices error:', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+module.exports = { getMetalPrices, refreshMetalPrices, getRingSpecs, saveRingSpecs, calculatePrice, refreshAllProductPrices };

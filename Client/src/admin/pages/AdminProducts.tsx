@@ -55,6 +55,7 @@ interface Product {
   primary_image?: string;
   created_at: string;
   updated_at: string;
+  price_range?: { min: number; max: number } | null;
 }
 
 interface ProductsResponse {
@@ -1227,7 +1228,14 @@ const AdminProducts: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900 font-satoshi">
-                        {product.sale_price ? (
+                        {product.price_range ? (
+                          <span className="font-medium">
+                            {product.price_range.min === product.price_range.max
+                              ? `£${product.price_range.min.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                              : `£${product.price_range.min.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} – £${product.price_range.max.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                            }
+                          </span>
+                        ) : product.sale_price ? (
                           <div>
                             <span className="text-red-600 font-medium">
                               {formatPrice(product.sale_price, product.currency)}

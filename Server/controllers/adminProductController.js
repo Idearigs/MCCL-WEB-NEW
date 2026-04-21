@@ -101,7 +101,7 @@ const getProducts = async (req, res) => {
           model: ProductPricingConfig,
           as: 'pricingConfig',
           required: false,
-          attributes: ['last_calculated_at', 'calculated_prices']
+          attributes: ['last_calculated_at', 'calculated_prices', 'price_overrides']
         }] : []),
       ],
       order: [[sortBy, sortOrder.toUpperCase()]],
@@ -136,17 +136,30 @@ const getProducts = async (req, res) => {
         primary_image: primaryImage ? primaryImage.image_url : null,
         created_at: product.created_at,
         updated_at: product.updated_at,
+        price_range: (() => {
+          const overrides = product.pricingConfig?.price_overrides;
+          if (!overrides || typeof overrides !== 'object') return null;
+          const vals = Object.values(overrides).map(v => parseFloat(v)).filter(v => v > 0);
+          if (vals.length === 0) return null;
+          return { min: Math.min(...vals), max: Math.max(...vals) };
+        })(),
         price_change_pct: (() => {
           const cp = product.pricingConfig?.calculated_prices;
           if (!cp) return null;
+          const overrides = product.pricingConfig?.price_overrides;
+          const preferred = ['gold_18kt', 'gold_14kt', 'gold_9kt', 'silver', 'platinum'];
+          const refPrice = (() => {
+            if (overrides) {
+              const k = preferred.find(k => overrides[k] && parseFloat(overrides[k]) > 0);
+              return k ? parseFloat(overrides[k]) : null;
+            }
+            const metal = preferred.find(k => cp[k]?.available && cp[k]?.final_price > 0);
+            return metal ? cp[metal].final_price : null;
+          })();
+          if (!refPrice) return null;
           const base = parseFloat(product.base_price);
           if (!base) return null;
-          // Prefer 18kt → 14kt → 9kt → silver → platinum
-          const preferred = ['gold_18kt', 'gold_14kt', 'gold_9kt', 'silver', 'platinum'];
-          const metal = preferred.find(k => cp[k]?.available && cp[k]?.final_price > 0);
-          if (!metal) return null;
-          const calc = cp[metal].final_price;
-          return parseFloat(((calc - base) / base * 100).toFixed(1));
+          return parseFloat(((refPrice - base) / base * 100).toFixed(1));
         })(),
         ring_spec_status: (() => {
           const s = product.ringSpecs;

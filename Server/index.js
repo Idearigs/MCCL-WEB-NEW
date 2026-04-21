@@ -310,6 +310,16 @@ const startServer = async () => {
       }
     }
 
+    // Schedule daily ring price refresh (runs at 2am)
+    if (dbConnected) {
+      try {
+        const { scheduleDailyRefresh } = require('./jobs/dailyPriceRefresh');
+        scheduleDailyRefresh();
+      } catch (err) {
+        logger.warn('Could not start daily price refresh scheduler:', err.message);
+      }
+    }
+
     // Start HTTP server regardless of database status
     server.listen(config.PORT, () => {
       logger.info(`🚀 Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);
