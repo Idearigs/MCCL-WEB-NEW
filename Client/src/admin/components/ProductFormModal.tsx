@@ -545,13 +545,25 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               margin_type:            pricing_config.margin_type  || 'percent',
               margin_value:           String(pricing_config.margin_value ?? '0'),
             });
-            if (pricing_config.price_overrides) {
-              const ov: Record<string,string> = {};
-              Object.entries(pricing_config.price_overrides).forEach(([k,v]) => { ov[k] = String(v); });
-              setRingPriceOverrides(ov);
-            }
             if (pricing_config.calculated_prices) {
               setCalculatedPrices(pricing_config.calculated_prices);
+            }
+            // Build overrides: start from saved overrides, auto-fill any blank keys from calculated prices
+            {
+              const ov: Record<string,string> = {};
+              if (pricing_config.price_overrides) {
+                Object.entries(pricing_config.price_overrides).forEach(([k,v]) => { ov[k] = String(v); });
+              }
+              if (pricing_config.calculated_prices) {
+                const KEYS = ['silver','gold_9kt','gold_14kt','gold_18kt','platinum'] as const;
+                KEYS.forEach(key => {
+                  if (!ov[key]) {
+                    const v = (pricing_config.calculated_prices as any)[key];
+                    if (v?.available && v.final_price) ov[key] = String(v.final_price);
+                  }
+                });
+              }
+              setRingPriceOverrides(ov);
             }
           }
         }
@@ -581,6 +593,18 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         if (data.success) {
           setCalculatedPrices(data.data.prices);
           if (data.data.meta) setCalcMeta(data.data.meta);
+          // Auto-sync: fill any blank overrides from the freshly calculated prices
+          setRingPriceOverrides(prev => {
+            const updated = { ...prev };
+            const KEYS = ['silver','gold_9kt','gold_14kt','gold_18kt','platinum'] as const;
+            KEYS.forEach(key => {
+              if (!updated[key]) {
+                const v = data.data.prices[key];
+                if (v?.available && v.final_price) updated[key] = String(v.final_price);
+              }
+            });
+            return updated;
+          });
         }
       } catch {}
     };

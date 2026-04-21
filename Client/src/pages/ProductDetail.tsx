@@ -1457,9 +1457,7 @@ const ProductDetail = () => {
                         <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
                           From £{((liveMountPrice ?? mountPrice) + nivodaPrice.min).toLocaleString()}
                         </div>
-                        <div className="flex flex-col gap-0.5 text-[10px] 2xl:text-xs font-futura-pt text-gray-500">
-                          <span>Ring from £{(liveMountPrice ?? mountPrice).toLocaleString()} · Diamond from £{nivodaPrice.min.toLocaleString()}</span>
-                        </div>
+                        <div className="flex flex-col gap-0.5 text-[10px] 2xl:text-xs font-futura-pt text-gray-500"></div>
                       </div>
                     ) : (
                       <div className="text-base 2xl:text-lg font-futura-pt font-normal text-gray-900 mb-1">
