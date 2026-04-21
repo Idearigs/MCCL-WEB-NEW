@@ -720,6 +720,61 @@ const ProductDetail = () => {
     setCarouselDragging(false);
   };
 
+  // Sync metal thumbnail → metal type (price)
+  const handleMetalThumbnailClick = (metalId: string) => {
+    setSelectedMetal(metalId);
+    const metal = productData?.available_metals?.find((m: any) => m.id === metalId);
+    if (!metal) return;
+    const overrides = productData?.ring_price_overrides;
+    if (!overrides) return;
+    const nameLower = (metal.name || '').toLowerCase();
+    let color: string | null = null;
+    if (nameLower.includes('yellow')) color = 'yellow';
+    else if (nameLower.includes('rose')) color = 'rose';
+    else if (nameLower.includes('white')) color = 'white';
+    let newValue: string | null = null;
+    if (nameLower === 'silver') {
+      newValue = 'silver';
+    } else if (nameLower === 'platinum') {
+      newValue = 'platinum';
+    } else if (color) {
+      // Keep same karat, swap color
+      const currentOpt = metalTypeOptions.find(m => m.value === selectedMetalType);
+      const karat = currentOpt?.value.replace(/-white-gold|-yellow-gold|-rose-gold/, '') || '18ct';
+      const candidate = `${karat}-${color}-gold`;
+      const candidateOpt = metalTypeOptions.find(m => m.value === candidate);
+      if (candidateOpt && overrides[candidateOpt.overrideKey]) {
+        newValue = candidate;
+      } else {
+        // Fall back to any option for this color that has a price
+        const fallback = metalTypeOptions.find(m => m.value.includes(`-${color}-gold`) && overrides[m.overrideKey]);
+        newValue = fallback?.value || null;
+      }
+    }
+    if (newValue) setSelectedMetalType(newValue);
+  };
+
+  // Sync metal type button → metal thumbnail (image)
+  const handleMetalTypeClick = (value: string) => {
+    setSelectedMetalType(value);
+    if (!productData?.available_metals) return;
+    let colorKeyword: string | null = null;
+    if (value.includes('yellow')) colorKeyword = 'yellow';
+    else if (value.includes('rose')) colorKeyword = 'rose';
+    else if (value.includes('white')) colorKeyword = 'white';
+    else if (value === 'silver') colorKeyword = 'silver';
+    else if (value === 'platinum') colorKeyword = 'platinum';
+    if (!colorKeyword) return;
+    const match = productData.available_metals.find((m: any) => {
+      const name = (m.name || '').toLowerCase();
+      return name.includes(colorKeyword!);
+    });
+    if (match) {
+      const img = getMetalThumbnail(match.id);
+      if (img?.url) setSelectedMetal(match.id);
+    }
+  };
+
   // Static fallback data will be replaced by API data
   // const staticProductData = { ... }; // Removed - using dynamic productData from API
 
@@ -930,7 +985,7 @@ const ProductDetail = () => {
                 return (
                   <button
                     key={metal.id}
-                    onClick={() => setSelectedMetal(metal.id)}
+                    onClick={() => handleMetalThumbnailClick(metal.id)}
                     className={`w-12 h-12 border transition-all overflow-hidden flex items-center justify-center bg-gray-100 ${
                       selectedMetal === metal.id ? 'border-gray-800' : 'border-gray-300'
                     }`}
@@ -967,7 +1022,7 @@ const ProductDetail = () => {
             {visibleOptions.map((option) => (
               <button
                 key={option.value}
-                onClick={() => setSelectedMetalType(option.value)}
+                onClick={() => handleMetalTypeClick(option.value)}
                 className={`flex-shrink-0 px-4 py-2 border transition-all font-futura-pt text-xs font-light ${
                   selectedMetalType === option.value
                     ? 'border-gray-800 bg-gray-100'
@@ -1189,6 +1244,42 @@ const ProductDetail = () => {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Mobile Total Price — shown when diamond specs are selected */}
+        {productData?.nivoda_enabled && (
+          <div
+            className={`mb-4 overflow-hidden transition-all duration-500 ease-out ${
+              nivodaPrice && !nivodaPriceLoading ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+            }`}
+          >
+            {nivodaPrice && (
+              <div className="p-4 bg-[#F5EFE6] border border-[#e8d5b7]">
+                <p className="text-[10px] font-futura-pt uppercase tracking-wider text-gray-500 mb-3">Price Breakdown</p>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-futura-pt">
+                    <span className="text-gray-500">Ring ({metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Ring'})</span>
+                    <span className="text-gray-700">£{(liveMountPrice ?? mountPrice).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-futura-pt">
+                    <span className="text-gray-500">Diamond (your specs)</span>
+                    <span className="text-gray-700">£{nivodaPrice.min.toLocaleString()} – £{nivodaPrice.max.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-[#e8d5b7] pt-2 mt-1">
+                    <div className="flex justify-between text-sm font-futura-pt font-medium">
+                      <span className="text-gray-900">Total (from)</span>
+                      <span className="text-[#D4A574]">£{((liveMountPrice ?? mountPrice) + nivodaPrice.min).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {nivodaPriceLoading && (
+          <div className="mb-4 px-4 py-3 bg-[#F5EFE6] border border-[#e8d5b7]">
+            <p className="text-xs font-futura-pt text-gray-500 animate-pulse uppercase tracking-wider">Calculating price…</p>
           </div>
         )}
 
@@ -1486,7 +1577,7 @@ const ProductDetail = () => {
                     return (
                       <button
                         key={metal.id}
-                        onClick={() => setSelectedMetal(metal.id)}
+                        onClick={() => handleMetalThumbnailClick(metal.id)}
                         className={`w-14 h-14 2xl:w-16 2xl:h-16 border transition-all duration-200 overflow-hidden flex items-center justify-center bg-gray-100 ${
                           selectedMetal === metal.id
                             ? 'border-gray-800'
@@ -1523,7 +1614,7 @@ const ProductDetail = () => {
                 {visibleOptions.map((option) => (
                   <button
                     key={option.value}
-                    onClick={() => setSelectedMetalType(option.value)}
+                    onClick={() => handleMetalTypeClick(option.value)}
                     className={`px-4 py-2 border transition-all duration-200 font-futura-pt text-sm font-light ${
                       selectedMetalType === option.value
                         ? 'border-gray-800 bg-gray-100'
@@ -1786,8 +1877,8 @@ const ProductDetail = () => {
                         <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-3">Price Breakdown</p>
                         {/* Ring mount price */}
                         <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
-                          <span className="text-gray-500">Ring</span>
-                          <span className="text-gray-700">£{mountPrice.toLocaleString()}</span>
+                          <span className="text-gray-500">Ring ({metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Ring'})</span>
+                          <span className="text-gray-700">£{(liveMountPrice ?? mountPrice).toLocaleString()}</span>
                         </div>
                         {/* Diamond price range */}
                         <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt">
@@ -1798,7 +1889,7 @@ const ProductDetail = () => {
                         <div className="border-t border-[#e8d5b7] pt-1.5 mt-1.5">
                           <div className="flex justify-between text-xs 2xl:text-sm font-futura-pt font-medium">
                             <span className="text-gray-900">Total (from)</span>
-                            <span className="text-[#D4A574]">£{(mountPrice + nivodaPrice.min).toLocaleString()}</span>
+                            <span className="text-[#D4A574]">£{((liveMountPrice ?? mountPrice) + nivodaPrice.min).toLocaleString()}</span>
                           </div>
                         </div>
                       </div>
