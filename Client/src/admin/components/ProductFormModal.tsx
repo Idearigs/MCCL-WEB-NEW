@@ -555,7 +555,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 Object.entries(pricing_config.price_overrides).forEach(([k,v]) => { ov[k] = String(v); });
               }
               if (pricing_config.calculated_prices) {
-                const KEYS = ['silver','gold_9kt','gold_14kt','gold_18kt','platinum'] as const;
+                const KEYS = ['silver','gold_9kt','gold_9kt_yellow','gold_9kt_rose','gold_14kt','gold_14kt_yellow','gold_14kt_rose','gold_18kt','gold_18kt_yellow','gold_18kt_rose','platinum'];
                 KEYS.forEach(key => {
                   if (!ov[key]) {
                     const v = (pricing_config.calculated_prices as any)[key];
@@ -596,7 +596,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           // Auto-sync: fill any blank overrides from the freshly calculated prices
           setRingPriceOverrides(prev => {
             const updated = { ...prev };
-            const KEYS = ['silver','gold_9kt','gold_14kt','gold_18kt','platinum'] as const;
+            const KEYS = ['silver','gold_9kt','gold_9kt_yellow','gold_9kt_rose','gold_14kt','gold_14kt_yellow','gold_14kt_rose','gold_18kt','gold_18kt_yellow','gold_18kt_rose','platinum'];
             KEYS.forEach(key => {
               if (!updated[key]) {
                 const v = data.data.prices[key];
@@ -1123,11 +1123,17 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   {/* Price per Metal — 5 fixed ring-spec weight types */}
                   {(() => {
                     const RING_METALS = [
-                      { key: 'silver',    label: 'Silver',    color: '#C0C0C0', wtField: 'silver_wt' },
-                      { key: 'gold_9kt',  label: '9kt Gold',  color: '#E8C97A', wtField: 'gold_9kt_wt' },
-                      { key: 'gold_14kt', label: '14kt Gold', color: '#E5B84C', wtField: 'gold_14kt_wt' },
-                      { key: 'gold_18kt', label: '18kt Gold', color: '#D4A017', wtField: 'gold_18kt_wt' },
-                      { key: 'platinum',  label: 'Platinum',  color: '#A8A9AD', wtField: 'platinum_wt' },
+                      { key: 'silver',           label: 'Silver',           color: '#C0C0C0', wtField: 'silver_wt'    },
+                      { key: 'gold_9kt',         label: '9kt White Gold',   color: '#E8C97A', wtField: 'gold_9kt_wt'  },
+                      { key: 'gold_9kt_yellow',  label: '9kt Yellow Gold',  color: '#D4A017', wtField: 'gold_9kt_wt'  },
+                      { key: 'gold_9kt_rose',    label: '9kt Rose Gold',    color: '#D4845A', wtField: 'gold_9kt_wt'  },
+                      { key: 'gold_14kt',        label: '14kt White Gold',  color: '#E5B84C', wtField: 'gold_14kt_wt' },
+                      { key: 'gold_14kt_yellow', label: '14kt Yellow Gold', color: '#C8960A', wtField: 'gold_14kt_wt' },
+                      { key: 'gold_14kt_rose',   label: '14kt Rose Gold',   color: '#C8724A', wtField: 'gold_14kt_wt' },
+                      { key: 'gold_18kt',        label: '18kt White Gold',  color: '#D4A017', wtField: 'gold_18kt_wt' },
+                      { key: 'gold_18kt_yellow', label: '18kt Yellow Gold', color: '#B8860B', wtField: 'gold_18kt_wt' },
+                      { key: 'gold_18kt_rose',   label: '18kt Rose Gold',   color: '#B8603A', wtField: 'gold_18kt_wt' },
+                      { key: 'platinum',         label: 'Platinum',         color: '#A8A9AD', wtField: 'platinum_wt'  },
                     ];
                     return (
                       <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">

@@ -2,11 +2,17 @@ const metalPriceService = require('./metalPriceService');
 const nivodaService     = require('./nivodaService');
 
 const METALS = [
-  { key: 'silver',    label: 'Silver',      weightField: 'silver_wt',    priceField: 'silver_per_gram'    },
-  { key: 'gold_9kt',  label: '9kt Gold',    weightField: 'gold_9kt_wt',  priceField: 'gold_9kt_per_gram'  },
-  { key: 'gold_14kt', label: '14kt Gold',   weightField: 'gold_14kt_wt', priceField: 'gold_14kt_per_gram' },
-  { key: 'gold_18kt', label: '18kt Gold',   weightField: 'gold_18kt_wt', priceField: 'gold_18kt_per_gram' },
-  { key: 'platinum',  label: 'Platinum',    weightField: 'platinum_wt',  priceField: 'platinum_per_gram'  },
+  { key: 'silver',          label: 'Silver',          weightField: 'silver_wt',    priceField: 'silver_per_gram'    },
+  { key: 'gold_9kt',        label: '9kt White Gold',  weightField: 'gold_9kt_wt',  priceField: 'gold_9kt_per_gram'  },
+  { key: 'gold_9kt_yellow', label: '9kt Yellow Gold', weightField: 'gold_9kt_wt',  priceField: 'gold_9kt_per_gram'  },
+  { key: 'gold_9kt_rose',   label: '9kt Rose Gold',   weightField: 'gold_9kt_wt',  priceField: 'gold_9kt_per_gram'  },
+  { key: 'gold_14kt',        label: '14kt White Gold', weightField: 'gold_14kt_wt', priceField: 'gold_14kt_per_gram' },
+  { key: 'gold_14kt_yellow', label: '14kt Yellow Gold',weightField: 'gold_14kt_wt', priceField: 'gold_14kt_per_gram' },
+  { key: 'gold_14kt_rose',   label: '14kt Rose Gold',  weightField: 'gold_14kt_wt', priceField: 'gold_14kt_per_gram' },
+  { key: 'gold_18kt',        label: '18kt White Gold', weightField: 'gold_18kt_wt', priceField: 'gold_18kt_per_gram' },
+  { key: 'gold_18kt_yellow', label: '18kt Yellow Gold',weightField: 'gold_18kt_wt', priceField: 'gold_18kt_per_gram' },
+  { key: 'gold_18kt_rose',   label: '18kt Rose Gold',  weightField: 'gold_18kt_wt', priceField: 'gold_18kt_per_gram' },
+  { key: 'platinum',         label: 'Platinum',        weightField: 'platinum_wt',  priceField: 'platinum_per_gram'  },
 ];
 
 async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = {}, nivodaDiamondPriceGBP = 0 }) {

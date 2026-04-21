@@ -147,7 +147,7 @@ const getProducts = async (req, res) => {
           const cp = product.pricingConfig?.calculated_prices;
           if (!cp) return null;
           const overrides = product.pricingConfig?.price_overrides;
-          const preferred = ['gold_18kt', 'gold_14kt', 'gold_9kt', 'silver', 'platinum'];
+          const preferred = ['gold_18kt', 'gold_18kt_yellow', 'gold_18kt_rose', 'gold_14kt', 'gold_14kt_yellow', 'gold_14kt_rose', 'gold_9kt', 'gold_9kt_yellow', 'gold_9kt_rose', 'platinum', 'silver'];
           const refPrice = (() => {
             if (overrides) {
               const k = preferred.find(k => overrides[k] && parseFloat(overrides[k]) > 0);

@@ -3,7 +3,7 @@ const ringPricingService = require('../services/ringPricingService');
 const metalPriceService = require('../services/metalPriceService');
 const { logger } = require('../config/database');
 
-const PREFERRED_METALS = ['gold_18kt', 'gold_14kt', 'gold_9kt', 'platinum', 'silver'];
+const PREFERRED_METALS = ['gold_18kt', 'gold_18kt_yellow', 'gold_18kt_rose', 'gold_14kt', 'gold_14kt_yellow', 'gold_14kt_rose', 'gold_9kt', 'gold_9kt_yellow', 'gold_9kt_rose', 'platinum', 'silver'];
 
 async function refreshAllRingPrices() {
   const { Product, ProductRingSpecs, ProductSideStones, ProductPricingConfig } = getModels();

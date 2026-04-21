@@ -100,7 +100,7 @@ async function saveRingSpecs(req, res) {
       // Sync best price from price_overrides back to products table
       const overrides = pricing_config.price_overrides;
       if (overrides && typeof overrides === 'object') {
-        const preferred = ['gold_18kt', 'gold_14kt', 'gold_9kt', 'platinum', 'silver'];
+        const preferred = ['gold_18kt', 'gold_18kt_yellow', 'gold_18kt_rose', 'gold_14kt', 'gold_14kt_yellow', 'gold_14kt_rose', 'gold_9kt', 'gold_9kt_yellow', 'gold_9kt_rose', 'platinum', 'silver'];
         const bestKey = preferred.find(k => overrides[k] && parseFloat(overrides[k]) > 0);
         if (bestKey) {
           const { Product } = getModels();

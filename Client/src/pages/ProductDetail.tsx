@@ -10,17 +10,17 @@ import API_BASE_URL, { getMediaUrl } from '../config/api';
 import { trackViewContent, trackAddToCart } from '../services/pixelService';
 
 const metalTypeOptions = [
-  { value: 'silver',          label: 'Silver',          overrideKey: 'silver' },
-  { value: '9ct-white-gold',  label: '9ct White Gold',  overrideKey: 'gold_9kt' },
-  { value: '9ct-yellow-gold', label: '9ct Yellow Gold', overrideKey: 'gold_9kt' },
-  { value: '9ct-rose-gold',   label: '9ct Rose Gold',   overrideKey: 'gold_9kt' },
-  { value: '14ct-white-gold', label: '14ct White Gold', overrideKey: 'gold_14kt' },
-  { value: '14ct-yellow-gold',label: '14ct Yellow Gold',overrideKey: 'gold_14kt' },
-  { value: '14ct-rose-gold',  label: '14ct Rose Gold',  overrideKey: 'gold_14kt' },
-  { value: '18ct-white-gold', label: '18ct White Gold', overrideKey: 'gold_18kt' },
-  { value: '18ct-yellow-gold',label: '18ct Yellow Gold',overrideKey: 'gold_18kt' },
-  { value: '18ct-rose-gold',  label: '18ct Rose Gold',  overrideKey: 'gold_18kt' },
-  { value: 'platinum',        label: 'Platinum',        overrideKey: 'platinum' },
+  { value: 'silver',           label: 'Silver',           overrideKey: 'silver'          },
+  { value: '9ct-white-gold',   label: '9ct White Gold',   overrideKey: 'gold_9kt'        },
+  { value: '9ct-yellow-gold',  label: '9ct Yellow Gold',  overrideKey: 'gold_9kt_yellow' },
+  { value: '9ct-rose-gold',    label: '9ct Rose Gold',    overrideKey: 'gold_9kt_rose'   },
+  { value: '14ct-white-gold',  label: '14ct White Gold',  overrideKey: 'gold_14kt'       },
+  { value: '14ct-yellow-gold', label: '14ct Yellow Gold', overrideKey: 'gold_14kt_yellow'},
+  { value: '14ct-rose-gold',   label: '14ct Rose Gold',   overrideKey: 'gold_14kt_rose'  },
+  { value: '18ct-white-gold',  label: '18ct White Gold',  overrideKey: 'gold_18kt'       },
+  { value: '18ct-yellow-gold', label: '18ct Yellow Gold', overrideKey: 'gold_18kt_yellow'},
+  { value: '18ct-rose-gold',   label: '18ct Rose Gold',   overrideKey: 'gold_18kt_rose'  },
+  { value: 'platinum',         label: 'Platinum',         overrideKey: 'platinum'        },
 ];
 
 const ringSizes = [
@@ -927,7 +927,10 @@ const ProductDetail = () => {
               Metal: {productData.available_metals.find(metal => metal.id === selectedMetal)?.name || productData.available_metals[0]?.name}
             </h3>
             <div className="flex space-x-2">
-              {productData.available_metals.map((metal) => {
+              {productData.available_metals.filter((metal) => {
+                const img = getMetalThumbnail(metal.id);
+                return img && img.url;
+              }).map((metal) => {
                 const metalImage = getMetalThumbnail(metal.id);
                 return (
                   <button
@@ -938,20 +941,12 @@ const ProductDetail = () => {
                     }`}
                     title={metal.name}
                   >
-                    {metalImage && metalImage.url ? (
-                      <img
-                        src={getMediaUrl(metalImage.url)}
-                        alt={metal.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{ backgroundColor: metal.color }}
-                        title={metal.name}
-                      />
-                    )}
+                    <img
+                      src={getMediaUrl(metalImage!.url)}
+                      alt={metal.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </button>
                 );
               })}
@@ -1488,7 +1483,10 @@ const ProductDetail = () => {
                   Metal: {productData.available_metals.find(metal => metal.id === selectedMetal)?.name || productData.available_metals[0]?.name || 'Not Selected'}
                 </h3>
                 <div className="flex space-x-2 2xl:space-x-3">
-                  {productData.available_metals.map((metal) => {
+                  {productData.available_metals.filter((metal) => {
+                    const img = getMetalThumbnail(metal.id);
+                    return img && img.url;
+                  }).map((metal) => {
                     const metalImage = getMetalThumbnail(metal.id);
                     return (
                       <button
@@ -1501,20 +1499,12 @@ const ProductDetail = () => {
                         }`}
                         title={metal.name}
                       >
-                        {metalImage && metalImage.url ? (
-                          <img
-                            src={getMediaUrl(metalImage.url)}
-                            alt={metal.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div
-                            className="w-full h-full flex items-center justify-center"
-                            style={{ backgroundColor: metal.color }}
-                            title={metal.name}
-                          />
-                        )}
+                        <img
+                          src={getMediaUrl(metalImage!.url)}
+                          alt={metal.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
                       </button>
                     );
                   })}
@@ -1526,9 +1516,7 @@ const ProductDetail = () => {
             {(() => {
               const overrides = productData?.ring_price_overrides;
               const visibleOptions = overrides
-                ? metalTypeOptions.filter((o, idx, arr) =>
-                    overrides[o.overrideKey] && arr.findIndex(x => x.overrideKey === o.overrideKey) === idx
-                  )
+                ? metalTypeOptions.filter(o => overrides[o.overrideKey])
                 : metalTypeOptions;
               if (visibleOptions.length === 0) return null;
               return (
