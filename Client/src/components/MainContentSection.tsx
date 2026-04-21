@@ -84,9 +84,7 @@ export default function MainContentSection(): JSX.Element {
             price: product.price,
             image: product.image
           }));
-          // Only show products that have images; fetch up to 20
-          const withImages = transformedProducts.filter((p: Product) => p.image?.url);
-          setRingProducts(withImages.slice(0, 20));
+          setRingProducts(transformedProducts.slice(0, 20));
         }
       } catch (error) {
         console.error('Error fetching ring products:', error);
@@ -555,14 +553,18 @@ export default function MainContentSection(): JSX.Element {
                 >
                   {/* Image tile */}
                   <div
-                    className="w-full bg-[#f0f0f0] overflow-hidden"
+                    className="w-full bg-[#f0f0f0] overflow-hidden flex items-center justify-center"
                     style={{ aspectRatio: '1 / 1' }}
                   >
-                    <img
-                      src={getMediaUrl(product.image?.url || '')}
-                      alt={product.image?.alt || product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
+                    {product.image?.url ? (
+                      <img
+                        src={getMediaUrl(product.image.url)}
+                        alt={product.image.alt || product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                    ) : (
+                      <span className="text-xs font-cormorant text-gray-400 text-center px-2">{product.name}</span>
+                    )}
                   </div>
                   {/* Name below on white */}
                   <div className="pt-3 pb-1">
@@ -618,14 +620,18 @@ export default function MainContentSection(): JSX.Element {
                   >
                     {/* Image tile */}
                     <div
-                      className="w-full bg-[#f5f5f5] overflow-hidden"
+                      className="w-full bg-[#f5f5f5] overflow-hidden flex items-center justify-center"
                       style={{ aspectRatio: '4/3' }}
                     >
-                      <img
-                        src={getMediaUrl(product.image?.url || '')}
-                        alt={product.image?.alt || product.name}
-                        className="w-full h-full object-cover"
-                      />
+                      {product.image?.url ? (
+                        <img
+                          src={getMediaUrl(product.image.url)}
+                          alt={product.image.alt || product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-cormorant text-gray-400">{product.name}</span>
+                      )}
                     </div>
                     {/* Centered name */}
                     <div className="mt-4 text-center">
