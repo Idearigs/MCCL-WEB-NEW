@@ -2158,119 +2158,117 @@ const ProductDetail = () => {
 
       {/* Image Lightbox */}
       {isLightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-white flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-white flex flex-col lg:flex-row lg:items-center lg:justify-center">
+
           {/* Close Button */}
-          <button 
+          <button
             onClick={closeLightbox}
-            className="absolute top-6 right-6 w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center z-10 transition-colors"
+            className="absolute top-4 right-4 w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center z-20 transition-colors"
           >
             <X className="w-6 h-6 text-gray-700" />
           </button>
 
-          {/* Left Sidebar - Thumbnails */}
-          <div className="absolute left-6 top-1/2 transform -translate-y-1/2 flex flex-col space-y-3 z-10">
+          {/* ── DESKTOP: left thumbnail sidebar ── */}
+          <div className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 flex-col space-y-3 z-10 max-h-[90vh] overflow-y-auto">
             {productData.images.map((image, index) => (
               <button
                 key={index}
                 onClick={() => goToLightboxImage(index)}
-                className={`w-16 h-16 bg-white rounded overflow-hidden border-2 transition-all ${
-                  index === lightboxImageIndex 
-                    ? 'border-gray-800 scale-110' 
-                    : 'border-gray-300 hover:border-gray-600'
+                className={`w-16 h-16 bg-white rounded overflow-hidden border-2 transition-all flex-shrink-0 ${
+                  index === lightboxImageIndex ? 'border-gray-800 scale-110' : 'border-gray-300 hover:border-gray-600'
                 }`}
               >
                 {isVideoFile(image.url) ? (
                   <div className="relative w-full h-full bg-gray-100 flex items-center justify-center">
-                    <video
-                      src={getMediaUrl(image.url || '')}
-                      className="w-full h-full object-cover"
-                      muted
-                      autoPlay
-                      loop
-                      playsInline
-                      preload="metadata"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                    <video src={getMediaUrl(image.url || '')} className="w-full h-full object-cover" muted autoPlay loop playsInline preload="metadata" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                       <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                        <div className="w-0 h-0 border-l-[6px] border-l-gray-600 border-t-[3px] border-t-transparent border-b-[3px] border-b-transparent ml-0.5"></div>
+                        <div className="w-0 h-0 border-l-[6px] border-l-gray-600 border-t-[3px] border-t-transparent border-b-[3px] border-b-transparent ml-0.5" />
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <img
-                    src={getMediaUrl(image.url || '')}
-                    alt={image.alt || `Product view ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
+                  <img src={getMediaUrl(image.url || '')} alt={image.alt || `View ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
                 )}
               </button>
             ))}
           </div>
 
-          {/* Right Sidebar - Zoom Controls */}
-          <div className="absolute right-6 top-1/2 transform -translate-y-1/2 flex flex-col space-y-4 z-10">
-            <button 
-              onClick={zoomIn}
-              className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-              disabled={zoomLevel >= 3}
-            >
+          {/* ── DESKTOP: zoom controls ── */}
+          <div className="hidden lg:flex absolute right-6 top-1/2 -translate-y-1/2 flex-col space-y-4 z-10">
+            <button onClick={zoomIn} disabled={zoomLevel >= 3} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors disabled:opacity-40">
               <ZoomIn className="w-6 h-6 text-gray-700" />
             </button>
-            <button 
-              onClick={zoomOut}
-              className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-              disabled={zoomLevel <= 0.5}
-            >
+            <button onClick={zoomOut} disabled={zoomLevel <= 0.5} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors disabled:opacity-40">
               <ZoomOut className="w-6 h-6 text-gray-700" />
             </button>
           </div>
 
-          {/* Main Image */}
-          <div className="flex-1 flex items-center justify-center p-20">
-            <div 
-              className="relative overflow-hidden"
-              style={{
-                transform: `scale(${zoomLevel})`,
-                transition: 'transform 0.3s ease-out'
-              }}
+          {/* ── Main image (mobile: flex-1 full width; desktop: centred with padding) ── */}
+          <div className="flex-1 flex items-center justify-center lg:p-20 overflow-hidden">
+            <div
+              style={{ transform: `scale(${zoomLevel})`, transition: 'transform 0.3s ease-out' }}
+              className="w-full h-full lg:w-auto lg:h-auto flex items-center justify-center"
             >
               {isVideoFile(displayImages[lightboxImageIndex]?.url) ? (
                 <video
                   src={getMediaUrl(displayImages[lightboxImageIndex]?.url || '')}
-                  controls
-                  autoPlay
-                  muted
-                  playsInline
-                  preload="auto"
-                  className="max-w-full max-h-full object-contain"
-                  style={{ maxHeight: '80vh', maxWidth: '80vw' }}
+                  controls autoPlay muted playsInline preload="auto"
+                  className="w-full h-full object-contain lg:max-h-[80vh] lg:max-w-[80vw]"
                 />
               ) : (
                 <img
                   src={getMediaUrl(displayImages[lightboxImageIndex]?.url || '')}
                   alt={displayImages[lightboxImageIndex]?.alt || productData.name}
-                  className="max-w-full max-h-full object-contain"
-                  style={{ maxHeight: '80vh', maxWidth: '80vw' }}
-                  loading="lazy"
+                  className="w-full h-full object-contain lg:max-h-[80vh] lg:max-w-[80vw]"
+                  loading="eager"
                 />
               )}
             </div>
           </div>
 
-          {/* Navigation Arrows - Bottom Positioned */}
+          {/* ── MOBILE: bottom thumbnail strip + nav arrows ── */}
+          <div className="lg:hidden flex-shrink-0 pb-4">
+            {/* Nav arrows */}
+            {displayImages.length > 1 && (
+              <div className="flex justify-center space-x-4 mb-3">
+                <button onClick={() => goToLightboxImage((lightboxImageIndex - 1 + displayImages.length) % displayImages.length)} className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-gray-700" />
+                </button>
+                <button onClick={() => goToLightboxImage((lightboxImageIndex + 1) % displayImages.length)} className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                  <ChevronRight className="w-5 h-5 text-gray-700" />
+                </button>
+              </div>
+            )}
+            {/* Horizontal thumbnail strip */}
+            <div className="flex space-x-2 overflow-x-auto px-4 pb-2 scrollbar-hide">
+              {productData.images.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToLightboxImage(index)}
+                  className={`w-14 h-14 flex-shrink-0 bg-white rounded overflow-hidden border-2 transition-all ${
+                    index === lightboxImageIndex ? 'border-gray-800' : 'border-gray-300'
+                  }`}
+                >
+                  {isVideoFile(image.url) ? (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <div className="w-0 h-0 border-l-[8px] border-l-gray-600 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent ml-1" />
+                    </div>
+                  ) : (
+                    <img src={getMediaUrl(image.url || '')} alt={image.alt || `View ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── DESKTOP: bottom nav arrows ── */}
           {displayImages.length > 1 && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-4 z-10">
-              <button
-                onClick={() => goToLightboxImage((lightboxImageIndex - 1 + displayImages.length) % displayImages.length)}
-                className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-              >
+            <div className="hidden lg:flex absolute bottom-8 left-1/2 -translate-x-1/2 space-x-4 z-10">
+              <button onClick={() => goToLightboxImage((lightboxImageIndex - 1 + displayImages.length) % displayImages.length)} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
                 <ChevronLeft className="w-6 h-6 text-gray-700" />
               </button>
-              <button
-                onClick={() => goToLightboxImage((lightboxImageIndex + 1) % displayImages.length)}
-                className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-              >
+              <button onClick={() => goToLightboxImage((lightboxImageIndex + 1) % displayImages.length)} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
                 <ChevronRight className="w-6 h-6 text-gray-700" />
               </button>
             </div>
