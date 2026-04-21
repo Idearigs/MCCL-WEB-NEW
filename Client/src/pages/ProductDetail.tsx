@@ -567,6 +567,7 @@ const ProductDetail = () => {
 
       const newItem: any = {
         id: productData.id,
+        slug: productData.slug,
         name: productData.name,
         price: productData.price,
         metal: selectedMetalName,

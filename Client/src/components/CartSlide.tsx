@@ -103,18 +103,32 @@ const CartSlide: React.FC<CartSlideProps> = ({
                 <div key={index} className="flex space-x-4 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                   {/* Product Image */}
                   <div className="flex-shrink-0 w-20 h-20 bg-gray-50 rounded overflow-hidden">
-                    <img
-                      src={getMediaUrl(item.image)}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
+                    {item.slug ? (
+                      <Link to={`/rings/${item.slug}`} onClick={onClose}>
+                        <img
+                          src={getMediaUrl(item.image)}
+                          alt={item.name}
+                          className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                        />
+                      </Link>
+                    ) : (
+                      <img
+                        src={getMediaUrl(item.image)}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
-                  
+
                   {/* Product Details */}
                   <div className="flex-1 space-y-2">
                     <div className="flex justify-between">
                       <h3 className="text-sm font-cormorant font-medium text-gray-900 pr-2 leading-tight">
-                        {item.name}
+                        {item.slug ? (
+                          <Link to={`/rings/${item.slug}`} onClick={onClose} className="hover:text-[#D4A574] transition-colors">
+                            {item.name}
+                          </Link>
+                        ) : item.name}
                       </h3>
                       <button
                         onClick={() => onRemoveItem(index)}

@@ -103,13 +103,13 @@ const Cart = (): JSX.Element => {
                     <div className="flex gap-5 lg:gap-8">
                       {/* Image */}
                       <Link
-                        to={`/engagement-rings/${item.id}`}
+                        to={item.slug ? `/rings/${item.slug}` : '#'}
                         className="flex-shrink-0 w-28 h-28 lg:w-32 lg:h-32 bg-gray-50 overflow-hidden"
                       >
                         <img
                           src={getMediaUrl(item.image)}
                           alt={item.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover hover:opacity-90 transition-opacity"
                         />
                       </Link>
 
@@ -119,7 +119,11 @@ const Cart = (): JSX.Element => {
                         <div>
                           <div className="flex justify-between items-start gap-2">
                             <h3 className="text-base lg:text-lg font-cormorant font-normal text-gray-900 leading-snug">
-                              {item.name}
+                              {item.slug ? (
+                                <Link to={`/rings/${item.slug}`} className="hover:text-[#D4A574] transition-colors">
+                                  {item.name}
+                                </Link>
+                              ) : item.name}
                             </h3>
                             <button
                               onClick={() => removeItem(index)}
