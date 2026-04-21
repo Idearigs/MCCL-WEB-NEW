@@ -77,6 +77,7 @@ const ProductDetail = () => {
   const [selectedPolish, setSelectedPolish] = useState('');
   const [selectedSymmetry, setSelectedSymmetry] = useState('');
   const [selectedFluorescence, setSelectedFluorescence] = useState('');
+  const [selectedCertificate, setSelectedCertificate] = useState('');
 
   // Nivoda API price calculation
   const [nivodaPrice, setNivodaPrice] = useState<{ min: number; avg: number; max: number } | null>(null);
@@ -255,6 +256,7 @@ const ProductDetail = () => {
         value: f,
         label: f === 'NONE' ? 'None' : f === 'VERY_STRONG' ? 'Very Strong' : f.charAt(0) + f.slice(1).toLowerCase()
       })),
+      certificate: (config.certificateOptions || []).map((c: string) => ({ value: c, label: c })),
     };
   };
 
@@ -278,8 +280,10 @@ const ProductDetail = () => {
       if (selectedPolish) params.set('polish', selectedPolish);
       if (selectedSymmetry) params.set('symmetry', selectedSymmetry);
       if (selectedFluorescence) params.set('fluorescence', selectedFluorescence);
+      // Use customer-selected cert if available, else fall back to all configured certs
       const certs = config?.certificateOptions || [];
-      if (certs.length) params.set('certificate', certs.join(','));
+      if (selectedCertificate) params.set('certificate', selectedCertificate);
+      else if (certs.length) params.set('certificate', certs.join(','));
 
       const response = await fetch(`${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params}`);
       const data = await response.json();
@@ -297,7 +301,7 @@ const ProductDetail = () => {
     } finally {
       setNivodaPriceLoading(false);
     }
-  }, [productData, selectedStoneType, selectedPolish, selectedSymmetry, selectedFluorescence]);
+  }, [productData, selectedStoneType, selectedPolish, selectedSymmetry, selectedFluorescence, selectedCertificate]);
 
   // Mount price parsed from base_price field (the ring without diamond)
   const mountPrice = (() => {
@@ -458,7 +462,7 @@ const ProductDetail = () => {
       console.log('Fetching Nivoda price for:', { selectedCarat, selectedClarity, selectedColour, selectedCut });
       fetchNivodaPrice(selectedCarat, selectedClarity, selectedColour, selectedCut);
     }
-  }, [selectedCarat, selectedClarity, selectedColour, selectedCut, selectedPolish, selectedSymmetry, selectedFluorescence, selectedStoneType, productData?.nivoda_enabled, fetchNivodaPrice]);
+  }, [selectedCarat, selectedClarity, selectedColour, selectedCut, selectedPolish, selectedSymmetry, selectedFluorescence, selectedCertificate, selectedStoneType, productData?.nivoda_enabled, fetchNivodaPrice]);
 
   // Facebook Pixel: Track ViewContent when product loads
   useEffect(() => {
@@ -1251,6 +1255,21 @@ const ProductDetail = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Certificate */}
+                {(stoneOptions as any).certificate?.length > 1 && (
+                  <div>
+                    <span className="text-xs font-futura-pt font-medium text-gray-900">Certificate Lab:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(stoneOptions as any).certificate.map((option: any) => (
+                        <button key={option.value} onClick={() => setSelectedCertificate(prev => prev === option.value ? '' : option.value)}
+                          className={`px-3 py-1 text-xs font-futura-pt border rounded transition-all ${selectedCertificate === option.value ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-200 hover:border-gray-300'}`}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1866,6 +1885,21 @@ const ProductDetail = () => {
                       {(stoneOptions as any).fluorescence.map((option: any) => (
                         <button key={option.value} onClick={() => handleFluorescenceSelect(option.value)}
                           className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs font-futura-pt border transition-all duration-200 ${selectedFluorescence === option.value ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'}`}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Certificate Lab */}
+                {(stoneOptions as any).certificate?.length > 1 && (
+                  <div className="mb-4 2xl:mb-5">
+                    <p className="text-[10px] 2xl:text-xs font-futura-pt uppercase tracking-wider text-gray-500 mb-2">Certificate Lab</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(stoneOptions as any).certificate.map((option: any) => (
+                        <button key={option.value} onClick={() => setSelectedCertificate(prev => prev === option.value ? '' : option.value)}
+                          className={`px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-xs font-futura-pt border transition-all duration-200 ${selectedCertificate === option.value ? 'bg-[#F5EFE6] border-[#D4A574] text-gray-900 font-medium' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'}`}>
                           {option.label}
                         </button>
                       ))}
