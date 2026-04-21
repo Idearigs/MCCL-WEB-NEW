@@ -173,8 +173,13 @@ const ProductDetail = () => {
       return metalSpecificImages;
     }
 
-    // Otherwise, return general images (those with no metal_id and no diamond_size_id)
-    return allImages.filter(img => !img.metal_id && !img.diamond_size_id);
+    // Try general images (no metal_id, no diamond_size_id)
+    const generalImages = allImages.filter(img => !img.metal_id && !img.diamond_size_id);
+    if (generalImages.length > 0) return generalImages;
+
+    // Final fallback: return images for the first metal that has any images
+    const firstMetalId = allImages.find(img => img.metal_id && !img.diamond_size_id)?.metal_id;
+    return firstMetalId ? allImages.filter(img => img.metal_id === firstMetalId && !img.diamond_size_id) : [];
   };
 
   // Helper function to get the primary image for a specific metal
@@ -369,9 +374,13 @@ const ProductDetail = () => {
           setProductData(data.data.product);
           setRecommendedProducts(data.data.recommended_products || []);
 
-          // Set initial metal selection to first available metal
+          // Set initial metal selection to first metal that has images, else first available
           if (data.data.product.available_metals && data.data.product.available_metals.length > 0) {
-            setSelectedMetal(data.data.product.available_metals[0].id);
+            const imgs = data.data.product.images || [];
+            const firstWithImages = data.data.product.available_metals.find((m: any) =>
+              imgs.some((img: any) => img.metal_id === m.id)
+            );
+            setSelectedMetal(firstWithImages ? firstWithImages.id : data.data.product.available_metals[0].id);
           }
 
           // Set initial metal type to first option that has a price override (preferring 18kt gold)
