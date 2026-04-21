@@ -72,7 +72,7 @@ export default function MainContentSection(): JSX.Element {
     const fetchRingProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/products/category/engagement-rings`);
+        const response = await fetch(`${API_BASE_URL}/products/category/engagement-rings?sort=sort_order&order=asc&limit=20`);
         const data = await response.json();
 
         if (data.success && data.data && data.data.products) {

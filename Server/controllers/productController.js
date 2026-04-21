@@ -68,7 +68,8 @@ const getAllProducts = asyncHandler(async (req, res) => {
       model: ProductImage,
       as: 'images',
       attributes: ['id', 'image_url', 'alt_text', 'is_primary', 'sort_order', 'metal_id', 'is_metal_preview', 'diamond_size_id', 'is_diamond_size_preview'],
-      order: [['sort_order', 'ASC'], ['created_at', 'ASC']]
+      separate: true,
+      order: [['sort_order', 'ASC']]
     },
     {
       model: ProductVariant,
