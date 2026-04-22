@@ -448,10 +448,12 @@ export default function ChatWindow({
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div
-                    className={`max-w-xs px-4 py-2.5 rounded-2xl transition-all duration-300 backdrop-blur-sm ${
-                      msg.sender_type === 'customer'
-                        ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-lg hover:shadow-xl border border-gray-700/50'
-                        : 'bg-white/80 border border-gray-200 text-gray-900 shadow-md hover:shadow-lg'
+                    className={`max-w-xs transition-all duration-300 backdrop-blur-sm ${
+                      msg.message?.startsWith('[PRODUCT:')
+                        ? 'bg-transparent border-0 shadow-none p-0'
+                        : msg.sender_type === 'customer'
+                          ? 'px-4 py-2.5 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-lg hover:shadow-xl border border-gray-700/50'
+                          : 'px-4 py-2.5 rounded-2xl bg-white/80 border border-gray-200 text-gray-900 shadow-md hover:shadow-lg'
                     }`}
                   >
                     {/* Display image if attachment exists */}
@@ -465,14 +467,42 @@ export default function ChatWindow({
                       </div>
                     )}
 
-                    {/* Display message text if it exists */}
-                    {msg.message && (
-                      <p className="text-sm leading-relaxed font-light">{msg.message}</p>
-                    )}
+                    {/* Display message text — detect product cards */}
+                    {msg.message && (() => {
+                      const productMatch = msg.message.match(/^\[PRODUCT:([^:]+):([^:]+):([^:]+):([^:]+):([^\]]+)\]$/);
+                      if (productMatch) {
+                        const [, slug, name, price, imageUrl, category] = productMatch;
+                        const productPath = `/${category}/${slug}`;
+                        const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `${API_BASE_URL.replace('/api/v1', '')}${imageUrl}`;
+                        return (
+                          <a
+                            href={productPath}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-48 rounded-xl overflow-hidden border border-gray-100 bg-white shadow-md hover:shadow-lg transition-shadow duration-200 no-underline"
+                          >
+                            <div className="w-full aspect-square bg-gray-50 overflow-hidden">
+                              <img
+                                src={fullImageUrl}
+                                alt={name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            </div>
+                            <div className="px-3 py-2.5">
+                              <p className="text-sm font-cormorant font-medium text-gray-900 leading-snug">{name}</p>
+                              <p className="text-sm font-cormorant text-amber-700 mt-0.5">{price}</p>
+                              <p className="text-[10px] font-inter font-light tracking-widest uppercase text-amber-600 mt-1.5">View Product</p>
+                            </div>
+                          </a>
+                        );
+                      }
+                      return <p className="text-sm leading-relaxed font-light">{msg.message}</p>;
+                    })()}
 
                     <p className={`text-xs mt-2 font-light opacity-70 ${
-                      msg.sender_type === 'customer' ? 'text-gray-300' : 'text-gray-600'
-                    }`}>
+                      msg.message?.startsWith('[PRODUCT:') ? 'hidden' : ''
+                    } ${msg.sender_type === 'customer' ? 'text-gray-300' : 'text-gray-600'}`}>
                       {(() => {
                         try {
                           const date = new Date(msg.created_at);

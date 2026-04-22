@@ -19,68 +19,40 @@ interface MarketingContent {
   };
 }
 
+const getVideoEmbedUrl = (url: string): string => {
+  if (!url) return '';
+  if (url.includes('/embed/')) return url;
+
+  let videoId = '';
+  if (url.includes('youtube.com/watch')) {
+    const m = url.match(/[?&]v=([^&]+)/);
+    videoId = m ? m[1] : '';
+  } else if (url.includes('youtu.be/')) {
+    const m = url.match(/youtu\.be\/([^?&]+)/);
+    videoId = m ? m[1] : '';
+  } else if (url.includes('youtube.com') && url.includes('v=')) {
+    const m = url.match(/v=([^&]+)/);
+    videoId = m ? m[1] : '';
+  }
+
+  if (videoId) {
+    return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&rel=0&iv_load_policy=3&vq=hd1080&loop=1&playlist=${videoId}`;
+  }
+  return url;
+};
+
 export default function MarketingSection(): JSX.Element {
   const [marketingContent, setMarketingContent] = useState<MarketingContent | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const getVideoEmbedUrl = (url: string): string => {
-    if (!url) return '';
-
-    console.log('Processing URL:', url);
-
-    // If it's already an embed URL, return as is
-    if (url.includes('/embed/')) {
-      console.log('Already embed URL, returning:', url);
-      return url;
-    }
-
-    let videoId = '';
-
-    // Extract video ID from YouTube formats
-    if (url.includes('youtube.com/watch')) {
-      const match = url.match(/[?&]v=([^&]+)/);
-      videoId = match ? match[1] : '';
-      console.log('YouTube watch format, videoId:', videoId);
-    } else if (url.includes('youtu.be/')) {
-      const match = url.match(/youtu\.be\/([^?&]+)/);
-      videoId = match ? match[1] : '';
-      console.log('YouTube short format, videoId:', videoId);
-    } else if (url.includes('youtube.com') && url.includes('v=')) {
-      const match = url.match(/v=([^&]+)/);
-      videoId = match ? match[1] : '';
-      console.log('YouTube generic format, videoId:', videoId);
-    }
-
-    if (videoId) {
-      // Use youtube-nocookie domain like hero section - no controls will show
-      const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&fs=0&rel=0&iv_load_policy=3`;
-      console.log('Returning embed URL:', embedUrl);
-      return embedUrl;
-    }
-
-    console.log('Not a YouTube URL, returning original:', url);
-    // For other video sources, return as is
-    return url;
-  };
 
   useEffect(() => {
     const fetchMarketingContent = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          `${API_BASE_URL}/marketing?featured_only=true&limit=1`
-        );
+        const response = await fetch(`${API_BASE_URL}/marketing?featured_only=true&limit=1`);
         const data = await response.json();
-
-        console.log('Marketing API response:', data);
-
-        if (data.success && data.data.marketing_content && data.data.marketing_content.length > 0) {
-          const content = data.data.marketing_content[0];
-          console.log('Marketing content found:', content);
-          console.log('Video URL:', content.video_url);
-          setMarketingContent(content);
-        } else {
-          console.log('No marketing content found');
+        if (data.success && data.data.marketing_content?.length > 0) {
+          setMarketingContent(data.data.marketing_content[0]);
         }
       } catch (error) {
         console.error('Error fetching marketing content:', error);
@@ -88,78 +60,102 @@ export default function MarketingSection(): JSX.Element {
         setLoading(false);
       }
     };
-
     fetchMarketingContent();
   }, []);
 
-  if (loading || !marketingContent) {
-    return <div />;
-  }
+  if (loading || !marketingContent) return <div />;
+
+  const hasVideo = !!marketingContent.video_url;
+  const hasThumbnail = !!marketingContent.thumbnail_image;
 
   return (
-    <section className="relative w-full" style={{ backgroundColor: '#F8F6F0' }}>
-      <div className="flex flex-col lg:flex-row">
+    <section className="w-full bg-[#F5F3EE] overflow-hidden">
+      {/* Two-column editorial: media left (65%), text right (35%) */}
+      <div className="flex flex-col lg:flex-row" style={{ minHeight: '80vh' }}>
 
-        {/* Left Side - Video - Full Height */}
-        <div className="w-full lg:w-2/3 h-64 sm:h-96 lg:h-screen order-2 lg:order-1 bg-black relative overflow-hidden">
-          {marketingContent.video_url && (
+        {/* ── Left: Media ── */}
+        <div className="relative w-full lg:w-[65%] order-2 lg:order-1 bg-black overflow-hidden" style={{ minHeight: '60vw', maxHeight: '90vh' }}>
+          {hasVideo && (
             <iframe
-              src={getVideoEmbedUrl(marketingContent.video_url)}
+              src={getVideoEmbedUrl(marketingContent.video_url!)}
               title={marketingContent.title}
-              allow="autoplay"
+              allow="autoplay; fullscreen"
               referrerPolicy="strict-origin-when-cross-origin"
               style={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                width: '150vw',
-                height: '150vh',
+                width: '160%',
+                height: '160%',
                 transform: 'translate(-50%, -50%)',
                 border: 'none',
-                pointerEvents: 'none'
+                pointerEvents: 'none',
               }}
             />
           )}
-          {!marketingContent.video_url && marketingContent.thumbnail_image && (
+          {!hasVideo && hasThumbnail && (
             <img
               src={marketingContent.thumbnail_image}
               alt={marketingContent.title}
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          {!marketingContent.video_url && !marketingContent.thumbnail_image && (
-            <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-              <p className="text-gray-400">Media content</p>
-            </div>
+          {!hasVideo && !hasThumbnail && (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
           )}
         </div>
 
-        {/* Right Side - Content - Full Height */}
-        <div className="w-full lg:w-1/3 h-auto lg:h-screen flex flex-col justify-center items-center px-6 sm:px-10 lg:px-16 py-12 lg:py-0 order-1 lg:order-2 text-center">
-          {/* Product Name */}
-          {marketingContent.product && (
-            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-cormorant font-light text-gray-900 mb-6 lg:mb-8">
+        {/* ── Right: Text ── */}
+        <div className="w-full lg:w-[35%] flex flex-col justify-center px-8 sm:px-12 lg:px-16 py-16 lg:py-24 order-1 lg:order-2">
+
+          {/* Eyebrow label */}
+          <p className="text-[10px] font-inter font-light tracking-[0.4em] uppercase text-gray-400 mb-6">
+            Featured Collection
+          </p>
+
+          {/* Title — always shown */}
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-cormorant font-light text-gray-900 leading-tight mb-6">
+            {marketingContent.title}
+          </h2>
+
+          {/* Thin rule */}
+          <div className="w-10 h-px bg-gray-300 mb-6" />
+
+          {/* Product name (if separate from title) */}
+          {marketingContent.product && marketingContent.product.name !== marketingContent.title && (
+            <p className="text-base font-cormorant font-light text-gray-600 mb-4 tracking-wide">
               {marketingContent.product.name}
-            </h3>
+            </p>
           )}
 
           {/* Description */}
           {marketingContent.description && (
-            <p className="text-sm sm:text-base lg:text-lg text-gray-700 mb-12 lg:mb-16 leading-relaxed max-w-md font-light">
+            <p className="text-sm font-inter font-light text-gray-600 leading-relaxed mb-10 max-w-xs">
               {marketingContent.description}
             </p>
           )}
 
-          {/* CTA Button */}
-          {marketingContent.product && (
-            <div>
-              <Link
-                to={`/products/${marketingContent.product.slug}`}
-                className="inline-block px-8 py-3 bg-white text-gray-900 border border-gray-900 font-serif font-medium text-xs uppercase tracking-widest hover:bg-gray-900 hover:text-white transition-all duration-300"
-              >
-                Start a Chat
-              </Link>
-            </div>
+          {/* CTA */}
+          {marketingContent.product ? (
+            <Link
+              to={`/rings/${marketingContent.product.slug}`}
+              className="inline-flex items-center gap-3 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-900 hover:text-gray-500 transition-colors duration-300 group"
+            >
+              <span>View Piece</span>
+              <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          ) : (
+            <Link
+              to="/engagement-rings"
+              className="inline-flex items-center gap-3 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-900 hover:text-gray-500 transition-colors duration-300 group"
+            >
+              <span>Explore Collection</span>
+              <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           )}
         </div>
       </div>

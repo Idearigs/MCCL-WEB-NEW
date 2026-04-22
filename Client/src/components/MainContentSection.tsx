@@ -12,22 +12,26 @@ const jewelryCategories = [
   {
     title: "Rings",
     image: "/images/fff.webp",
-    href: "/rings"
+    href: "/engagement-rings",
+    active: true,
   },
   {
-    title: "Earrings", 
+    title: "Earrings",
     image: "/images/ggg.webp",
-    href: "/earrings"
+    href: null,
+    active: false,
   },
   {
     title: "Necklaces",
-    image: "/images/dddd.webp", 
-    href: "/necklaces"
+    image: "/images/dddd.webp",
+    href: null,
+    active: false,
   },
   {
     title: "Bracelets",
     image: "/images/sddd.webp",
-    href: "/bracelets"
+    href: null,
+    active: false,
   },
 ];
 
@@ -233,18 +237,15 @@ export default function MainContentSection(): JSX.Element {
           >
             Forever yours.
           </p>
-          <Button
-            variant="outline"
-            className="h-11 sm:h-12 md:h-[50px] w-48 sm:w-56 md:w-[280px] bg-white bg-opacity-95 border-0 text-gray-900 hover:bg-white hover:bg-opacity-100 hover:scale-105 transition-all duration-300 font-normal tracking-wider uppercase opacity-0 animate-fade-in-up text-xs sm:text-sm"
-            style={{
-              animationDelay: '1.1s',
-              animationFillMode: 'forwards'
-            }}
+          <Link
+            to="/engagement-rings"
+            className="inline-flex items-center justify-center h-11 sm:h-12 md:h-[52px] px-8 md:px-12 bg-white bg-opacity-95 hover:bg-opacity-100 hover:scale-105 transition-all duration-300 opacity-0 animate-fade-in-up"
+            style={{ animationDelay: '1.1s', animationFillMode: 'forwards' }}
           >
-            <span className="text-[10px] sm:text-xs md:text-[12px] font-normal tracking-[1px] md:tracking-[1.5px]" style={{ fontFamily: 'Inter, sans-serif' }}>
-              EXPLORE THE COLLECTION
+            <span className="text-[10px] sm:text-[11px] md:text-[12px] font-light tracking-[2px] md:tracking-[2.5px] text-gray-900 uppercase" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Discover Our Engagement Rings
             </span>
-          </Button>
+          </Link>
         </div>
       </section>
 
@@ -258,28 +259,34 @@ export default function MainContentSection(): JSX.Element {
           <div className="grid grid-cols-4 gap-7">
             {jewelryCategories.map((category, index) => (
               <ScrollReveal key={index} delay={index * 100} direction="up">
-              <Link
-                to={category.href}
-                className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500 block"
-                style={{
-                  height: '430px'
-                }}
-              >
-                <img
-                  src={category.image}
-                  alt={category.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <div className="text-center">
-                    <h3 className="text-xl font-serif font-light text-white mb-2 tracking-wide">
-                      {category.title}
-                    </h3>
-                    <div className="w-12 h-px bg-white/60 mx-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {category.active ? (
+                  <Link
+                    to={category.href!}
+                    className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500 block"
+                    style={{ height: '430px' }}
+                  >
+                    <img src={category.image} alt={category.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
+                      <h3 className="text-xl font-serif font-light text-white mb-2 tracking-wide">{category.title}</h3>
+                      <div className="w-12 h-px bg-white/60 mx-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                  </Link>
+                ) : (
+                  <div
+                    className="group relative overflow-hidden shadow-lg block cursor-default"
+                    style={{ height: '430px' }}
+                  >
+                    <img src={category.image} alt={category.title} className="absolute inset-0 w-full h-full object-cover" />
+                    {/* Frosted overlay for coming soon */}
+                    <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                      <h3 className="text-xl font-serif font-light text-white mb-3 tracking-wide">{category.title}</h3>
+                      <div className="w-8 h-px bg-white/50 mx-auto mb-3" />
+                      <span className="text-[10px] font-inter font-light tracking-[0.3em] uppercase text-white/70">Coming Soon</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                )}
               </ScrollReveal>
             ))}
           </div>
@@ -288,34 +295,39 @@ export default function MainContentSection(): JSX.Element {
         {/* Mobile Horizontal Scroll Layout */}
         <div className="lg:hidden">
           <div ref={scrollRef} className="flex overflow-x-auto px-6 gap-4 scrollbar-hide pb-6">
-            {jewelryCategories.map((category, index) => (
-              <Link
-                key={index}
-                to={category.href}
-                className="group relative flex-shrink-0 overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500"
-                style={{
-                  width: '280px',
-                  height: '375px'
-                }}
-              >
-                <img
-                  src={category.image}
-                  alt={category.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <div className="text-center">
-                    <h3 className="text-lg font-serif font-light text-white mb-2 tracking-wide">
-                      {category.title}
-                    </h3>
+            {jewelryCategories.map((category, index) =>
+              category.active ? (
+                <Link
+                  key={index}
+                  to={category.href!}
+                  className="group relative flex-shrink-0 overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500"
+                  style={{ width: '280px', height: '375px' }}
+                >
+                  <img src={category.image} alt={category.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
+                    <h3 className="text-lg font-serif font-light text-white mb-2 tracking-wide">{category.title}</h3>
                     <div className="w-12 h-px bg-white/60 mx-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
+                </Link>
+              ) : (
+                <div
+                  key={index}
+                  className="group relative flex-shrink-0 overflow-hidden shadow-lg cursor-default"
+                  style={{ width: '280px', height: '375px' }}
+                >
+                  <img src={category.image} alt={category.title} className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                    <h3 className="text-lg font-serif font-light text-white mb-3 tracking-wide">{category.title}</h3>
+                    <div className="w-8 h-px bg-white/50 mx-auto mb-3" />
+                    <span className="text-[10px] font-inter font-light tracking-[0.3em] uppercase text-white/70">Coming Soon</span>
+                  </div>
                 </div>
-              </Link>
-            ))}
+              )
+            )}
           </div>
-          
+
           {/* Custom Scroll Indicator */}
           <div className="flex justify-center mt-4">
             <div className="flex gap-2">
@@ -335,195 +347,217 @@ export default function MainContentSection(): JSX.Element {
       {/* Marketing Section - Bespoke Collection */}
       <MarketingSection />
 
-      {/* Latest Designs & Engagement Rings Showcase */}
-      <section className="bg-gray-50 py-20 lg:py-24">
-        {/* Desktop Layout */}
-        <div className="hidden lg:block max-w-7xl mx-auto px-8 relative">
-          <div className="grid grid-cols-2 gap-28">
+      {/* Latest Designs & Engagement Rings — editorial two-column */}
+      <section className="bg-white">
 
-            {/* Latest Designs */}
-            <ScrollReveal direction="left" duration={800}>
-            <div className="flex flex-col">
-              <div className="mb-10">
-                <h2 className="text-3xl font-serif font-normal text-gray-900 mb-4 tracking-normal leading-tight">
+        {/* ── Desktop ── */}
+        <div className="hidden lg:grid grid-cols-2">
+
+          {/* Left — Latest Designs: text top, image bottom */}
+          <ScrollReveal direction="left" duration={800}>
+            <div className="flex flex-col h-full border-r border-gray-100">
+              <div className="px-12 xl:px-16 pt-16 pb-10">
+                <p className="text-[10px] font-inter font-light tracking-[0.4em] uppercase text-gray-400 mb-4">Collection</p>
+                <h2 className="text-4xl xl:text-5xl font-cormorant font-light text-gray-900 mb-5 leading-tight">
                   Latest Designs
                 </h2>
-                <p className="text-base font-cormorant font-normal text-gray-700 mb-6 leading-relaxed">
-                  Explore the latest jewellery designs and collections
+                <p className="text-sm font-inter font-light text-gray-500 mb-8 leading-relaxed max-w-xs">
+                  Explore the finest jewellery designs and collections
                 </p>
-                <button className="group flex items-center text-xs font-serif font-medium text-gray-800 uppercase tracking-[0.15em] hover:text-gray-600 transition-colors duration-300">
+                <Link
+                  to="/rings"
+                  className="inline-flex items-center gap-3 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
+                >
                   <span>Discover More</span>
-                  <svg className="ml-2 w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
+                </Link>
               </div>
-              
-              <div className="flex-1 relative group overflow-hidden rounded-lg shadow-lg">
+              <div className="flex-1 overflow-hidden min-h-[480px]">
                 <img
                   src="/images/latest-designs.jpg"
                   alt="Latest Jewelry Designs"
-                  className="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=500&fit=crop";
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&h=600&fit=crop";
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
               </div>
             </div>
-            </ScrollReveal>
+          </ScrollReveal>
 
-            {/* Vertical Divider Line */}
-            <div className="absolute left-1/2 top-8 bottom-8 w-px bg-gray-200 transform -translate-x-1/2"></div>
-
-            {/* Engagement Rings */}
-            <ScrollReveal direction="right" duration={800} delay={100}>
-            <div className="flex flex-col">
-              <div className="flex-1 relative group overflow-hidden rounded-lg shadow-lg mb-10">
+          {/* Right — Engagement Rings: image top, text bottom */}
+          <ScrollReveal direction="right" duration={800} delay={100}>
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-hidden min-h-[480px]">
                 <img
                   src="/images/engagement-rings.jpg"
                   alt="Engagement Rings Collection"
-                  className="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&h=500&fit=crop";
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&h=600&fit=crop";
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
               </div>
-              
-              <div>
-                <h2 className="text-3xl font-serif font-normal text-gray-900 mb-4 tracking-normal leading-tight">
+              <div className="px-12 xl:px-16 pt-10 pb-16">
+                <p className="text-[10px] font-inter font-light tracking-[0.4em] uppercase text-gray-400 mb-4">Our Focus</p>
+                <h2 className="text-4xl xl:text-5xl font-cormorant font-light text-gray-900 mb-5 leading-tight">
                   Engagement Rings
                 </h2>
-                <p className="text-base font-cormorant font-normal text-gray-700 mb-6 leading-relaxed">
+                <p className="text-sm font-inter font-light text-gray-500 mb-8 leading-relaxed max-w-xs">
                   Start your love story in style with an iconic McCulloch ring
                 </p>
-                <button className="group flex items-center text-xs font-serif font-medium text-gray-800 uppercase tracking-[0.15em] hover:text-gray-600 transition-colors duration-300">
+                <Link
+                  to="/engagement-rings"
+                  className="inline-flex items-center gap-3 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
+                >
                   <span>Discover More</span>
-                  <svg className="ml-2 w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
+                </Link>
               </div>
             </div>
-            </ScrollReveal>
-
-          </div>
+          </ScrollReveal>
         </div>
 
-        {/* Mobile Layout - Full Width Images */}
+        {/* ── Mobile ── stacked, text above image */}
         <div className="lg:hidden">
+
           {/* Latest Designs */}
           <ScrollReveal direction="up">
-          <div>
-            <div className="px-6 lg:px-0 mx-5 lg:mx-0 mb-10">
-              <h2 className="text-2xl font-serif font-normal text-gray-900 mb-4 tracking-normal leading-tight">
-                Latest Designs
-              </h2>
-              <p className="text-sm font-cormorant font-normal text-gray-700 mb-6 leading-relaxed">
-                Explore the latest jewellery designs and collections
-              </p>
-              <button className="group flex items-center text-xs font-serif font-medium text-gray-800 uppercase tracking-[0.15em] hover:text-gray-600 transition-colors duration-300">
-                <span>Discover More</span>
-                <svg className="ml-2 w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="relative group">
+            <div>
+              <div className="px-6 pt-14 pb-8">
+                <p className="text-[10px] font-inter font-light tracking-[0.4em] uppercase text-gray-400 mb-3">Collection</p>
+                <h2 className="text-3xl font-cormorant font-light text-gray-900 mb-4 leading-tight">
+                  Latest Designs
+                </h2>
+                <p className="text-sm font-inter font-light text-gray-500 mb-6 leading-relaxed">
+                  Explore the latest jewellery designs and collections
+                </p>
+                <Link
+                  to="/rings"
+                  className="inline-flex items-center gap-2 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
+                >
+                  <span>Discover More</span>
+                  <svg className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
               <img
                 src="/images/latest-designs.jpg"
                 alt="Latest Jewelry Designs"
-                className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full object-cover"
+                style={{ height: '70vw' }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=500&fit=crop";
+                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&h=600&fit=crop";
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
-          </div>
           </ScrollReveal>
 
           {/* Engagement Rings */}
           <ScrollReveal direction="up" delay={100}>
-          <div>
-            <div className="relative group">
+            <div className="mt-2">
+              <div className="px-6 pt-14 pb-8">
+                <p className="text-[10px] font-inter font-light tracking-[0.4em] uppercase text-gray-400 mb-3">Our Focus</p>
+                <h2 className="text-3xl font-cormorant font-light text-gray-900 mb-4 leading-tight">
+                  Engagement Rings
+                </h2>
+                <p className="text-sm font-inter font-light text-gray-500 mb-6 leading-relaxed">
+                  Start your love story in style with an iconic McCulloch ring
+                </p>
+                <Link
+                  to="/engagement-rings"
+                  className="inline-flex items-center gap-2 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
+                >
+                  <span>Discover More</span>
+                  <svg className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
               <img
                 src="/images/engagement-rings.jpg"
                 alt="Engagement Rings Collection"
-                className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full object-cover"
+                style={{ height: '70vw' }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&h=500&fit=crop";
+                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&h=600&fit=crop";
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
-            
-            <div className="px-6 lg:px-0 mx-5 lg:mx-0 mt-8 lg:mt-0 text-center lg:text-left">
-              <h2 className="text-2xl font-serif font-normal text-gray-900 mb-4 tracking-normal leading-tight">
-                Engagement Rings
-              </h2>
-              <p className="text-sm font-cormorant font-normal text-gray-700 mb-6 leading-relaxed">
-                Start your love story in style with an iconic McCulloch ring
-              </p>
-              <div className="flex justify-center lg:justify-start">
-                <button className="group flex items-center text-xs font-serif font-medium text-gray-800 uppercase tracking-[0.15em] hover:text-gray-600 transition-colors duration-300">
-                  <span>Discover More</span>
-                  <svg className="ml-2 w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
           </ScrollReveal>
         </div>
       </section>
 
       {/* Product Carousel Section */}
-      <section className="bg-white py-12 lg:py-16">
-        {/* Section Header */}
-        <ScrollReveal direction="up" className="flex items-center justify-between mb-8 px-6 lg:px-8">
-          <div>
-            <p className="text-[10px] font-inter font-light uppercase tracking-[0.35em] text-gray-400 mb-1">
-              Our Collection
-            </p>
-            <h2 className="text-3xl lg:text-4xl font-cormorant font-light text-gray-900 leading-tight">
-              Rings
-            </h2>
+      <section className="bg-white pt-14 pb-12 lg:pt-16 lg:pb-16">
+
+        {/* ── Tab navigation (matches reference screenshot) ── */}
+        <div className="px-6 lg:px-8 mb-10">
+          <div className="flex items-end justify-between">
+            {/* Tabs */}
+            <div className="flex items-end gap-0">
+              {/* RINGS — active */}
+              <button className="relative pb-3 pr-6 text-[11px] font-inter font-normal tracking-[0.25em] uppercase text-gray-900 transition-colors duration-200">
+                Rings
+                <span className="absolute bottom-0 left-0 right-6 h-px bg-gray-900" />
+              </button>
+              {/* Divider */}
+              <span className="pb-3 pr-6 text-[11px] font-inter text-gray-300">|</span>
+              {/* EARRINGS — coming soon */}
+              <span className="pb-3 pr-6 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-300 cursor-default" title="Coming Soon">
+                Earrings
+              </span>
+              <span className="pb-3 pr-6 text-[11px] font-inter text-gray-200">|</span>
+              {/* NECKLACES — coming soon */}
+              <span className="pb-3 pr-6 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-300 cursor-default" title="Coming Soon">
+                Necklaces
+              </span>
+              <span className="pb-3 pr-6 text-[11px] font-inter text-gray-200">|</span>
+              {/* BRACELETS — coming soon */}
+              <span className="pb-3 text-[11px] font-inter font-light tracking-[0.25em] uppercase text-gray-300 cursor-default" title="Coming Soon">
+                Bracelets
+              </span>
+            </div>
+
+            {/* Right: View All + Arrows */}
+            <div className="flex items-center gap-3 pb-3">
+              <Link
+                to="/engagement-rings"
+                className="hidden lg:inline text-[10px] font-inter font-light uppercase tracking-[0.25em] text-gray-400 hover:text-gray-900 transition-colors duration-300 mr-2"
+              >
+                View All
+              </Link>
+              <button
+                onClick={handlePrevious}
+                disabled={currentProductIndex === 0}
+                className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-200 ${
+                  currentProductIndex === 0
+                    ? 'border-gray-200 cursor-not-allowed'
+                    : 'border-gray-300 hover:border-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <svg className={`w-3 h-3 ${currentProductIndex === 0 ? 'text-gray-300' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={handleNext}
+                className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-600 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center"
+              >
+                <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/rings"
-              className="hidden lg:inline text-[10px] font-inter font-light uppercase tracking-[0.25em] text-gray-400 hover:text-gray-900 transition-colors duration-300 mr-2"
-            >
-              View All
-            </Link>
-            {/* Circular Navigation Arrows */}
-            <button
-              onClick={handlePrevious}
-              disabled={currentProductIndex === 0}
-              className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all duration-200 ${
-                currentProductIndex === 0
-                  ? 'border-gray-200 cursor-not-allowed'
-                  : 'border-gray-300 hover:border-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              <svg className={`w-3.5 h-3.5 ${currentProductIndex === 0 ? 'text-gray-300' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={handleNext}
-              className="w-9 h-9 rounded-full border border-gray-300 hover:border-gray-500 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center"
-            >
-              <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        </ScrollReveal>
+          {/* Full-width rule below tabs */}
+          <div className="w-full h-px bg-gray-100 -mt-px" />
+        </div>
 
         {/* Desktop Product Carousel */}
         <div
@@ -580,17 +614,13 @@ export default function MainContentSection(): JSX.Element {
           </div>
         </div>
 
-        {/* Desktop scroll indicator */}
-        <div className="hidden lg:flex justify-center mt-8">
-          <div className="flex gap-2">
-            {ringProducts.slice(0, Math.min(ringProducts.length, 4)).map((_, index) => (
-              <div
-                key={index}
-                className={`h-0.5 rounded-full transition-all duration-500 ease-in-out ${
-                  index === currentProductIndex ? 'w-10 bg-gray-800' : 'w-4 bg-gray-300'
-                }`}
-              />
-            ))}
+        {/* Desktop: thin progress line at bottom */}
+        <div className="hidden lg:block px-8 mt-8">
+          <div className="w-full h-px bg-gray-100">
+            <div
+              className="h-px bg-gray-800 transition-all duration-500"
+              style={{ width: ringProducts.length > 1 ? `${((currentProductIndex + 1) / ringProducts.length) * 100}%` : '100%' }}
+            />
           </div>
         </div>
 
@@ -649,24 +679,18 @@ export default function MainContentSection(): JSX.Element {
             </div>
           </div>
 
-          {/* Elegant dot indicator */}
-          <div className="flex justify-center mt-6 gap-1.5">
-            {ringProducts.map((_, index) => (
-              <div
-                key={index}
-                className={`rounded-full transition-all duration-300 ${
-                  index === mobileCarouselIndex
-                    ? 'w-5 h-[3px] bg-gray-800'
-                    : 'w-[6px] h-[3px] bg-gray-300'
-                }`}
-              />
-            ))}
+          {/* Mobile progress line */}
+          <div className="mx-6 mt-6 h-px bg-gray-100">
+            <div
+              className="h-px bg-gray-800 transition-all duration-500"
+              style={{ width: ringProducts.length > 1 ? `${((mobileCarouselIndex + 1) / ringProducts.length) * 100}%` : '100%' }}
+            />
           </div>
 
           {/* View All */}
           <div className="flex justify-center mt-6">
             <Link
-              to="/rings"
+              to="/engagement-rings"
               className="text-[10px] font-inter font-light uppercase tracking-[0.3em] text-gray-400 hover:text-gray-800 transition-colors duration-300"
             >
               View All Rings
