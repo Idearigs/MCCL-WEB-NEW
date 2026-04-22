@@ -330,7 +330,7 @@ export default function ChatWindow({
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-50 w-96 max-h-[600px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-8 sm:w-96 z-50 max-h-[85dvh] sm:max-h-[600px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Header - Luxury Minimal */}
       <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 flex justify-between items-center border-b border-gray-700 relative overflow-hidden">
         {/* Background Accent */}
