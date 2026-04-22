@@ -50,10 +50,19 @@ export default function PromotionPopup({ delay = 3000 }: PromotionPopupProps): J
 
   useEffect(() => {
     if (promotion && !loading) {
+      const seenKey = `mcculloch_popup_seen_${promotion.id}`;
+      if (localStorage.getItem(seenKey)) return;
       const timer = setTimeout(() => setIsOpen(true), delay);
       return () => clearTimeout(timer);
     }
   }, [promotion, loading, delay]);
+
+  const handleClose = () => {
+    if (promotion) {
+      localStorage.setItem(`mcculloch_popup_seen_${promotion.id}`, '1');
+    }
+    setIsOpen(false);
+  };
 
   if (!promotion || !isOpen) return <div />;
 
@@ -62,7 +71,7 @@ export default function PromotionPopup({ delay = 3000 }: PromotionPopupProps): J
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black bg-opacity-75 z-40 cursor-pointer"
-        onClick={() => setIsOpen(false)}
+        onClick={handleClose}
       />
 
       {/* Modal */}
@@ -73,7 +82,7 @@ export default function PromotionPopup({ delay = 3000 }: PromotionPopupProps): J
         >
           {/* Close Button */}
           <button
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
             className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all duration-200"
           >
             <X className="w-4 h-4 text-gray-700" strokeWidth={2} />
@@ -145,14 +154,14 @@ export default function PromotionPopup({ delay = 3000 }: PromotionPopupProps): J
             {promotion.product ? (
               <Link
                 to={`/products/${promotion.product.slug}`}
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="inline-block px-10 py-3 border border-gray-900 text-gray-900 font-inter font-light text-xs uppercase tracking-[0.2em] hover:bg-gray-900 hover:text-white transition-all duration-300"
               >
                 Shop Now
               </Link>
             ) : (
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="px-10 py-3 border border-gray-400 text-gray-600 font-inter font-light text-xs uppercase tracking-[0.2em] hover:border-gray-900 hover:text-gray-900 transition-all duration-300"
               >
                 Discover More
