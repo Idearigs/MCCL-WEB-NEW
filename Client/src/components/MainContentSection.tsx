@@ -352,25 +352,25 @@ export default function MainContentSection(): JSX.Element {
 
         {/* ── Desktop ── */}
         <div className="hidden lg:block py-16 xl:py-24">
-          <div className="max-w-5xl mx-auto px-8">
+          <div className="max-w-[1400px] mx-auto px-8">
             {/* Thin divider line centered between columns */}
             <div className="relative">
               <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-500 -translate-x-1/2 z-10" />
-              <div className="grid grid-cols-2 gap-20 xl:gap-28">
+              <div className="grid grid-cols-2 gap-20 xl:gap-24">
 
                 {/* Left — Latest Designs: text top, image below */}
                 <ScrollReveal direction="left" duration={800}>
                   <div className="flex flex-col">
                     <div className="mb-6">
-                      <h2 className="text-[1.5rem] xl:text-[1.75rem] font-cormorant font-light text-gray-900 mb-2 leading-tight">
+                      <h2 className="text-[1.875rem] xl:text-[2.25rem] font-cormorant font-light text-gray-900 mb-2 leading-tight">
                         Latest Designs
                       </h2>
-                      <p className="text-[11px] font-inter font-light text-gray-500 mb-4 leading-relaxed">
+                      <p className="text-[12px] font-inter font-light text-gray-500 mb-4 leading-relaxed">
                         Explore the latest jewellery designs and collections
                       </p>
                       <Link
                         to="/rings"
-                        className="inline-flex items-center gap-2 text-[9px] font-inter font-light tracking-[0.2em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
+                        className="inline-flex items-center gap-2 text-[10px] font-inter font-light tracking-[0.2em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
                       >
                         <span>Discover More</span>
                         <svg className="w-2.5 h-2.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -405,15 +405,15 @@ export default function MainContentSection(): JSX.Element {
                       />
                     </div>
                     <div>
-                      <h2 className="text-[1.5rem] xl:text-[1.75rem] font-cormorant font-light text-gray-900 mb-2 leading-tight">
+                      <h2 className="text-[1.875rem] xl:text-[2.25rem] font-cormorant font-light text-gray-900 mb-2 leading-tight">
                         Engagement Rings
                       </h2>
-                      <p className="text-[11px] font-inter font-light text-gray-500 mb-4 leading-relaxed">
+                      <p className="text-[12px] font-inter font-light text-gray-500 mb-4 leading-relaxed">
                         Start your love story in style with an iconic McCulloch ring
                       </p>
                       <Link
                         to="/engagement-rings"
-                        className="inline-flex items-center gap-2 text-[9px] font-inter font-light tracking-[0.2em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
+                        className="inline-flex items-center gap-2 text-[10px] font-inter font-light tracking-[0.2em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
                       >
                         <span>Discover More</span>
                         <svg className="w-2.5 h-2.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
