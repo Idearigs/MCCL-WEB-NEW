@@ -353,12 +353,10 @@ export default function MainContentSection(): JSX.Element {
         {/* ── Desktop ── */}
         <div className="hidden lg:block py-16 xl:py-24">
           <div className="max-w-[1400px] mx-auto px-8">
-            {/* Thin divider line centered between columns */}
-            <div className="relative">
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-500 -translate-x-1/2 z-10" />
-              <div className="grid grid-cols-2 gap-20 xl:gap-24">
+            <div className="flex items-stretch">
 
-                {/* Left — Latest Designs: text top, image below */}
+              {/* Left — Latest Designs: text top, image below */}
+              <div className="flex-1 pr-16 xl:pr-20">
                 <ScrollReveal direction="left" duration={800}>
                   <div className="flex flex-col">
                     <div className="mb-6">
@@ -390,8 +388,13 @@ export default function MainContentSection(): JSX.Element {
                     </div>
                   </div>
                 </ScrollReveal>
+              </div>
 
-                {/* Right — Engagement Rings: image top, text below */}
+              {/* Divider — hairline, equal distance from both columns */}
+              <div className="w-px bg-gray-300 flex-shrink-0 self-stretch" />
+
+              {/* Right — Engagement Rings: image top, text below */}
+              <div className="flex-1 pl-16 xl:pl-20">
                 <ScrollReveal direction="right" duration={800} delay={100}>
                   <div className="flex flex-col">
                     <div className="overflow-hidden mb-6" style={{ width: '100%', maxWidth: '576px', height: '720px' }}>
@@ -423,8 +426,8 @@ export default function MainContentSection(): JSX.Element {
                     </div>
                   </div>
                 </ScrollReveal>
-
               </div>
+
             </div>
           </div>
         </div>
