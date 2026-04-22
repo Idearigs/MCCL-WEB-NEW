@@ -351,73 +351,78 @@ export default function MainContentSection(): JSX.Element {
       <section className="bg-white">
 
         {/* ── Desktop ── */}
-        <div className="hidden lg:flex px-12 xl:px-20 py-16 xl:py-24 gap-14 xl:gap-20">
+        <div className="hidden lg:block py-16 xl:py-24">
+          <div className="max-w-5xl mx-auto px-8">
+            <div className="grid grid-cols-2 gap-12 xl:gap-16">
 
-          {/* Left — Latest Designs: text top, image below */}
-          <ScrollReveal direction="left" duration={800}>
-            <div className="flex flex-col flex-1">
-              <div className="mb-8">
-                <h2 className="text-[2rem] xl:text-[2.6rem] font-cormorant font-light text-gray-900 mb-3 leading-tight">
-                  Latest Designs
-                </h2>
-                <p className="text-[13px] font-inter font-light text-gray-500 mb-6 leading-relaxed">
-                  Explore the latest jewellery designs and collections
-                </p>
-                <Link
-                  to="/rings"
-                  className="inline-flex items-center gap-2 text-[10px] font-inter font-light tracking-[0.2em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
-                >
-                  <span>Discover More</span>
-                  <svg className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-              <div className="overflow-hidden" style={{ height: '500px' }}>
-                <img
-                  src="/images/latest-designs.jpg"
-                  alt="Latest Jewelry Designs"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&h=600&fit=crop";
-                  }}
-                />
-              </div>
-            </div>
-          </ScrollReveal>
+              {/* Left — Latest Designs: text top, image below */}
+              <ScrollReveal direction="left" duration={800}>
+                <div className="flex flex-col">
+                  <div className="mb-8">
+                    <h2 className="text-[2rem] xl:text-[2.4rem] font-cormorant font-light text-gray-900 mb-3 leading-tight">
+                      Latest Designs
+                    </h2>
+                    <p className="text-[13px] font-inter font-light text-gray-500 mb-5 leading-relaxed">
+                      Explore the latest jewellery designs and collections
+                    </p>
+                    <Link
+                      to="/rings"
+                      className="inline-flex items-center gap-2 text-[10px] font-inter font-light tracking-[0.2em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
+                    >
+                      <span>Discover More</span>
+                      <svg className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                  <div className="overflow-hidden" style={{ height: '460px' }}>
+                    <img
+                      src="/images/latest-designs.jpg"
+                      alt="Latest Jewelry Designs"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&h=600&fit=crop";
+                      }}
+                    />
+                  </div>
+                </div>
+              </ScrollReveal>
 
-          {/* Right — Engagement Rings: image top, text below */}
-          <ScrollReveal direction="right" duration={800} delay={100}>
-            <div className="flex flex-col flex-1">
-              <div className="overflow-hidden mb-8" style={{ height: '500px' }}>
-                <img
-                  src="/images/engagement-rings.jpg"
-                  alt="Engagement Rings Collection"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&h=600&fit=crop";
-                  }}
-                />
-              </div>
-              <div>
-                <h2 className="text-[2rem] xl:text-[2.6rem] font-cormorant font-light text-gray-900 mb-3 leading-tight">
-                  Engagement Rings
-                </h2>
-                <p className="text-[13px] font-inter font-light text-gray-500 mb-6 leading-relaxed">
-                  Start your love story in style with an iconic McCulloch ring
-                </p>
-                <Link
-                  to="/engagement-rings"
-                  className="inline-flex items-center gap-2 text-[10px] font-inter font-light tracking-[0.2em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
-                >
-                  <span>Discover More</span>
-                  <svg className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
+              {/* Right — Engagement Rings: image top, text below */}
+              <ScrollReveal direction="right" duration={800} delay={100}>
+                <div className="flex flex-col">
+                  <div className="overflow-hidden mb-8" style={{ height: '460px' }}>
+                    <img
+                      src="/images/engagement-rings.jpg"
+                      alt="Engagement Rings Collection"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&h=600&fit=crop";
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h2 className="text-[2rem] xl:text-[2.4rem] font-cormorant font-light text-gray-900 mb-3 leading-tight">
+                      Engagement Rings
+                    </h2>
+                    <p className="text-[13px] font-inter font-light text-gray-500 mb-5 leading-relaxed">
+                      Start your love story in style with an iconic McCulloch ring
+                    </p>
+                    <Link
+                      to="/engagement-rings"
+                      className="inline-flex items-center gap-2 text-[10px] font-inter font-light tracking-[0.2em] uppercase text-gray-900 hover:text-gray-400 transition-colors duration-300 group"
+                    >
+                      <span>Discover More</span>
+                      <svg className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </ScrollReveal>
+
             </div>
-          </ScrollReveal>
+          </div>
         </div>
 
         {/* ── Mobile ── stacked, text above image */}
