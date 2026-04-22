@@ -355,7 +355,7 @@ export default function MainContentSection(): JSX.Element {
           <div className="max-w-5xl mx-auto px-8">
             {/* Thin divider line centered between columns */}
             <div className="relative">
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-200 -translate-x-1/2 z-10" />
+              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-500 -translate-x-1/2 z-10" />
               <div className="grid grid-cols-2 gap-20 xl:gap-28">
 
                 {/* Left — Latest Designs: text top, image below */}
@@ -378,7 +378,7 @@ export default function MainContentSection(): JSX.Element {
                         </svg>
                       </Link>
                     </div>
-                    <div className="overflow-hidden" style={{ height: '540px' }}>
+                    <div className="overflow-hidden" style={{ width: '100%', maxWidth: '576px', height: '720px' }}>
                       <img
                         src="/images/latest-designs.jpg"
                         alt="Latest Jewelry Designs"
@@ -394,7 +394,7 @@ export default function MainContentSection(): JSX.Element {
                 {/* Right — Engagement Rings: image top, text below */}
                 <ScrollReveal direction="right" duration={800} delay={100}>
                   <div className="flex flex-col">
-                    <div className="overflow-hidden mb-6" style={{ height: '540px' }}>
+                    <div className="overflow-hidden mb-6" style={{ width: '100%', maxWidth: '576px', height: '720px' }}>
                       <img
                         src="/images/engagement-rings.jpg"
                         alt="Engagement Rings Collection"
