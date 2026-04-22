@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
@@ -63,8 +63,8 @@ interface RingProduct {
   in_stock: boolean;
 }
 
-// Product card with per-card metal selection
-const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuthRequired: () => void }) => {
+// Product card with per-card metal selection — memoised to prevent re-renders when parent filters change
+const ProductCard = React.memo(({ product, onAuthRequired }: { product: RingProduct; onAuthRequired: () => void }) => {
   const [selectedMetalId, setSelectedMetalId] = useState<string | null>(null);
   const metals = product.available_metals || [];
 
@@ -99,6 +99,7 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
             alt={primaryImage?.alt || product.name}
             className="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-0"
             loading="lazy"
+            decoding="async"
           />
 
           {/* Hover Image */}
@@ -107,6 +108,7 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
             alt={hoverImage?.alt || `${product.name} - Alternative View`}
             className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100"
             loading="lazy"
+            decoding="async"
           />
 
           {/* Hover Overlay — desktop only */}
@@ -161,7 +163,7 @@ const ProductCard = ({ product, onAuthRequired }: { product: RingProduct; onAuth
       </div>
     </div>
   );
-};
+});
 
 const EngagementRings = (): JSX.Element => {
   const [searchParams] = useSearchParams();
@@ -328,12 +330,12 @@ const EngagementRings = (): JSX.Element => {
     fetchProducts();
   }, [currentPage, selectedFilters]);
 
-  const toggleFilter = (filterName: string) => {
-    setActiveFilter(activeFilter === filterName ? null : filterName);
-  };
+  const toggleFilter = useCallback((filterName: string) => {
+    setActiveFilter(prev => prev === filterName ? null : filterName);
+  }, []);
 
   // Filter handlers — reset to page 1 on any filter change
-  const handleFilterChange = (filterType: keyof typeof selectedFilters, value: string, checked: boolean) => {
+  const handleFilterChange = useCallback((filterType: keyof typeof selectedFilters, value: string, checked: boolean) => {
     setCurrentPage(1);
     setSelectedFilters(prev => ({
       ...prev,
@@ -341,9 +343,9 @@ const EngagementRings = (): JSX.Element => {
         ? [...prev[filterType], value]
         : prev[filterType].filter(item => item !== value)
     }));
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setCurrentPage(1);
     setSelectedFilters({
       price: [],
@@ -352,7 +354,7 @@ const EngagementRings = (): JSX.Element => {
       metals: [],
       collections: []
     });
-  };
+  }, []);
 
   // Server handles all filters except the dev search term
   const filteredProducts = ringProducts.filter(product => {

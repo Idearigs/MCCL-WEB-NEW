@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
@@ -386,6 +386,7 @@ const WeddingRings = (): JSX.Element => {
                           src={primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png"}
                           alt={primaryImage?.alt || product.name}
                           loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-0"
                         />
 
@@ -394,6 +395,7 @@ const WeddingRings = (): JSX.Element => {
                           src={hoverImage?.url ? getMediaUrl(hoverImage.url) : (primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png")}
                           alt={hoverImage?.alt || `${product.name} - Alternative View`}
                           loading="lazy"
+                          decoding="async"
                           className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                         />
 

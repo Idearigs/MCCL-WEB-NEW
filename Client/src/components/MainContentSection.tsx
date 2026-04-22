@@ -52,7 +52,7 @@ export default function MainContentSection(): JSX.Element {
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [ringProducts, setRingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const desktopScrollRef = useRef<HTMLDivElement>(null);
@@ -561,6 +561,8 @@ export default function MainContentSection(): JSX.Element {
                         src={getMediaUrl(product.image.url)}
                         alt={product.image.alt || product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        loading="lazy"
+                        decoding="async"
                       />
                     ) : (
                       <span className="text-xs font-cormorant text-gray-400 text-center px-2">{product.name}</span>
@@ -628,6 +630,8 @@ export default function MainContentSection(): JSX.Element {
                           src={getMediaUrl(product.image.url)}
                           alt={product.image.alt || product.name}
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <span className="text-sm font-cormorant text-gray-400">{product.name}</span>

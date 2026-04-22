@@ -329,10 +329,12 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
               <Link to="/" className="flex flex-col items-center">
                 {/* Company Logo */}
                 <div className="mb-2">
-                  <img 
-                    src="/images/logo.png" 
-                    alt="McCulloch Jewellers Logo" 
+                  <img
+                    src="/images/logo.png"
+                    alt="McCulloch Jewellers Logo"
                     className="h-16 w-auto object-contain"
+                    fetchPriority="high"
+                    decoding="sync"
                   />
                 </div>
                 {/* Store Name */}

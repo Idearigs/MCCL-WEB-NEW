@@ -8,6 +8,7 @@ import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
 import API_BASE_URL, { getMediaUrl } from '../config/api';
 import { trackViewContent, trackAddToCart } from '../services/pixelService';
+import { useCountry } from '../hooks/useCountry';
 
 const metalTypeOptions = [
   { value: 'silver',           label: 'Silver',           overrideKey: 'silver'          },
@@ -65,8 +66,7 @@ const ProductDetail = () => {
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userCountry, setUserCountry] = useState<string | null>(null);
-  const [userCountryName, setUserCountryName] = useState<string | null>(null);
+  const { countryCode: userCountry, countryName: userCountryName } = useCountry();
 
   // Nivoda Stone Selection States
   const [selectedStoneType, setSelectedStoneType] = useState<'natural' | 'lab-grown'>('natural');
@@ -335,29 +335,6 @@ const ProductDetail = () => {
     }
     return productData?.price || '';
   })();
-
-  // Fetch user's country based on IP
-  useEffect(() => {
-    const fetchUserCountry = async () => {
-      try {
-        // Using ipapi.co for geolocation - free tier allows 1000 requests/day
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-
-        if (data.country_code && data.country_name) {
-          setUserCountry(data.country_code);
-          setUserCountryName(data.country_name);
-          console.log('User country detected:', data.country_name, data.country_code);
-        }
-      } catch (err) {
-        console.log('Could not detect user country:', err);
-        // Fallback: don't show the message if we can't detect
-        setUserCountry('GB'); // Default to GB (no message shown)
-      }
-    };
-
-    fetchUserCountry();
-  }, []);
 
   // Fetch product data
   useEffect(() => {

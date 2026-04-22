@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
@@ -706,6 +706,7 @@ const Necklaces = (): JSX.Element => {
                         src={primaryImage?.url || "/images/Rings.png"}
                         alt={primaryImage?.alt || product.name}
                         loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
                       />
 
@@ -714,6 +715,7 @@ const Necklaces = (): JSX.Element => {
                         src={hoverImage?.url || primaryImage?.url || "/images/Rings.png"}
                         alt={hoverImage?.alt || `${product.name} - Alternative View`}
                         loading="lazy"
+                        decoding="async"
                         className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                       />
 

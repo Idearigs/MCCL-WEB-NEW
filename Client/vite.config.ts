@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    assetsInlineLimit: 0,
+    assetsInlineLimit: 4096,
     copyPublicDir: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {

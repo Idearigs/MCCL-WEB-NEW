@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Share2, Clock, Droplet, Maximize2 } from 'lucide-react';
 import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
@@ -1127,6 +1127,7 @@ const WatchDetail = () => {
                           alt={strap.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-inter">

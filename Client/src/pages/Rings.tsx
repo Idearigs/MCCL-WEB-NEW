@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FooterSection } from "../components/FooterSection";
 import LuxuryNavigationWhite from "../components/LuxuryNavigationWhite";
@@ -920,6 +920,7 @@ const Rings = (): JSX.Element => {
                             alt={displayImage.alt}
                             className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
                             loading="lazy"
+                            decoding="async"
                           />
 
                           {/* Hover Image */}
@@ -928,6 +929,7 @@ const Rings = (): JSX.Element => {
                             alt={hoverImage?.alt || `${product.name} - Alternative View`}
                             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                             loading="lazy"
+                            decoding="async"
                           />
 
                           {/* Hover Overlay */}
