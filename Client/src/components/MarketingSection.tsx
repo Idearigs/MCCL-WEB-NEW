@@ -71,10 +71,10 @@ export default function MarketingSection(): JSX.Element {
   return (
     <section className="w-full bg-[#F5F3EE] overflow-hidden">
       {/* Two-column editorial: media left (65%), text right (35%) */}
-      <div className="flex flex-col lg:flex-row" style={{ minHeight: '80vh' }}>
+      <div className="flex flex-col lg:flex-row" style={{ minHeight: 'calc(80vh - 20px)' }}>
 
         {/* ── Left: Media ── */}
-        <div className="relative w-full lg:w-[65%] order-2 lg:order-1 bg-black overflow-hidden" style={{ minHeight: '60vw', maxHeight: '90vh' }}>
+        <div className="relative w-full lg:w-[65%] order-2 lg:order-1 bg-black overflow-hidden" style={{ minHeight: '60vw', maxHeight: 'calc(90vh - 20px)' }}>
           {hasVideo && (
             <iframe
               src={getVideoEmbedUrl(marketingContent.video_url!)}
