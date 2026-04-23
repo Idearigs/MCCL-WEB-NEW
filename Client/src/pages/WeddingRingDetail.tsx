@@ -550,7 +550,7 @@ const WeddingRingDetail = (): JSX.Element => {
                   </>
                 )}
                 <div className="absolute top-3 right-3 z-20">
-                  <FavoriteButton productId={productData.id} productName={productData.name} size="sm" />
+                  <FavoriteButton productId={productData.id} productName={productData.name} imageUrl={displayImages[0]?.url} size="sm" />
                 </div>
               </div>
 

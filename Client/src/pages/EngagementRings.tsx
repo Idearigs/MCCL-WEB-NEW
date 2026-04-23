@@ -90,7 +90,7 @@ const ProductCard = React.memo(({ product, onAuthRequired }: { product: RingProd
       <Link to={`/${product.category.slug}/${product.slug}`} className="group cursor-pointer block">
         <div className="relative bg-white overflow-hidden" style={{ aspectRatio: '1', height: 'auto' }}>
           <div className="absolute top-2 right-2 lg:top-3 lg:right-3 z-20">
-            <FavoriteButton productId={product.id} productName={product.name} size="sm" />
+            <FavoriteButton productId={product.id} productName={product.name} imageUrl={primaryImage?.url} size="sm" />
           </div>
 
           {/* Default Image */}

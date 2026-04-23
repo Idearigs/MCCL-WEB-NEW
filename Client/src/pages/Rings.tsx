@@ -910,6 +910,7 @@ const Rings = (): JSX.Element => {
                             <FavoriteButton
                               productId={product.id}
                               productName={product.name}
+                              imageUrl={displayImage?.url}
                               size="sm"
                             />
                           </div>

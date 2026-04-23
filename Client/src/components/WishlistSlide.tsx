@@ -169,9 +169,18 @@ const WishlistSlide: React.FC<WishlistSlideProps> = ({
               {/* Local (non-auth) favorites */}
               {localFavorites.map((fav) => (
                 <div key={fav.productId} className="flex space-x-4 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
-                  {/* Placeholder image */}
-                  <div className="flex-shrink-0 w-20 h-20 bg-gray-50 flex items-center justify-center rounded">
-                    <Heart className="w-6 h-6 text-rose-300 fill-rose-200" />
+                  <div className="flex-shrink-0 w-20 h-20 bg-gray-50 overflow-hidden rounded">
+                    {fav.image ? (
+                      <img
+                        src={getMediaUrl(fav.image)}
+                        alt={fav.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Heart className="w-6 h-6 text-rose-300 fill-rose-200" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Product Details */}

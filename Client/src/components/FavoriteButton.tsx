@@ -5,6 +5,7 @@ import { useFavorites } from '../contexts/FavoritesContext';
 interface FavoriteButtonProps {
   productId: string;
   productName?: string;
+  imageUrl?: string;
   size?: 'sm' | 'md' | 'lg';
   // kept for backwards compat — no longer used
   showTooltip?: boolean;
@@ -14,6 +15,7 @@ interface FavoriteButtonProps {
 const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   productId,
   productName,
+  imageUrl,
   size = 'md',
 }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -35,7 +37,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     setTimeout(() => setIsAnimating(false), 300);
 
     try {
-      await toggleFavorite(productId, productName);
+      await toggleFavorite(productId, productName, imageUrl);
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
     }

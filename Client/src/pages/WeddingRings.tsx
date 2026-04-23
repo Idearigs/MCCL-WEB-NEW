@@ -377,6 +377,7 @@ const WeddingRings = (): JSX.Element => {
                           <FavoriteButton
                             productId={product.id}
                             productName={product.name}
+                            imageUrl={primaryImage?.url}
                             size="sm"
                           />
                         </div>
