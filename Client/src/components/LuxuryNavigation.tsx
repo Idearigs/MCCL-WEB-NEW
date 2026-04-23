@@ -301,7 +301,7 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
       <div className="fixed top-0 left-0 right-0 z-50">
         <TopBanner />
         <nav 
-          className={`relative transition-all duration-0 ${
+          className={`relative transition-colors duration-300 ${
             anyDropdownOpen || navbarHover
               ? 'bg-white shadow-lg'
               : isScrolled 
@@ -1014,20 +1014,33 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
 
           {/* Mobile Navigation */}
           <div className="lg:hidden px-4 py-4">
-            <div className="flex items-center justify-between">
-              {/* Left - Menu Button */}
-              <button
-                onClick={openMobileMenu}
-                className="p-2 rounded-full hover:bg-white/10 transition-colors"
-              >
-                <Menu className={`w-5 h-5 transition-colors duration-300 ${
-                  isScrolled ? 'text-gray-700' : 'text-white'
-                }`} />
-              </button>
+            <div className="relative flex items-center">
+              {/* Left - Hamburger + Search */}
+              <div className="flex items-center">
+                <button
+                  onClick={openMobileMenu}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <Menu className={`w-5 h-5 transition-colors duration-300 ${
+                    isScrolled ? 'text-gray-700' : 'text-white'
+                  }`} />
+                </button>
+                <button
+                  onClick={openSearch}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <svg className={`w-4 h-4 transition-colors duration-300 ${
+                    isScrolled ? 'text-gray-700' : 'text-white'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
+                </button>
+              </div>
 
-              {/* Center - Minimal Logo/Brand */}
-              <div className="flex-1 flex justify-center">
-                <Link to="/" className="flex flex-col items-center">
+              {/* Center - Logo (absolutely centered) */}
+              <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none">
+                <Link to="/" className="flex flex-col items-center pointer-events-auto">
                   <div className={`text-lg font-cormorant tracking-[0.2em] uppercase transition-colors duration-300 ${
                     isScrolled ? 'text-gray-900' : 'text-white'
                   }`}>
@@ -1041,23 +1054,29 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
                 </Link>
               </div>
 
-              {/* Right - Minimal Actions */}
-              <div className="flex items-center space-x-2">
-                {/* Search */}
-                <button 
-                  onClick={openSearch}
-                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+              {/* Right - Wishlist + Cart */}
+              <div className="ml-auto flex items-center">
+                {/* Wishlist */}
+                <button
+                  onClick={openWishlist}
+                  className="p-2 rounded-full hover:bg-white/10 transition-colors relative"
                 >
                   <svg className={`w-4 h-4 transition-colors duration-300 ${
                     isScrolled ? 'text-gray-700' : 'text-white'
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                   </svg>
+                  {favoritesCount > 0 && (
+                    <span className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium ${
+                      isScrolled ? 'bg-rose-500 text-white' : 'bg-white text-rose-500'
+                    }`}>
+                      {favoritesCount}
+                    </span>
+                  )}
                 </button>
 
                 {/* Shopping Bag */}
-                <button 
+                <button
                   onClick={openCart}
                   className="p-2 rounded-full hover:bg-white/10 transition-colors relative"
                 >
@@ -1070,9 +1089,7 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
                   </svg>
                   {getCartCount() > 0 && (
                     <span className={`absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center font-medium ${
-                      isScrolled 
-                        ? 'bg-gray-900 text-white' 
-                        : 'bg-white text-gray-900'
+                      isScrolled ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
                     }`}>
                       {getCartCount()}
                     </span>

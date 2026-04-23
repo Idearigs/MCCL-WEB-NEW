@@ -43,9 +43,20 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/mcculloch-logo.png">
     <link rel="apple-touch-icon" href="/mcculloch-logo.png">
     
+    <!-- Font CDN early connections — must appear before font stylesheets -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.cdnfonts.com">
+    <!-- Fonts loaded as <link> (parallel with CSS) instead of @import (waterfall) -->
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/satoshi">
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/futura-pt">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap">
+    <!-- API server early connection -->
+    <link rel="preconnect" href="https://api.buymediamonds.co.uk">
+    <link rel="dns-prefetch" href="https://api.buymediamonds.co.uk">
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -53,11 +64,11 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-PP0B5P4');</script>
     <!-- End Google Tag Manager -->
-    <script type="module" crossorigin src="/assets/main-Bz8hbUDW.js"></script>
+    <script type="module" crossorigin src="/assets/main-DMql0HGx.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/api-CuPpx1fJ.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-D4DSpbSH.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-socket-Cc1G6gjo.js">
-    <link rel="stylesheet" crossorigin href="/assets/main-B4ocyBxj.css">
+    <link rel="stylesheet" crossorigin href="/assets/main-Bl858PF2.css">
   </head>
 
   <body>
