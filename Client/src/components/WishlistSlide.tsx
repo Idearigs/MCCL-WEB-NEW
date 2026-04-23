@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useCart } from '../contexts/CartContext';
 import { toast } from 'sonner';
+import { getMediaUrl } from '../config/api';
 
 interface WishlistSlideProps {
   isOpen: boolean;
@@ -113,7 +114,7 @@ const WishlistSlide: React.FC<WishlistSlideProps> = ({
                     className="flex-shrink-0 w-20 h-20 bg-gray-50 rounded overflow-hidden"
                   >
                     <img
-                      src={fav.product.image || fav.product.images?.[0]?.url || '/images/placeholder.jpg'}
+                      src={(() => { const u = fav.product.image || fav.product.images?.[0]?.url; return u ? getMediaUrl(u) : '/images/placeholder.jpg'; })()}
                       alt={fav.product.name}
                       className="w-full h-full object-cover"
                     />
