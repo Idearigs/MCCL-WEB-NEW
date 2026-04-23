@@ -169,26 +169,42 @@ const WishlistSlide: React.FC<WishlistSlideProps> = ({
               {/* Local (non-auth) favorites */}
               {localFavorites.map((fav) => (
                 <div key={fav.productId} className="flex space-x-4 border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
-                  <div className="flex-shrink-0 w-20 h-20 bg-gray-50 overflow-hidden rounded">
-                    {fav.image ? (
-                      <img
-                        src={getMediaUrl(fav.image)}
-                        alt={fav.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
+                  {fav.url ? (
+                    <Link to={fav.url} onClick={onClose} className="flex-shrink-0 w-20 h-20 bg-gray-50 overflow-hidden rounded block">
+                      {fav.image ? (
+                        <img src={getMediaUrl(fav.image)} alt={fav.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Heart className="w-6 h-6 text-rose-300 fill-rose-200" />
+                        </div>
+                      )}
+                    </Link>
+                  ) : (
+                    <div className="flex-shrink-0 w-20 h-20 bg-gray-50 overflow-hidden rounded flex items-center justify-center">
+                      {fav.image ? (
+                        <img src={getMediaUrl(fav.image)} alt={fav.name} className="w-full h-full object-cover" />
+                      ) : (
                         <Heart className="w-6 h-6 text-rose-300 fill-rose-200" />
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Product Details */}
                   <div className="flex-1 space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm font-cormorant font-medium text-gray-900 pr-2 leading-tight">
-                        {fav.name || 'Saved item'}
-                      </span>
+                      {fav.url ? (
+                        <Link
+                          to={fav.url}
+                          onClick={onClose}
+                          className="text-sm font-cormorant font-medium text-gray-900 pr-2 leading-tight hover:text-gray-600 transition-colors"
+                        >
+                          {fav.name || 'Saved item'}
+                        </Link>
+                      ) : (
+                        <span className="text-sm font-cormorant font-medium text-gray-900 pr-2 leading-tight">
+                          {fav.name || 'Saved item'}
+                        </span>
+                      )}
                       <button
                         onClick={() => handleRemove(fav.productId)}
                         className="text-gray-400 hover:text-red-500 transition-colors"

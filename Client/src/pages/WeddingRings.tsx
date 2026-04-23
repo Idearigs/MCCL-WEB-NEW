@@ -378,6 +378,7 @@ const WeddingRings = (): JSX.Element => {
                             productId={product.id}
                             productName={product.name}
                             imageUrl={primaryImage?.url}
+                            productUrl={`/${product.category.slug}/${product.slug}`}
                             size="sm"
                           />
                         </div>

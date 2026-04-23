@@ -911,6 +911,7 @@ const Rings = (): JSX.Element => {
                               productId={product.id}
                               productName={product.name}
                               imageUrl={displayImage?.url}
+                              productUrl={`/${product.category.slug}/${product.slug}`}
                               size="sm"
                             />
                           </div>

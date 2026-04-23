@@ -9,6 +9,7 @@ interface LocalFavorite {
   productId: string;
   name: string;
   image?: string;
+  url?: string;
   addedAt: string;
 }
 
@@ -37,8 +38,8 @@ interface FavoritesContextType {
   favoritesCount: number;
   isLoading: boolean;
   isFavorite: (productId: string) => boolean;
-  toggleFavorite: (productId: string, productName?: string, imageUrl?: string) => Promise<void>;
-  addFavorite: (productId: string, notes?: string, imageUrl?: string) => Promise<void>;
+  toggleFavorite: (productId: string, productName?: string, imageUrl?: string, productUrl?: string) => Promise<void>;
+  addFavorite: (productId: string, notes?: string, imageUrl?: string, productUrl?: string) => Promise<void>;
   removeFavorite: (productId: string) => Promise<void>;
   refreshFavorites: () => Promise<void>;
 }
@@ -111,11 +112,11 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
     return localFavorites.some(fav => fav.productId === productId);
   };
 
-  const addFavorite = async (productId: string, notes?: string, imageUrl?: string) => {
+  const addFavorite = async (productId: string, notes?: string, imageUrl?: string, productUrl?: string) => {
     if (!isAuthenticated) {
       const already = localFavorites.some(f => f.productId === productId);
       if (!already) {
-        const updated = [...localFavorites, { productId, name: '', image: imageUrl, addedAt: new Date().toISOString() }];
+        const updated = [...localFavorites, { productId, name: '', image: imageUrl, url: productUrl, addedAt: new Date().toISOString() }];
         setLocalFavorites(updated);
         localStorage.setItem(LOCAL_FAVORITES_KEY, JSON.stringify(updated));
       }
@@ -136,7 +137,7 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
     setFavorites(prev => prev.filter(fav => fav.product.id !== productId));
   };
 
-  const toggleFavorite = async (productId: string, productName?: string, imageUrl?: string) => {
+  const toggleFavorite = async (productId: string, productName?: string, imageUrl?: string, productUrl?: string) => {
     if (!isAuthenticated) {
       const existing = localFavorites.find(f => f.productId === productId);
       if (existing) {
@@ -145,7 +146,7 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
         localStorage.setItem(LOCAL_FAVORITES_KEY, JSON.stringify(updated));
         showToast(`${productName || 'Item'} removed from wishlist`);
       } else {
-        const updated = [...localFavorites, { productId, name: productName || '', image: imageUrl, addedAt: new Date().toISOString() }];
+        const updated = [...localFavorites, { productId, name: productName || '', image: imageUrl, url: productUrl, addedAt: new Date().toISOString() }];
         setLocalFavorites(updated);
         localStorage.setItem(LOCAL_FAVORITES_KEY, JSON.stringify(updated));
         showToast(`${productName || 'Item'} added to your wishlist`);
