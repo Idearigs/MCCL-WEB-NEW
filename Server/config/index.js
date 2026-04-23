@@ -6,9 +6,9 @@ const config = {
   API_VERSION: process.env.API_VERSION || 'v1',
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'fallback-secret-change-in-production',
+    secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret',
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
     maxDevices: parseInt(process.env.MAX_DEVICES) || 3
   },
@@ -69,13 +69,11 @@ const config = {
 const validateConfig = () => {
   const requiredEnvVars = [];
 
-  if (config.NODE_ENV === 'production') {
-    requiredEnvVars.push(
-      'JWT_SECRET',
-      'PG_PASSWORD'
-      // MONGODB_URI is optional - only used for logging
-    );
-  }
+  requiredEnvVars.push(
+    'JWT_SECRET',
+    'JWT_REFRESH_SECRET',
+    'PG_PASSWORD'
+  );
 
   const missing = requiredEnvVars.filter(varName => !process.env[varName]);
 

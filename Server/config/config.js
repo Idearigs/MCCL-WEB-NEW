@@ -10,11 +10,11 @@ const config = {
   database: {
     // PostgreSQL Configuration
     postgres: {
-      host: process.env.POSTGRES_HOST || '31.97.116.89',
-      port: process.env.POSTGRES_PORT || 5433,
-      database: process.env.POSTGRES_DB || 'mcculloch_db',
-      username: process.env.POSTGRES_USER || 'mcculloch_admin',
-      password: process.env.POSTGRES_PASSWORD || '#mcculloch_admin#20026',
+      host: process.env.PG_HOST || process.env.POSTGRES_HOST || 'localhost',
+      port: process.env.PG_PORT || process.env.POSTGRES_PORT || 5432,
+      database: process.env.PG_DATABASE || process.env.POSTGRES_DB || 'mcculloch_db',
+      username: process.env.PG_USERNAME || process.env.POSTGRES_USER || 'postgres',
+      password: process.env.PG_PASSWORD || process.env.POSTGRES_PASSWORD,
       dialect: 'postgres',
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
       pool: {
@@ -27,7 +27,7 @@ const config = {
 
     // MongoDB Configuration
     mongodb: {
-      uri: process.env.MONGODB_URI || `mongodb://mcculloch-mdb:#mcculloch_admin#20026@31.97.116.89:27019/mcculloch_logs`,
+      uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/mcculloch_logs',
       options: {
         useNewUrlParser: true,
         useUnifiedTopology: true,
@@ -40,7 +40,7 @@ const config = {
 
   // JWT Configuration
   jwt: {
-    secret: process.env.JWT_SECRET || 'mcculloch_jwt_secret_key_2024_production',
+    secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN || '24h',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
   },

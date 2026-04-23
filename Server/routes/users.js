@@ -5,13 +5,18 @@ const router = express.Router();
 const pool = require('../config/pool');
 const { authMiddleware: auth } = require('../middleware/auth');
 const { adminAuth } = require('../middleware/adminAuth');
+const { authRateLimit } = require('../middleware/security');
 const crypto = require('crypto');
 const { sendVerificationEmail, sendWelcomeEmail } = require('../utils/emailService');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
-const JWT_EXPIRES_IN = '15m'; // Access token expires in 15 minutes
-const REFRESH_TOKEN_EXPIRES_IN = '7d'; // Refresh token expires in 7 days
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const JWT_EXPIRES_IN = '15m';
+const REFRESH_TOKEN_EXPIRES_IN = '7d';
+
+if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error('JWT_SECRET and JWT_REFRESH_SECRET environment variables are required');
+}
 
 /**
  * @route   POST /api/v1/users/signup
@@ -268,7 +273,7 @@ router.post('/login', async (req, res) => {
  * @desc    Refresh access token using refresh token
  * @access  Public
  */
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', authRateLimit, async (req, res) => {
   try {
     const { refreshToken } = req.body;
 

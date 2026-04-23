@@ -3,6 +3,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 const asyncHandler = require('../middleware/asyncHandler');
 const { getModels } = require('../models');
+const { logger } = require('../config/database');
 const { Sequelize } = require('sequelize');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 const { generateOrderNumber } = require('../utils/orderUtils');
@@ -115,15 +116,6 @@ const confirmPayment = asyncHandler(async (req, res) => {
     // Create order items
     const createdItems = [];
     for (const item of cartItems) {
-      console.log('Creating order item:', {
-        order_id: order.id,
-        product_id: item.product_id,
-        product_variant_id: item.variant_id,
-        product_name: item.name,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.price * item.quantity
-      });
 
       if (!OrderItem) {
         throw new Error('OrderItem model is undefined');
@@ -153,7 +145,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
       });
 
       createdItems.push(orderItem);
-      console.log('Order item created:', orderItem.id);
+      logger.info(`Order item created: ${orderItem.id}`);
 
       // Update inventory if applicable
       if (item.variant_id) {
@@ -186,9 +178,9 @@ const confirmPayment = asyncHandler(async (req, res) => {
         shippingAddress: order.shipping_address,
         createdAt: order.createdAt
       });
-      console.log(`Order confirmation email sent to ${customerEmail}`);
+      logger.info(`Order confirmation email sent: ${order.order_number}`);
     } catch (emailError) {
-      console.error(`Failed to send confirmation email: ${emailError.message}`);
+      logger.error(`Failed to send confirmation email: ${emailError.message}`);
       // Don't fail the order creation if email fails
     }
 
@@ -203,15 +195,10 @@ const confirmPayment = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in confirmPayment:', error.message);
-    console.error('Error stack:', error.stack);
-    if (error.errors) {
-      console.error('Validation errors:', error.errors);
-    }
+    logger.error('Error in confirmPayment:', { message: error.message });
     res.status(500).json({
       success: false,
-      message: 'Failed to confirm payment',
-      error: error.message
+      message: 'Failed to confirm payment'
     });
   }
 });
@@ -271,11 +258,10 @@ const getOrder = asyncHandler(async (req, res) => {
       data: order
     });
   } catch (error) {
-    console.error('Error in getOrder:', error);
+    logger.error('Error in getOrder:', { message: error.message });
     res.status(500).json({
       success: false,
-      message: 'Failed to retrieve order',
-      error: error.message
+      message: 'Failed to retrieve order'
     });
   }
 });
@@ -296,8 +282,8 @@ const handleWebhook = asyncHandler(async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    logger.error('Webhook signature verification failed');
+    return res.status(400).send('Webhook Error: invalid signature');
   }
 
   try {
@@ -324,13 +310,13 @@ const handleWebhook = asyncHandler(async (req, res) => {
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        logger.info(`Unhandled webhook event type: ${event.type}`);
     }
 
     res.json({ received: true });
   } catch (error) {
-    console.error('Webhook handler error:', error);
-    res.status(500).json({ error: error.message });
+    logger.error('Webhook handler error:', { message: error.message });
+    res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
 
@@ -338,22 +324,17 @@ const handleWebhook = asyncHandler(async (req, res) => {
  * Payment intent succeeded - update order
  */
 async function handlePaymentIntentSucceeded(paymentIntent) {
-  console.log('✅ Payment succeeded:', paymentIntent.id);
+  logger.info(`Payment succeeded: ${paymentIntent.id}`);
 
   try {
     const { Order } = getModels();
-
-    // Update order payment status if it exists
-    const order = await Order.findOne({
-      where: { stripe_payment_id: paymentIntent.id }
-    });
-
+    const order = await Order.findOne({ where: { stripe_payment_id: paymentIntent.id } });
     if (order) {
       await order.update({ payment_status: 'paid' });
-      console.log('Order updated:', order.id);
+      logger.info(`Order payment confirmed: ${order.id}`);
     }
   } catch (error) {
-    console.error('Error in handlePaymentIntentSucceeded:', error);
+    logger.error('Error in handlePaymentIntentSucceeded:', { message: error.message });
   }
 }
 
@@ -361,20 +342,14 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
  * Payment intent failed
  */
 async function handlePaymentIntentFailed(paymentIntent) {
-  console.log('❌ Payment failed:', paymentIntent.id);
+  logger.warn(`Payment failed: ${paymentIntent.id}`);
 
   try {
     const { Order } = getModels();
-
-    const order = await Order.findOne({
-      where: { stripe_payment_id: paymentIntent.id }
-    });
-
-    if (order) {
-      await order.update({ payment_status: 'failed' });
-    }
+    const order = await Order.findOne({ where: { stripe_payment_id: paymentIntent.id } });
+    if (order) await order.update({ payment_status: 'failed' });
   } catch (error) {
-    console.error('Error in handlePaymentIntentFailed:', error);
+    logger.error('Error in handlePaymentIntentFailed:', { message: error.message });
   }
 }
 
@@ -382,20 +357,14 @@ async function handlePaymentIntentFailed(paymentIntent) {
  * Payment intent canceled
  */
 async function handlePaymentIntentCanceled(paymentIntent) {
-  console.log('⚠️ Payment canceled:', paymentIntent.id);
+  logger.info(`Payment canceled: ${paymentIntent.id}`);
 
   try {
     const { Order } = getModels();
-
-    const order = await Order.findOne({
-      where: { stripe_payment_id: paymentIntent.id }
-    });
-
-    if (order) {
-      await order.update({ payment_status: 'canceled' });
-    }
+    const order = await Order.findOne({ where: { stripe_payment_id: paymentIntent.id } });
+    if (order) await order.update({ payment_status: 'canceled' });
   } catch (error) {
-    console.error('Error in handlePaymentIntentCanceled:', error);
+    logger.error('Error in handlePaymentIntentCanceled:', { message: error.message });
   }
 }
 
@@ -403,20 +372,14 @@ async function handlePaymentIntentCanceled(paymentIntent) {
  * Payment intent processing
  */
 async function handlePaymentIntentProcessing(paymentIntent) {
-  console.log('🔄 Payment processing:', paymentIntent.id);
+  logger.info(`Payment processing: ${paymentIntent.id}`);
 
   try {
     const { Order } = getModels();
-
-    const order = await Order.findOne({
-      where: { stripe_payment_id: paymentIntent.id }
-    });
-
-    if (order) {
-      await order.update({ payment_status: 'processing' });
-    }
+    const order = await Order.findOne({ where: { stripe_payment_id: paymentIntent.id } });
+    if (order) await order.update({ payment_status: 'processing' });
   } catch (error) {
-    console.error('Error in handlePaymentIntentProcessing:', error);
+    logger.error('Error in handlePaymentIntentProcessing:', { message: error.message });
   }
 }
 
@@ -424,20 +387,14 @@ async function handlePaymentIntentProcessing(paymentIntent) {
  * Payment intent requires action (3D Secure)
  */
 async function handlePaymentIntentRequiresAction(paymentIntent) {
-  console.log('⚠️ Payment requires action (3D Secure):', paymentIntent.id);
+  logger.info(`Payment requires action (3DS): ${paymentIntent.id}`);
 
   try {
     const { Order } = getModels();
-
-    const order = await Order.findOne({
-      where: { stripe_payment_id: paymentIntent.id }
-    });
-
-    if (order) {
-      await order.update({ payment_status: 'requires_action' });
-    }
+    const order = await Order.findOne({ where: { stripe_payment_id: paymentIntent.id } });
+    if (order) await order.update({ payment_status: 'requires_action' });
   } catch (error) {
-    console.error('Error in handlePaymentIntentRequiresAction:', error);
+    logger.error('Error in handlePaymentIntentRequiresAction:', { message: error.message });
   }
 }
 
@@ -485,12 +442,10 @@ const getAllOrders = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in getAllOrders:', error.message);
-    console.error('Error stack:', error.stack);
+    logger.error('Error in getAllOrders:', { message: error.message });
     res.status(500).json({
       success: false,
-      message: 'Failed to retrieve orders',
-      error: error.message
+      message: 'Failed to retrieve orders'
     });
   }
 });
@@ -542,10 +497,9 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
         orderNumber: order.order_number,
         trackingNumber: order.tracking_number
       }, status);
-      console.log(`Order status update email sent to ${order.customer_email}`);
+      logger.info(`Order status update email sent: ${order.order_number}`);
     } catch (emailError) {
-      console.error(`Failed to send status update email: ${emailError.message}`);
-      // Don't fail the status update if email fails
+      logger.error(`Failed to send status update email: ${emailError.message}`);
     }
 
     res.json({
@@ -558,11 +512,10 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in updateOrderStatus:', error.message);
+    logger.error('Error in updateOrderStatus:', { message: error.message });
     res.status(500).json({
       success: false,
-      message: 'Failed to update order status',
-      error: error.message
+      message: 'Failed to update order status'
     });
   }
 });
@@ -619,7 +572,7 @@ const updateOrderDetails = asyncHandler(async (req, res) => {
           trackingNumber: updates.tracking_number || order.tracking_number
         }, status);
       } catch (emailError) {
-        console.error(`Failed to send status update email: ${emailError.message}`);
+        logger.error(`Failed to send status update email: ${emailError.message}`);
       }
     }
 
@@ -628,11 +581,10 @@ const updateOrderDetails = asyncHandler(async (req, res) => {
       data: order
     });
   } catch (error) {
-    console.error('Error in updateOrderDetails:', error.message);
+    logger.error('Error in updateOrderDetails:', { message: error.message });
     res.status(500).json({
       success: false,
-      message: 'Failed to update order',
-      error: error.message
+      message: 'Failed to update order'
     });
   }
 });

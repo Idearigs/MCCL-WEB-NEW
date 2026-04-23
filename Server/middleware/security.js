@@ -52,11 +52,11 @@ const helmetConfig = helmet({
       ],
       scriptSrc: [
         "'self'",
-        "'unsafe-eval'",
-        "'unsafe-inline'",
+        "'unsafe-inline'", // required by Stripe CardElement; replace with nonce when upgrading
+        "https://js.stripe.com",
+        "https://maps.googleapis.com",
         "https:",
-        "blob:",
-        "data:"
+        "blob:"
       ],
       imgSrc: [
         "'self'",

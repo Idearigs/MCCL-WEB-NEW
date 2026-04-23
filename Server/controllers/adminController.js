@@ -478,15 +478,22 @@ const removeDevice = asyncHandler(async (req, res) => {
   });
 });
 
+// Module-level Map for pairing codes — scoped to this module, not global namespace
+const _pairingCodes = new Map();
+
+const _cleanExpiredPairingCodes = () => {
+  const now = Date.now();
+  for (const [key, val] of _pairingCodes) {
+    if (val.expires_at < now) _pairingCodes.delete(key);
+  }
+};
+
 // Generate Pairing Code (for QR-based device linking)
 const generatePairingCode = asyncHandler(async (req, res) => {
   const code = crypto.randomBytes(32).toString('hex');
-  const numericCode = String(Math.floor(100000 + Math.random() * 900000));
+  // Use crypto.randomInt for numeric code to avoid Math.random bias
+  const numericCode = String(crypto.randomInt(100000, 999999));
 
-  // Store pairing code temporarily (expires in 5 minutes)
-  const { AdminSession } = getAdminModels();
-
-  // Store in a simple way - we use a temporary session entry
   const pairingData = {
     code,
     numeric_code: numericCode,
@@ -495,15 +502,9 @@ const generatePairingCode = asyncHandler(async (req, res) => {
     expires_at: Date.now() + 5 * 60 * 1000
   };
 
-  // Store in global Map (in production, use Redis)
-  if (!global._pairingCodes) global._pairingCodes = new Map();
-  global._pairingCodes.set(code, pairingData);
-  global._pairingCodes.set(`numeric:${numericCode}`, pairingData);
-
-  // Clean up expired codes
-  for (const [key, val] of global._pairingCodes) {
-    if (val.expires_at < Date.now()) global._pairingCodes.delete(key);
-  }
+  _cleanExpiredPairingCodes();
+  _pairingCodes.set(code, pairingData);
+  _pairingCodes.set(`numeric:${numericCode}`, pairingData);
 
   res.json({
     success: true,
@@ -526,15 +527,8 @@ const verifyPairing = asyncHandler(async (req, res) => {
     });
   }
 
-  if (!global._pairingCodes) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid pairing code'
-    });
-  }
-
-  // Check both hex and numeric codes
-  const pairingData = global._pairingCodes.get(code) || global._pairingCodes.get(`numeric:${code}`);
+  _cleanExpiredPairingCodes();
+  const pairingData = _pairingCodes.get(code) || _pairingCodes.get(`numeric:${code}`);
 
   if (!pairingData || pairingData.expires_at < Date.now()) {
     return res.status(400).json({

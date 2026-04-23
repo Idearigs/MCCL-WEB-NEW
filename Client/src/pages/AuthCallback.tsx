@@ -10,75 +10,50 @@ const AuthCallback: React.FC = () => {
   const { setUser } = useUserAuth() as any;
 
   useEffect(() => {
-    const accessToken = searchParams.get('accessToken');
-    const refreshToken = searchParams.get('refreshToken');
+    const code = searchParams.get('code');
     const error = searchParams.get('error');
-
-    // Check if user came from checkout
     const checkoutRedirect = localStorage.getItem('checkout_redirect') === 'true';
 
-    if (error) {
-      console.error('OAuth error:', error);
-      navigate('/?auth_error=' + error);
-      return;
-    }
-
-    if (accessToken && refreshToken) {
-      // Store tokens with correct keys used by UserAuthContext
-      localStorage.setItem('user_access_token', accessToken);
-      localStorage.setItem('user_refresh_token', refreshToken);
-
-      // Decode JWT to get user info (simple decode, not validation)
-      try {
-        const payload = JSON.parse(atob(accessToken.split('.')[1]));
-
-        // Fetch full user profile
-        fetch(`${API_BASE_URL}/users/profile`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && setUser) {
-            setUser(data.data);
-          }
-          // Redirect to checkout if user came from there
-          if (checkoutRedirect) {
-            localStorage.removeItem('checkout_redirect');
-            navigate('/checkout');
-          } else {
-            navigate('/');
-          }
-        })
-        .catch(() => {
-          // Redirect to checkout if user came from there
-          if (checkoutRedirect) {
-            localStorage.removeItem('checkout_redirect');
-            navigate('/checkout');
-          } else {
-            navigate('/');
-          }
-        });
-      } catch (error) {
-        console.error('Failed to process auth:', error);
-        // Redirect to checkout if user came from there
-        if (checkoutRedirect) {
-          localStorage.removeItem('checkout_redirect');
-          navigate('/checkout');
-        } else {
-          navigate('/');
-        }
-      }
-    } else {
-      // Redirect to checkout if user came from there
+    const redirectAfterAuth = () => {
       if (checkoutRedirect) {
         localStorage.removeItem('checkout_redirect');
         navigate('/checkout');
       } else {
         navigate('/');
       }
+    };
+
+    if (error) {
+      navigate('/?auth_error=' + error);
+      return;
     }
+
+    if (!code) {
+      redirectAfterAuth();
+      return;
+    }
+
+    // Exchange the one-time code for tokens — tokens are never in the URL
+    fetch(`${API_BASE_URL}/auth/exchange?code=${encodeURIComponent(code)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          navigate('/?auth_error=exchange_failed');
+          return;
+        }
+
+        const { accessToken, refreshToken } = data.data;
+        localStorage.setItem('user_access_token', accessToken);
+        localStorage.setItem('user_refresh_token', refreshToken);
+
+        return fetch(`${API_BASE_URL}/users/profile`, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        }).then(res => res.json()).then(profileData => {
+          if (profileData.success && setUser) setUser(profileData.data);
+          redirectAfterAuth();
+        });
+      })
+      .catch(() => redirectAfterAuth());
   }, [searchParams, navigate, setUser]);
 
   return (
