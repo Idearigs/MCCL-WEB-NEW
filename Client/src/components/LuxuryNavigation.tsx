@@ -1136,14 +1136,14 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
             {/* Mobile Header - Always Visible */}
             <div className="border-b border-gray-200/30 px-0 py-0 flex-shrink-0" style={{background: 'linear-gradient(90deg, #fafafa 0%, #fcfcfc 100%)'}}>
               <div className="flex items-center justify-center px-6 py-5 relative">
-                <div className="text-center">
+                <Link to="/" onClick={closeMobileMenu} className="text-center">
                   <div className="text-xl font-cormorant font-light uppercase text-gray-900" style={{letterSpacing: '0.3em'}}>
                     McCulloch
                   </div>
                   <div className="text-xs font-cormorant font-light uppercase text-gray-600 mt-0.5" style={{letterSpacing: '0.5em'}}>
                     Jewellers
                   </div>
-                </div>
+                </Link>
                 <button
                   onClick={closeMobileMenu}
                   className="absolute right-6 p-2 hover:bg-white/60 hover:shadow-sm rounded-full transition-all duration-200"
