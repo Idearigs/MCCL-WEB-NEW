@@ -356,13 +356,14 @@ const EngagementRings = (): JSX.Element => {
     });
   }, []);
 
-  // Server handles all filters except the dev search term
+  // Server handles all filters; search term also matches name and gemstone/stone shape
   const filteredProducts = ringProducts.filter(product => {
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       const nameMatch = product.name?.toLowerCase().includes(term);
-      const skuMatch = (product as any).sku?.toLowerCase().includes(term);
-      if (!nameMatch && !skuMatch) return false;
+      const gemstoneMatch = product.gemstones?.some(g => g.name.toLowerCase().includes(term));
+      const ringTypeMatch = product.ringTypes?.some(r => r.name.toLowerCase().includes(term));
+      if (!nameMatch && !gemstoneMatch && !ringTypeMatch) return false;
     }
     return true;
   }).sort((a, b) => {
@@ -429,7 +430,7 @@ const EngagementRings = (): JSX.Element => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name or SKU (e.g. BJ-103)..."
+              placeholder="Search rings..."
               className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg text-sm font-inter focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
             />
             {searchTerm && (
