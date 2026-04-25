@@ -356,6 +356,27 @@ const AdminProducts: React.FC = () => {
     }
   };
 
+  const handleCategoryStatusToggle = async (is_active: boolean) => {
+    if (!filters.category) return;
+    const categoryName = productOptions?.categories.find(c => c.id === filters.category)?.name || 'this category';
+    const action = is_active ? 'activate' : 'deactivate';
+    if (!window.confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ALL products in "${categoryName}"? This affects every product in this category.`)) return;
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_BASE_URL}/admin/products/bulk/category-status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ category_id: filters.category, is_active }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed');
+      fetchProducts();
+      showAlert('success', 'Category updated', data.message);
+    } catch (error: any) {
+      showAlert('error', 'Failed', error.message);
+    }
+  };
+
   const toggleProductStatus = async (productId: string) => {
     try {
       const token = localStorage.getItem('admin_token');
@@ -1072,6 +1093,29 @@ const AdminProducts: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Category-level bulk status — shown when a category filter is active */}
+        {filters.category && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-amber-800 text-sm font-satoshi font-medium">
+              Category: <strong>{productOptions?.categories.find(c => c.id === filters.category)?.name}</strong>
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleCategoryStatusToggle(true)}
+                className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 font-satoshi font-medium"
+              >
+                Activate All
+              </button>
+              <button
+                onClick={() => handleCategoryStatusToggle(false)}
+                className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 font-satoshi font-medium"
+              >
+                Deactivate All
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Bulk Actions */}
         {selectedProducts.length > 0 && (

@@ -44,4 +44,7 @@ router.patch('/bulk/update', adminProductController.bulkUpdateProducts);
 // Bulk price adjustment by percentage
 router.post('/bulk/price-adjust', adminProductController.bulkPriceAdjust);
 
+// Bulk activate/deactivate all products in a category
+router.patch('/bulk/category-status', adminProductController.bulkCategoryStatus);
+
 module.exports = router;

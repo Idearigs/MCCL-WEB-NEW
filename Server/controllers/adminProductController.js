@@ -1447,6 +1447,33 @@ const bulkPriceAdjust = async (req, res) => {
   }
 };
 
+// Bulk activate/deactivate ALL products in a category (ignores pagination)
+const bulkCategoryStatus = async (req, res) => {
+  try {
+    const { Product } = getModelInstance();
+    const { category_id, is_active } = req.body;
+
+    if (!category_id || typeof is_active !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'category_id and is_active (boolean) are required'
+      });
+    }
+
+    const [count] = await Product.update(
+      { is_active },
+      { where: { category_id } }
+    );
+
+    res.json({
+      success: true,
+      message: `${count} products ${is_active ? 'activated' : 'deactivated'}`
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update category products' });
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
@@ -1460,4 +1487,5 @@ module.exports = {
   getProductOptions,
   bulkUpdateProducts,
   bulkPriceAdjust,
+  bulkCategoryStatus,
 };
