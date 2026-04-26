@@ -15,6 +15,8 @@ const METALS = [
   { key: 'platinum',         label: 'Platinum',        weightField: 'platinum_wt',  priceField: 'platinum_per_gram'  },
 ];
 
+const MOUNT_SURCHARGE = 1.022; // 2.2% surcharge applied to all metal mount costs
+
 async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = {}, nivodaDiamondPriceGBP = 0 }) {
   const metalPrices     = await metalPriceService.fetchMetalPrices();
   const premiumMult     = 1 + (parseFloat(pricingConfig.metal_premium_pct ?? 5) / 100);
@@ -57,7 +59,7 @@ async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = 
     }
 
     const spotPerGram = metalPrices[metal.priceField];
-    const mountCost   = parseFloat((weight * spotPerGram * premiumMult).toFixed(2));
+    const mountCost   = parseFloat((weight * spotPerGram * premiumMult * MOUNT_SURCHARGE).toFixed(2));
     const totalCost   = parseFloat((mountCost + diamondCost + sideStoneCost).toFixed(2));
     const finalPrice  = parseFloat((
       marginType === 'percent'
