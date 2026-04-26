@@ -2382,7 +2382,7 @@ const ProductDetail = () => {
                   <div className="relative bg-gray-50 mb-6 overflow-hidden">
                     <div className="aspect-square">
                       <img
-                        src={product.image}
+                        src={product.image ? getMediaUrl(product.image) : ''}
                         alt={product.name}
                         className="w-full h-full object-contain p-6 lg:p-8 transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
