@@ -2379,12 +2379,12 @@ const ProductDetail = () => {
               {recommendedProducts.slice(currentRecommendationIndex, currentRecommendationIndex + 4).map((product, index) => (
                 <div key={product.id} className="group cursor-pointer flex-shrink-0 w-80 lg:w-96">
                   {/* Product Image */}
-                  <div className="relative bg-gray-50 mb-6 overflow-hidden">
+                  <div className="relative bg-white mb-6 overflow-hidden">
                     <div className="aspect-square">
                       <img
                         src={product.image ? getMediaUrl(product.image) : ''}
                         alt={product.name}
-                        className="w-full h-full object-contain p-6 lg:p-8 transition-transform duration-500 group-hover:scale-105"
+                        className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
                       />
                     </div>
