@@ -148,39 +148,35 @@ const ProductDetail = () => {
   const getMetalSpecificMedia = (allImages: any[], selectedMetalId: string, selectedDiamondSizeId?: string) => {
     if (!allImages || allImages.length === 0) return [];
 
+    // Videos always show regardless of metal selection
+    const videos = allImages.filter(img => img.type === 'video');
+
     // If diamond size is selected, try to get images for both metal AND diamond size
     if (selectedDiamondSizeId) {
       const metalAndDiamondImages = allImages.filter(img =>
         img.metal_id === selectedMetalId && img.diamond_size_id === selectedDiamondSizeId
       );
-      if (metalAndDiamondImages.length > 0) {
-        return metalAndDiamondImages;
-      }
+      if (metalAndDiamondImages.length > 0) return [...metalAndDiamondImages, ...videos];
 
       // Fallback: try diamond size only (no specific metal)
       const diamondOnlyImages = allImages.filter(img =>
         !img.metal_id && img.diamond_size_id === selectedDiamondSizeId
       );
-      if (diamondOnlyImages.length > 0) {
-        return diamondOnlyImages;
-      }
+      if (diamondOnlyImages.length > 0) return [...diamondOnlyImages, ...videos];
     }
 
-    // First, try to get metal-specific images for the selected metal
-    const metalSpecificImages = allImages.filter(img => img.metal_id === selectedMetalId && !img.diamond_size_id);
+    // Try metal-specific images (exclude videos and diamond-size specific)
+    const metalSpecificImages = allImages.filter(img =>
+      img.metal_id === selectedMetalId && !img.diamond_size_id && img.type !== 'video'
+    );
+    if (metalSpecificImages.length > 0) return [...metalSpecificImages, ...videos];
 
-    // If metal-specific images exist, return them
-    if (metalSpecificImages.length > 0) {
-      return metalSpecificImages;
-    }
-
-    // Try general images (no metal_id, no diamond_size_id)
-    const generalImages = allImages.filter(img => !img.metal_id && !img.diamond_size_id);
-    if (generalImages.length > 0) return generalImages;
-
-    // Final fallback: return images for the first metal that has any images
-    const firstMetalId = allImages.find(img => img.metal_id && !img.diamond_size_id)?.metal_id;
-    return firstMetalId ? allImages.filter(img => img.metal_id === firstMetalId && !img.diamond_size_id) : [];
+    // Fallback: show first available metal's images + videos (never show only the video)
+    const firstMetalId = allImages.find(img => img.metal_id && !img.diamond_size_id && img.type !== 'video')?.metal_id;
+    const fallbackImages = firstMetalId
+      ? allImages.filter(img => img.metal_id === firstMetalId && !img.diamond_size_id && img.type !== 'video')
+      : [];
+    return [...fallbackImages, ...videos];
   };
 
   // Helper function to get the primary image for a specific metal
@@ -199,9 +195,8 @@ const ProductDetail = () => {
     const metalAnyImage = productData.images.find((img: any) => img.metal_id === metalId);
     if (metalAnyImage) return metalAnyImage;
 
-    // Fall back to general image
-    const generalImage = productData.images.find((img: any) => !img.metal_id);
-    return generalImage || null;
+    // No metal-specific image found — return null so this metal is hidden from the thumbnail strip
+    return null;
   };
 
   // Helper function to build stone options from nivoda_options_config
