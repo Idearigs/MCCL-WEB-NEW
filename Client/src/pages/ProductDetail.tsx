@@ -854,12 +854,7 @@ const ProductDetail = () => {
             {displayImages.map((img, idx) => (
               <div key={idx} className="w-full flex-shrink-0 h-full">
                 {isVideoFile(img?.url) ? (
-                  <div
-                    className="relative w-full h-full bg-black"
-                    onClick={toggleVideoPlay}
-                    onMouseEnter={() => setShowVideoControls(true)}
-                    onMouseLeave={() => setShowVideoControls(false)}
-                  >
+                  <div className="relative w-full h-full bg-black">
                     <video
                       ref={idx === currentImageIndex ? videoRef : undefined}
                       src={getMediaUrl(img?.url || '')}
@@ -867,36 +862,9 @@ const ProductDetail = () => {
                       muted
                       loop
                       playsInline
-                      preload="auto"
+                      preload={idx === currentImageIndex ? 'auto' : 'none'}
                       className="w-full h-full object-cover"
-                      onTimeUpdate={handleVideoTimeUpdate}
-                      onPlay={() => setIsVideoPlaying(true)}
-                      onPause={() => setIsVideoPlaying(false)}
                     />
-                    <div className={`absolute inset-0 flex flex-col justify-between transition-opacity duration-300 ${showVideoControls ? 'opacity-100' : 'opacity-0'}`}>
-                      <div className="flex-1 flex items-center justify-center">
-                        <button
-                          onClick={toggleVideoPlay}
-                          className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-white/30 hover:scale-110"
-                        >
-                          {isVideoPlaying ? (
-                            <Pause className="w-8 h-8 text-white" fill="white" />
-                          ) : (
-                            <Play className="w-8 h-8 text-white ml-1" fill="white" />
-                          )}
-                        </button>
-                      </div>
-                      <div className="px-4 pb-4">
-                        <div className="w-full h-1 bg-white/30 rounded-full cursor-pointer mb-3" onClick={handleVideoSeek}>
-                          <div className="h-full bg-white rounded-full transition-all duration-100" style={{ width: `${videoProgress}%` }} />
-                        </div>
-                        <div className="flex justify-end">
-                          <button onClick={toggleVideoMute} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-white/30">
-                            {isVideoMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <img
@@ -2229,7 +2197,7 @@ const ProductDetail = () => {
               {isVideoFile(displayImages[lightboxImageIndex]?.url) ? (
                 <video
                   src={getMediaUrl(displayImages[lightboxImageIndex]?.url || '')}
-                  controls autoPlay muted playsInline preload="auto"
+                  autoPlay muted loop playsInline preload="auto"
                   className="w-full h-full object-contain lg:max-h-[80vh] lg:max-w-[80vw]"
                 />
               ) : (
