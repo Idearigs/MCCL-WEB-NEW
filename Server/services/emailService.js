@@ -8,7 +8,7 @@ const FRONTEND_URL  = process.env.FRONTEND_URL  || 'https://buymediamonds.co.uk'
 
 function createTransporter() {
   return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST || 'smtp.titan.email',
+    host:   process.env.SMTP_HOST || 'smtpout.secureserver.net',
     port:   parseInt(process.env.SMTP_PORT || '465'),
     secure: process.env.SMTP_SECURE !== 'false', // true for port 465
     auth: {
