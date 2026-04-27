@@ -537,23 +537,26 @@ const ProductDetail = () => {
 
       const imageUrl = displayImages[0]?.url || productData.images[0]?.url;
 
+      // Use the fully calculated price (mount + diamond) as the cart price
+      const cartPrice = calculateTotalPrice();
+
       const newItem: any = {
         id: productData.id,
         slug: productData.slug,
         name: productData.name,
-        price: productData.price,
+        price: cartPrice,
         metal: selectedMetalName,
         size: selectedSizeLabel,
         diamondSize: selectedDiamondSizeName,
         image: imageUrl ? getMediaUrl(imageUrl) : '',
-        type: 'jewelry',  // Mark as jewelry product for order ID system
+        type: 'jewelry',
         selectedOptions: selectedOptions
       };
 
-      // Include Nivoda price information if available
+      // Include Nivoda price breakdown for reference
       if (productData?.nivoda_enabled) {
-        newItem.nivodaPrice = nivodaPrice; // { min, avg, max }
-        newItem.totalPrice = calculateTotalPrice(); // Uses Nivoda API price (avg) when available
+        newItem.nivodaPrice = nivodaPrice;
+        newItem.totalPrice = cartPrice;
       }
 
       // Calculate price for pixel tracking
