@@ -772,19 +772,62 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   const calculateRingPrice = async () => {
     const productId = (initialData as any)?.id;
-    if (!productId) return;
     setPricingCalcLoading(true);
     try {
-      await saveRingSpecs();
-      const res = await fetch(`${API_BASE_URL}/ring-pricing/${productId}/calculate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nivodaDiamondPriceGBP: 0 }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCalculatedPrices(data.data.prices);
-        if (data.data.meta) setCalcMeta(data.data.meta);
+      if (productId) {
+        // Edit mode — save then calculate via product endpoint
+        await saveRingSpecs();
+        const res = await fetch(`${API_BASE_URL}/ring-pricing/${productId}/calculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nivodaDiamondPriceGBP: 0 }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setCalculatedPrices(data.data.prices);
+          if (data.data.meta) setCalcMeta(data.data.meta);
+        }
+      } else {
+        // Create mode — preview without saving, using specs from current state
+        const computedWeights: Record<string, number | null> = {
+          silver_wt: null, gold_9kt_wt: null, gold_14kt_wt: null, gold_18kt_wt: null, platinum_wt: null,
+        };
+        metalWeightRows.forEach(row => {
+          const opt = METAL_OPTIONS.find(o => o.key === row.key);
+          if (opt && row.weight !== '') computedWeights[opt.weightField] = Number(row.weight);
+        });
+        const res = await fetch(`${API_BASE_URL}/ring-pricing/preview`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            specs: {
+              ...computedWeights,
+              cs1_shape:   ringSpecs.cs1_shape   || null,
+              cs1_carats:  ringSpecs.cs1_carats  !== '' ? Number(ringSpecs.cs1_carats)  : null,
+              cs1_pieces:  ringSpecs.cs1_pieces  !== '' ? Number(ringSpecs.cs1_pieces)  : null,
+              cs2_shape:   ringSpecs.cs2_shape   || null,
+              cs2_carats:  ringSpecs.cs2_carats  !== '' ? Number(ringSpecs.cs2_carats)  : null,
+              stone_type:  ringSpecs.stone_type  || null,
+            },
+            side_stones: sideStones.map(s => ({
+              shape: s.shape || null, dimensions: s.dimensions || null,
+              pieces: s.pieces !== '' ? Number(s.pieces) : null,
+              carats: s.carats !== '' ? Number(s.carats) : null,
+            })),
+            pricing_config: {
+              metal_premium_pct:      Number(pricingConfig.metal_premium_pct) || 5,
+              side_stone_rate_per_ct: Number(pricingConfig.side_stone_rate_per_ct) || 500,
+              diamond_rate_per_ct:    Number(pricingConfig.diamond_rate_per_ct) || 2000,
+              margin_type:            pricingConfig.margin_type,
+              margin_value:           Number(pricingConfig.margin_value) || 0,
+            },
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setCalculatedPrices(data.data.prices);
+          if (data.data.meta) setCalcMeta(data.data.meta);
+        }
       }
     } catch (e) {
       console.error('Price calc failed', e);
@@ -2970,7 +3013,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     {ringSpecsSaving && <Loader2 className="h-3 w-3 animate-spin" />}
                     Save Specs
                   </button>
-                  <button type="button" onClick={calculateRingPrice} disabled={pricingCalcLoading || !((initialData as any)?.id)}
+                  <button type="button" onClick={calculateRingPrice} disabled={pricingCalcLoading || metalWeightRows.length === 0}
                     className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 font-satoshi flex items-center gap-2">
                     {pricingCalcLoading && <Loader2 className="h-3 w-3 animate-spin" />}
                     Calculate Live Price

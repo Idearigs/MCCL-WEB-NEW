@@ -201,4 +201,21 @@ async function refreshAllProductPrices(req, res) {
   }
 }
 
-module.exports = { getMetalPrices, refreshMetalPrices, getRingSpecs, saveRingSpecs, calculatePrice, refreshAllProductPrices };
+// POST /api/ring-pricing/preview — calculate without a saved product (create-mode preview)
+async function previewPrice(req, res) {
+  try {
+    const { specs = {}, side_stones = [], pricing_config = {}, nivodaDiamondPriceGBP = 0 } = req.body;
+    const result = await ringPricingService.calculateRingPrice({
+      ringSpecs:             specs,
+      sideStones:            side_stones,
+      pricingConfig:         pricing_config,
+      nivodaDiamondPriceGBP: nivodaDiamondPriceGBP ? parseFloat(nivodaDiamondPriceGBP) : 0,
+    });
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('Preview price error:', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+module.exports = { getMetalPrices, refreshMetalPrices, getRingSpecs, saveRingSpecs, calculatePrice, previewPrice, refreshAllProductPrices };
