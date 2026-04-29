@@ -2597,7 +2597,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                               );
                             })}
                           </div>
-                          )}
                           <p className="text-xs text-gray-500 mt-3 font-satoshi">Leave empty to accept any certificate lab</p>
                         </div>
 
