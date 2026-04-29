@@ -98,6 +98,21 @@ interface ProductFormModalProps {
   isLoading?: boolean;
 }
 
+function metalNameToKey(name: string): string | null {
+  const n = name.toLowerCase();
+  const has9  = /9\s*ct|9\s*k/.test(n);
+  const has14 = /14\s*ct|14\s*k/.test(n);
+  const has18 = /18\s*ct|18\s*k/.test(n);
+  const isYellow = n.includes('yellow');
+  const isRose   = n.includes('rose') || n.includes('red');
+  if (n.includes('silver'))   return 'silver';
+  if (n.includes('platinum')) return 'platinum';
+  if (has9)  return isYellow ? 'gold_9kt_yellow'  : isRose ? 'gold_9kt_rose'  : 'gold_9kt';
+  if (has14) return isYellow ? 'gold_14kt_yellow' : isRose ? 'gold_14kt_rose' : 'gold_14kt';
+  if (has18) return isYellow ? 'gold_18kt_yellow' : isRose ? 'gold_18kt_rose' : 'gold_18kt';
+  return null;
+}
+
 const METAL_OPTIONS = [
   { key: 'silver',           label: 'Silver',           weightField: 'silver_wt'    },
   { key: 'gold_9kt',         label: '9ct White Gold',   weightField: 'gold_9kt_wt'  },
@@ -645,6 +660,22 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     run();
   }, [activeTab]);
 
+  // Auto-populate metalWeightRows from Basic Info metals when Ring Specs tab opens (if rows are empty)
+  useEffect(() => {
+    if (activeTab !== 'ring_pricing') return;
+    if (metalWeightRows.length > 0) return; // already populated from DB or user input
+    if (!formData.metal_ids.length) return;
+    const rows = formData.metal_ids
+      .map(id => {
+        const metal = metals.find(m => m.id === id);
+        if (!metal) return null;
+        const key = metalNameToKey(metal.name);
+        return key ? { key, weight: '' } : null;
+      })
+      .filter((r): r is { key: string; weight: string } => r !== null);
+    if (rows.length > 0) setMetalWeightRows(rows);
+  }, [activeTab]);
+
   const fetchMetalPrices = async () => {
     setMetalPricesLoading(true);
     try {
@@ -883,7 +914,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     { id: 'metals', label: 'Metals' },
     { id: 'media', label: 'Media' },
     { id: 'variants', label: 'Variants' },
-    { id: 'details', label: 'Details' },
+    { id: 'details', label: 'Warranty & Care' },
     { id: 'nivoda', label: 'Nivoda Integration' },
     { id: 'ring_pricing', label: 'Ring Specs & Pricing' },
     { id: 'seo', label: 'SEO' }
@@ -2246,10 +2277,33 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
           )}
 
-          {/* Details Tab */}
+          {/* Warranty & Care Tab */}
           {activeTab === 'details' && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-500 font-satoshi">Additional product details are managed in the Basic Info and SEO tabs.</p>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                  Care Instructions
+                </label>
+                <textarea
+                  value={formData.care_instructions}
+                  onChange={e => handleInputChange('care_instructions', e.target.value)}
+                  rows={5}
+                  placeholder="e.g. Clean with a soft cloth. Avoid exposure to harsh chemicals and perfumes. Store separately to prevent scratching."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi text-sm resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
+                  Warranty Information
+                </label>
+                <textarea
+                  value={formData.warranty_info}
+                  onChange={e => handleInputChange('warranty_info', e.target.value)}
+                  rows={5}
+                  placeholder="e.g. 12-month manufacturer's warranty covering manufacturing defects. Excludes damage caused by wear and tear or misuse."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi text-sm resize-none"
+                />
+              </div>
             </div>
           )}
 
@@ -2745,11 +2799,30 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-900 font-satoshi">Mount Metal Weights (grams)</h3>
-                  <button type="button"
-                    onClick={() => setMetalWeightRows(p => [...p, { key: '', weight: '' }])}
-                    className="text-xs px-2 py-1 bg-gray-900 text-white rounded-lg font-satoshi hover:bg-gray-700">
-                    + Add Metal
-                  </button>
+                  <div className="flex gap-2">
+                    {formData.metal_ids.length > 0 && (
+                      <button type="button"
+                        onClick={() => {
+                          const fromBasic = formData.metal_ids
+                            .map(id => {
+                              const m = metals.find(x => x.id === id);
+                              if (!m) return null;
+                              const key = metalNameToKey(m.name);
+                              return key ? { key, weight: '' } : null;
+                            })
+                            .filter((r): r is { key: string; weight: string } => r !== null);
+                          setMetalWeightRows(fromBasic);
+                        }}
+                        className="text-xs px-2 py-1 border border-gray-400 text-gray-700 rounded-lg font-satoshi hover:bg-gray-100">
+                        Sync from Basic Info
+                      </button>
+                    )}
+                    <button type="button"
+                      onClick={() => setMetalWeightRows(p => [...p, { key: '', weight: '' }])}
+                      className="text-xs px-2 py-1 bg-gray-900 text-white rounded-lg font-satoshi hover:bg-gray-700">
+                      + Add Metal
+                    </button>
+                  </div>
                 </div>
                 {metalWeightRows.length === 0 ? (
                   <p className="text-xs text-amber-600 font-satoshi">⚠ No metals added — mount cost cannot be calculated</p>
