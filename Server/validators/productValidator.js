@@ -21,8 +21,7 @@ const validateProduct = [
     .trim(),
 
   body('base_price')
-    .notEmpty()
-    .withMessage('Base price is required')
+    .customSanitizer(value => (value === '' || value === null || value === undefined) ? 0 : value)
     .isFloat({ min: 0 })
     .withMessage('Base price must be a positive number'),
 
