@@ -2751,11 +2751,21 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-3 font-satoshi">Center Stone 1</h3>
                 <div className="grid grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Shape</label>
+                    <select
+                      value={ringSpecs.cs1_shape}
+                      onChange={e => setRingSpecs(p => ({ ...p, cs1_shape: e.target.value }))}
+                      className={`w-full px-2 py-1.5 border rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900 ${!ringSpecs.cs1_shape ? 'border-amber-300 bg-amber-50' : 'border-gray-300'}`}
+                    >
+                      <option value="">Select shape</option>
+                      {stoneShapes.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                    </select>
+                  </div>
                   {[
-                    { key: 'cs1_shape',  label: 'Shape',   type: 'text',   placeholder: 'e.g. Round' },
-                    { key: 'cs1_size',   label: 'Size (mm)', type: 'text', placeholder: 'e.g. 6.50 x 6.50' },
-                    { key: 'cs1_carats', label: 'Carats',  type: 'number', placeholder: 'e.g. 1.00' },
-                    { key: 'cs1_pieces', label: 'Pieces',  type: 'number', placeholder: '1' },
+                    { key: 'cs1_size',   label: 'Size (mm)', type: 'text',   placeholder: 'e.g. 6.50 x 6.50' },
+                    { key: 'cs1_carats', label: 'Carats',    type: 'number', placeholder: 'e.g. 1.00' },
+                    { key: 'cs1_pieces', label: 'Pieces',    type: 'number', placeholder: '1' },
                   ].map(({ key, label, type, placeholder }) => (
                     <div key={key}>
                       <label className="block text-xs text-gray-500 mb-1 font-satoshi">{label}</label>
@@ -2793,8 +2803,18 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 </div>
                 {showCs2 && (
                   <div className="grid grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1 font-satoshi">Shape</label>
+                      <select
+                        value={ringSpecs.cs2_shape}
+                        onChange={e => setRingSpecs(p => ({ ...p, cs2_shape: e.target.value }))}
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      >
+                        <option value="">Select shape</option>
+                        {stoneShapes.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                      </select>
+                    </div>
                     {[
-                      { key: 'cs2_shape',  label: 'Shape',     type: 'text' },
                       { key: 'cs2_size',   label: 'Size (mm)', type: 'text' },
                       { key: 'cs2_carats', label: 'Carats',    type: 'number' },
                       { key: 'cs2_pieces', label: 'Pieces',    type: 'number' },
@@ -2835,13 +2855,24 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       return (
                         <div key={i} className={`grid grid-cols-5 gap-2 items-center rounded-lg px-1 py-0.5 ${!isComplete ? 'bg-amber-50 border border-amber-200' : ''}`}>
                           {(['shape','dimensions','pieces','carats'] as const).map(field => (
-                            <input key={field} type={field === 'pieces' || field === 'carats' ? 'number' : 'text'}
-                              step={field === 'carats' ? '0.0001' : undefined}
-                              value={(stone as any)[field]}
-                              onChange={e => setSideStones(p => p.map((s, j) => j === i ? { ...s, [field]: e.target.value } : s))}
-                              placeholder={field}
-                              className={`w-full px-2 py-1 border rounded text-xs font-satoshi focus:outline-none focus:ring-1 focus:ring-gray-900 ${!isComplete ? 'border-amber-300' : 'border-gray-300'}`}
-                            />
+                            field === 'shape' ? (
+                              <select key={field}
+                                value={stone.shape}
+                                onChange={e => setSideStones(p => p.map((s, j) => j === i ? { ...s, shape: e.target.value } : s))}
+                                className={`w-full px-2 py-1 border rounded text-xs font-satoshi focus:outline-none focus:ring-1 focus:ring-gray-900 ${!isComplete ? 'border-amber-300' : 'border-gray-300'}`}
+                              >
+                                <option value="">Shape</option>
+                                {stoneShapes.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                              </select>
+                            ) : (
+                              <input key={field} type={field === 'pieces' || field === 'carats' ? 'number' : 'text'}
+                                step={field === 'carats' ? '0.0001' : undefined}
+                                value={(stone as any)[field]}
+                                onChange={e => setSideStones(p => p.map((s, j) => j === i ? { ...s, [field]: e.target.value } : s))}
+                                placeholder={field}
+                                className={`w-full px-2 py-1 border rounded text-xs font-satoshi focus:outline-none focus:ring-1 focus:ring-gray-900 ${!isComplete ? 'border-amber-300' : 'border-gray-300'}`}
+                              />
+                            )
                           ))}
                           <div className="flex items-center gap-1">
                             {!isComplete && <span title="Missing pieces or carats — excluded from pricing" className="text-amber-500 text-xs">⚠</span>}
