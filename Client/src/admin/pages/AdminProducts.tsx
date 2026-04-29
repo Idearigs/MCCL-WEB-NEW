@@ -746,7 +746,8 @@ const AdminProducts: React.FC = () => {
       setShowProductForm(false);
       setEditingProduct(null);
       fetchProducts();
-      showAlert('success', 'Product updated successfully', `${productData.name} has been updated.`);
+      const sku = editingProduct?.sku ? ` ${editingProduct.sku}` : '';
+      showAlert('success', `Product${sku} updated successfully`, `${productData.name} has been updated.`);
     } catch (error: any) {
       showAlert('error', 'Failed to update product', error.message);
     } finally {

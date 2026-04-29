@@ -223,6 +223,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [pricingCalcLoading, setPricingCalcLoading] = useState(false);
   const [ringSpecsSaving, setRingSpecsSaving] = useState(false);
   const [ringSpecsMessage, setRingSpecsMessage] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [showCs2, setShowCs2] = useState(false);
 
   const checkMarketPrice = async () => {
     const cfg = formData.nivoda_options_config;
@@ -548,6 +550,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             if (pricing_config.calculated_prices) {
               setCalculatedPrices(pricing_config.calculated_prices);
             }
+            setShowCs2(!!(specs.cs2_shape || specs.cs2_carats || specs.cs2_size || specs.cs2_pieces));
             // Build overrides: start from saved overrides, auto-fill any blank keys from calculated prices
             {
               const ov: Record<string,string> = {};
@@ -673,7 +676,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         }),
       });
       const data = await res.json();
-      setRingSpecsMessage(data.success ? '✓ Saved' : `Error: ${data.error}`);
+      if (data.success) {
+        const sku = (initialData as any)?.sku || '';
+        setSuccessToast(`Product ${sku} specs saved successfully`);
+        setTimeout(() => setSuccessToast(null), 3500);
+      } else {
+        setRingSpecsMessage(`Error: ${data.error}`);
+      }
     } catch {
       setRingSpecsMessage('Save failed');
     } finally {
@@ -841,14 +850,34 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     { id: 'seo', label: 'SEO' }
   ];
 
+  const productSku = (initialData as any)?.sku || '';
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={mode === 'create' ? 'Add New Product' : 'Edit Product'}
+      title={mode === 'create' ? 'Add New Product' : `Edit Product`}
       size="2xl"
     >
+      {/* Success Toast */}
+      {successToast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 bg-green-600 text-white px-6 py-3 rounded-xl shadow-2xl animate-pulse">
+          <svg className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+          <span className="font-satoshi font-semibold text-sm">{successToast}</span>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Product code badge — always visible in edit mode */}
+        {mode === 'edit' && productSku && (
+          <div className="flex items-center gap-3 -mt-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 border border-amber-400 rounded-lg">
+              <span className="text-xs text-amber-700 font-satoshi">Product Code</span>
+              <span className="text-sm font-bold text-amber-900 font-satoshi tracking-wider">{productSku}</span>
+            </span>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="border-b border-gray-200">
           <nav className="flex space-x-8">
@@ -2196,60 +2225,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Details Tab */}
           {activeTab === 'details' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
-                    Weight (grams)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.weight}
-                    onChange={(e) => handleInputChange('weight', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
-                    placeholder="Product weight"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
-                    Dimensions
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.dimensions}
-                    onChange={(e) => handleInputChange('dimensions', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
-                    placeholder="e.g., 20mm diameter, Size N"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
-                  Care Instructions
-                </label>
-                <textarea
-                  value={formData.care_instructions}
-                  onChange={(e) => handleInputChange('care_instructions', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
-                  placeholder="How to care for this product"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 font-satoshi">
-                  Warranty Information
-                </label>
-                <textarea
-                  value={formData.warranty_info}
-                  onChange={(e) => handleInputChange('warranty_info', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-satoshi"
-                  placeholder="Warranty details and coverage"
-                />
-              </div>
+              <p className="text-sm text-gray-500 font-satoshi">Additional product details are managed in the Basic Info and SEO tabs.</p>
             </div>
           )}
 
@@ -2797,28 +2773,45 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
               {/* ── Center Stone 2 (optional) ─────────────────────── */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 font-satoshi">
-                  Center Stone 2 <span className="text-xs font-normal text-gray-400">(optional — for rings with 2 center stones)</span>
-                </h3>
-                <div className="grid grid-cols-4 gap-3">
-                  {[
-                    { key: 'cs2_shape',  label: 'Shape',     type: 'text' },
-                    { key: 'cs2_size',   label: 'Size (mm)', type: 'text' },
-                    { key: 'cs2_carats', label: 'Carats',    type: 'number' },
-                    { key: 'cs2_pieces', label: 'Pieces',    type: 'number' },
-                  ].map(({ key, label, type }) => (
-                    <div key={key}>
-                      <label className="block text-xs text-gray-500 mb-1 font-satoshi">{label}</label>
-                      <input
-                        type={type} step={type === 'number' ? '0.0001' : undefined} min={type === 'number' ? '0' : undefined}
-                        value={(ringSpecs as any)[key]}
-                        onChange={e => setRingSpecs(p => ({ ...p, [key]: e.target.value }))}
-                        placeholder="–"
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
-                      />
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900 font-satoshi">
+                    Center Stone 2 <span className="text-xs font-normal text-gray-400">(optional)</span>
+                  </h3>
+                  {!showCs2 ? (
+                    <button type="button" onClick={() => setShowCs2(true)}
+                      className="text-xs px-2 py-1 bg-gray-900 text-white rounded-lg font-satoshi hover:bg-gray-700">
+                      + Add 2nd Center Stone
+                    </button>
+                  ) : (
+                    <button type="button" onClick={() => {
+                      setShowCs2(false);
+                      setRingSpecs(p => ({ ...p, cs2_shape: '', cs2_size: '', cs2_carats: '', cs2_pieces: '' }));
+                    }} className="flex items-center gap-1 text-xs px-2 py-1 border border-red-200 text-red-600 rounded-lg font-satoshi hover:bg-red-50">
+                      <X className="h-3 w-3" /> Remove
+                    </button>
+                  )}
                 </div>
+                {showCs2 && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {[
+                      { key: 'cs2_shape',  label: 'Shape',     type: 'text' },
+                      { key: 'cs2_size',   label: 'Size (mm)', type: 'text' },
+                      { key: 'cs2_carats', label: 'Carats',    type: 'number' },
+                      { key: 'cs2_pieces', label: 'Pieces',    type: 'number' },
+                    ].map(({ key, label, type }) => (
+                      <div key={key}>
+                        <label className="block text-xs text-gray-500 mb-1 font-satoshi">{label}</label>
+                        <input
+                          type={type} step={type === 'number' ? '0.0001' : undefined} min={type === 'number' ? '0' : undefined}
+                          value={(ringSpecs as any)[key]}
+                          onChange={e => setRingSpecs(p => ({ ...p, [key]: e.target.value }))}
+                          placeholder="–"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* ── Side Stones ───────────────────────────────────── */}
@@ -2864,54 +2857,21 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 )}
               </div>
 
-              {/* ── Pricing Config ────────────────────────────────── */}
+              {/* ── Metal Margin ──────────────────────────────────── */}
               <div className="border-t pt-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 font-satoshi">Pricing Configuration</h3>
-                <div className="grid grid-cols-4 gap-3 mb-4">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Metal Premium %</label>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 font-satoshi">Metal Margin</h3>
+                <div className="flex items-end gap-4 mb-4">
+                  <div className="w-40">
+                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Metal Margin (%)</label>
                     <input type="number" step="0.1" min="0" max="100"
                       value={pricingConfig.metal_premium_pct}
                       onChange={e => setPricingConfig(p => ({ ...p, metal_premium_pct: e.target.value }))}
                       className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
                     />
-                    <p className="text-xs text-gray-400 mt-0.5 font-satoshi">Over spot price</p>
+                    <p className="text-xs text-gray-400 mt-0.5 font-satoshi">Applied over live spot price</p>
                   </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Side Stone Rate (£/ct)</label>
-                    <input type="number" step="1" min="0"
-                      value={pricingConfig.side_stone_rate_per_ct}
-                      onChange={e => setPricingConfig(p => ({ ...p, side_stone_rate_per_ct: e.target.value }))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Diamond Rate (£/ct)</label>
-                    <input type="number" step="50" min="0"
-                      value={pricingConfig.diamond_rate_per_ct}
-                      onChange={e => setPricingConfig(p => ({ ...p, diamond_rate_per_ct: e.target.value }))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
-                    />
-                    <p className="text-xs text-gray-400 mt-0.5 font-satoshi">Used when no Nivoda price</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">Margin Type</label>
-                    <select value={pricingConfig.margin_type}
-                      onChange={e => setPricingConfig(p => ({ ...p, margin_type: e.target.value }))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900">
-                      <option value="percent">Percent (%)</option>
-                      <option value="fixed">Fixed (£)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1 font-satoshi">
-                      Margin {pricingConfig.margin_type === 'percent' ? '(%)' : '(£)'}
-                    </label>
-                    <input type="number" step={pricingConfig.margin_type === 'percent' ? '0.1' : '1'} min="0"
-                      value={pricingConfig.margin_value}
-                      onChange={e => setPricingConfig(p => ({ ...p, margin_value: e.target.value }))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900"
-                    />
+                  <div className="text-xs text-gray-500 font-satoshi pb-6">
+                    Default: <strong>2.2%</strong> — matches the fixed mount surcharge applied by the pricing engine.
                   </div>
                 </div>
 
