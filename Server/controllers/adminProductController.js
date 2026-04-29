@@ -362,12 +362,12 @@ const createProduct = async (req, res) => {
     console.log('DEBUG: Extracted name:', name, 'category_id:', category_id, 'base_price:', base_price);
 
     // Validation
-    if (!name || !base_price || !category_id) {
-      console.error('DEBUG: Validation failed - name, base_price, or category_id missing');
+    if (!name || !category_id) {
+      console.error('DEBUG: Validation failed - name or category_id missing');
       return res.status(400).json({
         success: false,
-        message: 'Name, base price, and category are required',
-        received: { name, base_price, category_id }
+        message: 'Name and category are required',
+        received: { name, category_id }
       });
     }
 
@@ -1248,10 +1248,10 @@ const createProductWithMedia = async (req, res) => {
     const parsedDiamondSizeIds = diamond_size_ids ? JSON.parse(diamond_size_ids) : [];
 
     // Validation
-    if (!name || !base_price || !category_id) {
+    if (!name || !category_id) {
       return res.status(400).json({
         success: false,
-        message: 'Name, base price, and category are required'
+        message: 'Name and category are required'
       });
     }
 

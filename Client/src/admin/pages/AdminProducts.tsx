@@ -565,6 +565,27 @@ const AdminProducts: React.FC = () => {
         throw new Error(data.message || data.error || 'Failed to create product');
       }
 
+      // Auto-save ring specs + calculate prices if provided
+      const newProductId = data.data?.id;
+      if (newProductId && productData._ringSpecsPayload) {
+        try {
+          const specsRes = await fetch(`${API_BASE_URL}/ring-pricing/${newProductId}/specs`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(productData._ringSpecsPayload),
+          });
+          if (specsRes.ok) {
+            await fetch(`${API_BASE_URL}/ring-pricing/${newProductId}/calculate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({}),
+            });
+          }
+        } catch (specsErr) {
+          console.warn('Ring specs auto-save failed:', specsErr);
+        }
+      }
+
       setShowProductForm(false);
       setEditingProduct(null);
       fetchProducts();

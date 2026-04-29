@@ -815,9 +815,51 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         await saveRingSpecs();
       }
 
+      // Build ring specs payload for create mode so they're saved right after product creation
+      let ringSpecsPayload: any = undefined;
+      if (mode === 'create' && metalWeightRows.length > 0) {
+        const computedWeights: Record<string, number | null> = {
+          silver_wt: null, gold_9kt_wt: null, gold_14kt_wt: null, gold_18kt_wt: null, platinum_wt: null,
+        };
+        metalWeightRows.forEach(row => {
+          const opt = METAL_OPTIONS.find(o => o.key === row.key);
+          if (opt && row.weight !== '') computedWeights[opt.weightField] = Number(row.weight);
+        });
+        ringSpecsPayload = {
+          specs: {
+            ...computedWeights,
+            cs1_shape:   ringSpecs.cs1_shape   || null,
+            cs1_size:    ringSpecs.cs1_size    || null,
+            cs1_carats:  ringSpecs.cs1_carats  !== '' ? Number(ringSpecs.cs1_carats)  : null,
+            cs1_pieces:  ringSpecs.cs1_pieces  !== '' ? Number(ringSpecs.cs1_pieces)  : null,
+            cs2_shape:   ringSpecs.cs2_shape   || null,
+            cs2_size:    ringSpecs.cs2_size    || null,
+            cs2_carats:  ringSpecs.cs2_carats  !== '' ? Number(ringSpecs.cs2_carats)  : null,
+            cs2_pieces:  ringSpecs.cs2_pieces  !== '' ? Number(ringSpecs.cs2_pieces)  : null,
+            stone_shape: ringSpecs.stone_shape || null,
+            stone_type:  ringSpecs.stone_type  || null,
+            ring_styles: ringSpecs.ring_styles || null,
+          },
+          side_stones: sideStones.map(s => ({
+            shape: s.shape || null, dimensions: s.dimensions || null,
+            pieces: s.pieces !== '' ? Number(s.pieces) : null,
+            carats: s.carats !== '' ? Number(s.carats) : null,
+            raw_entry: s.raw_entry || null,
+          })),
+          pricing_config: {
+            metal_premium_pct:      Number(pricingConfig.metal_premium_pct) || 5,
+            side_stone_rate_per_ct: Number(pricingConfig.side_stone_rate_per_ct) || 500,
+            diamond_rate_per_ct:    Number(pricingConfig.diamond_rate_per_ct) || 2000,
+            margin_type:            pricingConfig.margin_type,
+            margin_value:           Number(pricingConfig.margin_value) || 0,
+          },
+        };
+      }
+
       const formDataWithMetal = {
         ...formData,
-        metalMediaState
+        metalMediaState,
+        _ringSpecsPayload: ringSpecsPayload,
       } as any;
 
       await onSubmit(formDataWithMetal);
@@ -2707,8 +2749,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {activeTab === 'ring_pricing' && (
             <div className="space-y-6">
               {!((initialData as any)?.id) && (
-                <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 text-sm text-amber-800 font-satoshi">
-                  ⚠ Save the product first using <strong>Create Product</strong> (Basic Info tab), then reopen it to add Ring Specs and calculate prices.
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 font-satoshi">
+                  ℹ Fill in ring specs below — they will be saved automatically when you click <strong>Create Product</strong>.
                 </div>
               )}
 
