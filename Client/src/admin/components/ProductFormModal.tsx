@@ -98,6 +98,13 @@ interface ProductFormModalProps {
   isLoading?: boolean;
 }
 
+// Standard engagement ring diamond options (GIA grades)
+const DIAMOND_CLARITY_OPTIONS = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2'];
+const DIAMOND_COLOUR_OPTIONS  = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
+const DIAMOND_POLISH_OPTIONS  = ['EX', 'VG', 'G'];
+const DIAMOND_SYMMETRY_OPTIONS = ['EX', 'VG', 'G'];
+const DIAMOND_CERT_OPTIONS    = ['GIA', 'IGI', 'HRD', 'GCAL', 'EGL', 'DBIOD', 'GSI', 'SGL', 'AGS', 'EGLISR'];
+
 function metalNameToKey(name: string): string | null {
   const n = name.toLowerCase();
   const has9  = /9\s*ct|9\s*k/.test(n);
@@ -195,9 +202,12 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     nivoda_options_config: {
       stoneType: 'natural',
       caratRange: { min: 0.5, max: 2.0 },
-      clarityOptions: [],
-      colourOptions: [],
-      cutOptions: [],
+      clarityOptions: [...DIAMOND_CLARITY_OPTIONS],
+      colourOptions:  [...DIAMOND_COLOUR_OPTIONS],
+      cutOptions:     [],
+      polishOptions:  [...DIAMOND_POLISH_OPTIONS],
+      symmetryOptions:[...DIAMOND_SYMMETRY_OPTIONS],
+      certificateOptions: [...DIAMOND_CERT_OPTIONS],
       defaultSpecs: { carat: '', clarity: '', colour: '', cut: '' }
     },
     metalMountPrices: {},
@@ -448,13 +458,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         nivoda_options_config: {
           stoneType: 'natural',
           caratRange: { min: 0.5, max: 2.0 },
-          clarityOptions: [],
-          colourOptions: [],
-          cutOptions: [],
-          polishOptions: [],
-          symmetryOptions: [],
-          fluorescenceOptions: [],
-          certificateOptions: [],
+          clarityOptions:     [...DIAMOND_CLARITY_OPTIONS],
+          colourOptions:      [...DIAMOND_COLOUR_OPTIONS],
+          cutOptions:         [],
+          polishOptions:      [...DIAMOND_POLISH_OPTIONS],
+          symmetryOptions:    [...DIAMOND_SYMMETRY_OPTIONS],
+          fluorescenceOptions:[],
+          certificateOptions: [...DIAMOND_CERT_OPTIONS],
         },
         images: [],
         videos: [],
@@ -2485,164 +2495,70 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
                         {/* Clarities */}
                         <div className="border border-gray-200 rounded-lg p-4 bg-white">
-                          <label className="text-sm font-medium text-gray-900 mb-4 block font-satoshi">
-                            Available Clarity Grades
+                          <label className="text-sm font-medium text-gray-900 mb-3 block font-satoshi">
+                            Clarity Grades <span className="text-xs text-gray-400 font-normal">(up to VS2 by default)</span>
                           </label>
-                          {(nivodaAvailableOptions?.clarities || []).length === 0 ? (
-                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available clarity grades</p>
-                          ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {(nivodaAvailableOptions?.clarities || []).map((clarity) => {
-                                const isSelected = (formData.nivoda_options_config?.clarityOptions || []).includes(clarity);
-                                return (
-                                  <label key={clarity} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={(e) => {
-                                        setFormData({
-                                          ...formData,
-                                          nivoda_options_config: {
-                                            ...formData.nivoda_options_config!,
-                                            clarityOptions: e.target.checked
-                                              ? [...(formData.nivoda_options_config?.clarityOptions || []), clarity]
-                                              : (formData.nivoda_options_config?.clarityOptions || []).filter(c => c !== clarity)
-                                          }
-                                        });
-                                      }}
-                                      className="rounded"
-                                    />
-                                    <span className="text-sm text-gray-700 font-satoshi">{clarity}</span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500 mt-3 font-satoshi">
-                            Customers can choose from the clarity grades you select above
-                          </p>
+                          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                            {(nivodaAvailableOptions?.clarities?.length ? nivodaAvailableOptions.clarities : ['FL','IF','VVS1','VVS2','VS1','VS2','SI1','SI2','I1','I2','I3']).map((clarity) => {
+                              const isSelected = (formData.nivoda_options_config?.clarityOptions || []).includes(clarity);
+                              return (
+                                <label key={clarity} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                  <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, clarityOptions: e.target.checked ? [...(formData.nivoda_options_config?.clarityOptions || []), clarity] : (formData.nivoda_options_config?.clarityOptions || []).filter(c => c !== clarity) } })} />
+                                  {clarity}
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* Colours */}
                         <div className="border border-gray-200 rounded-lg p-4 bg-white">
-                          <label className="text-sm font-medium text-gray-900 mb-4 block font-satoshi">
-                            Available Colours
+                          <label className="text-sm font-medium text-gray-900 mb-3 block font-satoshi">
+                            Colour Grades <span className="text-xs text-gray-400 font-normal">(all selected by default)</span>
                           </label>
-                          {(nivodaAvailableOptions?.colours || []).length === 0 ? (
-                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available colour grades</p>
-                          ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {(nivodaAvailableOptions?.colours || []).map((colour) => {
-                                const isSelected = (formData.nivoda_options_config?.colourOptions || []).includes(colour);
-                                return (
-                                  <label key={colour} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={(e) => {
-                                        setFormData({
-                                          ...formData,
-                                          nivoda_options_config: {
-                                            ...formData.nivoda_options_config!,
-                                            colourOptions: e.target.checked
-                                              ? [...(formData.nivoda_options_config?.colourOptions || []), colour]
-                                              : (formData.nivoda_options_config?.colourOptions || []).filter(c => c !== colour)
-                                          }
-                                        });
-                                      }}
-                                      className="rounded"
-                                    />
-                                    <span className="text-sm text-gray-700 font-satoshi">{colour}</span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500 mt-3 font-satoshi">
-                            Customers can choose from the colours you select above
-                          </p>
-                        </div>
-
-                        {/* Cuts */}
-                        <div className="border border-gray-200 rounded-lg p-4 bg-white">
-                          <label className="text-sm font-medium text-gray-900 mb-4 block font-satoshi">
-                            Available Cut Grades
-                          </label>
-                          {(nivodaAvailableOptions?.cuts || []).length === 0 ? (
-                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available cut grades</p>
-                          ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {(nivodaAvailableOptions?.cuts || []).map((cut) => {
-                                const isSelected = (formData.nivoda_options_config?.cutOptions || []).includes(cut);
-                                return (
-                                  <label key={cut} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={(e) => {
-                                        setFormData({
-                                          ...formData,
-                                          nivoda_options_config: {
-                                            ...formData.nivoda_options_config!,
-                                            cutOptions: e.target.checked
-                                              ? [...(formData.nivoda_options_config?.cutOptions || []), cut]
-                                              : (formData.nivoda_options_config?.cutOptions || []).filter(c => c !== cut)
-                                          }
-                                        });
-                                      }}
-                                      className="rounded"
-                                    />
-                                    <span className="text-sm text-gray-700 font-satoshi">{cut}</span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500 mt-3 font-satoshi">
-                            Customers can choose from the cut grades you select above
-                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {(nivodaAvailableOptions?.colours?.length ? nivodaAvailableOptions.colours : DIAMOND_COLOUR_OPTIONS).map((colour) => {
+                              const isSelected = (formData.nivoda_options_config?.colourOptions || []).includes(colour);
+                              return (
+                                <label key={colour} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                  <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, colourOptions: e.target.checked ? [...(formData.nivoda_options_config?.colourOptions || []), colour] : (formData.nivoda_options_config?.colourOptions || []).filter(c => c !== colour) } })} />
+                                  {colour}
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* Polish */}
                         <div className="border border-gray-200 rounded-lg p-4">
-                          <label className="text-sm font-semibold text-gray-900 mb-1 block font-satoshi">Available Polish Grades</label>
-                          {(nivodaAvailableOptions?.polishes || []).length === 0 ? (
-                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available polish grades</p>
-                          ) : (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {(nivodaAvailableOptions?.polishes || []).map((p) => {
-                                const isSelected = (formData.nivoda_options_config?.polishOptions || []).includes(p);
-                                return (
-                                  <label key={p} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
-                                    <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, polishOptions: e.target.checked ? [...(formData.nivoda_options_config?.polishOptions || []), p] : (formData.nivoda_options_config?.polishOptions || []).filter(x => x !== p) } })} />
-                                    {p}
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500 mt-3 font-satoshi">Leave empty to accept any polish grade</p>
+                          <label className="text-sm font-semibold text-gray-900 mb-2 block font-satoshi">Polish Grades <span className="text-xs font-normal text-gray-400">(EX, VG, G selected by default)</span></label>
+                          <div className="flex flex-wrap gap-2">
+                            {(nivodaAvailableOptions?.polishes?.length ? nivodaAvailableOptions.polishes : ['EX','VG','G','F','P']).map((p) => {
+                              const isSelected = (formData.nivoda_options_config?.polishOptions || []).includes(p);
+                              return (
+                                <label key={p} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                  <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, polishOptions: e.target.checked ? [...(formData.nivoda_options_config?.polishOptions || []), p] : (formData.nivoda_options_config?.polishOptions || []).filter(x => x !== p) } })} />
+                                  {p}
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* Symmetry */}
                         <div className="border border-gray-200 rounded-lg p-4">
-                          <label className="text-sm font-semibold text-gray-900 mb-1 block font-satoshi">Available Symmetry Grades</label>
-                          {(nivodaAvailableOptions?.symmetries || []).length === 0 ? (
-                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available symmetry grades</p>
-                          ) : (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {(nivodaAvailableOptions?.symmetries || []).map((s) => {
-                                const isSelected = (formData.nivoda_options_config?.symmetryOptions || []).includes(s);
-                                return (
-                                  <label key={s} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
-                                    <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, symmetryOptions: e.target.checked ? [...(formData.nivoda_options_config?.symmetryOptions || []), s] : (formData.nivoda_options_config?.symmetryOptions || []).filter(x => x !== s) } })} />
-                                    {s}
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500 mt-3 font-satoshi">Leave empty to accept any symmetry grade</p>
+                          <label className="text-sm font-semibold text-gray-900 mb-2 block font-satoshi">Symmetry Grades <span className="text-xs font-normal text-gray-400">(EX, VG, G selected by default)</span></label>
+                          <div className="flex flex-wrap gap-2">
+                            {(nivodaAvailableOptions?.symmetries?.length ? nivodaAvailableOptions.symmetries : ['EX','VG','G','F','P']).map((s) => {
+                              const isSelected = (formData.nivoda_options_config?.symmetryOptions || []).includes(s);
+                              return (
+                                <label key={s} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                  <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, symmetryOptions: e.target.checked ? [...(formData.nivoda_options_config?.symmetryOptions || []), s] : (formData.nivoda_options_config?.symmetryOptions || []).filter(x => x !== s) } })} />
+                                  {s}
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* Fluorescence */}
@@ -2669,21 +2585,18 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
                         {/* Certificate / Lab */}
                         <div className="border border-gray-200 rounded-lg p-4">
-                          <label className="text-sm font-semibold text-gray-900 mb-1 block font-satoshi">Certificate Labs</label>
-                          {(nivodaAvailableOptions?.certificates || []).length === 0 ? (
-                            <p className="text-xs text-gray-400 italic font-satoshi">Load options from Nivoda to see available certificate labs</p>
-                          ) : (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {(nivodaAvailableOptions?.certificates || []).map((cert) => {
-                                const isSelected = (formData.nivoda_options_config?.certificateOptions || []).includes(cert);
-                                return (
-                                  <label key={cert} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
-                                    <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, certificateOptions: e.target.checked ? [...(formData.nivoda_options_config?.certificateOptions || []), cert] : (formData.nivoda_options_config?.certificateOptions || []).filter(x => x !== cert) } })} />
-                                    {cert}
-                                  </label>
-                                );
-                              })}
-                            </div>
+                          <label className="text-sm font-semibold text-gray-900 mb-2 block font-satoshi">Certificate Labs <span className="text-xs font-normal text-gray-400">(all selected by default)</span></label>
+                          <div className="flex flex-wrap gap-2">
+                            {(nivodaAvailableOptions?.certificates?.length ? nivodaAvailableOptions.certificates : DIAMOND_CERT_OPTIONS).map((cert) => {
+                              const isSelected = (formData.nivoda_options_config?.certificateOptions || []).includes(cert);
+                              return (
+                                <label key={cert} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer text-sm font-satoshi transition-colors ${isSelected ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'}`}>
+                                  <input type="checkbox" className="sr-only" checked={isSelected} onChange={(e) => setFormData({ ...formData, nivoda_options_config: { ...formData.nivoda_options_config!, certificateOptions: e.target.checked ? [...(formData.nivoda_options_config?.certificateOptions || []), cert] : (formData.nivoda_options_config?.certificateOptions || []).filter(x => x !== cert) } })} />
+                                  {cert}
+                                </label>
+                              );
+                            })}
+                          </div>
                           )}
                           <p className="text-xs text-gray-500 mt-3 font-satoshi">Leave empty to accept any certificate lab</p>
                         </div>
@@ -2794,6 +2707,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Ring Specs & Pricing Tab */}
           {activeTab === 'ring_pricing' && (
             <div className="space-y-6">
+              {!((initialData as any)?.id) && (
+                <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 text-sm text-amber-800 font-satoshi">
+                  ⚠ Save the product first using <strong>Create Product</strong> (Basic Info tab), then reopen it to add Ring Specs and calculate prices.
+                </div>
+              )}
 
               {/* ── Mount Metal Weights ───────────────────────────── */}
               <div>

@@ -27,7 +27,7 @@ const validateProduct = [
     .withMessage('Base price must be a positive number'),
 
   body('sale_price')
-    .optional()
+    .optional({ checkFalsy: true })
     .isFloat({ min: 0 })
     .withMessage('Sale price must be a positive number')
     .custom((value, { req }) => {
@@ -49,7 +49,7 @@ const validateProduct = [
     .withMessage('Category ID must be a valid UUID'),
 
   body('collection_id')
-    .optional()
+    .optional({ checkFalsy: true })
     .isUUID()
     .withMessage('Collection ID must be a valid UUID'),
 
@@ -59,7 +59,7 @@ const validateProduct = [
     .withMessage('Stock quantity must be a non-negative integer'),
 
   body('weight')
-    .optional()
+    .optional({ checkFalsy: true })
     .isFloat({ min: 0 })
     .withMessage('Weight must be a positive number'),
 
@@ -112,8 +112,8 @@ const validateProduct = [
     .if(body('images').exists())
     .notEmpty()
     .withMessage('Image URL is required')
-    .isURL()
-    .withMessage('Image URL must be valid'),
+    .custom((value) => /^https?:\/\//.test(value) || value.startsWith('/')  )
+    .withMessage('Image URL must be a valid URL or server path'),
 
   body('images.*.alt_text')
     .optional()
