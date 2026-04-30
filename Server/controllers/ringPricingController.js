@@ -223,4 +223,16 @@ async function previewPrice(req, res) {
   }
 }
 
-module.exports = { getMetalPrices, refreshMetalPrices, getRingSpecs, saveRingSpecs, calculatePrice, previewPrice, refreshAllProductPrices };
+// POST /api/ring-pricing/recalculate-all — manual full recalculation with per-product report
+async function recalculateAll(req, res) {
+  try {
+    const { recalculateAllWithReport } = require('../jobs/dailyPriceRefresh');
+    const result = await recalculateAllWithReport();
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('Recalculate all error:', err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+module.exports = { getMetalPrices, refreshMetalPrices, getRingSpecs, saveRingSpecs, calculatePrice, previewPrice, refreshAllProductPrices, recalculateAll };

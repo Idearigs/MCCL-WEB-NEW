@@ -27,6 +27,10 @@ import {
   AlertCircle,
   Diamond,
   Gem,
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from 'lucide-react';
 
 interface Product {
@@ -89,6 +93,8 @@ const AdminProducts: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [recalcRunning, setRecalcRunning]     = useState(false);
+  const [recalcReport, setRecalcReport]       = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     category: '',
@@ -426,6 +432,22 @@ const AdminProducts: React.FC = () => {
   // Alert helper function
   const showAlert = (type: 'success' | 'error' | 'warning' | 'info', title: string, message?: string) => {
     setAlert({ type, title, message });
+  };
+
+  // Recalculate all ring prices and return a report
+  const handleRecalcAll = async () => {
+    setRecalcRunning(true);
+    setRecalcReport(null);
+    try {
+      const res  = await fetch(`${API_BASE_URL}/ring-pricing/recalculate-all`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Recalculation failed');
+      setRecalcReport(data.data);
+    } catch (err: any) {
+      showAlert('error', 'Recalculation failed', err.message);
+    } finally {
+      setRecalcRunning(false);
+    }
   };
 
   // Create product
@@ -966,6 +988,14 @@ const AdminProducts: React.FC = () => {
                 <Gem className="h-4 w-4" />
                 <span>Ring Pricing</span>
               </Link>
+              <button
+                onClick={handleRecalcAll}
+                disabled={recalcRunning}
+                className="bg-emerald-600 text-white border border-emerald-500 px-4 py-2.5 rounded-xl hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 font-satoshi text-sm"
+              >
+                <RefreshCw className={`h-4 w-4 ${recalcRunning ? 'animate-spin' : ''}`} />
+                <span>{recalcRunning ? 'Recalculating…' : 'Recalculate Prices'}</span>
+              </button>
               <button
                 onClick={openCreateForm}
                 className="bg-white text-gray-900 px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2 font-satoshi font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -1522,6 +1552,124 @@ const AdminProducts: React.FC = () => {
           isVisible={!!alert}
           onClose={() => setAlert(null)}
         />
+      )}
+
+      {/* Price Recalculation Report Modal */}
+      {recalcReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-900 rounded-t-2xl">
+              <div>
+                <h2 className="text-lg font-satoshi font-semibold text-white flex items-center gap-2">
+                  <RefreshCw className="h-5 w-5 text-emerald-400" />
+                  Price Recalculation Report
+                </h2>
+                <p className="text-xs text-gray-400 font-satoshi mt-0.5">
+                  Gold £{recalcReport.metalPrices?.gold_per_gram?.toFixed(2)}/g · Silver £{recalcReport.metalPrices?.silver_per_gram?.toFixed(2)}/g · Platinum £{recalcReport.metalPrices?.platinum_per_gram?.toFixed(2)}/g · USD/GBP {recalcReport.metalPrices?.usd_to_gbp?.toFixed(4)}
+                </p>
+              </div>
+              <button onClick={() => setRecalcReport(null)} className="text-gray-400 hover:text-white transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Summary bar */}
+            <div className="grid grid-cols-4 divide-x divide-gray-200 border-b border-gray-200">
+              {[
+                { label: 'Total Products', value: recalcReport.total, color: 'text-gray-900' },
+                { label: 'Updated', value: recalcReport.updated, color: 'text-emerald-600' },
+                { label: 'Unchanged', value: recalcReport.unchanged, color: 'text-blue-600' },
+                { label: 'Errors', value: recalcReport.errors, color: 'text-red-600' },
+              ].map(s => (
+                <div key={s.label} className="px-6 py-3 text-center">
+                  <div className={`text-2xl font-satoshi font-bold ${s.color}`}>{s.value}</div>
+                  <div className="text-xs text-gray-500 font-satoshi uppercase tracking-wider">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Report table */}
+            <div className="overflow-y-auto flex-1 px-6 py-4">
+              {recalcReport.report.filter((r: any) => r.status !== 'skipped').length === 0 ? (
+                <p className="text-sm text-gray-500 font-satoshi text-center py-8">No ring products with metal weights found.</p>
+              ) : (
+                <table className="w-full text-xs font-satoshi border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="text-left px-3 py-2 text-gray-500 uppercase tracking-wider font-medium w-24">SKU</th>
+                      <th className="text-left px-3 py-2 text-gray-500 uppercase tracking-wider font-medium">Product</th>
+                      <th className="text-left px-3 py-2 text-gray-500 uppercase tracking-wider font-medium w-24">Status</th>
+                      <th className="text-left px-3 py-2 text-gray-500 uppercase tracking-wider font-medium">Price Changes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recalcReport.report
+                      .filter((r: any) => r.status !== 'skipped')
+                      .map((row: any, i: number) => {
+                        const METAL_LABELS: Record<string, string> = {
+                          silver: 'Silver', platinum: 'Platinum',
+                          gold_9kt: '9ct White', gold_9kt_yellow: '9ct Yellow', gold_9kt_rose: '9ct Rose',
+                          gold_14kt: '14ct White', gold_14kt_yellow: '14ct Yellow', gold_14kt_rose: '14ct Rose',
+                          gold_18kt: '18ct White', gold_18kt_yellow: '18ct Yellow', gold_18kt_rose: '18ct Rose',
+                        };
+                        const changeEntries = Object.entries(row.changes || {}) as [string, { old: number | null; new: number | null }][];
+                        return (
+                          <tr key={row.product_id} className={`border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                            <td className="px-3 py-2 font-medium text-gray-700 align-top">{row.sku}</td>
+                            <td className="px-3 py-2 text-gray-900 align-top font-medium">{row.name}</td>
+                            <td className="px-3 py-2 align-top">
+                              {row.status === 'updated'   && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold uppercase">Updated</span>}
+                              {row.status === 'unchanged' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold uppercase">Same</span>}
+                              {row.status === 'error'     && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-semibold uppercase">Error</span>}
+                            </td>
+                            <td className="px-3 py-2 align-top">
+                              {row.status === 'error' && <span className="text-red-500">{row.reason}</span>}
+                              {row.status === 'unchanged' && <span className="text-gray-400 italic">No change</span>}
+                              {row.status === 'updated' && changeEntries.length > 0 && (
+                                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                  {changeEntries.map(([key, diff]) => {
+                                    const delta = diff.new !== null && diff.old !== null ? diff.new - diff.old : null;
+                                    return (
+                                      <div key={key} className="flex items-center gap-1 whitespace-nowrap">
+                                        <span className="text-gray-500">{METAL_LABELS[key] || key}:</span>
+                                        <span className="text-gray-400">{diff.old !== null ? `£${diff.old.toFixed(0)}` : '—'}</span>
+                                        <span className="text-gray-400">→</span>
+                                        <span className="font-semibold text-gray-800">{diff.new !== null ? `£${diff.new.toFixed(0)}` : '—'}</span>
+                                        {delta !== null && (
+                                          <span className={`flex items-center gap-0.5 text-[10px] font-semibold ${delta > 0 ? 'text-red-500' : delta < 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                                            {delta > 0 ? <TrendingUp className="h-3 w-3" /> : delta < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                                            {delta > 0 ? '+' : ''}£{delta.toFixed(0)}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-gray-200 flex justify-between items-center">
+              <p className="text-xs text-gray-400 font-satoshi">
+                {recalcReport.report.filter((r: any) => r.status === 'skipped').length} products skipped (no metal weights configured)
+              </p>
+              <button
+                onClick={() => setRecalcReport(null)}
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg font-satoshi text-sm hover:bg-gray-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </AdminLayout>
   );

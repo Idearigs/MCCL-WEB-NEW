@@ -6,6 +6,7 @@ const ctrl = require('../controllers/ringPricingController');
 router.get('/metal-prices',              ctrl.getMetalPrices);
 router.post('/metal-prices/refresh',     ctrl.refreshMetalPrices);
 router.post('/refresh-all-prices',       ctrl.refreshAllProductPrices);
+router.post('/recalculate-all',          ctrl.recalculateAll);
 router.post('/preview',                  ctrl.previewPrice);
 
 // Per-product ring spec endpoints
