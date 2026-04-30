@@ -9,6 +9,7 @@ async function refreshAllRingPrices() {
   const { Product, ProductRingSpecs, ProductSideStones, ProductPricingConfig } = getModels();
 
   const products = await Product.findAll({
+    attributes: ['id', 'nivoda_enabled'],
     include: [
       { model: ProductRingSpecs,    as: 'ringSpecs',    required: true },
       { model: ProductSideStones,   as: 'sideStones',   required: false },
@@ -44,12 +45,15 @@ async function refreshAllRingPrices() {
       continue;
     }
 
-    // Build new price_overrides from calculated final prices
+    // Nivoda products: store mount-only price so customer page adds the actual diamond on top.
+    // Non-Nivoda products: store total final_price (includes flat-rate diamond estimate).
+    const nivodaEnabled = product.nivoda_enabled || false;
     const newOverrides = {};
     for (const key of PREFERRED_METALS) {
       const m = result.prices[key];
-      if (m?.available && m.final_price > 0) {
-        newOverrides[key] = parseFloat(m.final_price.toFixed(2));
+      if (m?.available) {
+        const priceToStore = nivodaEnabled ? m.mount_only_price : m.final_price;
+        if (priceToStore > 0) newOverrides[key] = parseFloat(priceToStore.toFixed(2));
       }
     }
 

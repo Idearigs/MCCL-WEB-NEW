@@ -143,13 +143,19 @@ async function calculatePrice(req, res) {
       nivodaDiamondPriceGBP: nivodaDiamondPriceGBP ? parseFloat(nivodaDiamondPriceGBP) : 0,
     });
 
-    // Build price_overrides from calculated final prices (same logic as daily refresh)
+    // For Nivoda-enabled products: store mount-only price so customer page adds their own
+    // diamond price on top (no double-counting). For non-Nivoda: store full final_price.
+    const { Product } = getModels();
+    const productRow = await Product.findByPk(productId, { attributes: ['id', 'nivoda_enabled'] });
+    const nivodaEnabled = productRow?.nivoda_enabled || false;
+
     const PREFERRED_METALS = ['gold_18kt', 'gold_18kt_yellow', 'gold_18kt_rose', 'gold_14kt', 'gold_14kt_yellow', 'gold_14kt_rose', 'gold_9kt', 'gold_9kt_yellow', 'gold_9kt_rose', 'platinum', 'silver'];
     const newOverrides = {};
     for (const key of PREFERRED_METALS) {
       const m = result.prices[key];
-      if (m?.available && m.final_price > 0) {
-        newOverrides[key] = parseFloat(m.final_price.toFixed(2));
+      if (m?.available) {
+        const priceToStore = nivodaEnabled ? m.mount_only_price : m.final_price;
+        if (priceToStore > 0) newOverrides[key] = parseFloat(priceToStore.toFixed(2));
       }
     }
 
@@ -175,7 +181,6 @@ async function calculatePrice(req, res) {
     // Sync best metal price to products.base_price
     const bestKey = PREFERRED_METALS.find(k => newOverrides[k] && newOverrides[k] > 0);
     if (bestKey) {
-      const { Product } = getModels();
       await Product.update(
         { base_price: newOverrides[bestKey], currency: 'GBP', updated_at: new Date() },
         { where: { id: productId } }

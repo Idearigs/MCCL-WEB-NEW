@@ -230,7 +230,7 @@ class NivodaService {
               clarity: [VS1,VS2,VVS1,VVS2]
               cut: [EX,VG]
             }
-            limit: 5
+            limit: 20
             offset: 0
             order: { type: price, direction: ASC }
           ) {
@@ -245,10 +245,13 @@ class NivodaService {
       const items = response.data.data?.as?.diamonds_by_query?.items || [];
       if (!items.length) return null;
 
-      // Prices from Nivoda are in GBP cents — convert to pounds, return median
+      // Prices are in USD cents → convert to USD dollars.
+      // Use trimmed mean (drop bottom & top 25%) to avoid outlier distortion.
       const prices = items.map(d => d.price / 100).sort((a, b) => a - b);
-      const mid = Math.floor(prices.length / 2);
-      return prices[mid] || prices[0];
+      const drop = Math.floor(prices.length * 0.25);
+      const trimmed = prices.slice(drop, prices.length - drop || undefined);
+      const avg = trimmed.reduce((s, p) => s + p, 0) / trimmed.length;
+      return parseFloat(avg.toFixed(2));
     } catch {
       return null;
     }

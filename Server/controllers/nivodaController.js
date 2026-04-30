@@ -5,6 +5,7 @@
 
 const nivodaService = require('../services/nivodaService');
 const { centsToGBP, summarisePrices } = require('../services/pricingService');
+const metalPriceService = require('../services/metalPriceService');
 
 /**
  * Get available Nivoda diamond options
@@ -98,9 +99,13 @@ async function getDiamondPriceBySuggestions(req, res) {
     const labgrown = stoneType === 'lab-grown';
     const shapeNivoda = shape ? shape.toUpperCase().replace(/[\s-]/g, '_') : undefined;
 
+    // Tight carat band: ±10% of target carat (min ±0.05) for accurate pricing
+    const ct = parseFloat(carat) || 1.0;
+    const caratMargin = Math.max(ct * 0.10, 0.05);
+
     const filters = {
-      minCarat: Math.max(0.1, (parseFloat(carat) || 1.0) - 0.25),
-      maxCarat: (parseFloat(carat) || 1.0) + 0.25,
+      minCarat: parseFloat(Math.max(0.1, ct - caratMargin).toFixed(2)),
+      maxCarat: parseFloat((ct + caratMargin).toFixed(2)),
       minPrice: 0,
       maxPrice: 500000,
       clarity: clarity ? [clarity] : undefined,
@@ -127,7 +132,9 @@ async function getDiamondPriceBySuggestions(req, res) {
     }
 
     if (filteredDiamonds.length > 0) {
-      const { min: minPrice, avg: avgPrice, max: maxPrice } = summarisePrices(filteredDiamonds);
+      const metalPrices = await metalPriceService.fetchMetalPrices();
+      const usdToGbp = metalPrices.usd_to_gbp || 0.79;
+      const { min: minPrice, avg: avgPrice, max: maxPrice } = summarisePrices(filteredDiamonds, usdToGbp);
 
       return res.json({
         success: true,

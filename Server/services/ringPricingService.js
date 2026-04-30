@@ -70,17 +70,25 @@ async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = 
         : totalCost + marginValue
     ).toFixed(2));
 
+    // mount_only_final_price: ring cost without the center diamond (used by customer page for Nivoda products)
+    const mountOnlyFinalPrice = parseFloat((
+      marginType === 'percent'
+        ? (mountCost + sideStoneCost) * (1 + marginValue / 100)
+        : (mountCost + sideStoneCost) + marginValue
+    ).toFixed(2));
+
     result[metal.key] = {
-      available:         true,
-      label:             metal.label,
-      weight_g:          weight,
-      spot_per_gram:     spotPerGram,
-      mount_cost:        mountCost,
-      diamond_cost:      diamondCost,
-      side_stones_cost:  sideStoneCost,
-      total_cost:        totalCost,
-      margin_applied:    marginType === 'percent' ? `${marginValue}%` : `£${marginValue}`,
-      final_price:       finalPrice,
+      available:            true,
+      label:                metal.label,
+      weight_g:             weight,
+      spot_per_gram:        spotPerGram,
+      mount_cost:           mountCost,
+      diamond_cost:         diamondCost,
+      side_stones_cost:     sideStoneCost,
+      total_cost:           totalCost,
+      margin_applied:       marginType === 'percent' ? `${marginValue}%` : `£${marginValue}`,
+      final_price:          finalPrice,
+      mount_only_price:     mountOnlyFinalPrice,
     };
   }
 

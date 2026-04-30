@@ -3,7 +3,7 @@ const cache = require('./cacheService');
 
 const TROY_OZ_TO_GRAMS = 31.1035;
 const CACHE_KEY = 'metal:prices:gbp';
-const CACHE_TTL = 24 * 60 * 60; // 24 hours
+const CACHE_TTL = 6 * 60 * 60; // 6 hours — prices shift during trading hours
 
 function parseCsvClose(csv) {
   const lines = csv.trim().split('\n');

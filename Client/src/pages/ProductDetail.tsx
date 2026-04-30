@@ -260,14 +260,15 @@ const ProductDetail = () => {
   // Fetch price from Nivoda API based on selected specs
   const fetchNivodaPrice = useCallback(async (carat?: string, clarity?: string, colour?: string, cut?: string) => {
     if (!productData?.nivoda_enabled) return;
-    if (!carat || !clarity || !colour || !cut) return;
+    if (!carat || !clarity || !colour) return; // cut is optional — many products have no cut options
 
     setNivodaPriceLoading(true);
     setNivodaPriceError(null);
 
     try {
       const config = productData.nivoda_options_config;
-      const params = new URLSearchParams({ carat, clarity, color: colour, cut });
+      const params = new URLSearchParams({ carat, clarity, color: colour });
+      if (cut) params.set('cut', cut);
 
       params.set('stoneType', selectedStoneType);
       const shapeName = productData.stone_shapes?.[0]?.name;
@@ -428,11 +429,10 @@ const ProductDetail = () => {
     }
   }, [productData?.id, productData?.nivoda_enabled, isEngagementRing]);
 
-  // Fetch price when any selection changes
+  // Fetch price when any selection changes — cut is optional (may not be configured)
   useEffect(() => {
-    if (productData?.nivoda_enabled && selectedCarat && selectedClarity && selectedColour && selectedCut) {
-      console.log('Fetching Nivoda price for:', { selectedCarat, selectedClarity, selectedColour, selectedCut });
-      fetchNivodaPrice(selectedCarat, selectedClarity, selectedColour, selectedCut);
+    if (productData?.nivoda_enabled && selectedCarat && selectedClarity && selectedColour) {
+      fetchNivodaPrice(selectedCarat, selectedClarity, selectedColour, selectedCut || undefined);
     }
   }, [selectedCarat, selectedClarity, selectedColour, selectedCut, selectedPolish, selectedSymmetry, selectedFluorescence, selectedCertificate, selectedStoneType, productData?.nivoda_enabled, fetchNivodaPrice]);
 

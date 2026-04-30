@@ -1,11 +1,12 @@
-const USD_TO_GBP = 0.79;
+const FALLBACK_USD_TO_GBP = 0.79;
 
-/** Convert Nivoda USD cents → GBP pounds */
-const centsToGBP = (cents) => Math.round((cents / 100) * USD_TO_GBP);
+/** Convert Nivoda USD cents → GBP pounds using live exchange rate */
+const centsToGBP = (cents, usdToGbp = FALLBACK_USD_TO_GBP) =>
+  Math.round((cents / 100) * usdToGbp);
 
 /** Summarise an array of Nivoda items into { min, avg, max } in GBP */
-const summarisePrices = (items = []) => {
-  const prices = items.map(d => centsToGBP(d.price));
+const summarisePrices = (items = [], usdToGbp = FALLBACK_USD_TO_GBP) => {
+  const prices = items.map(d => centsToGBP(d.price, usdToGbp));
   if (!prices.length) return { min: 0, avg: 0, max: 0 };
   return {
     min: Math.min(...prices),
