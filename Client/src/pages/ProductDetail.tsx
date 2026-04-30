@@ -24,6 +24,32 @@ const metalTypeOptions = [
   { value: 'platinum',         label: 'Platinum',         overrideKey: 'platinum'        },
 ];
 
+function getMetalBase(value: string): string {
+  if (!value || value === 'silver') return 'silver';
+  if (value === 'platinum') return 'platinum';
+  if (value.includes('white')) return 'white-gold';
+  if (value.includes('yellow')) return 'yellow-gold';
+  if (value.includes('rose')) return 'rose-gold';
+  return '';
+}
+function getMetalKarat(value: string): string {
+  if (value.startsWith('9ct')) return '9ct';
+  if (value.startsWith('14ct')) return '14ct';
+  if (value.startsWith('18ct')) return '18ct';
+  return '';
+}
+function buildMetalValue(base: string, karat: string): string {
+  if (base === 'silver' || base === 'platinum') return base;
+  return karat ? `${karat}-${base}` : `18ct-${base}`;
+}
+const METAL_BASE_LABELS: Record<string, string> = {
+  'silver': 'Silver',
+  'white-gold': 'White Gold',
+  'yellow-gold': 'Yellow Gold',
+  'rose-gold': 'Rose Gold',
+  'platinum': 'Platinum',
+};
+
 const ringSizes = [
   { value: 'A', label: 'UK Size A (US 0, EU 37.5)' },
   { value: 'B', label: 'UK Size B (US 0.5, EU 38.2)' },
@@ -285,10 +311,14 @@ const ProductDetail = () => {
       const data = await response.json();
 
       console.log('API Response:', data);
-      if (data.success && data.data?.prices) {
+      if (data.success && data.data?.prices && data.data.prices.avg > 0) {
         console.log('Price updated:', data.data.prices);
         setNivodaPrice(data.data.prices);
+      } else if (data.success && data.data?.count === 0) {
+        setNivodaPrice(null);
+        setNivodaPriceError('No diamonds available for this specification — try adjusting clarity or colour');
       } else {
+        setNivodaPrice(null);
         setNivodaPriceError('Could not fetch price for this specification');
       }
     } catch (error) {
@@ -405,10 +435,14 @@ const ProductDetail = () => {
         : '');
       if (carat) setSelectedCarat(carat);
 
-      const clarity = defaults?.clarity || (config.clarityOptions?.[0] ?? '');
+      // Default to G VS2 — the base quality standard used for all product pricing.
+      // Customers see the lowest realistic price first and can upgrade clarity/colour.
+      // If G/VS2 isn't in the configured options, fall back to the middle of the list.
+      const mid = (arr: string[] | undefined) => arr?.[Math.floor(((arr?.length || 1) - 1) / 2)] ?? '';
+      const clarity = defaults?.clarity || (config.clarityOptions?.includes('VS2') ? 'VS2' : mid(config.clarityOptions));
       if (clarity) setSelectedClarity(clarity);
 
-      const colour = defaults?.colour || (config.colourOptions?.[0] ?? '');
+      const colour = defaults?.colour || (config.colourOptions?.includes('G') ? 'G' : mid(config.colourOptions));
       if (colour) setSelectedColour(colour);
 
       const cut = defaults?.cut || (config.cutOptions?.[0] ?? '');
@@ -961,35 +995,54 @@ const ProductDetail = () => {
           </div>
         )}
 
-        {/* Mobile Metal Type Selection */}
+        {/* Mobile Metal Type Selection — two-level: color then karat */}
         {(() => {
           const overrides = productData?.ring_price_overrides;
           const visibleOptions = overrides
-            ? metalTypeOptions.filter((o, idx, arr) =>
-                overrides[o.overrideKey] && arr.findIndex(x => x.overrideKey === o.overrideKey) === idx
-              )
+            ? metalTypeOptions.filter(o => overrides[o.overrideKey])
             : metalTypeOptions;
           if (visibleOptions.length === 0) return null;
+
+          const availableBases = Array.from(new Set(visibleOptions.map(o => getMetalBase(o.value))));
+          const currentBase  = getMetalBase(selectedMetalType);
+          const currentKarat = getMetalKarat(selectedMetalType);
+          const availableKarats = Array.from(new Set(
+            visibleOptions.filter(o => getMetalBase(o.value) === currentBase).map(o => getMetalKarat(o.value)).filter(Boolean)
+          ));
+          const isGold = currentBase.includes('gold');
+
+          const handleBaseClick = (base: string) => {
+            if (base === 'silver' || base === 'platinum') { handleMetalTypeClick(base); return; }
+            const karats = Array.from(new Set(
+              visibleOptions.filter(o => getMetalBase(o.value) === base).map(o => getMetalKarat(o.value)).filter(Boolean)
+            ));
+            const karat = karats.includes(currentKarat) ? currentKarat : karats[0];
+            handleMetalTypeClick(buildMetalValue(base, karat));
+          };
+
           return (
         <div className="mb-4">
           <h3 className="text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2">
-            Metal Type: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
+            Metal: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
           </h3>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {visibleOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleMetalTypeClick(option.value)}
-                className={`flex-shrink-0 px-4 py-2 border transition-all font-futura-pt text-xs font-light ${
-                  selectedMetalType === option.value
-                    ? 'border-gray-800 bg-gray-100'
-                    : 'border-gray-300'
-                }`}
-              >
-                {option.label}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mb-2">
+            {availableBases.map(base => (
+              <button key={base} onClick={() => handleBaseClick(base)}
+                className={`flex-shrink-0 px-4 py-2 border transition-all font-futura-pt text-xs font-light ${currentBase === base ? 'border-gray-800 bg-gray-100' : 'border-gray-300'}`}>
+                {METAL_BASE_LABELS[base] || base}
               </button>
             ))}
           </div>
+          {isGold && availableKarats.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {availableKarats.map(karat => (
+                <button key={karat} onClick={() => handleMetalTypeClick(buildMetalValue(currentBase, karat))}
+                  className={`flex-shrink-0 px-4 py-2 border transition-all font-futura-pt text-xs font-light ${currentKarat === karat ? 'border-gray-800 bg-gray-100' : 'border-gray-300'}`}>
+                  {karat}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
           );
         })()}
@@ -1557,33 +1610,56 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Metal Type Selection */}
+            {/* Metal Type Selection — two-level: color then karat */}
             {(() => {
               const overrides = productData?.ring_price_overrides;
               const visibleOptions = overrides
                 ? metalTypeOptions.filter(o => overrides[o.overrideKey])
                 : metalTypeOptions;
               if (visibleOptions.length === 0) return null;
+
+              const availableBases = Array.from(new Set(visibleOptions.map(o => getMetalBase(o.value))));
+              const currentBase  = getMetalBase(selectedMetalType);
+              const currentKarat = getMetalKarat(selectedMetalType);
+              const availableKarats = Array.from(new Set(
+                visibleOptions.filter(o => getMetalBase(o.value) === currentBase).map(o => getMetalKarat(o.value)).filter(Boolean)
+              ));
+              const isGold = currentBase.includes('gold');
+
+              const handleBaseClick = (base: string) => {
+                if (base === 'silver' || base === 'platinum') { handleMetalTypeClick(base); return; }
+                const karats = Array.from(new Set(
+                  visibleOptions.filter(o => getMetalBase(o.value) === base).map(o => getMetalKarat(o.value)).filter(Boolean)
+                ));
+                const karat = karats.includes(currentKarat) ? currentKarat : karats[0];
+                handleMetalTypeClick(buildMetalValue(base, karat));
+              };
+
               return (
             <div className="mb-4 2xl:mb-5">
               <h3 className="text-[10px] 2xl:text-xs font-futura-pt font-normal text-gray-900 uppercase tracking-wider mb-2 2xl:mb-2">
-                Metal Type: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
+                Metal: {metalTypeOptions.find(m => m.value === selectedMetalType)?.label || 'Select'}
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {visibleOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleMetalTypeClick(option.value)}
-                    className={`px-4 py-2 border transition-all duration-200 font-futura-pt text-sm font-light ${
-                      selectedMetalType === option.value
-                        ? 'border-gray-800 bg-gray-100'
-                        : 'border-gray-300 hover:border-gray-500'
-                    }`}
-                  >
-                    {option.label}
+              {/* Row 1: metal base / color */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {availableBases.map(base => (
+                  <button key={base} onClick={() => handleBaseClick(base)}
+                    className={`px-4 py-2 border transition-all duration-200 font-futura-pt text-sm font-light ${currentBase === base ? 'border-gray-800 bg-gray-100' : 'border-gray-300 hover:border-gray-500'}`}>
+                    {METAL_BASE_LABELS[base] || base}
                   </button>
                 ))}
               </div>
+              {/* Row 2: karat (gold only) */}
+              {isGold && availableKarats.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {availableKarats.map(karat => (
+                    <button key={karat} onClick={() => handleMetalTypeClick(buildMetalValue(currentBase, karat))}
+                      className={`px-4 py-2 border transition-all duration-200 font-futura-pt text-sm font-light ${currentKarat === karat ? 'border-gray-800 bg-gray-100' : 'border-gray-300 hover:border-gray-500'}`}>
+                      {karat}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
               );
             })()}
@@ -1874,9 +1950,11 @@ const ProductDetail = () => {
             <div className="space-y-2 2xl:space-y-3 mb-5 2xl:mb-6">
               <Button
                 onClick={handleAddToCart}
-                disabled={isLoading}
+                disabled={isLoading || (productData?.nivoda_enabled && !nivodaPrice)}
                 className={`w-full h-12 2xl:h-13 font-futura-pt font-normal uppercase tracking-wider text-sm 2xl:text-base border-0 transition-all duration-300 relative overflow-hidden ${
-                  isLoading
+                  productData?.nivoda_enabled && !nivodaPrice && !isLoading
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : isLoading
                     ? 'bg-gray-900 text-white cursor-not-allowed'
                     : 'bg-[#f4e6c8] hover:bg-[#f0ddb0] text-gray-900'
                 }`}
@@ -1892,6 +1970,14 @@ const ProductDetail = () => {
                   Add to Bag
                 </span>
               </Button>
+
+              {productData?.nivoda_enabled && !nivodaPrice && !nivodaPriceLoading && (
+                <p className="text-center text-xs font-futura-pt text-gray-400">
+                  {nivodaPriceError
+                    ? 'Adjust your diamond selection above to enable ordering'
+                    : 'Select your diamond specifications above to enable ordering'}
+                </p>
+              )}
 
               <Button
                 variant="outline"

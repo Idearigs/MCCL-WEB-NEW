@@ -59,9 +59,9 @@ class NivodaService {
 
       const labgrown = filters.labgrown === true ? 'true' : 'false';
       const shapeFilter      = filters.shape?.length      ? `shapes:      ["${filters.shape.toUpperCase().replace(/[\s-]/g, '_')}"]` : '';
-      const polishFilter     = filters.polish?.length     ? `polish:      [${filters.polish.map(p => `"${p.toUpperCase()}"`).join(',')}]` : '';
-      const symmetryFilter   = filters.symmetry?.length   ? `symmetry:    [${filters.symmetry.map(s => `"${s.toUpperCase()}"`).join(',')}]` : '';
-      const fluorFilter      = filters.fluorescence?.length ? `fluorescence: [${filters.fluorescence.map(f => `"${f.toUpperCase()}"`).join(',')}]` : '';
+      const polishFilter     = filters.polish?.length     ? `polish:      [${filters.polish.map(p => p.toUpperCase()).join(',')}]` : '';
+      const symmetryFilter   = filters.symmetry?.length   ? `symmetry:    [${filters.symmetry.map(s => s.toUpperCase()).join(',')}]` : '';
+      const fluorFilter      = filters.fluorescence?.length ? `fluorescence: [${filters.fluorescence.map(f => f.toUpperCase()).join(',')}]` : '';
       // lab filter removed — Nivoda deprecated this GraphQL field; filter by certificate client-side
 
       const query = `query ($token: String!) {
@@ -219,6 +219,10 @@ class NivodaService {
       const caratMax = parseFloat((ct + margin).toFixed(2));
       const nivodaShape = shape?.toUpperCase().replace(/[\s-]/g, '_') || '';
 
+      // Base quality standard: G/H colour + VS2 clarity.
+      // These are the most popular engagement ring specs and give the "starting from"
+      // price customers expect to see. D/E/F + VVS stones are 3-5× more expensive
+      // and would skew the estimate far above realistic retail pricing.
       const query = `query ($token: String!) {
         as(token: $token) {
           diamonds_by_query(
@@ -226,9 +230,9 @@ class NivodaService {
               labgrown: ${labgrown ? 'true' : 'false'}
               sizes: { from: ${caratMin}, to: ${caratMax} }
               ${nivodaShape ? `shapes: ["${nivodaShape}"]` : ''}
-              color: [D,E,F,G,H,I]
-              clarity: [VS1,VS2,VVS1,VVS2]
-              cut: [EX,VG]
+              color: [G,H]
+              clarity: [VS2]
+              cut: [EX,VG,G]
             }
             limit: 20
             offset: 0

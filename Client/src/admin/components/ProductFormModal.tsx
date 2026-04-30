@@ -3066,7 +3066,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       </thead>
                       <tbody>
                         {Object.entries(calculatedPrices)
-                          .filter(([key]) => metalWeightRows.some(r => r.key === key))
+                          .filter(([, v]: [string, any]) => v.available)
                           .map(([key, v]: [string, any], i) => (
                           <tr key={key} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="px-3 py-2 font-medium">
