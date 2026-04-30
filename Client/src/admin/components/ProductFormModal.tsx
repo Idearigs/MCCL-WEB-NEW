@@ -562,13 +562,28 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         if (res.success && res.data) {
           const { specs, side_stones, pricing_config } = res.data;
           if (specs) {
-            // Build metalWeightRows from non-empty weight columns (default to white-gold variant)
+            // Build metalWeightRows — expand each karat into all 3 colours so all metals show
             const initRows: { key: string; weight: string }[] = [];
-            if (specs.silver_wt)    initRows.push({ key: 'silver',    weight: String(specs.silver_wt) });
-            if (specs.gold_9kt_wt)  initRows.push({ key: 'gold_9kt',  weight: String(specs.gold_9kt_wt) });
-            if (specs.gold_14kt_wt) initRows.push({ key: 'gold_14kt', weight: String(specs.gold_14kt_wt) });
-            if (specs.gold_18kt_wt) initRows.push({ key: 'gold_18kt', weight: String(specs.gold_18kt_wt) });
-            if (specs.platinum_wt)  initRows.push({ key: 'platinum',  weight: String(specs.platinum_wt) });
+            if (specs.silver_wt) initRows.push({ key: 'silver', weight: String(specs.silver_wt) });
+            if (specs.gold_9kt_wt) {
+              const w = String(specs.gold_9kt_wt);
+              initRows.push({ key: 'gold_9kt',        weight: w });
+              initRows.push({ key: 'gold_9kt_yellow',  weight: w });
+              initRows.push({ key: 'gold_9kt_rose',    weight: w });
+            }
+            if (specs.gold_14kt_wt) {
+              const w = String(specs.gold_14kt_wt);
+              initRows.push({ key: 'gold_14kt',        weight: w });
+              initRows.push({ key: 'gold_14kt_yellow', weight: w });
+              initRows.push({ key: 'gold_14kt_rose',   weight: w });
+            }
+            if (specs.gold_18kt_wt) {
+              const w = String(specs.gold_18kt_wt);
+              initRows.push({ key: 'gold_18kt',        weight: w });
+              initRows.push({ key: 'gold_18kt_yellow', weight: w });
+              initRows.push({ key: 'gold_18kt_rose',   weight: w });
+            }
+            if (specs.platinum_wt) initRows.push({ key: 'platinum', weight: String(specs.platinum_wt) });
             setMetalWeightRows(initRows);
             setRingSpecs({
               silver_wt:    specs.silver_wt    ?? '',
@@ -2848,7 +2863,16 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         <input
                           type="number" step="0.001" min="0"
                           value={row.weight}
-                          onChange={e => setMetalWeightRows(p => p.map((r, j) => j === i ? { ...r, weight: e.target.value } : r))}
+                          onChange={e => {
+                            const newW = e.target.value;
+                            const changedOpt = METAL_OPTIONS.find(o => o.key === row.key);
+                            setMetalWeightRows(p => p.map((r, j) => {
+                              if (j === i) return { ...r, weight: newW };
+                              const opt = METAL_OPTIONS.find(o => o.key === r.key);
+                              if (changedOpt && opt && opt.weightField === changedOpt.weightField) return { ...r, weight: newW };
+                              return r;
+                            }));
+                          }}
                           placeholder="e.g. 4.200"
                           className={`w-full px-2 py-1.5 border rounded-lg text-sm font-satoshi focus:outline-none focus:ring-2 focus:ring-gray-900 ${!row.weight ? 'border-amber-300 bg-amber-50' : 'border-gray-300'}`}
                         />

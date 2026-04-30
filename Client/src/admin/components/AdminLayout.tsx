@@ -22,7 +22,8 @@ import {
   Zap,
   MessageCircle,
   Gem,
-  FlaskConical
+  FlaskConical,
+  Shield,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -63,6 +64,7 @@ const navigation: NavItem[] = [
   { name: 'Watches', href: '/admin/watches', icon: Watch },
   { name: 'Nivoda', href: '/admin/nivoda', icon: Diamond },
   { name: 'Users', href: '/admin/users', icon: Users },
+  { name: 'Staff', href: '/admin/staff', icon: Shield },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
   {
     name: 'Tools',

@@ -15,6 +15,7 @@ import AdminPromotions from './pages/AdminPromotions';
 import AdminChats from './pages/AdminChats';
 import AdminWeddingRings from './pages/AdminWeddingRings';
 import AdminSettings from './pages/AdminSettings';
+import AdminStaff from './pages/AdminStaff';
 import NivodaTestingPage from '../pages/NivodaTestingPage';
 import RingPricingTestPage from '../pages/RingPricingTestPage';
 import AdminNivoda from './pages/AdminNivoda';
@@ -131,6 +132,15 @@ const AdminApp: React.FC = () => {
           element={
             <ProtectedRoute>
               <AdminSettings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute>
+              <AdminStaff />
             </ProtectedRoute>
           }
         />

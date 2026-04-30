@@ -85,4 +85,12 @@ router.use('/wedding-rings', weddingRingsRoutes);
 // Upload Routes
 router.use('/upload', uploadRoutes);
 
+// Staff (Admin User) Management
+const adminStaffController = require('../controllers/adminStaffController');
+router.get('/staff',                   adminStaffController.listStaff);
+router.post('/staff',                  requireSuperAdmin, adminStaffController.createStaff);
+router.put('/staff/:id',               requireSuperAdmin, adminStaffController.updateStaff);
+router.patch('/staff/:id/reset-password', requireSuperAdmin, adminStaffController.resetPassword);
+router.delete('/staff/:id',            requireSuperAdmin, adminStaffController.deleteStaff);
+
 module.exports = router;

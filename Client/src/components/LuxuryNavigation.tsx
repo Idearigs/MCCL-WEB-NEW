@@ -620,7 +620,10 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
                     <div>
                       <h3 className="text-base font-satoshi font-bold text-gray-950 uppercase tracking-wide mb-3" style={{fontSize: '16px', fontWeight: 600}}>METALS</h3>
                       <div className="space-y-1">
-                        {navigationData?.metals?.map((item) => (
+                        {navigationData?.metals
+                          ?.filter((item) => !item.name.startsWith('_TEST'))
+                          .slice(0, 7)
+                          .map((item) => (
                           <Link
                             key={item.id}
                             to={`/engagement-rings?metal=${encodeURIComponent(item.name)}`}
@@ -630,6 +633,13 @@ const LuxuryNavigation = ({ forceWhite = false }: { forceWhite?: boolean }): JSX
                             {item.name}
                           </Link>
                         ))}
+                        <Link
+                          to="/engagement-rings"
+                          className="block font-satoshi font-bold text-gray-700 hover:text-gray-900 transition-colors duration-200 ease-out leading-relaxed py-0.5"
+                          style={{fontSize: '12px'}}
+                        >
+                          Shop All
+                        </Link>
                       </div>
                     </div>
                   </div>
