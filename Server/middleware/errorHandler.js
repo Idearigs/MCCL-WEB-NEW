@@ -1,6 +1,17 @@
 const { logger } = require('../config/database');
 
 const errorHandler = (err, req, res, next) => {
+  // Always set CORS headers so browser can read error responses
+  const origin = req.headers.origin;
+  const allowed = [
+    'http://localhost:3000', 'http://localhost:8080', 'http://127.0.0.1:8080',
+    'https://buymediamonds.co.uk', 'https://www.buymediamonds.co.uk', 'https://api.buymediamonds.co.uk'
+  ];
+  if (!origin || allowed.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+
   let error = { ...err };
   error.message = err.message;
 

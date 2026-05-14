@@ -16,6 +16,7 @@ const getProducts = async (req, res) => {
   try {
     const { Product, Category, Collection, ProductImage, ProductVariant, ProductRingSpecs, ProductPricingConfig } = getModelInstance();
 
+    const ALLOWED_SORT_COLUMNS = ['name', 'sku', 'base_price', 'created_at', 'updated_at', 'sort_order', 'is_active', 'is_featured'];
     const {
       page = 1,
       limit = 10,
@@ -25,9 +26,10 @@ const getProducts = async (req, res) => {
       status = '',
       featured = '',
       jewelryCategory = '',
-      sortBy = 'created_at',
       sortOrder = 'DESC'
     } = req.query;
+    const rawSortBy = req.query.sortBy || 'created_at';
+    const sortBy = ALLOWED_SORT_COLUMNS.includes(rawSortBy) ? rawSortBy : 'created_at';
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
 

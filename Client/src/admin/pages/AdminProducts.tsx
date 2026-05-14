@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
 import { LoadingState } from '../components/LoadingSpinner';
@@ -111,6 +111,7 @@ const AdminProducts: React.FC = () => {
   });
   const [sortBy, setSortBy] = useState('sku');
   const [sortOrder, setSortOrder] = useState('ASC');
+  const abortRef = useRef<AbortController | null>(null);
 
   // Modal states
   const [showProductForm, setShowProductForm] = useState(false);
@@ -129,8 +130,14 @@ const AdminProducts: React.FC = () => {
   } | null>(null);
 
   const fetchProducts = async () => {
+    // Cancel any in-flight request before starting a new one
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       setIsLoading(true);
+      setError('');
       const token = localStorage.getItem('admin_token');
 
       const queryParams = new URLSearchParams({
@@ -147,6 +154,7 @@ const AdminProducts: React.FC = () => {
       });
 
       const response = await fetch(`${API_BASE_URL}/admin/products?${queryParams}`, {
+        signal: controller.signal,
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -161,9 +169,10 @@ const AdminProducts: React.FC = () => {
       setProducts(data.data.products);
       setPagination(data.data.pagination);
     } catch (error: any) {
+      if (error.name === 'AbortError') return; // stale request cancelled — ignore
       setError(error.message);
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) setIsLoading(false);
     }
   };
 
@@ -274,7 +283,11 @@ const AdminProducts: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [pagination.currentPage, pagination.limit, searchTerm, filters, sortBy, sortOrder]);
+  }, [
+    pagination.currentPage, pagination.limit, searchTerm,
+    filters.category, filters.collection, filters.status, filters.featured, filters.jewelryCategory,
+    sortBy, sortOrder
+  ]);
 
   useEffect(() => {
     fetchProductOptions();
@@ -1456,17 +1469,18 @@ const AdminProducts: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
-                  disabled={!pagination.hasPrev}
+                  disabled={!pagination.hasPrev || isLoading}
                   className="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed font-satoshi transition-all duration-200"
                 >
                   Previous
                 </button>
                 <span className="text-sm text-gray-700 font-satoshi px-2">
                   Page <span className="font-bold">{pagination.currentPage}</span> of <span className="font-bold">{pagination.totalPages}</span>
+                  {isLoading && <span className="ml-2 text-gray-400 animate-pulse">loading…</span>}
                 </span>
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
-                  disabled={!pagination.hasNext}
+                  disabled={!pagination.hasNext || isLoading}
                   className="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed font-satoshi transition-all duration-200"
                 >
                   Next
