@@ -2487,7 +2487,11 @@ const ProductDetail = () => {
             {/* Products Horizontal Layout */}
             <div className="flex space-x-8 lg:space-x-12 overflow-x-auto scrollbar-hide pb-4">
               {recommendedProducts.slice(currentRecommendationIndex, currentRecommendationIndex + 4).map((product, index) => (
-                <div key={product.id} className="group cursor-pointer flex-shrink-0 w-80 lg:w-96">
+                <Link
+                  key={product.id}
+                  to={`/product/${product.slug}`}
+                  className="group cursor-pointer flex-shrink-0 w-80 lg:w-96 block"
+                >
                   {/* Product Image */}
                   <div className="relative bg-white mb-6 overflow-hidden">
                     <div className="aspect-square">
@@ -2509,7 +2513,7 @@ const ProductDetail = () => {
                       {product.price}
                     </p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 
