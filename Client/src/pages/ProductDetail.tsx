@@ -81,33 +81,49 @@ const ringSizes = [
 
 const renderDescription = (text: string | undefined) => {
   if (!text) return null;
-  const blocks: { type: 'title' | 'header' | 'body'; text: string }[] = [];
-  let current = '';
 
-  const flush = () => {
-    const t = current.trim();
-    if (!t) return;
-    const isTitle = t.includes('–') && t.split('\n').length === 1;
-    const isHeader = !isTitle && t.length < 70 && !t.endsWith('.') && !t.endsWith(',') && /^[A-Z]/.test(t);
-    blocks.push({ type: isTitle ? 'title' : isHeader ? 'header' : 'body', text: t });
-    current = '';
+  const isSectionHeader = (line: string) =>
+    line.length < 65 &&
+    !line.endsWith('.') &&
+    !line.endsWith(':') &&
+    /^[A-Z]/.test(line) &&
+    line.split(' ').length >= 2;
+
+  const blocks: { type: 'title' | 'header' | 'body'; text: string }[] = [];
+  let bodyAccum = '';
+
+  const flushBody = () => {
+    const t = bodyAccum.trim();
+    if (t) { blocks.push({ type: 'body', text: t }); bodyAccum = ''; }
   };
 
-  for (const line of text.split('\n')) {
-    if (!line.trim()) { flush(); } else { current += (current ? ' ' : '') + line.trim(); }
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (!line) { flushBody(); continue; }
+    if (line.includes('–') && line.length < 120) { flushBody(); blocks.push({ type: 'title', text: line }); continue; }
+    if (isSectionHeader(line)) { flushBody(); blocks.push({ type: 'header', text: line }); continue; }
+    bodyAccum += (bodyAccum ? ' ' : '') + line;
   }
-  flush();
+  flushBody();
 
   return (
-    <div className="space-y-2">
+    <div>
       {blocks.map((block, i) => {
-        if (block.type === 'title') {
-          return <p key={i} className="font-medium text-gray-900 text-sm leading-snug">{block.text}</p>;
-        }
-        if (block.type === 'header') {
-          return <p key={i} className="font-medium text-gray-800 text-xs uppercase tracking-wide pt-2">{block.text}</p>;
-        }
-        return <p key={i} className="text-sm font-futura-pt font-light text-gray-700 leading-relaxed">{block.text}</p>;
+        if (block.type === 'title') return (
+          <p key={i} className="font-medium text-gray-900 text-sm leading-snug mb-4">
+            {block.text}
+          </p>
+        );
+        if (block.type === 'header') return (
+          <p key={i} className="font-medium text-gray-800 text-[11px] uppercase tracking-[0.14em] mt-5 mb-2">
+            {block.text}
+          </p>
+        );
+        return (
+          <p key={i} className="text-sm font-futura-pt font-light text-gray-600 leading-[1.75] mb-3">
+            {block.text}
+          </p>
+        );
       })}
     </div>
   );
@@ -1362,9 +1378,9 @@ const ProductDetail = () => {
               }`} strokeWidth="2" />
             </button>
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              className={`overflow-hidden transition-all duration-500 ease-in-out ${
                 expandedSections.about
-                  ? 'max-h-96 opacity-100'
+                  ? 'max-h-[800px] opacity-100'
                   : 'max-h-0 opacity-0'
               }`}
             >
@@ -2096,9 +2112,9 @@ const ProductDetail = () => {
                   }`} strokeWidth="2" />
                 </button>
                 <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  className={`overflow-hidden transition-all duration-500 ease-in-out ${
                     expandedSections.about
-                      ? 'max-h-96 opacity-100'
+                      ? 'max-h-[800px] opacity-100'
                       : 'max-h-0 opacity-0'
                   }`}
                 >
