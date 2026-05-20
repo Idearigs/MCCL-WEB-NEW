@@ -79,6 +79,40 @@ const ringSizes = [
   { value: 'Z', label: 'UK Size Z (US 12.5, EU 54.1)' }
 ];
 
+const renderDescription = (text: string | undefined) => {
+  if (!text) return null;
+  const blocks: { type: 'title' | 'header' | 'body'; text: string }[] = [];
+  let current = '';
+
+  const flush = () => {
+    const t = current.trim();
+    if (!t) return;
+    const isTitle = t.includes('–') && t.split('\n').length === 1;
+    const isHeader = !isTitle && t.length < 70 && !t.endsWith('.') && !t.endsWith(',') && /^[A-Z]/.test(t);
+    blocks.push({ type: isTitle ? 'title' : isHeader ? 'header' : 'body', text: t });
+    current = '';
+  };
+
+  for (const line of text.split('\n')) {
+    if (!line.trim()) { flush(); } else { current += (current ? ' ' : '') + line.trim(); }
+  }
+  flush();
+
+  return (
+    <div className="space-y-2">
+      {blocks.map((block, i) => {
+        if (block.type === 'title') {
+          return <p key={i} className="font-medium text-gray-900 text-sm leading-snug">{block.text}</p>;
+        }
+        if (block.type === 'header') {
+          return <p key={i} className="font-medium text-gray-800 text-xs uppercase tracking-wide pt-2">{block.text}</p>;
+        }
+        return <p key={i} className="text-sm font-futura-pt font-light text-gray-700 leading-relaxed">{block.text}</p>;
+      })}
+    </div>
+  );
+};
+
 const ProductDetail = () => {
   const { productId } = useParams();
   const location = useLocation();
@@ -1335,9 +1369,9 @@ const ProductDetail = () => {
               }`}
             >
               <div className="pb-3">
-                <p className="text-sm font-futura-pt font-light text-gray-700 leading-relaxed mb-3">
-                  {productData.description}
-                </p>
+                <div className="mb-3">
+                  {renderDescription(productData.description)}
+                </div>
                 {productData.is_made_on_request && (
                   <div className="mt-4 mb-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                     <div className="flex items-start space-x-3">
@@ -2069,9 +2103,9 @@ const ProductDetail = () => {
                   }`}
                 >
                   <div className="pb-3 2xl:pb-4">
-                    <p className="text-sm 2xl:text-base font-futura-pt font-light text-gray-700 leading-relaxed mb-3">
-                      {productData.description}
-                    </p>
+                    <div className="mb-3">
+                      {renderDescription(productData.description)}
+                    </div>
 
                     {/* Made on Request Notice */}
                     {productData.is_made_on_request && (

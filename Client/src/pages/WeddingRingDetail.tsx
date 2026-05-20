@@ -122,6 +122,33 @@ const SizeBtn = ({ active, onClick, label }: { active: boolean; onClick: () => v
 );
 
 // ── Accordion row ─────────────────────────────────────────────────────────────
+const renderDescription = (text: string | undefined) => {
+  if (!text) return null;
+  const blocks: { type: 'title' | 'header' | 'body'; text: string }[] = [];
+  let current = '';
+  const flush = () => {
+    const t = current.trim();
+    if (!t) return;
+    const isTitle = t.includes('–') && !t.includes('\n');
+    const isHeader = !isTitle && t.length < 70 && !t.endsWith('.') && !t.endsWith(',') && /^[A-Z]/.test(t);
+    blocks.push({ type: isTitle ? 'title' : isHeader ? 'header' : 'body', text: t });
+    current = '';
+  };
+  for (const line of text.split('\n')) {
+    if (!line.trim()) { flush(); } else { current += (current ? ' ' : '') + line.trim(); }
+  }
+  flush();
+  return (
+    <div className="space-y-2">
+      {blocks.map((block, i) => {
+        if (block.type === 'title') return <p key={i} className="font-medium text-gray-900 text-sm leading-snug">{block.text}</p>;
+        if (block.type === 'header') return <p key={i} className="font-medium text-gray-800 text-xs uppercase tracking-wide pt-2">{block.text}</p>;
+        return <p key={i} className="text-sm font-inter font-light text-gray-600 leading-relaxed">{block.text}</p>;
+      })}
+    </div>
+  );
+};
+
 const AccordionRow = ({ label, content }: { label: string; content: string }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -130,7 +157,7 @@ const AccordionRow = ({ label, content }: { label: string; content: string }) =>
         <span className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900">{label}</span>
         <span className="text-gray-500 text-lg leading-none">{open ? '−' : '+'}</span>
       </button>
-      {open && <p className="pb-4 text-sm font-inter font-light text-gray-600 leading-relaxed">{content}</p>}
+      {open && <div className="pb-4">{renderDescription(content)}</div>}
     </div>
   );
 };
@@ -583,9 +610,9 @@ const WeddingRingDetail = (): JSX.Element => {
               </div>
 
               {productData.description && (
-                <p className="text-sm font-inter font-light text-gray-600 leading-relaxed mb-8">
-                  {productData.description}
-                </p>
+                <div className="mb-8">
+                  {renderDescription(productData.description)}
+                </div>
               )}
 
               {/* Ring type badge */}
