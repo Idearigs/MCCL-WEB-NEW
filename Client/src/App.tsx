@@ -93,8 +93,10 @@ const PixelPageViewTracker = () => {
   return null;
 };
 
+const MAINTENANCE_MODE = true;
+
 const AppRoutes = () => {
-  if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
+  if (MAINTENANCE_MODE) {
     return (
       <Routes>
         <Route path="/admin/*" element={<AdminApp />} />
