@@ -13,6 +13,7 @@ import { usePixelPageView } from "./hooks/usePixelPageView";
 // ── Eagerly loaded (tiny files or needed immediately) ──────────────────────
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import MaintenancePage from "./pages/MaintenancePage";
 
 // ── Lazily loaded pages (split into separate chunks) ──────────────────────
 const Collections       = lazy(() => import("./pages/Collections"));
@@ -92,6 +93,94 @@ const PixelPageViewTracker = () => {
   return null;
 };
 
+const AppRoutes = () => {
+  if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
+    return (
+      <Routes>
+        <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="*" element={<MaintenancePage />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <Routes>
+      {/* Home — eager */}
+      <Route path="/" element={<Index />} />
+
+      {/* Shop */}
+      <Route path="/collections" element={<Collections />} />
+      <Route path="/products" element={<Products />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/thank-you" element={<ThankYou />} />
+
+      {/* Jewellery */}
+      <Route path="/jewellery" element={<Jewellery />} />
+      <Route path="/diamonds" element={<Diamonds />} />
+      <Route path="/rings" element={<Rings />} />
+      <Route path="/engagement-rings" element={<EngagementRings />} />
+      <Route path="/wedding-rings" element={<WeddingRings />} />
+      <Route path="/wedding" element={<WeddingRings />} />
+      <Route path="/earrings" element={<Earrings />} />
+      <Route path="/necklaces" element={<Necklaces />} />
+      <Route path="/bracelets" element={<Bracelets />} />
+
+      {/* Watches */}
+      <Route path="/watches" element={<Watches />} />
+      <Route path="/roamer" element={<Roamer />} />
+      <Route path="/briston" element={<Briston />} />
+      <Route path="/festina" element={<Festina />} />
+      <Route path="/festina-watches" element={<FestinaWatches />} />
+      <Route path="/briston-watches" element={<BristonWatches />} />
+      <Route path="/roamer-watches" element={<RoamerWatches />} />
+      <Route path="/collections/festina-classic-collection" element={<FestinaClassicCollection />} />
+      <Route path="/collections/briston-heritage-collection" element={<BristonHeritageCollection />} />
+      <Route path="/collections/roamer-swiss-tradition" element={<RoamerSwissTradition />} />
+      <Route path="/collections/:collectionSlug" element={<WatchCollection />} />
+
+      {/* Product detail pages */}
+      <Route path="/engagement-rings/:productId" element={<ProductDetail />} />
+      <Route path="/wedding-rings/:productId" element={<WeddingRingDetail />} />
+      <Route path="/wedding/:productId" element={<WeddingRingDetail />} />
+      <Route path="/rings/:productId" element={<ProductDetail />} />
+      <Route path="/earrings/:productId" element={<ProductDetail />} />
+      <Route path="/necklaces/:productId" element={<ProductDetail />} />
+      <Route path="/bracelets/:productId" element={<ProductDetail />} />
+      <Route path="/jewellery/:productId" element={<ProductDetail />} />
+      <Route path="/watches/:productId" element={<WatchDetail />} />
+      <Route path="/diamonds/:productId" element={<ProductDetail />} />
+      <Route path="/product/:productId" element={<ProductDetail />} />
+
+      {/* Info */}
+      <Route path="/heritage" element={<Heritage />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/our-story" element={<OurStory />} />
+      <Route path="/bespoke-design" element={<BespokeDesign />} />
+      <Route path="/portfolio" element={<Portfolio />} />
+      <Route path="/customer-service" element={<CustomerService />} />
+      <Route path="/visit-us" element={<VisitUs />} />
+      <Route path="/trust-guarantees" element={<TrustGuarantees />} />
+
+      {/* Account */}
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/account" element={<Account />} />
+      <Route path="/orders" element={<Orders />} />
+      <Route path="/orders/:orderId" element={<OrderDetail />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+
+      {/* Admin */}
+      <Route path="/admin/*" element={<AdminApp />} />
+
+      {/* Testing */}
+      {/* Test pages moved to /admin/tools/nivoda and /admin/tools/ring-pricing */}
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -104,80 +193,7 @@ const App = () => (
               <ScrollToTop />
               <PixelPageViewTracker />
               <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {/* Home — eager */}
-                  <Route path="/" element={<Index />} />
-
-                  {/* Shop */}
-                  <Route path="/collections" element={<Collections />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/thank-you" element={<ThankYou />} />
-
-                  {/* Jewellery */}
-                  <Route path="/jewellery" element={<Jewellery />} />
-                  <Route path="/diamonds" element={<Diamonds />} />
-                  <Route path="/rings" element={<Rings />} />
-                  <Route path="/engagement-rings" element={<EngagementRings />} />
-                  <Route path="/wedding-rings" element={<WeddingRings />} />
-                  <Route path="/wedding" element={<WeddingRings />} />
-                  <Route path="/earrings" element={<Earrings />} />
-                  <Route path="/necklaces" element={<Necklaces />} />
-                  <Route path="/bracelets" element={<Bracelets />} />
-
-                  {/* Watches */}
-                  <Route path="/watches" element={<Watches />} />
-                  <Route path="/roamer" element={<Roamer />} />
-                  <Route path="/briston" element={<Briston />} />
-                  <Route path="/festina" element={<Festina />} />
-                  <Route path="/festina-watches" element={<FestinaWatches />} />
-                  <Route path="/briston-watches" element={<BristonWatches />} />
-                  <Route path="/roamer-watches" element={<RoamerWatches />} />
-                  <Route path="/collections/festina-classic-collection" element={<FestinaClassicCollection />} />
-                  <Route path="/collections/briston-heritage-collection" element={<BristonHeritageCollection />} />
-                  <Route path="/collections/roamer-swiss-tradition" element={<RoamerSwissTradition />} />
-                  <Route path="/collections/:collectionSlug" element={<WatchCollection />} />
-
-                  {/* Product detail pages */}
-                  <Route path="/engagement-rings/:productId" element={<ProductDetail />} />
-                  <Route path="/wedding-rings/:productId" element={<WeddingRingDetail />} />
-                  <Route path="/wedding/:productId" element={<WeddingRingDetail />} />
-                  <Route path="/rings/:productId" element={<ProductDetail />} />
-                  <Route path="/earrings/:productId" element={<ProductDetail />} />
-                  <Route path="/necklaces/:productId" element={<ProductDetail />} />
-                  <Route path="/bracelets/:productId" element={<ProductDetail />} />
-                  <Route path="/jewellery/:productId" element={<ProductDetail />} />
-                  <Route path="/watches/:productId" element={<WatchDetail />} />
-                  <Route path="/diamonds/:productId" element={<ProductDetail />} />
-                  <Route path="/product/:productId" element={<ProductDetail />} />
-
-                  {/* Info */}
-                  <Route path="/heritage" element={<Heritage />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/our-story" element={<OurStory />} />
-                  <Route path="/bespoke-design" element={<BespokeDesign />} />
-                  <Route path="/portfolio" element={<Portfolio />} />
-                  <Route path="/customer-service" element={<CustomerService />} />
-                  <Route path="/visit-us" element={<VisitUs />} />
-                  <Route path="/trust-guarantees" element={<TrustGuarantees />} />
-
-                  {/* Account */}
-                  <Route path="/favorites" element={<Favorites />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/orders/:orderId" element={<OrderDetail />} />
-                  <Route path="/verify-email" element={<VerifyEmail />} />
-                  <Route path="/auth/callback" element={<AuthCallback />} />
-
-                  {/* Admin */}
-                  <Route path="/admin/*" element={<AdminApp />} />
-
-                  {/* Testing */}
-                  {/* Test pages moved to /admin/tools/nivoda and /admin/tools/ring-pricing */}
-
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <AppRoutes />
               </Suspense>
             </BrowserRouter>
           </CartProvider>
