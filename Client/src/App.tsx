@@ -94,9 +94,19 @@ const PixelPageViewTracker = () => {
 };
 
 const MAINTENANCE_MODE = true;
+const PREVIEW_TOKEN = 'mcc2026';
 
 const AppRoutes = () => {
-  if (MAINTENANCE_MODE) {
+  // Persist preview access via localStorage so client can navigate freely
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('preview') === PREVIEW_TOKEN) {
+      localStorage.setItem('preview_bypass', 'true');
+    }
+  }
+  const hasPreviewAccess = typeof window !== 'undefined' && localStorage.getItem('preview_bypass') === 'true';
+
+  if (MAINTENANCE_MODE && !hasPreviewAccess) {
     return (
       <Routes>
         <Route path="/admin/*" element={<AdminApp />} />
