@@ -2,21 +2,21 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 const ContactInfoSection = () => {
   const contactInfo = [
-    { 
-      icon: <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />, 
-      text: "No. 1, Galle Face Terrace, Colombo 03, Sri Lanka" 
+    {
+      icon: <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />,
+      text: "7 The Square, Beeston, Nottinghamshire, NG9 2JG"
     },
-    { 
-      icon: <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />, 
-      text: "+94 11 2 555 555" 
+    {
+      icon: <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />,
+      text: "0115 925 7552"
     },
-    { 
-      icon: <Mail className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />, 
-      text: "info@mcculloch.lk" 
+    {
+      icon: <Mail className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />,
+      text: "has@mccullochjewellers.co.uk"
     },
-    { 
-      icon: <Clock className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />, 
-      text: "Mon - Sat: 10:00 AM - 7:00 PM" 
+    {
+      icon: <Clock className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />,
+      text: "Mon–Sat: 9:00am–5:30pm | Sunday: Closed"
     },
   ];
 

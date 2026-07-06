@@ -476,7 +476,7 @@ const StaticNavigation = (): JSX.Element => {
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-cormorant font-medium text-gray-900">Email Us</div>
-                    <div className="text-xs font-cormorant text-gray-600">info@mcculloch.co.uk</div>
+                    <div className="text-xs font-cormorant text-gray-600">has@mccullochjewellers.co.uk</div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 transform rotate-[-90deg]" />
                 </Link>

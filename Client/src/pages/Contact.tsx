@@ -68,9 +68,9 @@ const Contact = (): JSX.Element => {
                     Visit Our Showroom
                   </h3>
                   <p className="text-base font-cormorant text-gray-600 leading-relaxed">
-                    123 Luxury Lane<br />
-                    Mayfair, London W1K 5AB<br />
-                    United Kingdom
+                    Andrew McCulloch Jewellers<br />
+                    7 The Square, Beeston<br />
+                    Nottinghamshire, NG9 2JG
                   </p>
                 </div>
               </div>
@@ -85,8 +85,8 @@ const Contact = (): JSX.Element => {
                     Call Us
                   </h3>
                   <p className="text-base font-cormorant text-gray-600 leading-relaxed">
-                    +44 (0) 20 7123 4567<br />
-                    +44 (0) 20 7123 4568
+                    0115 925 7552<br />
+                    07859 888649
                   </p>
                 </div>
               </div>
@@ -101,8 +101,7 @@ const Contact = (): JSX.Element => {
                     Email Us
                   </h3>
                   <p className="text-base font-cormorant text-gray-600 leading-relaxed">
-                    info@mcculloch.co.uk<br />
-                    bespoke@mcculloch.co.uk
+                    has@mccullochjewellers.co.uk
                   </p>
                 </div>
               </div>
@@ -117,9 +116,8 @@ const Contact = (): JSX.Element => {
                     Opening Hours
                   </h3>
                   <p className="text-base font-cormorant text-gray-600 leading-relaxed">
-                    Monday - Friday: 10:00 AM - 7:00 PM<br />
-                    Saturday: 10:00 AM - 6:00 PM<br />
-                    Sunday: 12:00 PM - 5:00 PM
+                    Monday–Saturday: 9:00am–5:30pm<br />
+                    Sunday: Closed
                   </p>
                 </div>
               </div>

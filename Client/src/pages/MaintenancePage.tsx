@@ -35,11 +35,11 @@ const MaintenancePage = () => (
       For urgent enquiries
     </p>
     <a
-      href="mailto:info@mcculloch.co.uk"
+      href="mailto:has@mccullochjewellers.co.uk"
       className="inline-flex items-center gap-2 text-[#C9A96E] hover:text-[#a88550] transition-colors font-['Cormorant_Garamond'] text-lg"
     >
       <Mail className="w-4 h-4" />
-      info@mcculloch.co.uk
+      has@mccullochjewellers.co.uk
     </a>
 
     <p className="mt-16 text-[10px] tracking-[0.2em] uppercase text-[#c0b0a0] font-['Futura_PT']">
