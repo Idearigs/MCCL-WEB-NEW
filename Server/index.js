@@ -36,7 +36,11 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmetConfig);
 app.use(securityLogger);
-app.use(generalRateLimit);
+// Skip general rate limit for authenticated admin routes — admins need bulk-operation headroom
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/v1/admin')) return next();
+  return generalRateLimit(req, res, next);
+});
 
 // CORS configuration
 const corsOptions = {
