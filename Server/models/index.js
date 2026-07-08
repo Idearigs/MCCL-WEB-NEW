@@ -1180,6 +1180,7 @@ const initializeModels = (sequelize) => {
     tableName: 'product_diamond_sizes',
     underscored: true,
     timestamps: true,
+    updatedAt: false,
     indexes: [
       {
         unique: true,
