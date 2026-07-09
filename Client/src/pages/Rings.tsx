@@ -120,7 +120,7 @@ const Rings = (): JSX.Element => {
           metalsResponse,
           diamondSizesResponse
         ] = await Promise.all([
-          fetch(`${API_BASE_URL}/products/category/engagement-rings`),
+          fetch(`${API_BASE_URL}/products/category/rings`),
           fetch(`${API_BASE_URL}/filters/collections`),
           fetch(`${API_BASE_URL}/filters/ring-types`),
           fetch(`${API_BASE_URL}/filters/gemstones`),
