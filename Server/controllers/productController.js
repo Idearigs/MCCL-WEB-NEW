@@ -1,4 +1,4 @@
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const { getModels } = require('../models');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { logger } = require('../config/database');
@@ -221,6 +221,13 @@ const getAllProducts = asyncHandler(async (req, res) => {
   } else {
     orderBy.push(['created_at', order.toUpperCase()], ['sort_order', 'ASC'], ['slug', 'ASC']);
   }
+
+  // Products with images always rank above image-less ones; the chosen sort
+  // then applies within each group.
+  orderBy.unshift([
+    literal('(EXISTS (SELECT 1 FROM product_images pi WHERE pi.product_id = "Product"."id"))'),
+    'DESC'
+  ]);
 
   const { count, rows: products } = await Product.findAndCountAll({
     where: whereClause,
