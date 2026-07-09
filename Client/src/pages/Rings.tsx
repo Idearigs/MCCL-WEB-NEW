@@ -131,7 +131,12 @@ const Rings = (): JSX.Element => {
         // Handle products data
         const productsData = await productsResponse.json();
         if (productsData.success) {
-          setRingProducts(productsData.data.products || []);
+          const products = productsData.data.products || [];
+          // Show products with images first, image-less products below
+          const sorted = [...products].sort(
+            (a, b) => ((a.images?.length ? 0 : 1) - (b.images?.length ? 0 : 1))
+          );
+          setRingProducts(sorted);
         } else {
           setError(productsData.message || 'Failed to fetch ring products');
         }
