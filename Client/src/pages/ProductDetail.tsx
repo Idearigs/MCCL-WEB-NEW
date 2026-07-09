@@ -249,10 +249,18 @@ const ProductDetail = () => {
 
     // Fallback: show first available metal's images + videos (never show only the video)
     const firstMetalId = allImages.find(img => img.metal_id && !img.diamond_size_id && img.type !== 'video')?.metal_id;
-    const fallbackImages = firstMetalId
-      ? allImages.filter(img => img.metal_id === firstMetalId && !img.diamond_size_id && img.type !== 'video')
-      : [];
-    return [...fallbackImages, ...videos];
+    if (firstMetalId) {
+      const fallbackImages = allImages.filter(img =>
+        img.metal_id === firstMetalId && !img.diamond_size_id && img.type !== 'video'
+      );
+      return [...fallbackImages, ...videos];
+    }
+
+    // Products whose images aren't tied to a metal at all (e.g. live stock uploads)
+    const generalImages = allImages.filter(img =>
+      !img.metal_id && !img.diamond_size_id && img.type !== 'video'
+    );
+    return [...generalImages, ...videos];
   };
 
   // Helper function to get the primary image for a specific metal

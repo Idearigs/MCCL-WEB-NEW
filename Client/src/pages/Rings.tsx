@@ -69,12 +69,17 @@ interface RingProduct {
   in_stock: boolean;
 }
 
+// Filtering and paging happen client-side, so the whole category is fetched up
+// front (~87KB compressed for the full ring catalogue).
+const CATALOG_FETCH_LIMIT = 500;
+const PRODUCTS_PER_PAGE = 24;
+
 const Rings = (): JSX.Element => {
   const { addToCart, openCart } = useCart();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('rings');
-  const [displayCount, setDisplayCount] = useState<number>(30);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedMetals, setSelectedMetals] = useState<{[productId: string]: string}>({});
   const [selectedFilters, setSelectedFilters] = useState<{
     price: string[];
@@ -120,7 +125,7 @@ const Rings = (): JSX.Element => {
           metalsResponse,
           diamondSizesResponse
         ] = await Promise.all([
-          fetch(`${API_BASE_URL}/products/category/rings`),
+          fetch(`${API_BASE_URL}/products/category/rings?limit=${CATALOG_FETCH_LIMIT}`),
           fetch(`${API_BASE_URL}/filters/collections`),
           fetch(`${API_BASE_URL}/filters/ring-types`),
           fetch(`${API_BASE_URL}/filters/gemstones`),
@@ -387,6 +392,33 @@ const Rings = (): JSX.Element => {
 
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const pageStart = (currentPage - 1) * PRODUCTS_PER_PAGE;
+  const pagedProducts = filteredProducts.slice(pageStart, pageStart + PRODUCTS_PER_PAGE);
+
+  // A narrowed filter can leave the current page out of range
+  const filterKey = JSON.stringify(selectedFilters);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterKey]);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Page numbers with ellipsis: 1 … 4 5 [6] 7 8 … 12
+  const pageNumbers = ((): (number | 'gap')[] => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = new Set<number>([1, totalPages, currentPage]);
+    if (currentPage - 1 > 1) pages.add(currentPage - 1);
+    if (currentPage + 1 < totalPages) pages.add(currentPage + 1);
+    const sorted = [...pages].sort((a, b) => a - b);
+    return sorted.flatMap((p, i) =>
+      i > 0 && p - sorted[i - 1] > 1 ? ['gap' as const, p] : [p]
+    );
+  })();
 
   // Ring-specific filter options - using database data only
   const filterOptions = {
@@ -898,7 +930,7 @@ const Rings = (): JSX.Element => {
                   </div>
                 </div>
               ) : (
-                filteredProducts.slice(0, displayCount).map((product) => {
+                pagedProducts.map((product) => {
                   const selectedMetalId = selectedMetals[product.id] || product.available_metals?.[0]?.id;
                   const displayImage = getImageForMetal(product, selectedMetalId);
                   const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
@@ -1020,26 +1052,54 @@ const Rings = (): JSX.Element => {
               )}
             </div>
 
-            {/* Load More Section */}
+            {/* Pagination */}
             {!loading && !error && filteredProducts.length > 0 && (
               <div className="flex flex-col items-center gap-4 mb-16">
-                {displayCount < filteredProducts.length ? (
-                  <>
+                {totalPages > 1 && (
+                  <nav aria-label="Pagination" className="flex items-center gap-1">
                     <button
-                      onClick={() => setDisplayCount(prev => prev + 30)}
-                      className="bg-gray-900 text-white px-8 py-3 hover:bg-gray-800 transition-colors font-medium"
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      aria-label="Previous page"
+                      className="px-3 py-2 text-sm font-inter text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition-colors"
                     >
-                      Load More
+                      Prev
                     </button>
-                    <p className="text-sm text-gray-600 font-inter">
-                      {Math.min(displayCount, filteredProducts.length)} / {filteredProducts.length} results
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-600 font-inter">
-                    All {filteredProducts.length} results loaded
-                  </p>
+
+                    {pageNumbers.map((p, idx) =>
+                      p === 'gap' ? (
+                        <span key={`gap-${idx}`} className="px-2 text-sm text-gray-400 select-none">…</span>
+                      ) : (
+                        <button
+                          key={p}
+                          onClick={() => goToPage(p)}
+                          aria-label={`Page ${p}`}
+                          aria-current={p === currentPage ? 'page' : undefined}
+                          className={`min-w-[38px] px-3 py-2 text-sm font-inter transition-colors ${
+                            p === currentPage
+                              ? 'bg-gray-900 text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      )
+                    )}
+
+                    <button
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      aria-label="Next page"
+                      className="px-3 py-2 text-sm font-inter text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                    >
+                      Next
+                    </button>
+                  </nav>
                 )}
+
+                <p className="text-sm text-gray-600 font-inter">
+                  {pageStart + 1}–{pageStart + pagedProducts.length} of {filteredProducts.length} results
+                </p>
               </div>
             )}
           </div>

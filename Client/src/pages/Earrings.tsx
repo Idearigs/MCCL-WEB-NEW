@@ -113,7 +113,7 @@ const Earrings = (): JSX.Element => {
           gemstonesResponse,
           metalsResponse
         ] = await Promise.all([
-          fetch(`${API_BASE_URL}/products/category/earrings`),
+          fetch(`${API_BASE_URL}/products/category/earrings?limit=500`),
           fetch(`${API_BASE_URL}/filters/collections`),
           fetch(`${API_BASE_URL}/filters/ring-types`),
           fetch(`${API_BASE_URL}/filters/gemstones`),
