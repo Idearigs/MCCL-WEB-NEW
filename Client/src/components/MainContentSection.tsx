@@ -18,20 +18,20 @@ const jewelryCategories = [
   {
     title: "Earrings",
     image: "/images/ggg.webp",
-    href: null,
-    active: false,
+    href: "/earrings",
+    active: true,
   },
   {
     title: "Necklaces",
     image: "/images/dddd.webp",
-    href: null,
-    active: false,
+    href: "/necklaces",
+    active: true,
   },
   {
     title: "Bracelets",
     image: "/images/sddd.webp",
-    href: null,
-    active: false,
+    href: "/bracelets",
+    active: true,
   },
 ];
 
