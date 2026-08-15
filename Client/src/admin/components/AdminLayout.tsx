@@ -24,6 +24,9 @@ import {
   Gem,
   FlaskConical,
   Shield,
+  Star,
+  Calendar,
+  Award,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -60,6 +63,9 @@ const navigation: NavItem[] = [
       { name: 'Promotions', href: '/admin/promotions', icon: Zap },
     ]
   },
+  { name: 'Reviews', href: '/admin/reviews', icon: Star },
+  { name: 'Appointments', href: '/admin/appointments', icon: Calendar },
+  { name: 'Client Pieces', href: '/admin/pieces', icon: Award },
   { name: 'Chats', href: '/admin/chats', icon: MessageCircle },
   { name: 'Watches', href: '/admin/watches', icon: Watch },
   { name: 'Nivoda', href: '/admin/nivoda', icon: Diamond },

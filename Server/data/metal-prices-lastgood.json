@@ -1,0 +1,14 @@
+{
+  "gold_per_gram": 103.9725,
+  "silver_per_gram": 1.5397,
+  "platinum_per_gram": 41.683,
+  "gold_9kt_per_gram": 38.9897,
+  "gold_14kt_per_gram": 60.6506,
+  "gold_18kt_per_gram": 77.9794,
+  "usd_to_gbp": 0.73874,
+  "gold_usd_per_oz": 4377.600098,
+  "silver_usd_per_oz": 64.827003,
+  "platinum_usd_per_oz": 1755,
+  "fetched_at": "2026-08-15T09:25:23.965Z",
+  "source": "gold-api.com + frankfurter.app (committed seed)"
+}

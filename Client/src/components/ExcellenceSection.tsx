@@ -86,7 +86,7 @@ export default function ExcellenceSection(): JSX.Element {
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="font-light text-lg md:text-xl text-white font-serif max-w-2xl"
           >
-            A legacy of excellence since 1847
+            A legacy of excellence since 1952
           </motion.p>
         </div>
       </div>

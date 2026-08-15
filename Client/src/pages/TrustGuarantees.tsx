@@ -35,7 +35,7 @@ const TrustGuarantees = (): JSX.Element => {
       {/* Content Sections */}
       <div className="max-w-7xl mx-auto px-6 py-8 lg:py-12">
 
-        {/* Lifetime Warranty Section */}
+        {/* 1-Year Manufacturing Warranty Section */}
         <section id="lifetime-warranty" className="mb-16 lg:mb-20">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
             <div>
@@ -45,29 +45,29 @@ const TrustGuarantees = (): JSX.Element => {
                 </div>
                 <div>
                   <h2 className="text-2xl lg:text-3xl font-cormorant font-light text-gray-900 mb-4">
-                    Lifetime Warranty
+                    1-Year Manufacturing Warranty
                   </h2>
                 </div>
               </div>
               <p className="text-base font-cormorant text-gray-600 leading-relaxed mb-6">
-                Every piece of jewelry purchased from McCulloch Jewellers comes with our comprehensive lifetime warranty, ensuring your investment is protected for generations to come.
+                Eligible jewellery purchased from Andrew McCulloch Jewellers is covered by our 1-Year Manufacturing Warranty, covering defects in materials or craftsmanship for 12 months from the date of purchase.
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-base font-cormorant text-gray-600">Free cleaning and inspection annually</p>
+                  <p className="text-base font-cormorant text-gray-600">Confirmed manufacturing faults repaired, replaced or remade free of charge</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-base font-cormorant text-gray-600">Complimentary minor repairs and adjustments</p>
+                  <p className="text-base font-cormorant text-gray-600">Assessed by the jewellers who made or supplied the piece</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-base font-cormorant text-gray-600">Prong re-tipping and stone tightening</p>
+                  <p className="text-base font-cormorant text-gray-600">Servicing, cleaning and inspections available on our own premises</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-base font-cormorant text-gray-600">Manufacturing defect coverage</p>
+                  <p className="text-base font-cormorant text-gray-600">Regular maintenance recommended to keep your jewellery secure</p>
                 </div>
               </div>
             </div>
@@ -78,15 +78,15 @@ const TrustGuarantees = (): JSX.Element => {
               <div className="space-y-6">
                 <div>
                   <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">What's Included</div>
-                  <div className="text-sm font-cormorant text-gray-600">All structural repairs, stone replacement due to setting failure, and metal work restoration</div>
+                  <div className="text-sm font-cormorant text-gray-600">Confirmed manufacturing defects in materials or workmanship within 12 months of purchase</div>
                 </div>
                 <div>
                   <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Exclusions</div>
-                  <div className="text-sm font-cormorant text-gray-600">Normal wear, loss, theft, or damage due to abuse or accidents</div>
+                  <div className="text-sm font-cormorant text-gray-600">Accidental damage, loss, theft, normal wear and tear, and repairs or alterations by another jeweller</div>
                 </div>
                 <div>
-                  <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Transferable</div>
-                  <div className="text-sm font-cormorant text-gray-600">Warranty transfers with ownership documentation</div>
+                  <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Making a Claim</div>
+                  <div className="text-sm font-cormorant text-gray-600">Contact us with your original proof of purchase and we will inspect the item</div>
                 </div>
               </div>
             </div>
@@ -108,21 +108,21 @@ const TrustGuarantees = (): JSX.Element => {
             </div>
             <div className="grid lg:grid-cols-3 gap-8">
               <div>
-                <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-3">30-Day Return Policy</h3>
+                <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-3">30-Day Returns</h3>
                 <p className="text-base font-cormorant text-gray-600 leading-relaxed">
-                  If you're not completely satisfied with your purchase, return it within 30 days for a full refund. No questions asked.
+                  Return an eligible item within 30 days in its original condition for a refund, made to your original payment method once inspected. Bespoke and personalised pieces are excluded.
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-3">Exchange Program</h3>
+                <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-3">Exchanges</h3>
                 <p className="text-base font-cormorant text-gray-600 leading-relaxed">
-                  Exchange your piece for another of equal or greater value within 60 days of purchase with store credit applied.
+                  Prefer something else? Exchange an eligible item subject to availability, with any price difference payable or refunded as appropriate.
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-3">Upgrade Protection</h3>
+                <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-3">Aftercare &amp; Servicing</h3>
                 <p className="text-base font-cormorant text-gray-600 leading-relaxed">
-                  Trade up to a more valuable piece within one year and receive full credit for your original purchase price.
+                  Repairs, servicing and inspections are carried out by hand on our own premises in Beeston, keeping your jewellery secure and looking its best for years to come.
                 </p>
               </div>
             </div>
@@ -169,19 +169,19 @@ const TrustGuarantees = (): JSX.Element => {
               <h3 className="text-xl font-cormorant font-medium text-gray-900 mb-6">Quality Standards</h3>
               <div className="space-y-6">
                 <div>
-                  <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Diamond Grading</div>
-                  <div className="text-sm font-cormorant text-gray-600 mb-2">Comprehensive 4C analysis: Cut, Color, Clarity, and Carat weight</div>
-                  <div className="text-xs font-cormorant text-gray-500">Detailed plotting and laser inscription available</div>
+                  <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Diamond Certification</div>
+                  <div className="text-sm font-cormorant text-gray-600 mb-2">Independent grading from GIA, IGI or HRD on larger diamonds, covering the 4Cs</div>
+                  <div className="text-xs font-cormorant text-gray-500">Smaller and accent stones are supplied without individual reports, as is standard</div>
                 </div>
                 <div>
-                  <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Precious Metal Testing</div>
-                  <div className="text-sm font-cormorant text-gray-600 mb-2">Assay office hallmarking for gold, platinum, and silver content</div>
-                  <div className="text-xs font-cormorant text-gray-500">British Hallmarking Council certified</div>
+                  <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Precious Metal Hallmarking</div>
+                  <div className="text-sm font-cormorant text-gray-600 mb-2">Hallmarked by a UK Assay Office for gold, platinum and silver content</div>
+                  <div className="text-xs font-cormorant text-gray-500">Our own registered Sponsor's Mark on jewellery we make</div>
                 </div>
                 <div>
-                  <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Gemstone Authentication</div>
-                  <div className="text-sm font-cormorant text-gray-600 mb-2">Origin determination and treatment disclosure for all colored stones</div>
-                  <div className="text-xs font-cormorant text-gray-500">Spectroscopic analysis and inclusion mapping</div>
+                  <div className="text-sm font-cormorant font-medium text-gray-900 mb-2">Certificate of Authenticity</div>
+                  <div className="text-sm font-cormorant text-gray-600 mb-2">Supplied with bespoke jewellery, recording its key details and gemstone information</div>
+                  <div className="text-xs font-cormorant text-gray-500">Significant gemstone treatments disclosed where known</div>
                 </div>
               </div>
             </div>
@@ -198,24 +198,24 @@ const TrustGuarantees = (): JSX.Element => {
               <div>
                 <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-4">Responsible Practices</h3>
                 <p className="text-base font-cormorant text-gray-600 leading-relaxed mb-4">
-                  We are committed to ethical sourcing and responsible business practices throughout our entire supply chain.
+                  We believe beautiful jewellery should be made to last, and we make responsible use of precious materials wherever possible.
                 </p>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span className="text-sm font-cormorant text-gray-600">Kimberley Process Certification</span>
+                    <span className="text-sm font-cormorant text-gray-600">Professionally refined recycled gold</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span className="text-sm font-cormorant text-gray-600">Responsible Jewellery Council Member</span>
+                    <span className="text-sm font-cormorant text-gray-600">Reuse your own gold in a bespoke piece</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span className="text-sm font-cormorant text-gray-600">Fairmined Gold Certification</span>
+                    <span className="text-sm font-cormorant text-gray-600">Remodelling and repair to extend jewellery's life</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span className="text-sm font-cormorant text-gray-600">Supply Chain Transparency</span>
+                    <span className="text-sm font-cormorant text-gray-600">UK hallmarking on precious metals</span>
                   </div>
                 </div>
               </div>
@@ -223,20 +223,20 @@ const TrustGuarantees = (): JSX.Element => {
                 <h3 className="text-lg font-cormorant font-medium text-gray-900 mb-4">Our Commitments</h3>
                 <div className="space-y-4">
                   <div>
-                    <div className="text-sm font-cormorant font-medium text-gray-900">Conflict-Free Diamonds</div>
-                    <div className="text-xs font-cormorant text-gray-600">100% certified conflict-free diamond sourcing</div>
+                    <div className="text-sm font-cormorant font-medium text-gray-900">Reusing Your Gold</div>
+                    <div className="text-xs font-cormorant text-gray-600">Inherited or unwanted gold professionally refined and reused where suitable</div>
                   </div>
                   <div>
-                    <div className="text-sm font-cormorant font-medium text-gray-900">Fair Labor Practices</div>
-                    <div className="text-xs font-cormorant text-gray-600">Supporting ethical mining and fair wages</div>
+                    <div className="text-sm font-cormorant font-medium text-gray-900">Repair Before Replace</div>
+                    <div className="text-xs font-cormorant text-gray-600">Restoring and remodelling treasured pieces rather than replacing them</div>
                   </div>
                   <div>
-                    <div className="text-sm font-cormorant font-medium text-gray-900">Environmental Responsibility</div>
-                    <div className="text-xs font-cormorant text-gray-600">Minimizing environmental impact through sustainable practices</div>
+                    <div className="text-sm font-cormorant font-medium text-gray-900">Made to Last</div>
+                    <div className="text-xs font-cormorant text-gray-600">Quality craftsmanship designed to be worn, enjoyed and passed down</div>
                   </div>
                   <div>
-                    <div className="text-sm font-cormorant font-medium text-gray-900">Community Support</div>
-                    <div className="text-xs font-cormorant text-gray-600">Contributing to mining community development programs</div>
+                    <div className="text-sm font-cormorant font-medium text-gray-900">Honest Disclosure</div>
+                    <div className="text-xs font-cormorant text-gray-600">Significant gemstone treatments disclosed where known</div>
                   </div>
                 </div>
               </div>

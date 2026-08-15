@@ -1,17 +1,15 @@
 
 import React from "react";
-import { FooterSection } from "../components/FooterSection";
-import LuxuryNavigation from "../components/LuxuryNavigation";
-import MainContentSection from "../components/MainContentSection";
-import TestimonialsSection from "../components/TestimonialsSection";
-import BespokeDesignSection from "../components/BespokeDesignSection";
-import ServiceFeaturesSection from "../components/ServiceFeaturesSection";
+import NavigationV2 from "../components/home-v2/NavigationV2";
+import MainContentV2 from "../components/home-v2/MainContentV2";
+import FooterV2 from "../components/home-v2/FooterV2";
 import PromotionPopup from "../components/PromotionPopup";
-import ChatWidget from "../components/ChatWidget";
+import ChatWidget from "../components/ChatWidgetV2";
 import { useUserAuth } from "../contexts/UserAuthContext";
 
+// Homepage v2 redesign (design_handoff_mcculloch_homepage).
+// The previous homepage is preserved at pages/Index.original.tsx.
 const Index = (): JSX.Element => {
-  // Get user from auth context
   const { user: authUser } = useUserAuth();
   const user = authUser ? {
     id: authUser.id,
@@ -20,15 +18,12 @@ const Index = (): JSX.Element => {
   } : null;
 
   return (
-    <div className="flex flex-col w-full bg-white min-h-screen">
-      <LuxuryNavigation />
+    <div className="flex flex-col w-full min-h-screen" style={{ background: "#F8F6F0" }}>
+      <NavigationV2 />
       <PromotionPopup delay={3000} />
       <ChatWidget user={user} />
-      <MainContentSection />
-      <TestimonialsSection />
-      <BespokeDesignSection />
-      <ServiceFeaturesSection />
-      <FooterSection />
+      <MainContentV2 />
+      <FooterV2 />
     </div>
   );
 };

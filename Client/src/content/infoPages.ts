@@ -1,0 +1,1524 @@
+// AUTO-GENERATED from client Website Essentials.ods (verbatim copy). Do not hand-edit prose here; regenerate from the doc.
+
+export interface InfoSection { heading: string; paras: string[]; bullets: string[]; }
+export interface InfoPage { slug: string; title: string; sections: InfoSection[]; table?: string[][]; }
+export interface FaqGroup { category: string; items: { q: string; a: string }[]; }
+
+export const INFO_PAGES: Record<string, InfoPage> = {
+  "sustainability": {
+    "slug": "sustainability",
+    "title": "Sustainability",
+    "sections": [
+      {
+        "heading": "Sustainability",
+        "paras": [
+          "At Andrew McCulloch Jewellers, we believe beautiful jewellery should be made to last. Sustainability is about creating timeless pieces, extending the life of treasured jewellery through expert repairs and remodelling, and making responsible use of precious materials wherever possible."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Our Approach",
+        "paras": [
+          "We are committed to responsible craftsmanship and creating jewellery that can be enjoyed for generations. By encouraging jewellery repairs, remodelling existing pieces and making thoughtful use of precious metals, we help reduce unnecessary waste while preserving the sentimental value behind every piece."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Reusing Your Gold",
+        "paras": [
+          "If you're commissioning a bespoke piece of jewellery and have unwanted or inherited gold, we encourage you to use it wherever it is suitable. Reusing your own gold allows treasured materials to become part of a new design while preserving their sentimental value. Before manufacture, your gold is professionally refined to ensure it meets the quality and purity required for creating a beautiful new piece of jewellery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Professionally Refined Gold",
+        "paras": [
+          "If you do not have your own gold to incorporate into your bespoke jewellery, we aim to use professionally refined recycled gold. The gold we purchase from members of the public is sent to a specialist precious metal refiner, where it is refined back to pure gold before being reused in the manufacture of new jewellery. Gold can be recycled repeatedly without losing its quality, making it one of the world's most reusable precious metals."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Jewellery Remodelling",
+        "paras": [
+          "Rather than replacing jewellery, we believe in restoring and reimagining it. Whether remodelling an inherited ring, resetting a cherished diamond or transforming older jewellery into a completely new design, our workshop helps extend the life of existing pieces through skilled craftsmanship and thoughtful design."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Repair Before Replace",
+        "paras": [
+          "Repairing jewellery is often the most sustainable option. Our experienced workshop carries out a wide range of jewellery repairs, helping customers restore treasured pieces instead of replacing them. By extending the life of jewellery, we help preserve memories while reducing unnecessary waste."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Jewellery Made to Last",
+        "paras": [
+          "We believe quality craftsmanship is one of the most sustainable choices we can make. Every bespoke commission and repair is completed with care, precision and attention to detail, creating jewellery designed to be worn, enjoyed and passed down through future generations."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Looking Ahead",
+        "paras": [
+          "Sustainability is an ongoing journey. We continually look for practical ways to improve our processes, reduce waste and make responsible choices while maintaining the exceptional quality, craftsmanship and personal service that Andrew McCulloch Jewellers is known for."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "certificate-of-authenticity": {
+    "slug": "certificate-of-authenticity",
+    "title": "Certificate of Authenticity",
+    "sections": [
+      {
+        "heading": "Certificate of Authenticity",
+        "paras": [
+          "At Andrew McCulloch Jewellers, we believe every piece of jewellery should be accompanied by clear and accurate information. Our Certificate of Authenticity provides a permanent record of your jewellery and confirms its principal characteristics at the time it is supplied. It is designed to give you confidence in your purchase and serves as a valuable record for future reference."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Andrew McCulloch Jewellers Certificate of Authenticity",
+        "paras": [
+          "We normally provide an Andrew McCulloch Jewellers Certificate of Authenticity with all bespoke jewellery created by our workshop. As every bespoke piece is individually designed and crafted, the certificate records the key details of the finished jewellery. For selected ready-to-wear items, a Certificate of Authenticity may also be provided upon request where appropriate."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What Information Is Included?",
+        "paras": [
+          "Depending on the jewellery, our Certificate of Authenticity may include the jewellery description, precious metal, hallmark information, gemstone details, diamond specifications where applicable, ring size, total gemstone weight, certificate number, date of issue and, where appropriate, a photograph of the finished piece."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Independent Diamond Certification",
+        "paras": [
+          "Some diamonds are accompanied by an independent grading report from recognised gemmological laboratories such as GIA, IGI or HRD. These reports provide an independent assessment of a diamond's characteristics, including its cut, colour, clarity and carat weight. Where an independent laboratory grading report is included, this will be clearly stated in the product description and supplied with your jewellery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Why Aren't All Diamonds or Gemstones Certified?",
+        "paras": [
+          "Not every diamond or coloured gemstone is individually certified. Smaller diamonds, accent stones and many coloured gemstones are commonly supplied without an independent laboratory grading report. This is standard practice throughout the jewellery industry and does not indicate a lower standard of quality. Where an independent certificate is not supplied, customers purchasing bespoke jewellery will normally receive our Certificate of Authenticity, and customers purchasing other jewellery may request one where appropriate."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What Our Certificate Confirms",
+        "paras": [
+          "Our Certificate of Authenticity confirms the details of your jewellery as supplied by Andrew McCulloch Jewellers. It provides a record of the item's principal characteristics but should not be confused with an independent laboratory grading report or an insurance valuation."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Lost Your Certificate?",
+        "paras": [
+          "If you have misplaced your Andrew McCulloch Jewellers Certificate of Authenticity, please contact our team. Where our records allow, we may be able to issue a replacement certificate following verification of the original purchase."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need More Information?",
+        "paras": [
+          "If you have any questions about our Certificate of Authenticity or whether a particular item includes an independent laboratory grading report, please contact Andrew McCulloch Jewellers. Our experienced team will be happy to assist you and explain the certification available for your chosen piece of jewellery."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "privacy": {
+    "slug": "privacy",
+    "title": "Privacy Policy",
+    "sections": [
+      {
+        "heading": "Protecting Your Privacy",
+        "paras": [
+          "At Andrew McCulloch Jewellers, we are committed to protecting your privacy and handling your personal information responsibly. Whether you visit our website, purchase jewellery, commission a bespoke piece, arrange a repair, request a valuation or contact us for advice, we want you to feel confident that your personal information is treated with care, respect and transparency. This Privacy Policy explains what information we collect, how we use it, how we protect it and your rights regarding your personal information."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Who We Are",
+        "paras": [
+          "Andrew McCulloch Jewellers is an independent family jeweller based in Beeston, Nottingham. We specialise in fine jewellery, bespoke jewellery, jewellery repairs, watch repairs, jewellery valuations and gold buying. If you have any questions about this Privacy Policy or how your personal information is processed, please contact us using the details provided on our Contact Us page."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Information We Collect",
+        "paras": [
+          "Depending on how you interact with us, we may collect your name, postal address, email address, telephone number, billing and delivery addresses, purchase history, repair records, bespoke consultation details, valuation records, payment information (processed securely through our payment providers), correspondence with our team, website usage information, IP address, browser and device information, and any information you voluntarily provide when contacting us in store, by telephone, email or through our website."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "How We Use Your Information",
+        "paras": [
+          "We use your personal information to process and fulfil orders, arrange deliveries, manage jewellery and watch repairs, provide bespoke jewellery consultations, prepare insurance and probate valuations, respond to enquiries, provide customer support, improve our website and services, prevent fraud, comply with legal and regulatory obligations and, where you have given your consent, send you marketing communications. We only collect information that is necessary for these purposes."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Legal Basis for Processing",
+        "paras": [
+          "We process personal information only where we have a lawful basis to do so under UK data protection legislation. These lawful bases include performing a contract with you, complying with legal obligations, pursuing our legitimate business interests and obtaining your consent where required, such as for marketing communications or non-essential cookies."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Sharing Your Information",
+        "paras": [
+          "We respect your privacy and never sell or rent your personal information. Where necessary, we may share your information with trusted third parties who help us operate our business, including secure payment providers, delivery companies, website hosting providers, IT support providers, professional advisers, finance providers (where applicable) and government or regulatory authorities where required by law. These organisations only receive the information necessary to perform their services and are expected to keep your information secure and confidential."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Marketing Communications",
+        "paras": [
+          "If you choose to receive marketing communications from Andrew McCulloch Jewellers, we may occasionally send you information about new collections, special offers, events and company news. You can unsubscribe at any time by clicking the unsubscribe link included in our emails or by contacting us directly. We will only send marketing communications where we have a lawful basis to do so."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Protecting Your Information",
+        "paras": [
+          "We take the security of your personal information seriously. Appropriate technical and organisational measures are in place to help protect your information against unauthorised access, misuse, loss, alteration or disclosure. Although no online system can guarantee complete security, we continually review and improve our security practices to safeguard your personal information."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "How Long We Keep Your Information",
+        "paras": [
+          "We retain personal information only for as long as necessary to fulfil the purposes for which it was collected, including providing our services, maintaining business records and complying with legal, accounting and regulatory obligations. When information is no longer required, it is securely deleted or anonymised where appropriate."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Your Rights",
+        "paras": [
+          "Under UK data protection law, you have the right to request access to your personal information, request correction of inaccurate or incomplete information, request deletion of your personal information where appropriate, request restriction of processing, object to certain types of processing, request a copy of your personal information and withdraw your consent where processing is based on consent. To exercise any of these rights, please contact us. If you are not satisfied with how we have handled your personal information, you have the right to lodge a complaint with the Information Commissioner's Office (ICO)."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Third-Party Websites",
+        "paras": [
+          "Our website may contain links to third-party websites for your convenience. We are not responsible for the privacy practices, content or security of these external websites and encourage you to read their privacy policies before providing any personal information."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Changes to This Privacy Policy",
+        "paras": [
+          "We may update this Privacy Policy from time to time to reflect changes in legislation, technology, our website or our business practices. Any updates will be published on this page together with the revised effective date. We encourage you to review this policy periodically to remain informed about how we protect your personal information."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Contact Us",
+        "paras": [
+          "If you have any questions about this Privacy Policy or how we handle your personal information, please contact Andrew McCulloch Jewellers using the contact details provided on our Contact Us page. We will always do our best to resolve your enquiry promptly, fairly and professionally."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "terms": {
+    "slug": "terms",
+    "title": "Terms & Conditions",
+    "sections": [
+      {
+        "heading": "Welcome",
+        "paras": [
+          "Welcome to Andrew McCulloch Jewellers. By accessing or using this website, you agree to be bound by these Terms & Conditions. Please read them carefully before placing an order or using our services."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "About Us",
+        "paras": [
+          "Andrew McCulloch Jewellers is an independent family jeweller based in Beeston, Nottingham, specialising in fine jewellery, bespoke jewellery, jewellery repairs, watch repairs, valuations and related services."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Website Use",
+        "paras": [
+          "You may use this website for lawful purposes only. You agree not to misuse the website, interfere with its operation or attempt to gain unauthorised access to any part of the website or its systems."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Product Information",
+        "paras": [
+          "We make every effort to ensure that product descriptions, specifications, images and prices are accurate. Due to the nature of jewellery, slight variations in colour, gemstone appearance, precious metal finish and handcrafted details may occur. Images are provided for illustration purposes and may not always represent the exact item."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Pricing",
+        "paras": [
+          "All prices are displayed in Pounds Sterling (£) and include VAT where applicable unless otherwise stated. We reserve the right to amend prices at any time without prior notice. While every effort is made to ensure pricing accuracy, errors may occasionally occur. Where this happens, we reserve the right to correct the error and contact you before processing your order."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Orders",
+        "paras": [
+          "All orders are subject to acceptance and product availability. An order confirmation acknowledges receipt of your order but does not constitute acceptance. We reserve the right to refuse or cancel any order where necessary, including where pricing errors, stock discrepancies or suspected fraudulent activity have occurred."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Payment",
+        "paras": [
+          "Payment must be received in full before goods are dispatched unless otherwise agreed in writing. We accept the payment methods displayed during checkout and reserve the right to change accepted payment methods without notice."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Delivery",
+        "paras": [
+          "Delivery times are estimates only and may vary depending on product availability, bespoke manufacturing times or courier services. Please refer to our Delivery Information page for further details regarding delivery options and timescales."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Returns & Refunds",
+        "paras": [
+          "Returns and refunds are handled in accordance with our Returns & Refunds Policy. Bespoke, personalised, engraved and specially commissioned items are generally non-returnable unless faulty or not as described under applicable consumer legislation."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Bespoke Jewellery",
+        "paras": [
+          "Bespoke and made-to-order jewellery is created specifically for each customer. Once production has commenced, orders cannot normally be cancelled. Customer approval of design drawings, CAD renders or wax models confirms acceptance of the design before manufacture begins."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Jewellery & Watch Repairs",
+        "paras": [
+          "Jewellery and watch repairs are carried out with the utmost care and skill. We will advise customers of any known risks before work begins. Certain repairs, particularly to older, fragile or previously repaired items, may carry inherent risks that cannot always be predicted. Please refer to our Repair Terms & Conditions for full details."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Warranty",
+        "paras": [
+          "Eligible jewellery purchased from Andrew McCulloch Jewellers is covered by our 1-Year Manufacturing Warranty. Full details, including warranty coverage and exclusions, can be found on our Warranty page."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Intellectual Property",
+        "paras": [
+          "All content on this website, including text, images, photographs, graphics, logos, designs and other materials, is the property of Andrew McCulloch Jewellers or its licensors. No content may be copied, reproduced, distributed or used without prior written permission."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Limitation of Liability",
+        "paras": [
+          "Nothing within these Terms & Conditions limits or excludes liability where it would be unlawful to do so. Subject to applicable law, our liability shall be limited to the purchase price of the goods or services supplied."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Privacy",
+        "paras": [
+          "Your personal information is processed in accordance with our Privacy Policy and Cookie Policy. Please refer to these pages for further information on how we collect, use and protect your personal information."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Changes to These Terms",
+        "paras": [
+          "We reserve the right to amend these Terms & Conditions at any time. The most up-to-date version will always be published on this website and will take effect immediately upon publication unless otherwise stated."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Governing Law",
+        "paras": [
+          "These Terms & Conditions are governed by the laws of England and Wales. Any disputes arising from the use of this website or the purchase of goods or services shall be subject to the exclusive jurisdiction of the courts of England and Wales."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "ring-size-guide": {
+    "slug": "ring-size-guide",
+    "title": "Ring Size Guide",
+    "sections": [
+      {
+        "heading": "Find Your Perfect Ring Size",
+        "paras": [
+          "Choosing the correct ring size is essential to ensure your new ring fits comfortably and securely. Whether you're purchasing an engagement ring, wedding ring or a special gift, our ring size guide will help you measure accurately from the comfort of your home."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What Is Ring Size?",
+        "paras": [
+          "Ring size refers to the inside circumference or diameter of a ring. Different countries use different sizing systems, with the UK using alphabetical sizes (A–Z). Knowing the correct size helps ensure your ring is comfortable to wear and reduces the need for resizing."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Why Getting the Right Size Matters",
+        "paras": [
+          "A ring should slide comfortably over the knuckle and fit securely on the finger without feeling too tight or too loose. Measuring correctly before ordering helps ensure the best possible fit, especially for engagement rings and bespoke jewellery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Measure Your Ring Size at Home",
+        "paras": [
+          "There are several simple ways to measure your ring size at home. You can use a printable ring size guide, a reusable ring sizer or measure an existing ring that already fits comfortably. If you're unsure, we recommend visiting our showroom where our experienced team can professionally measure your finger."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Measuring an Existing Ring",
+        "paras": [
+          "If you already own a ring that fits the correct finger, you can use it to determine your size. Simply measure the inside diameter or compare it against a printed ring size guide to identify the correct UK ring size."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Printable Ring Size Guide",
+        "paras": [
+          "Download and print our Ring Size Guide at 100% scale. Follow the instructions carefully and compare your existing ring with the printed circles to determine the correct size. Always check the print scale before measuring."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Request a Ring Sizer",
+        "paras": [
+          "If you're unsure of your size, you can request a reusable ring sizer. It provides a simple and convenient way to measure your finger accurately from home before placing your order."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Tips for Accurate Measuring",
+        "paras": [
+          "Measure your finger at room temperature, as fingers naturally expand in warm weather and contract in colder temperatures. Avoid measuring immediately after exercise or first thing in the morning. If your knuckle is noticeably larger than the base of your finger, take measurements of both areas and choose the size that provides the most comfortable fit."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Buying a Surprise Ring?",
+        "paras": [
+          "If you're planning a surprise proposal or buying a gift, consider borrowing a ring that is already worn on the correct finger or ask a close family member or friend if they know the recipient's ring size. If you're still unsure, our team will be happy to offer advice."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Ring Resizing",
+        "paras": [
+          "Many rings can be resized after purchase; however, this depends on the design, setting and metal. Some styles, such as full eternity rings, may have limited or no resizing options. If you have any questions, please contact us before placing your order."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Help?",
+        "paras": [
+          "If you're unsure about your ring size or need further guidance, our friendly team is here to help. Visit our showroom, contact us by telephone or send us an email and we'll be happy to assist you in finding the perfect fit."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "diamond-guide": {
+    "slug": "diamond-guide",
+    "title": "Diamond Guide",
+    "sections": [
+      {
+        "heading": "Your Guide to Choosing the Perfect Diamond",
+        "paras": [
+          "Choosing a diamond is one of life's most important purchases. Whether you're selecting an engagement ring, creating a bespoke piece or buying a special gift, understanding the key characteristics of a diamond will help you make an informed decision. At Andrew McCulloch Jewellers, we're here to guide you every step of the way."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Understanding the Four Cs",
+        "paras": [
+          "Diamonds are traditionally assessed using the Four Cs: Cut, Colour, Clarity and Carat Weight. Together, these characteristics determine a diamond's beauty, rarity and value. Finding the right balance between them is the key to choosing a diamond that suits both your style and budget."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Cut",
+        "paras": [
+          "Cut is often considered the most important of the Four Cs because it determines how well a diamond reflects light. A well-cut diamond will appear brighter, more lively and full of sparkle. Even a diamond with excellent colour and clarity can look less impressive if it is poorly cut."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Colour",
+        "paras": [
+          "Diamond colour is graded from D (colourless) to Z (light yellow or brown). Colourless diamonds are generally the rarest, although many diamonds with slight colour differences still appear beautifully white once set in jewellery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Clarity",
+        "paras": [
+          "Clarity measures the natural inclusions and surface characteristics found within a diamond. Almost every diamond contains tiny natural characteristics formed during its creation. Many inclusions are invisible to the naked eye and have little impact on a diamond's beauty."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Carat Weight",
+        "paras": [
+          "Carat refers to a diamond's weight rather than its physical size. While larger diamonds are generally rarer, a well-cut diamond with excellent proportions can often appear larger and more brilliant than a heavier diamond with a poorer cut."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Natural & Lab-Grown Diamonds",
+        "paras": [
+          "We offer both natural and lab-grown diamonds. Natural diamonds are formed over billions of years beneath the Earth's surface, while lab-grown diamonds are created using advanced technology that produces diamonds with the same physical, chemical and optical properties. Both are genuine diamonds, and the right choice depends on your personal preferences and budget."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Popular Diamond Shapes",
+        "paras": [
+          "Diamonds are available in a wide variety of shapes, including Round Brilliant, Oval, Cushion, Princess, Emerald, Pear, Marquise, Radiant, Asscher and Heart. Each shape has its own unique character and style."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Diamond Certification",
+        "paras": [
+          "Some diamonds are accompanied by an independent grading report from recognised gemmological laboratories such as GIA or IGI. These reports independently assess a diamond's characteristics, including cut, colour, clarity and carat weight. Smaller diamonds are not always supplied with individual grading reports."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Choosing the Right Diamond",
+        "paras": [
+          "Every customer has different priorities. Some prefer maximum sparkle, while others focus on size, colour or rarity. Our experienced team will help you understand the options available and guide you towards the diamond that best suits your style, budget and personal preferences."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Caring for Your Diamond Jewellery",
+        "paras": [
+          "Diamonds are extremely durable, but they should still be cared for properly. Regular cleaning, careful storage and periodic inspections help maintain their brilliance and ensure settings remain secure."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Expert Advice?",
+        "paras": [
+          "If you would like help choosing a diamond or designing a bespoke piece of jewellery, our experienced team is always happy to provide friendly, honest advice. Visit our showroom or contact us to arrange a consultation."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "gemstone-guide": {
+    "slug": "gemstone-guide",
+    "title": "Gemstone Guide",
+    "sections": [
+      {
+        "heading": "Discover the Beauty of Gemstones",
+        "paras": [
+          "Gemstones have been treasured for centuries for their beauty, rarity and individuality. Whether you're choosing an engagement ring, a meaningful gift or creating a bespoke piece of jewellery, understanding the characteristics of different gemstones can help you make the perfect choice."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Natural Gemstones",
+        "paras": [
+          "Natural gemstones are formed over millions of years through geological processes deep within the Earth. Each gemstone is unique, with its own colour, inclusions and natural characteristics that make every stone one of a kind."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Popular Gemstones",
+        "paras": [
+          "We work with a wide range of beautiful gemstones, including sapphires, rubies, emeralds, aquamarines, amethysts, topaz, garnets, tourmalines, peridots, opals, tanzanites, morganites and many other precious and semi-precious gemstones. Each offers its own unique beauty and character."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Sapphire",
+        "paras": [
+          "Best known for its rich blue colour, sapphire is available in a wide range of colours, including pink, yellow, green and white. It is one of the hardest gemstones, making it an excellent choice for everyday jewellery and engagement rings."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Ruby",
+        "paras": [
+          "Ruby is admired for its vibrant red colour and exceptional durability. As a member of the corundum family, it is one of the most valuable coloured gemstones and has long been associated with love, passion and strength."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Emerald",
+        "paras": [
+          "Emerald is prized for its beautiful green colour and distinctive natural inclusions, often referred to as the stone's \"garden\". Due to its natural characteristics, emerald requires a little more care than harder gemstones."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Aquamarine",
+        "paras": [
+          "Aquamarine is valued for its clear blue tones and elegant appearance. It is a durable gemstone that suits a wide range of jewellery styles and is popular for both engagement rings and special occasion jewellery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Opal",
+        "paras": [
+          "Opal is famous for its unique play of colour, displaying flashes of different colours as it catches the light. Because opals are softer than many other gemstones, they require careful handling and are best protected from knocks and sudden temperature changes."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Tourmaline",
+        "paras": [
+          "Tourmaline is available in an impressive variety of colours, from vibrant greens and blues to pinks and multi-coloured stones. Its versatility makes it a popular choice for bespoke jewellery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Tanzanite",
+        "paras": [
+          "Tanzanite is admired for its striking blue-violet colour and rarity, as it is found in only one region of the world. It should be worn with care due to its relative softness compared with sapphire or diamond."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Choosing the Right Gemstone",
+        "paras": [
+          "When selecting a gemstone, consider more than just colour. Durability, hardness, rarity, symbolism and suitability for everyday wear are all important factors. Our experienced team will be happy to help you choose the perfect gemstone for your jewellery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Gemstone Treatments",
+        "paras": [
+          "Some natural gemstones may undergo industry-accepted treatments to enhance their appearance, colour or clarity. Where known, we will always provide appropriate information regarding any significant treatments applied to a gemstone."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Caring for Your Gemstone Jewellery",
+        "paras": [
+          "Every gemstone has different care requirements. Regular cleaning, careful storage and routine inspections will help keep your jewellery looking its best. Softer gemstones should be protected from impact, harsh chemicals and extreme temperatures."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Expert Advice?",
+        "paras": [
+          "If you would like help choosing a gemstone or designing a bespoke piece of jewellery, our experienced team is always happy to offer friendly, honest advice and guide you through the available options."
+        ],
+        "bullets": []
+      }
+    ],
+    "table": [
+      [
+        "Gemstone",
+        "Mohs Hardness",
+        "Suitable for Everyday Wear"
+      ],
+      [
+        "Diamond",
+        "10",
+        "Excellent"
+      ],
+      [
+        "Sapphire",
+        "9",
+        "Excellent"
+      ],
+      [
+        "Ruby",
+        "9",
+        "Excellent"
+      ],
+      [
+        "Emerald",
+        "7.5–8",
+        "Good (with care)"
+      ],
+      [
+        "Aquamarine",
+        "7.5–8",
+        "Good"
+      ],
+      [
+        "Topaz",
+        "8",
+        "Good"
+      ],
+      [
+        "Spinel",
+        "8",
+        "Excellent"
+      ],
+      [
+        "Garnet",
+        "6.5–7.5",
+        "Moderate"
+      ],
+      [
+        "Amethyst",
+        "7",
+        "Good"
+      ],
+      [
+        "Peridot",
+        "6.5–7",
+        "Moderate"
+      ],
+      [
+        "Opal",
+        "5.5–6.5",
+        "Occasional wear recommended"
+      ],
+      [
+        "Tanzanite",
+        "6–7",
+        "Moderate (wear with care)"
+      ],
+      [
+        "Pearl",
+        "2.5–4.5",
+        "Special occasion wear"
+      ]
+    ]
+  },
+  "birthstone-guide": {
+    "slug": "birthstone-guide",
+    "title": "Birthstone Guide",
+    "sections": [
+      {
+        "heading": "Discover Your Birthstone",
+        "paras": [
+          "Birthstones have been associated with each month of the year for centuries and are believed to represent different qualities, meanings and traditions. Whether you're choosing a meaningful gift or a piece of jewellery for yourself, birthstones offer a personal way to celebrate life's special moments."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "January – Garnet",
+        "paras": [
+          "Garnet is admired for its rich red colour, although it is available in a variety of shades. It is traditionally associated with protection, friendship and strength."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "February – Amethyst",
+        "paras": [
+          "Amethyst is recognised for its beautiful purple colour and has long been associated with peace, wisdom and clarity."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "March – Aquamarine",
+        "paras": [
+          "Aquamarine is valued for its clear blue tones and is traditionally associated with tranquillity, courage and hope."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "April – Diamond",
+        "paras": [
+          "Diamond is celebrated for its exceptional brilliance and durability. It symbolises love, strength and everlasting commitment, making it the traditional choice for engagement rings."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "May – Emerald",
+        "paras": [
+          "Emerald is treasured for its vibrant green colour and is traditionally associated with renewal, growth and prosperity."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "June – Pearl, Alexandrite & Moonstone",
+        "paras": [
+          "June has three recognised birthstones. Pearls symbolise purity and elegance, Alexandrite is admired for its remarkable colour-changing properties, and Moonstone is associated with balance, intuition and new beginnings."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "July – Ruby",
+        "paras": [
+          "Ruby is famous for its vivid red colour and has long symbolised love, passion, courage and vitality."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "August – Peridot, Spinel & Sardonyx",
+        "paras": [
+          "August has three recognised birthstones. Peridot is admired for its fresh green colour, Spinel is available in a wide range of colours and is valued for its brilliance, while Sardonyx has been associated with courage and protection for centuries."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "September – Sapphire",
+        "paras": [
+          "Sapphire is best known for its deep blue colour but is found in many other colours. It symbolises wisdom, loyalty and sincerity."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "October – Opal & Tourmaline",
+        "paras": [
+          "October has two birthstones. Opal is celebrated for its unique play of colour, while Tourmaline is available in an impressive range of colours and is associated with creativity, compassion and confidence."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "November – Topaz & Citrine",
+        "paras": [
+          "November is represented by Topaz and Citrine. Topaz is associated with strength and wisdom, while Citrine is admired for its warm golden tones and is traditionally linked with happiness, success and optimism."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "December – Turquoise, Tanzanite & Zircon",
+        "paras": [
+          "December has three recognised birthstones. Turquoise is one of the oldest known gemstones, Tanzanite is admired for its striking blue-violet colour, and Zircon is valued for its exceptional brilliance and wide range of colours."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Choosing Birthstone Jewellery",
+        "paras": [
+          "Birthstone jewellery makes a thoughtful and personal gift for birthdays, anniversaries, new arrivals and other special occasions. Many customers also choose birthstones to celebrate family members or meaningful milestones."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Help Choosing?",
+        "paras": [
+          "Whether you're looking for a birthstone ring, pendant, earrings or a bespoke piece of jewellery, our experienced team will be delighted to help you choose the perfect gemstone."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "hallmark-guide": {
+    "slug": "hallmark-guide",
+    "title": "Hallmark Guide",
+    "sections": [
+      {
+        "heading": "Understanding Hallmarks",
+        "paras": [
+          "Every piece of precious metal jewellery sold by Andrew McCulloch Jewellers is hallmarked in accordance with UK hallmarking legislation where required. A hallmark is your assurance that your jewellery has been independently tested and verified for its precious metal content by a UK Assay Office."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What Is a Hallmark?",
+        "paras": [
+          "A hallmark is an official series of marks applied to precious metal jewellery by a UK Assay Office. It confirms the type and purity of the precious metal and provides assurance that the item meets the legal standards required for sale within the United Kingdom."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Why Hallmarking Is Important",
+        "paras": [
+          "Hallmarking provides independent verification of a jewellery item's precious metal content, helping to protect consumers and giving confidence that the jewellery has been tested and accurately described."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Our Commitment to Hallmarking",
+        "paras": [
+          "At Andrew McCulloch Jewellers, every item of jewellery requiring hallmarking is submitted to a UK Assay Office before being offered for sale. We are committed to ensuring our customers receive jewellery that complies with UK hallmarking legislation and meets the highest standards of quality."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Our Sponsor's Mark",
+        "paras": [
+          "Bespoke jewellery and jewellery manufactured by Andrew McCulloch Jewellers carries our own registered Sponsor's Mark. This unique mark identifies us as the company responsible for submitting the jewellery for hallmarking and demonstrates our commitment to quality, craftsmanship and authenticity."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What Does a Hallmark Include?",
+        "paras": [
+          "A UK hallmark may include several official marks, including the Sponsor's Mark, the precious metal fineness mark, the Assay Office mark and, where applicable, an optional commemorative mark. Together, these marks provide assurance of the jewellery's authenticity and precious metal content."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Precious Metal Purity Marks",
+        "paras": [
+          "Common UK fineness marks include 375 for 9ct gold, 585 for 14ct gold, 750 for 18ct gold, 916 for 22ct gold, 925 for sterling silver, 950 for platinum and 950 for palladium."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "UK Assay Offices",
+        "paras": [
+          "Jewellery in the United Kingdom is hallmarked by one of the four Assay Offices located in London, Birmingham, Sheffield and Edinburgh. Each Assay Office has its own distinctive mark identifying where the jewellery was tested and hallmarked."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Help Identifying a Hallmark?",
+        "paras": [
+          "If you have any questions about the hallmarks on your jewellery or would like assistance identifying a Sponsor's Mark or precious metal mark, our experienced team will be happy to help."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Contact Us",
+        "paras": [
+          "If you would like to learn more about hallmarking or the precious metals used in our jewellery, please contact Andrew McCulloch Jewellers or visit our showroom. We are always happy to share our knowledge and help you understand the quality behind every piece we create."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "jewellery-care": {
+    "slug": "jewellery-care",
+    "title": "Jewellery Care Guide",
+    "sections": [
+      {
+        "heading": "Caring for Your Jewellery",
+        "paras": [
+          "Fine jewellery is designed to be worn and enjoyed for many years. With the right care and regular maintenance, your jewellery will continue to look its best while helping to protect gemstones and precious metals from unnecessary wear."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Everyday Jewellery Care",
+        "paras": [
+          "Although precious metals are durable, jewellery should be treated with care. Remove jewellery before heavy lifting, gardening, DIY, contact sports, swimming, using cleaning products or any activity that may expose it to knocks, chemicals or excessive force."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Cleaning Your Jewellery",
+        "paras": [
+          "Regular cleaning helps maintain the brilliance of your jewellery. Warm water, a small amount of mild washing-up liquid and a soft brush are suitable for cleaning most gold, platinum and diamond jewellery. Rinse thoroughly and dry with a soft, lint-free cloth. If you are unsure whether your jewellery is suitable for cleaning at home, please contact us for advice."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Storing Your Jewellery",
+        "paras": [
+          "Store jewellery separately in a soft pouch or lined jewellery box to help prevent scratching. Avoid allowing pieces to rub against each other, particularly diamonds, which can scratch other gemstones and precious metals."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Regular Inspections",
+        "paras": [
+          "We recommend having your jewellery professionally inspected on a regular basis. Claws, settings, clasps and mountings naturally wear over time and should be checked periodically to ensure gemstones remain secure."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Caring for Gold Jewellery",
+        "paras": [
+          "Gold is a durable precious metal but can become scratched through everyday wear. Regular cleaning and occasional professional polishing will help maintain its appearance. Avoid exposing gold jewellery to harsh chemicals such as bleach and household cleaning products."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Caring for Platinum Jewellery",
+        "paras": [
+          "Platinum naturally develops a soft patina over time as it is worn. This is a normal characteristic of the metal and many people appreciate its appearance. Professional polishing can restore a brighter finish if preferred."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Caring for Diamond Jewellery",
+        "paras": [
+          "Diamonds are extremely durable but are not indestructible. A hard impact may chip a diamond or loosen a setting. Regular cleaning helps maintain their sparkle, while routine inspections ensure that claws and settings remain secure."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Caring for Coloured Gemstones",
+        "paras": [
+          "Different gemstones have different care requirements. Some gemstones, such as sapphires and rubies, are suitable for everyday wear, while others, including emeralds, opals, pearls and tanzanites, require additional care due to their natural characteristics. If you are unsure how to care for your gemstone jewellery, our team will be happy to advise you."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Caring for Pearls",
+        "paras": [
+          "Pearls are delicate organic gemstones and should be protected from perfumes, hairsprays, cosmetics and household chemicals. Wipe pearls gently with a soft cloth after wearing and store them separately to help preserve their lustre."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Professional Cleaning & Maintenance",
+        "paras": [
+          "Professional cleaning, polishing and routine maintenance can help keep your jewellery looking its best. Our experienced team can inspect your jewellery, check gemstone settings and advise if any maintenance is recommended."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Protecting Valuable Jewellery",
+        "paras": [
+          "We recommend insuring valuable jewellery against accidental loss, theft or damage. Keeping your jewellery valuation up to date will help ensure appropriate insurance cover."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Expert Advice?",
+        "paras": [
+          "If you have any questions about caring for your jewellery or would like your jewellery professionally cleaned or inspected, please contact Andrew McCulloch Jewellers or visit our showroom. Our experienced team will be happy to help."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "delivery": {
+    "slug": "delivery",
+    "title": "Delivery",
+    "sections": [
+      {
+        "heading": "Delivery Information",
+        "paras": [
+          "At Andrew McCulloch Jewellers, we take great care to ensure your jewellery arrives safely and securely. Every order is carefully prepared, inspected and packaged before dispatch. Delivery times vary depending on whether your purchase is a ready-to-wear item or a bespoke commission."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Ready-to-Wear Jewellery",
+        "paras": [
+          "In-stock items are normally dispatched as soon as they have been prepared for shipment. If there is likely to be any delay, we will contact you to keep you informed."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Bespoke Jewellery",
+        "paras": [
+          "Every bespoke piece is individually designed and handcrafted to your requirements. Please allow up to 6 weeks for the manufacture of bespoke jewellery from the date your design is approved and your deposit has been received. If your commission is expected to take longer, we will keep you informed throughout the process."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Secure Delivery",
+        "paras": [
+          "All eligible UK orders are dispatched using Royal Mail Special Delivery . This fully tracked and insured service is designed to ensure your jewellery arrives safely and securely. A signature will normally be required upon delivery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Tracking Your Order",
+        "paras": [
+          "Once your order has been dispatched, we will provide you with your Royal Mail tracking number by email or text message, allowing you to monitor the progress of your delivery until it arrives."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Delivery Address",
+        "paras": [
+          "Please ensure your delivery address is accurate when placing your order. We cannot accept responsibility for delays or failed deliveries caused by incorrect or incomplete address details."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Collect In Store",
+        "paras": [
+          "You're welcome to collect your order from our showroom. We will notify you as soon as your jewellery is ready for collection."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Questions About Delivery?",
+        "paras": [
+          "If you have any questions about your order, delivery or collection, please contact Andrew McCulloch Jewellers. Our friendly team will be happy to assist you."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "returns": {
+    "slug": "returns",
+    "title": "Returns & Refunds Policy",
+    "sections": [
+      {
+        "heading": "Returns & Refunds",
+        "paras": [
+          "We want you to shop with confidence at Andrew McCulloch Jewellers. If for any reason you are not completely satisfied with your purchase, this policy explains how returns, exchanges and refunds are handled. Your statutory rights under UK consumer law are not affected."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Returning an Item",
+        "paras": [
+          "If you wish to return an eligible item, please contact us as soon as possible after receiving your order. Items must be returned in their original condition, unworn, undamaged and with all original packaging, certificates and documentation where applicable."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Refund Eligibility",
+        "paras": [
+          "Refunds are available for eligible items returned in accordance with this policy. Returned items will be inspected upon receipt before a refund is approved. Refunds will only be made using the original payment method."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Items That Cannot Be Returned",
+        "paras": [
+          "The following items cannot normally be returned unless they are faulty or not as described: bespoke or custom-made jewellery, personalised or engraved items, resized rings requested by the customer, special order items, earrings where unsuitable for return for hygiene reasons."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Bespoke & Made-to-Order Jewellery",
+        "paras": [
+          "Bespoke and made-to-order jewellery is created specifically for each customer. Once production has begun, these orders cannot usually be cancelled or refunded unless the item is faulty or does not match the agreed specification."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Faulty or Damaged Items",
+        "paras": [
+          "If your order arrives damaged or you believe it has developed a manufacturing fault, please contact us as soon as possible. We will inspect the item and, where appropriate, arrange a repair, replacement or refund in accordance with your consumer rights."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Exchanges",
+        "paras": [
+          "If you wish to exchange an eligible item, please contact our team. Exchanges are subject to product availability and any price difference will be payable or refunded as appropriate."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Ring Resizing",
+        "paras": [
+          "Many rings can be resized; however, this depends on the design, setting and metal. Please contact us before returning a ring for resizing so we can advise on the available options."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "How Refunds Are Processed",
+        "paras": [
+          "Once your returned item has been received and inspected, we will notify you of the outcome. Approved refunds will be processed to your original payment method. The time taken for funds to appear in your account will depend on your bank or payment provider."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Returning Your Purchase",
+        "paras": [
+          "Customers are responsible for ensuring returned items are packaged securely and sent using a tracked and appropriately insured delivery service where appropriate. Andrew McCulloch Jewellers cannot accept responsibility for items lost or damaged during return transit until they have been safely received by us."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Your Consumer Rights",
+        "paras": [
+          "Nothing in this Returns & Refunds Policy affects your statutory rights under the Consumer Rights Act 2015 or any other applicable UK consumer protection legislation."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Assistance?",
+        "paras": [
+          "If you have any questions regarding returns, refunds or exchanges, please contact Andrew McCulloch Jewellers using the details provided on our Contact Us page. Our team will be happy to assist you."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "warranty": {
+    "slug": "warranty",
+    "title": "1-Year Warranty",
+    "sections": [
+      {
+        "heading": "Our 1-Year Warranty",
+        "paras": [
+          "At Andrew McCulloch Jewellers, we take great pride in the quality of our jewellery and craftsmanship. We carefully inspect every piece before it leaves our workshop and stand behind the quality of our workmanship. This warranty covers manufacturing defects in materials or craftsmanship for a period of 12 months from the original date of purchase."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What Our Warranty Covers",
+        "paras": [
+          "If your jewellery develops a manufacturing fault within 12 months of purchase, we will inspect the item and, where the fault is confirmed to be due to materials or workmanship, we will repair, replace or remake the item at our discretion without charge."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What Is Not Covered",
+        "paras": [
+          "Our warranty does not cover accidental damage, loss, theft, normal wear and tear, scratches, bent rings, worn claws, stretched chains or bracelets, chipped or broken gemstones caused by impact, damage caused by chemicals, misuse, neglect, or repairs and alterations carried out by another jeweller. Jewellery should be worn with care, and regular maintenance is recommended to help keep it in excellent condition."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Looking After Your Jewellery",
+        "paras": [
+          "Jewellery is designed to be enjoyed and worn, but everyday wear can naturally cause signs of ageing. We recommend removing jewellery before heavy lifting, gardening, sports, swimming, cleaning or using chemicals. Regular cleaning and periodic inspections will help maintain both the appearance and security of your jewellery."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "How to Make a Warranty Claim",
+        "paras": [
+          "If you believe your jewellery has developed a manufacturing fault within the warranty period, please contact us as soon as possible. Our experienced jewellers will carefully inspect the item and determine whether the issue is covered under this warranty. Please provide proof of purchase wherever possible."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Repairs Outside the Warranty Period",
+        "paras": [
+          "If your jewellery is no longer covered by our warranty or the damage is not the result of a manufacturing defect, we will be pleased to assess the item and provide a no-obligation quotation for repair before any work is carried out."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Warranty Conditions",
+        "paras": [
+          "This warranty applies only to the original purchaser and is non-transferable. Any alterations, resizing or repairs carried out by another jeweller may void this warranty if they contribute to the fault being claimed."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Your Consumer Rights",
+        "paras": [
+          "This warranty is provided in addition to your statutory rights under the Consumer Rights Act 2015. Nothing within this warranty limits or affects those rights."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Assistance?",
+        "paras": [
+          "If you have any questions regarding this warranty or require assistance with your jewellery, please contact Andrew McCulloch Jewellers using the details provided on our Contact Us page. Our team will be happy to help."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "repairs": {
+    "slug": "repairs",
+    "title": "Repairs & Aftercare",
+    "sections": [
+      {
+        "heading": "Repairs & Aftercare",
+        "paras": [
+          "At Andrew McCulloch Jewellers, our commitment to our customers continues long after a purchase has been made. Whether you require a jewellery repair, watch repair or routine maintenance, our experienced team is here to help keep your treasured items looking and performing at their best."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Jewellery Repairs",
+        "paras": [
+          "We offer a comprehensive range of jewellery repair services, including ring resizing, chain and bracelet repairs, claw rebuilding, stone replacement, soldering, polishing, rhodium plating, clasp repairs and jewellery restoration. Every repair is carefully assessed before work begins, and we will advise you of the available options before any chargeable work is carried out."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Watch Repairs",
+        "paras": [
+          "Our watch repair services include battery replacements, pressure testing, servicing, glass replacement, bracelet adjustments and specialist repairs. Every watch is assessed individually to determine the most suitable repair solution."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Jewellery Care & Maintenance",
+        "paras": [
+          "Regular cleaning, polishing and routine inspections help keep your jewellery in excellent condition. We recommend having rings and gemstone settings checked periodically to ensure stones remain secure and to identify any signs of wear before they develop into more significant repairs."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Our Commitment",
+        "paras": [
+          "Whether your jewellery was purchased from Andrew McCulloch Jewellers or elsewhere, every item entrusted to us is treated with the utmost care, skill and attention to detail. We understand the sentimental value behind every piece and take pride in providing professional workmanship and personal service."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Need Assistance?",
+        "paras": [
+          "If you would like to discuss a repair or require advice on caring for your jewellery or watch, please contact Andrew McCulloch Jewellers or visit our showroom. Our experienced team will be happy to assist you."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "book-appointment": {
+    "slug": "book-appointment",
+    "title": "Book an Appointment",
+    "sections": [
+      {
+        "heading": "Book an Appointment",
+        "paras": [
+          "We would be delighted to welcome you to Andrew McCulloch Jewellers. Whether you're planning a bespoke piece of jewellery, seeking expert advice or arranging a repair, booking an appointment allows us to dedicate time to you and ensure you receive the highest level of personal service."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Bespoke Jewellery Consultations",
+        "paras": [
+          "Book a consultation to discuss your ideas for a bespoke piece of jewellery. Whether you're designing an engagement ring, remodelling existing jewellery or creating something completely unique, we'll guide you through the process and help bring your vision to life."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Jewellery & Watch Repairs",
+        "paras": [
+          "If you would like us to assess a jewellery or watch repair, you are welcome to book an appointment. We'll examine your item, discuss the available repair options and provide a quotation where appropriate."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Jewellery Valuations",
+        "paras": [
+          "Appointments are available for insurance, probate and other jewellery valuations. Booking in advance helps us ensure we have sufficient time to assess your jewellery and answer any questions you may have."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What to Bring",
+        "paras": [
+          "If possible, please bring any relevant documentation, such as previous valuations, diamond certificates, receipts or photographs of your jewellery. If you're remodelling an existing piece, please bring the jewellery you would like us to assess."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "How to Book",
+        "paras": [
+          "To arrange an appointment, please contact us by telephone, mobile or email. Our team will be happy to arrange a convenient date and time for your visit. Walk-in customers are always welcome; however, appointments are recommended for bespoke consultations and valuations."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Contact Details",
+        "paras": [
+          "Telephone: 0115 925 7552Mobile: 07859 888649Email: has@mccullochjewellers.co.uk"
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Opening Hours",
+        "paras": [
+          "Monday – Saturday: 9:00am – 5:30pm Sunday: Closed"
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "cookies": {
+    "slug": "cookies",
+    "title": "Cookie Policy",
+    "sections": [
+      {
+        "heading": "Cookies on our website",
+        "paras": [
+          "Andrew McCulloch Jewellers uses cookies and similar technologies to help our website work, to understand how it is used, and — where you have given consent — to support marketing. This policy explains what cookies are and how we use them. It should be read alongside our Privacy Policy."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "What are cookies?",
+        "paras": [
+          "Cookies are small text files stored on your device when you visit a website. They help the site remember your actions and preferences, keep your basket and session working, and provide anonymous information about how the site is used."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "The cookies we use",
+        "paras": [
+          "We use strictly necessary cookies that are required for the website and checkout to function, and, with your consent, analytics and marketing cookies that help us improve the site and our communications. Non-essential cookies are only set once you have agreed to them."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Managing cookies",
+        "paras": [
+          "You can accept or decline non-essential cookies when you first visit the site, and change your choice at any time in your browser settings. Most browsers let you block or delete cookies, though some parts of the website may not work correctly without them."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Contact us",
+        "paras": [
+          "If you have any questions about how we use cookies, please contact Andrew McCulloch Jewellers using the details on our Contact page."
+        ],
+        "bullets": []
+      }
+    ]
+  }
+};
+
+export const FAQS: FaqGroup[] = [
+  {
+    "category": "Orders",
+    "items": [
+      {
+        "q": "How do I place an order?",
+        "a": "Simply browse our collections, add your chosen item to your basket and complete the secure checkout process. If you need any assistance, our team is always happy to help."
+      },
+      {
+        "q": "Can I order by telephone?",
+        "a": "Yes. Please contact our team and we'll be happy to assist you with your purchase."
+      },
+      {
+        "q": "Can I change or cancel my order?",
+        "a": "If your order has not yet been dispatched, we will do our best to accommodate changes or cancellations. Please contact us as soon as possible."
+      },
+      {
+        "q": "Will I receive an order confirmation?",
+        "a": "Yes. You will receive an email confirmation shortly after placing your order."
+      }
+    ]
+  },
+  {
+    "category": "Delivery",
+    "items": [
+      {
+        "q": "How long does delivery take?",
+        "a": "Delivery times vary depending on the item. Stock items are usually dispatched quickly, while bespoke or made-to-order jewellery will take longer. Estimated delivery times are shown on each product page where applicable."
+      },
+      {
+        "q": "Do you offer free delivery?",
+        "a": "Please refer to our Delivery Information page for current delivery options and charges."
+      },
+      {
+        "q": "Can I track my order?",
+        "a": "Yes. Once your order has been dispatched, you'll receive tracking information where available."
+      },
+      {
+        "q": "Do you ship internationally?",
+        "a": "Please contact us before placing your order if you require international delivery."
+      }
+    ]
+  },
+  {
+    "category": "Returns",
+    "items": [
+      {
+        "q": "Can I return my order?",
+        "a": "Eligible items may be returned in accordance with our Returns & Refund Policy. Bespoke and personalised items are generally non-returnable unless faulty."
+      },
+      {
+        "q": "How long do I have to return an item?",
+        "a": "Please refer to our Returns Policy for the current return period."
+      },
+      {
+        "q": "How will I receive my refund?",
+        "a": "Refunds will normally be made using the original payment method once the returned item has been inspected."
+      }
+    ]
+  },
+  {
+    "category": "Repairs",
+    "items": [
+      {
+        "q": "Do you repair jewellery purchased elsewhere?",
+        "a": "Yes. We are happy to assess jewellery regardless of where it was purchased."
+      },
+      {
+        "q": "Do I need an appointment?",
+        "a": "No appointment is necessary, although appointments are recommended for bespoke consultations and valuations."
+      },
+      {
+        "q": "How long do repairs take?",
+        "a": "Repair times vary depending on the work required. We'll provide an estimated completion time when we assess your jewellery."
+      },
+      {
+        "q": "Will I receive a quote before work begins?",
+        "a": "Yes. We will provide an estimate before carrying out any chargeable work whenever possible."
+      }
+    ]
+  },
+  {
+    "category": "Watches",
+    "items": [
+      {
+        "q": "Do you repair all watch brands?",
+        "a": "We repair many watch brands. Please contact us or visit the showroom for an assessment."
+      },
+      {
+        "q": "Can you replace watch batteries?",
+        "a": "Yes. Battery replacement is available for many watch brands."
+      },
+      {
+        "q": "Are repaired watches guaranteed?",
+        "a": "Our repairs are covered by our warranty. Please see our Warranty page for details and exclusions."
+      }
+    ]
+  },
+  {
+    "category": "Bespoke",
+    "items": [
+      {
+        "q": "How does the bespoke process work?",
+        "a": "We begin with a consultation to discuss your ideas before creating designs and producing your jewellery using expert craftsmanship."
+      },
+      {
+        "q": "Can I use my own diamonds or gemstones?",
+        "a": "In many cases, yes. We'll inspect your stones before confirming whether they're suitable for reuse."
+      },
+      {
+        "q": "How long does a bespoke commission take?",
+        "a": "Timescales vary depending on the design and complexity. We'll provide an estimated completion date during your consultation."
+      }
+    ]
+  },
+  {
+    "category": "Ring Sizing",
+    "items": [
+      {
+        "q": "How do I find my ring size?",
+        "a": "Please see our Ring Size Guide or visit our showroom for professional sizing."
+      },
+      {
+        "q": "Can rings be resized?",
+        "a": "Many rings can be resized, although it depends on the design and metal. We'll be happy to assess your ring."
+      }
+    ]
+  },
+  {
+    "category": "Valuations",
+    "items": [
+      {
+        "q": "Do you provide insurance valuations?",
+        "a": "Yes. We offer professional insurance valuations."
+      },
+      {
+        "q": "Do you provide probate valuations?",
+        "a": "Yes. Probate valuations are available by appointment."
+      }
+    ]
+  },
+  {
+    "category": "Gold Buying",
+    "items": [
+      {
+        "q": "Do you buy old gold?",
+        "a": "Yes. We purchase unwanted gold and other precious metals."
+      },
+      {
+        "q": "Do I need identification?",
+        "a": "Yes. Valid photo identification may be required when selling precious metals to comply with legal requirements."
+      }
+    ]
+  },
+  {
+    "category": "Warranty",
+    "items": [
+      {
+        "q": "Do your products come with a warranty?",
+        "a": "Yes. Please see our Warranty page for full details of what is covered."
+      }
+    ]
+  }
+];

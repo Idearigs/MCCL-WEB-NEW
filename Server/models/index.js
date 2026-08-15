@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 
-let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage, DiamondSizes, ProductDiamondSizes, ChatLabel, ChatLabelAssignment, ProductRingSpecs, ProductSideStones, ProductPricingConfig;
+let Category, Product, ProductImage, ProductVideo, ProductVariant, ProductMetals, ProductSizes, Collection, RingTypes, StoneShapes, StoneTypes, ProductRingTypes, ProductStoneShapes, ProductStoneTypes, ProductMetalsJunction, MarketingContent, Promotion, Chat, ChatMessage, DiamondSizes, ProductDiamondSizes, ChatLabel, ChatLabelAssignment, ProductRingSpecs, ProductSideStones, ProductPricingConfig, Review;
 
 // Accepts the sequelize instance directly so models never need to require config/database
 const initializeModels = (sequelize) => {
@@ -672,6 +672,77 @@ const initializeModels = (sequelize) => {
     tableName: 'promotions',
     underscored: true,
     timestamps: true
+  });
+
+  // Reviews Model — customer testimonials (admin-added and visitor-submitted).
+  // `source` and `status` are plain strings (validated in the controller) so the
+  // dev sync and the production SQL migration produce identical column types.
+  Review = sequelize.define('Review', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
+    author_name: {
+      type: DataTypes.STRING(120),
+      allowNull: false
+    },
+    location: {
+      type: DataTypes.STRING(120),
+      allowNull: true,
+      comment: 'Optional town/city or context shown under the quote'
+    },
+    category: {
+      type: DataTypes.STRING(60),
+      allowNull: true,
+      comment: 'e.g. Bespoke, Engagement, Servicing — the small label beside the name'
+    },
+    rating: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 5,
+      comment: '1–5 stars'
+    },
+    body: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      comment: 'The review / quote text'
+    },
+    email: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: 'Visitor email for follow-up — never shown publicly'
+    },
+    source: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'admin',
+      comment: 'admin = staff-added, visitor = submitted via the site form'
+    },
+    status: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'published',
+      comment: 'pending | published | hidden'
+    },
+    is_featured: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Show in the homepage "What clients say" section'
+    },
+    sort_order: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    }
+  }, {
+    tableName: 'reviews',
+    underscored: true,
+    timestamps: true,
+    indexes: [
+      { fields: ['status'] },
+      { fields: ['source'] },
+      { fields: ['is_featured'] }
+    ]
   });
 
   // Chat Model - for storing chat sessions
@@ -1430,6 +1501,7 @@ const initializeModels = (sequelize) => {
     ProductRingSpecs,
     ProductSideStones,
     ProductPricingConfig,
+    Review,
     ...watchModels,
     ...jewelryModels
   };
@@ -1474,6 +1546,7 @@ module.exports = {
       ProductRingSpecs,
       ProductSideStones,
       ProductPricingConfig,
+      Review,
       ...watchModels,
       ...jewelryModels,
       ...orderModels

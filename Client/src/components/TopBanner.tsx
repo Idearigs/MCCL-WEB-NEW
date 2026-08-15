@@ -4,10 +4,9 @@ const TopBanner = (): JSX.Element => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   const bannerItems = [
-    "FREE WORLDWIDE DELIVERY",
-    "30 DAY RETURNS / 60 DAY EXCHANGE", 
-    "5 YEAR WARRANTY",
-    "0% APR FINANCE",
+    "FREE INSURED UK DELIVERY",
+    "30 DAY RETURNS",
+    "1 YEAR WARRANTY",
     "UK HANDCRAFTED"
   ];
 
@@ -24,13 +23,11 @@ const TopBanner = (): JSX.Element => {
     <div className="bg-[#2d2d2d] text-white text-xs font-light h-7 flex items-center justify-center">
       {/* Desktop - Static Layout */}
       <div className="hidden lg:flex items-center justify-center gap-x-8 w-full px-4">
-        <span className="uppercase tracking-wider">Free Worldwide Delivery</span>
+        <span className="uppercase tracking-wider">Free Insured UK Delivery</span>
         <span className="text-gray-400">|</span>
-        <span className="uppercase tracking-wider">30 Day Returns / 60 Day Exchange</span>
+        <span className="uppercase tracking-wider">30 Day Returns</span>
         <span className="text-gray-400">|</span>
-        <span className="uppercase tracking-wider">5 Year Warranty</span>
-        <span className="text-gray-400">|</span>
-        <span className="uppercase tracking-wider">0% APR Finance</span>
+        <span className="uppercase tracking-wider">1 Year Warranty</span>
         <span className="text-gray-400">|</span>
         <span className="uppercase tracking-wider">UK Handcrafted</span>
       </div>

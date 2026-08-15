@@ -404,7 +404,7 @@ router.get('/profile', auth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, email, first_name, last_name, phone, avatar_url,
-              date_of_birth, gender, newsletter_subscribed, sms_notifications,
+              date_of_birth, gender, ring_size, newsletter_subscribed, sms_notifications,
               email_verified, created_at, last_login_at
        FROM users WHERE id = $1`,
       [req.user.userId]
@@ -430,6 +430,7 @@ router.get('/profile', auth, async (req, res) => {
         avatarUrl: user.avatar_url,
         dateOfBirth: user.date_of_birth,
         gender: user.gender,
+        ringSize: user.ring_size,
         newsletterSubscribed: user.newsletter_subscribed,
         smsNotifications: user.sms_notifications,
         emailVerified: user.email_verified,
@@ -461,6 +462,7 @@ router.put('/profile', auth, async (req, res) => {
       phone,
       dateOfBirth,
       gender,
+      ringSize,
       newsletterSubscribed,
       smsNotifications
     } = req.body;
@@ -472,11 +474,12 @@ router.put('/profile', auth, async (req, res) => {
         phone = COALESCE($3, phone),
         date_of_birth = COALESCE($4, date_of_birth),
         gender = COALESCE($5, gender),
-        newsletter_subscribed = COALESCE($6, newsletter_subscribed),
-        sms_notifications = COALESCE($7, sms_notifications)
-       WHERE id = $8
-       RETURNING id, email, first_name, last_name, phone, date_of_birth, gender`,
-      [firstName, lastName, phone, dateOfBirth, gender, newsletterSubscribed, smsNotifications, req.user.userId]
+        ring_size = COALESCE($6, ring_size),
+        newsletter_subscribed = COALESCE($7, newsletter_subscribed),
+        sms_notifications = COALESCE($8, sms_notifications)
+       WHERE id = $9
+       RETURNING id, email, first_name, last_name, phone, date_of_birth, gender, ring_size`,
+      [firstName, lastName, phone, dateOfBirth, gender, ringSize, newsletterSubscribed, smsNotifications, req.user.userId]
     );
 
     const user = result.rows[0];
@@ -491,7 +494,8 @@ router.put('/profile', auth, async (req, res) => {
         lastName: user.last_name,
         phone: user.phone,
         dateOfBirth: user.date_of_birth,
-        gender: user.gender
+        gender: user.gender,
+        ringSize: user.ring_size
       }
     });
 

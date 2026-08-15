@@ -17,6 +17,10 @@ const marketingRoutes = require('./marketing');
 const promotionRoutes = require('./promotions');
 const chatRoutes = require('./chats');
 const ringPricingRoutes = require('./ringPricing');
+const reviewRoutes = require('./reviews');
+const addressRoutes = require('./addresses');
+const appointmentRoutes = require('./appointments');
+const pieceRoutes = require('./pieces');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -35,6 +39,7 @@ router.use('/admin', adminRoutes);
 router.use('/admin/products', adminProductRoutes);
 router.use('/filters', filtersRoutes);
 router.use('/watches', watchRoutes);
+router.use('/users/addresses', addressRoutes); // before '/users' so it isn't shadowed
 router.use('/users', userRoutes);
 router.use('/favorites', favoritesRoutes);
 router.use('/auth', authRoutes);
@@ -45,6 +50,9 @@ router.use('/marketing', marketingRoutes);
 router.use('/promotions', promotionRoutes);
 router.use('/chats', chatRoutes);
 router.use('/ring-pricing', ringPricingRoutes);
+router.use('/reviews', reviewRoutes);
+router.use('/appointments', appointmentRoutes);
+router.use('/pieces', pieceRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {

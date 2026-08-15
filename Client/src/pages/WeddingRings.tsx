@@ -372,7 +372,10 @@ const WeddingRings = (): JSX.Element => {
                 return (
                   <div key={product.id} className="bg-white transition-all duration-300 pb-2">
                     <Link to={`/${product.category.slug}/${product.slug}`} className="group cursor-pointer block">
-                      <div className="relative bg-white overflow-hidden" style={{ aspectRatio: '1', height: 'auto' }}>
+                      <div
+                        className="relative overflow-hidden rounded-sm border border-gray-100 shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition-shadow duration-500 group-hover:shadow-[0_10px_32px_rgba(0,0,0,0.10)]"
+                        style={{ aspectRatio: '1', height: 'auto', background: 'radial-gradient(circle at 50% 42%, #ffffff 0%, #ffffff 72%, #f6f5f3 100%)' }}
+                      >
                         <div className="absolute top-2 right-2 lg:top-3 lg:right-3 z-20">
                           <FavoriteButton
                             productId={product.id}
@@ -383,23 +386,26 @@ const WeddingRings = (): JSX.Element => {
                           />
                         </div>
 
-                        {/* Default Image */}
-                        <img
-                          src={primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png"}
-                          alt={primaryImage?.alt || product.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-0"
-                        />
+                        {/* Padded image area — keeps the product small on the tile */}
+                        <div className="absolute inset-0 p-6 lg:p-8">
+                          {/* Default Image */}
+                          <img
+                            src={primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png"}
+                            alt={primaryImage?.alt || product.name}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-contain transition-opacity duration-300 group-hover:opacity-0"
+                          />
 
-                        {/* Hover Image */}
-                        <img
-                          src={hoverImage?.url ? getMediaUrl(hoverImage.url) : (primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png")}
-                          alt={hoverImage?.alt || `${product.name} - Alternative View`}
-                          loading="lazy"
-                          decoding="async"
-                          className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100"
-                        />
+                          {/* Hover Image */}
+                          <img
+                            src={hoverImage?.url ? getMediaUrl(hoverImage.url) : (primaryImage?.url ? getMediaUrl(primaryImage.url) : "/images/Rings.png")}
+                            alt={hoverImage?.alt || `${product.name} - Alternative View`}
+                            loading="lazy"
+                            decoding="async"
+                            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                          />
+                        </div>
 
                         {/* Hover Overlay — desktop only */}
                         <div className="hidden lg:flex absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-col justify-end p-4">

@@ -54,10 +54,10 @@ const BespokeDesignSection = () => {
             <ScrollReveal direction="right" delay={380}>
               <p className="text-sm lg:text-base text-gray-700 mb-8 leading-relaxed"
                  style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                McCulloch Jewellers is home to one of the finest collections of bespoke jewelry.
-                Founded in 1847, we have inspired artisans and creatives of every description. Now,
-                to mark 175+ years, McCulloch has created a collection of exceptional bespoke pieces
-                to celebrate this landmark legacy.
+                Andrew McCulloch Jewellers is home to one of Beeston's finest workshops for bespoke
+                jewellery. A trusted name on The Square since 1952, and owned by the de Silva family
+                since 2017, we design and make bespoke pieces by hand on our own bench — every
+                commission created for one person and no one else.
               </p>
             </ScrollReveal>
 
