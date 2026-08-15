@@ -46,15 +46,18 @@ Thumbs.db
 nul
 Server/nul
 
-# Root-level junk (Windows artifacts, local-only)
-public/
-
 # Large media files (stored in Docker volumes on VPS, not in git)
 *.mp4
 *.mov
 *.avi
 *.mkv
 *.webm
+
+# ...but the site's own public assets ARE needed at build time (the frontend
+# container rebuilds from source and copies Client/public into dist), so keep them.
+!Client/public/videos/
+!Client/public/videos/*.mp4
+!Client/public/videos/*.webm
 
 # Server uploads — stored in Docker volume, never in git
 Server/uploads/
