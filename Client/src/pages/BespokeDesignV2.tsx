@@ -118,10 +118,10 @@ const BespokeDesignV2 = (): JSX.Element => {
 
       {/* 1 — Hero */}
       <section style={{ position: "relative", height: "clamp(520px, 72vh, 760px)", minHeight: 520, background: T.inkDeep, overflow: "hidden", marginTop: 0 }}>
-        <video autoPlay muted loop playsInline preload="auto" poster="/videos/bespoke-poster.jpg" aria-label="Bespoke commissions at the bench"
+        <video autoPlay muted loop playsInline preload="auto" poster="/videos/workshop-poster.jpg" aria-label="Bespoke commissions at the bench"
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }}>
-          <source src="/videos/bespoke.webm" type="video/webm" />
-          <source src="/videos/bespoke.mp4" type="video/mp4" />
+          <source src="/videos/workshop.webm" type="video/webm" />
+          <source src="/videos/workshop.mp4" type="video/mp4" />
         </video>
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(18,16,13,0.82), rgba(18,16,13,0) 52%, rgba(18,16,13,0.3))" }} />
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: `0 ${pageX} clamp(40px, 5vw, 72px)` }}>
