@@ -19,48 +19,50 @@ import MaintenancePage from "./pages/MaintenancePage";
 const Collections       = lazy(() => import("./pages/Collections"));
 const Jewellery         = lazy(() => import("./pages/Jewellery"));
 const Diamonds          = lazy(() => import("./pages/Diamonds"));
-const Watches           = lazy(() => import("./pages/Watches"));
+const Watches           = lazy(() => import("./pages/WatchesV2"));
 const Heritage          = lazy(() => import("./pages/Heritage"));
 const Products          = lazy(() => import("./pages/Products"));
-const Cart              = lazy(() => import("./pages/Cart"));
-const Checkout          = lazy(() => import("./pages/Checkout"));
-const ThankYou          = lazy(() => import("./pages/ThankYou"));
+const Cart              = lazy(() => import("./pages/CartV2"));
+const Checkout          = lazy(() => import("./pages/CheckoutV2"));
+const ThankYou          = lazy(() => import("./pages/ThankYouV2"));
 
 // Watch brands
-const Roamer            = lazy(() => import("./pages/Roamer"));
-const Briston           = lazy(() => import("./pages/Briston"));
-const Festina           = lazy(() => import("./pages/Festina"));
+const Roamer            = lazy(() => import("./pages/WatchBrandV2"));
+const Briston           = lazy(() => import("./pages/WatchBrandV2"));
+const Festina           = lazy(() => import("./pages/WatchBrandV2"));
 const FestinaWatches    = lazy(() => import("./pages/FestinaWatches"));
 const BristonWatches    = lazy(() => import("./pages/BristonWatches"));
 const RoamerWatches     = lazy(() => import("./pages/RoamerWatches"));
 const FestinaClassicCollection  = lazy(() => import("./pages/FestinaClassicCollection"));
 const BristonHeritageCollection = lazy(() => import("./pages/BristonHeritageCollection"));
 const RoamerSwissTradition      = lazy(() => import("./pages/RoamerSwissTradition"));
-const WatchCollection   = lazy(() => import("./pages/WatchCollection"));
+const WatchCollection   = lazy(() => import("./pages/CollectionV2"));
 
 // Jewellery categories
 const Rings             = lazy(() => import("./pages/Rings"));
-const EngagementRings   = lazy(() => import("./pages/EngagementRings"));
-const WeddingRings      = lazy(() => import("./pages/WeddingRings"));
+const EngagementRings   = lazy(() => import("./pages/EngagementRingsV2"));
+const WeddingRings      = lazy(() => import("./pages/WeddingRingsV2"));
 const Earrings          = lazy(() => import("./pages/Earrings"));
 const Necklaces         = lazy(() => import("./pages/Necklaces"));
 const Bracelets         = lazy(() => import("./pages/Bracelets"));
 
 // Product detail pages (heaviest pages — always lazy)
 const ProductDetail     = lazy(() => import("./pages/ProductDetail"));
-const WatchDetail       = lazy(() => import("./pages/WatchDetail"));
+const ProductDetailV2    = lazy(() => import("./pages/ProductDetailV2"));
+const WatchDetail       = lazy(() => import("./pages/WatchDetailV2"));
 const WeddingRingDetail = lazy(() => import("./pages/WeddingRingDetail"));
 
 // Info / account pages
-const Contact           = lazy(() => import("./pages/Contact"));
-const OurStory          = lazy(() => import("./pages/OurStory"));
-const BespokeDesign     = lazy(() => import("./pages/BespokeDesign"));
+const Contact           = lazy(() => import("./pages/ContactV2"));
+const OurStory          = lazy(() => import("./pages/OurStoryV2"));
+const BespokeDesign     = lazy(() => import("./pages/BespokeDesignV2"));
 const Portfolio         = lazy(() => import("./pages/Portfolio"));
 const CustomerService   = lazy(() => import("./pages/CustomerService"));
 const VisitUs           = lazy(() => import("./pages/VisitUs"));
 const TrustGuarantees   = lazy(() => import("./pages/TrustGuarantees"));
+const InfoPage          = lazy(() => import("./pages/InfoPageV2"));
 const Favorites         = lazy(() => import("./pages/Favorites"));
-const Account           = lazy(() => import("./pages/Account"));
+const Account           = lazy(() => import("./pages/AccountV2"));
 const Orders            = lazy(() => import("./pages/Orders"));
 const OrderDetail       = lazy(() => import("./pages/OrderDetail"));
 const VerifyEmail       = lazy(() => import("./pages/VerifyEmail"));
@@ -152,7 +154,7 @@ const AppRoutes = () => {
       <Route path="/collections/:collectionSlug" element={<WatchCollection />} />
 
       {/* Product detail pages */}
-      <Route path="/engagement-rings/:productId" element={<ProductDetail />} />
+      <Route path="/engagement-rings/:productId" element={<ProductDetailV2 />} />
       <Route path="/wedding-rings/:productId" element={<WeddingRingDetail />} />
       <Route path="/wedding/:productId" element={<WeddingRingDetail />} />
       <Route path="/rings/:productId" element={<ProductDetail />} />
@@ -173,6 +175,28 @@ const AppRoutes = () => {
       <Route path="/customer-service" element={<CustomerService />} />
       <Route path="/visit-us" element={<VisitUs />} />
       <Route path="/trust-guarantees" element={<TrustGuarantees />} />
+
+      {/* Informational, legal & guide pages — content from Website Essentials (InfoPageV2) */}
+      <Route path="/privacy" element={<InfoPage slug="privacy" />} />
+      <Route path="/terms" element={<InfoPage slug="terms" />} />
+      <Route path="/cookies" element={<InfoPage slug="cookies" />} />
+      <Route path="/delivery" element={<InfoPage slug="delivery" />} />
+      <Route path="/returns" element={<InfoPage slug="returns" />} />
+      <Route path="/warranty" element={<InfoPage slug="warranty" />} />
+      <Route path="/repairs" element={<InfoPage slug="repairs" />} />
+      <Route path="/book-appointment" element={<InfoPage slug="book-appointment" />} />
+      <Route path="/sustainability" element={<InfoPage slug="sustainability" />} />
+      <Route path="/certificate-of-authenticity" element={<InfoPage slug="certificate-of-authenticity" />} />
+      <Route path="/certificates" element={<InfoPage slug="certificate-of-authenticity" />} />
+      <Route path="/faqs" element={<InfoPage slug="faqs" />} />
+      <Route path="/ring-size-guide" element={<InfoPage slug="ring-size-guide" />} />
+      <Route path="/size-guide" element={<InfoPage slug="ring-size-guide" />} />
+      <Route path="/diamond-guide" element={<InfoPage slug="diamond-guide" />} />
+      <Route path="/gemstone-guide" element={<InfoPage slug="gemstone-guide" />} />
+      <Route path="/birthstone-guide" element={<InfoPage slug="birthstone-guide" />} />
+      <Route path="/hallmark-guide" element={<InfoPage slug="hallmark-guide" />} />
+      <Route path="/jewellery-care" element={<InfoPage slug="jewellery-care" />} />
+      <Route path="/care" element={<InfoPage slug="jewellery-care" />} />
 
       {/* Account */}
       <Route path="/favorites" element={<Favorites />} />
@@ -201,7 +225,7 @@ const App = () => (
           <CartProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <ScrollToTop />
               <PixelPageViewTracker />
               <Suspense fallback={<PageLoader />}>

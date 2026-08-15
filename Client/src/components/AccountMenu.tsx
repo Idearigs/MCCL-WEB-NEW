@@ -15,9 +15,6 @@ const AccountMenu: React.FC<AccountMenuProps> = ({ onLoginClick, isTransparent =
   const { user, isAuthenticated, logout } = useUserAuth();
   const { favoritesCount } = useFavorites();
 
-  // Debug log
-  console.log('AccountMenu - isTransparent:', isTransparent, 'isAuthenticated:', isAuthenticated);
-
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

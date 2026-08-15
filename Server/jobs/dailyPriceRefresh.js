@@ -141,7 +141,15 @@ async function recalculateAllWithReport() {
   });
 
   await metalPriceService.clearMetalPriceCache();
-  const metalPrices = await metalPriceService.fetchMetalPrices();
+  // Never let a metal-price feed hiccup 500 the whole endpoint — the resilient
+  // service already falls back to last-known-good, but guard here too so the
+  // per-product loop can still run (calculateRingPrice fetches prices itself).
+  let metalPrices = null;
+  try {
+    metalPrices = await metalPriceService.fetchMetalPrices();
+  } catch (err) {
+    logger.warn(`Recalc: metal price fetch unavailable, proceeding with per-product fallback: ${err.message}`);
+  }
 
   const report  = [];
   let updated   = 0;

@@ -120,7 +120,6 @@ export const FooterSection = (): JSX.Element => {
                 <li><a href="/faqs" className="text-sm font-cormorant text-gray-800 hover:text-gray-900 transition-colors">FAQs</a></li>
                 <li><a href="/size-guide" className="text-sm font-cormorant text-gray-800 hover:text-gray-900 transition-colors">Ring size guide</a></li>
                 <li><a href="/buying-guide" className="text-sm font-cormorant text-gray-800 hover:text-gray-900 transition-colors">Buying guide</a></li>
-                <li><a href="/finance" className="text-sm font-cormorant text-gray-800 hover:text-gray-900 transition-colors">Finance options</a></li>
                 <li><a href="/payment" className="text-sm font-cormorant text-gray-800 hover:text-gray-900 transition-colors">Payment options</a></li>
                 <li><a href="/proposals" className="text-sm font-cormorant text-gray-800 hover:text-gray-900 transition-colors">101 proposal ideas</a></li>
               </ul>
@@ -224,8 +223,10 @@ export const FooterSection = (): JSX.Element => {
             
             <div className="text-center">
               <p className="text-xs font-cormorant text-gray-500 leading-relaxed max-w-4xl mx-auto">
-                &copy; {new Date().getFullYear()}. All Rights Reserved. McCulloch The Jewellers - Creators of exceptional jewelry since 1847. 
-                No. 1, Galle Face Terrace, Colombo 03, Sri Lanka. +94 11 2 555 555
+                &copy; {new Date().getFullYear()} Andrew McCulloch Jewellers. All rights reserved. Serving Beeston since 1952.
+                <br />
+                Beeston Jewellers Ltd, registered in England &amp; Wales No. 10915704. VAT No. 275322603.
+                Registered office: 7 The Square, Beeston, Nottinghamshire, NG9 2JG. Tel 0115 925 7552.
               </p>
             </div>
           </div>

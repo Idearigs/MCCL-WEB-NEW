@@ -12,6 +12,9 @@ import AdminUsers from './pages/AdminUsers';
 import AdminOrders from './pages/AdminOrders';
 import AdminMarketing from './pages/AdminMarketing';
 import AdminPromotions from './pages/AdminPromotions';
+import AdminReviews from './pages/AdminReviews';
+import AdminAppointments from './pages/AdminAppointments';
+import AdminPieces from './pages/AdminPieces';
 import AdminChats from './pages/AdminChats';
 import AdminWeddingRings from './pages/AdminWeddingRings';
 import AdminSettings from './pages/AdminSettings';
@@ -105,6 +108,33 @@ const AdminApp: React.FC = () => {
           element={
             <ProtectedRoute>
               <AdminPromotions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reviews"
+          element={
+            <ProtectedRoute>
+              <AdminReviews />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/appointments"
+          element={
+            <ProtectedRoute>
+              <AdminAppointments />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/pieces"
+          element={
+            <ProtectedRoute>
+              <AdminPieces />
             </ProtectedRoute>
           }
         />

@@ -8,6 +8,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Dev-only proxy: lets the local page call the production API/media same-origin
+    // (server-to-server, so no browser Origin header — the API's CORS layer 500s on
+    // unknown localhost origins otherwise). Only active for `vite`/`vite dev`.
+    proxy: {
+      '/api': { target: 'https://api.buymediamonds.co.uk', changeOrigin: true, secure: true },
+      '/uploads': { target: 'https://api.buymediamonds.co.uk', changeOrigin: true, secure: true },
+    },
   },
   plugins: [
     react(),

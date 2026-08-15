@@ -433,9 +433,6 @@ const ProductDetail = () => {
         const data = await response.json();
 
         if (data.success) {
-          console.log('Product data received:', data.data.product);
-          console.log('Number of images:', data.data.product.images?.length);
-          console.log('Images array:', data.data.product.images);
           setProductData(data.data.product);
           setRecommendedProducts(data.data.recommended_products || []);
 
@@ -966,7 +963,7 @@ const ProductDetail = () => {
                     src={getMediaUrl(img?.url || '')}
                     alt={img?.alt || productData.name}
                     className="w-full h-full object-cover cursor-pointer"
-                    fetchPriority={idx === 0 ? 'high' : 'auto'}
+                    {...{ fetchpriority: idx === 0 ? 'high' : 'auto' }}
                     loading={idx === 0 ? 'eager' : 'lazy'}
                     onClick={() => openLightbox(idx)}
                     draggable={false}
@@ -1466,8 +1463,8 @@ const ProductDetail = () => {
                 )}
                 <p className="text-sm font-futura-pt font-light text-gray-700 leading-relaxed">
                   {productData.is_made_on_request
-                    ? 'Once your piece is ready, we offer free worldwide delivery. Express shipping available upon request.'
-                    : 'Free worldwide delivery on all orders. Express delivery options available.'
+                    ? 'Once your piece is ready, we offer free insured UK delivery by Royal Mail Special Delivery. International delivery available on request.'
+                    : 'Free insured UK delivery by Royal Mail Special Delivery. International delivery available on request.'
                   }
                 </p>
               </div>
@@ -1527,11 +1524,13 @@ const ProductDetail = () => {
           <div className="w-full px-4">
             {/* Fixed 2-Column Grid for all media */}
             <div className="grid grid-cols-2 gap-2">
-              {displayImages.map((image, index) => (
+              {displayImages.map((image, index) => {
+                const isVid = isVideoFile(image?.url);
+                return (
                 <div
                   key={index}
-                  className="relative bg-gray-50 overflow-hidden group cursor-pointer"
-                  style={{ height: '750px' }}
+                  className={`relative overflow-hidden group cursor-pointer rounded-sm border border-gray-100 shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition-shadow duration-500 hover:shadow-[0_10px_32px_rgba(0,0,0,0.10)] ${isVid ? '' : 'p-12 xl:p-20'}`}
+                  style={{ height: '750px', background: isVid ? '#ffffff' : 'radial-gradient(circle at 50% 42%, #ffffff 0%, #ffffff 70%, #eef0f2 100%)' }}
                   onClick={() => openLightbox(index)}
                 >
                   {/* Loading skeleton for videos */}
@@ -1550,7 +1549,7 @@ const ProductDetail = () => {
                         autoPlay
                         playsInline
                         preload="metadata"
-                        className={`w-full h-full object-contain transition-transform duration-500 group-hover:scale-105`}
+                        className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
                         onLoadedData={(e) => {
                           // Hide loading skeleton when video loads
                           const loadingDiv = e.target.parentElement.previousElementSibling;
@@ -1568,7 +1567,7 @@ const ProductDetail = () => {
                     <img
                       src={getMediaUrl(image?.url || '')}
                       alt={image?.alt || `${productData.name} - Image ${index + 1}`}
-                      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
+                      className={`w-full h-full object-contain transition-transform duration-500 group-hover:scale-105`}
                       loading="lazy"
                     />
                   )}
@@ -1585,7 +1584,8 @@ const ProductDetail = () => {
                     </>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -2218,8 +2218,8 @@ const ProductDetail = () => {
                     {/* Standard Delivery Info */}
                     <p className="text-sm 2xl:text-base font-futura-pt font-light text-gray-700 leading-relaxed">
                       {productData.is_made_on_request
-                        ? 'Once your piece is ready, we offer free worldwide delivery. Express shipping available upon request.'
-                        : 'Free worldwide delivery on all orders. Express delivery options available.'
+                        ? 'Once your piece is ready, we offer free insured UK delivery by Royal Mail Special Delivery. International delivery available on request.'
+                        : 'Free insured UK delivery by Royal Mail Special Delivery. International delivery available on request.'
                       }
                     </p>
                   </div>
@@ -2391,7 +2391,7 @@ const ProductDetail = () => {
                   Experience McCulloch Excellence
                 </h2>
                 <p className="text-sm font-futura-pt text-gray-600 italic">
-                  Where craftsmanship meets distinction since 1847
+                  Where craftsmanship meets distinction since 1952
                 </p>
               </div>
               
@@ -2501,12 +2501,15 @@ const ProductDetail = () => {
                   className="group cursor-pointer flex-shrink-0 w-80 lg:w-96 block"
                 >
                   {/* Product Image */}
-                  <div className="relative bg-white mb-6 overflow-hidden">
-                    <div className="aspect-square">
+                  <div
+                    className="relative mb-6 overflow-hidden rounded-sm border border-gray-100 shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition-shadow duration-500 group-hover:shadow-[0_10px_32px_rgba(0,0,0,0.10)]"
+                    style={{ background: 'radial-gradient(circle at 50% 42%, #ffffff 0%, #ffffff 72%, #f6f5f3 100%)' }}
+                  >
+                    <div className="aspect-square flex items-center justify-center p-6 lg:p-10">
                       <img
                         src={product.image ? getMediaUrl(product.image) : ''}
                         alt={product.name}
-                        className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                        className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
                       />
                     </div>

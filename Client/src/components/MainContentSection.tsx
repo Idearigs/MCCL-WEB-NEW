@@ -101,57 +101,17 @@ export default function MainContentSection(): JSX.Element {
     fetchRingProducts();
   }, []);
 
-  // Auto-slide functionality - every 3 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (desktopScrollRef.current) {
-        const container = desktopScrollRef.current;
-        const firstCard = container.querySelector('a') as HTMLElement | null;
-        const cardWidth = firstCard ? firstCard.offsetWidth + 16 : 216; // measured card + gap
-        const containerWidth = container.clientWidth;
-        const cardsVisible = Math.floor(containerWidth / cardWidth);
-        const maxIndex = Math.max(0, ringProducts.length - cardsVisible);
+  // Number of cards visible at once in the "You may also like" style row
+  const VISIBLE_RING_CARDS = 4;
+  const maxRingIndex = Math.max(0, ringProducts.length - VISIBLE_RING_CARDS);
 
-        if (currentProductIndex >= maxIndex) {
-          // Reset to beginning
-          container.scrollTo({ left: 0, behavior: 'smooth' });
-          setCurrentProductIndex(0);
-        } else {
-          // Move to next slide
-          const nextIndex = currentProductIndex + 1;
-          container.scrollTo({ left: nextIndex * cardWidth, behavior: 'smooth' });
-          setCurrentProductIndex(nextIndex);
-        }
-      }
-    }, 3000); // 3 seconds
-
-    return () => clearInterval(interval);
-  }, [currentProductIndex, ringProducts.length]);
-
-  // Navigation arrow handlers
+  // Navigation arrow handlers — index-based paging (one card per click)
   const handlePrevious = () => {
-    if (desktopScrollRef.current) {
-      const container = desktopScrollRef.current;
-      const firstCard = container.querySelector('a') as HTMLElement | null;
-      const cardWidth = firstCard ? firstCard.offsetWidth + 16 : 216;
-      const newIndex = Math.max(0, currentProductIndex - 1);
-      container.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
-      setCurrentProductIndex(newIndex);
-    }
+    setCurrentProductIndex((i) => Math.max(0, i - 1));
   };
 
   const handleNext = () => {
-    if (desktopScrollRef.current) {
-      const container = desktopScrollRef.current;
-      const firstCard = container.querySelector('a') as HTMLElement | null;
-      const cardWidth = firstCard ? firstCard.offsetWidth + 16 : 216;
-      const containerWidth = container.clientWidth;
-      const cardsVisible = Math.floor(containerWidth / cardWidth);
-      const maxIndex = Math.max(0, ringProducts.length - cardsVisible);
-      const newIndex = Math.min(maxIndex, currentProductIndex + 1);
-      container.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
-      setCurrentProductIndex(newIndex);
-    }
+    setCurrentProductIndex((i) => Math.min(maxRingIndex, i + 1));
   };
 
   const handleScroll = () => {
@@ -503,192 +463,102 @@ export default function MainContentSection(): JSX.Element {
         </div>
       </section>
 
-      {/* Product Carousel Section */}
-      <section className="bg-white pt-14 pb-12 lg:pt-16 lg:pb-16">
+      {/* Product Carousel Section — "You may also like" style */}
+      <section className="bg-white py-14 lg:py-20 px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-10 lg:mb-12">
+            <h2 className="text-2xl lg:text-3xl font-cormorant font-light text-gray-900 tracking-wide">
+              Rings
+            </h2>
 
-        {/* ── Tab navigation (matches reference screenshot) ── */}
-        <div className="px-6 lg:px-8 mb-10">
-          <div className="flex items-end justify-between">
-            {/* Tabs */}
-            <div className="flex items-end gap-0">
-              {/* RINGS — active */}
-              <button className="relative pb-3 text-[11px] font-inter font-normal tracking-[0.25em] uppercase text-gray-900 transition-colors duration-200">
-                Rings
-                <span className="absolute bottom-0 left-0 right-0 h-px bg-gray-900" />
-              </button>
-            </div>
-
-            {/* Right: View All + Arrows */}
-            <div className="flex items-center gap-3 pb-3">
+            {/* View All + Navigation Arrows */}
+            <div className="flex items-center gap-5">
               <Link
                 to="/engagement-rings"
-                className="hidden lg:inline text-[10px] font-inter font-light uppercase tracking-[0.25em] text-gray-400 hover:text-gray-900 transition-colors duration-300 mr-2"
+                className="hidden sm:inline text-[10px] font-inter font-light uppercase tracking-[0.25em] text-gray-400 hover:text-gray-900 transition-colors duration-300"
               >
                 View All
               </Link>
-              <button
-                onClick={handlePrevious}
-                disabled={currentProductIndex === 0}
-                className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-200 ${
-                  currentProductIndex === 0
-                    ? 'border-gray-200 cursor-not-allowed'
-                    : 'border-gray-300 hover:border-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <svg className={`w-3 h-3 ${currentProductIndex === 0 ? 'text-gray-300' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={handleNext}
-                className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-600 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center"
-              >
-                <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={handlePrevious}
+                  disabled={currentProductIndex === 0}
+                  aria-label="Previous rings"
+                  className="w-9 h-9 lg:w-10 lg:h-10 border border-gray-300 hover:border-gray-900 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                >
+                  <svg className="w-4 h-4 lg:w-5 lg:h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={currentProductIndex >= maxRingIndex}
+                  aria-label="Next rings"
+                  className="w-9 h-9 lg:w-10 lg:h-10 border border-gray-300 hover:border-gray-900 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                >
+                  <svg className="w-4 h-4 lg:w-5 lg:h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-          {/* Full-width rule below tabs */}
-          <div className="w-full h-px bg-gray-100 -mt-px" />
-        </div>
 
-        {/* Desktop Product Carousel */}
-        <div
-          ref={desktopScrollRef}
-          className="hidden lg:block overflow-x-auto pl-6 lg:pl-8"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflow: 'hidden' }}
-        >
-          <div className="flex gap-4">
+          {/* Products Horizontal Row */}
+          <div className="flex space-x-8 lg:space-x-12 overflow-x-auto scrollbar-hide pb-4">
             {loading ? (
-              Array.from({ length: 7 }).map((_, index) => (
+              Array.from({ length: VISIBLE_RING_CARDS }).map((_, index) => (
                 <div
                   key={`loading-${index}`}
-                  className="flex-shrink-0 animate-pulse"
-                  style={{ width: 'calc((100vw - 4rem - 6 * 1rem) / 7)' }}
+                  className="flex-shrink-0 w-72 sm:w-80 lg:w-96 animate-pulse"
                 >
-                  <div className="bg-gray-100 w-full" style={{ aspectRatio: '1 / 1.1' }} />
-                  <div className="bg-gray-100 h-3 mt-3 w-3/4 rounded" />
+                  <div className="bg-gray-100 aspect-square mb-6" />
+                  <div className="bg-gray-100 h-4 w-2/3 rounded mb-2" />
+                  <div className="bg-gray-100 h-3 w-1/3 rounded" />
                 </div>
               ))
             ) : (
-              ringProducts.map((product, index) => (
-                <Link
-                  key={index}
-                  to={`/rings/${product.slug || product.id}`}
-                  className="flex-shrink-0 group"
-                  style={{ width: 'calc((100vw - 4rem - 6 * 1rem) / 7)' }}
-                >
-                  {/* Image tile */}
-                  <div
-                    className="w-full bg-[#f0f0f0] overflow-hidden flex items-center justify-center"
-                    style={{ aspectRatio: '1 / 1' }}
-                  >
-                    {product.image?.url ? (
-                      <img
-                        src={getMediaUrl(product.image.url)}
-                        alt={product.image.alt || product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <span className="text-xs font-cormorant text-gray-400 text-center px-2">{product.name}</span>
-                    )}
-                  </div>
-                  {/* Name below on white */}
-                  <div className="pt-3 pb-1">
-                    <h3 className="text-sm font-cormorant font-light text-gray-800 leading-snug">
-                      {product.name}
-                    </h3>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Desktop: thin progress line at bottom */}
-        <div className="hidden lg:block px-8 mt-8">
-          <div className="w-full h-px bg-gray-100">
-            <div
-              className="h-px bg-gray-800 transition-all duration-500"
-              style={{ width: ringProducts.length > 1 ? `${((currentProductIndex + 1) / ringProducts.length) * 100}%` : '100%' }}
-            />
-          </div>
-        </div>
-
-        {/* Mobile Product Carousel — 1 card at a time */}
-        <div className="lg:hidden">
-          <div
-            ref={mobileScrollRef}
-            className="overflow-x-auto"
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              scrollSnapType: 'x mandatory',
-              WebkitOverflowScrolling: 'touch'
-            }}
-          >
-            <div className="flex">
-              {loading ? (
-                <div className="flex-shrink-0 w-full px-6 animate-pulse">
-                  <div className="bg-gray-100 w-full" style={{ aspectRatio: '4/3' }} />
-                  <div className="bg-gray-100 h-4 mt-4 w-1/2 rounded mx-auto" />
-                </div>
-              ) : (
-                ringProducts.map((product, index) => (
+              ringProducts
+                .slice(currentProductIndex, currentProductIndex + VISIBLE_RING_CARDS)
+                .map((product) => (
                   <Link
-                    key={index}
+                    key={product.id}
                     to={`/rings/${product.slug || product.id}`}
-                    className="flex-shrink-0 w-full px-6 group"
-                    style={{ scrollSnapAlign: 'start' }}
+                    className="group cursor-pointer flex-shrink-0 w-72 sm:w-80 lg:w-96 block"
                   >
-                    {/* Image tile */}
+                    {/* Product Image */}
                     <div
-                      className="w-full bg-[#f5f5f5] overflow-hidden flex items-center justify-center"
-                      style={{ aspectRatio: '4/3' }}
+                      className="relative mb-6 overflow-hidden rounded-sm border border-gray-100 shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition-shadow duration-500 group-hover:shadow-[0_10px_32px_rgba(0,0,0,0.10)]"
+                      style={{ background: 'radial-gradient(circle at 50% 42%, #ffffff 0%, #ffffff 72%, #f6f5f3 100%)' }}
                     >
-                      {product.image?.url ? (
-                        <img
-                          src={getMediaUrl(product.image.url)}
-                          alt={product.image.alt || product.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <span className="text-sm font-cormorant text-gray-400">{product.name}</span>
-                      )}
+                      <div className="aspect-square flex items-center justify-center p-6 lg:p-10">
+                        {product.image?.url ? (
+                          <img
+                            src={getMediaUrl(product.image.url)}
+                            alt={product.image.alt || product.name}
+                            className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : (
+                          <span className="text-sm font-cormorant text-gray-400">{product.name}</span>
+                        )}
+                      </div>
                     </div>
-                    {/* Centered name */}
-                    <div className="mt-4 text-center">
-                      <h3 className="text-lg font-cormorant font-light text-gray-900 tracking-wide">
+
+                    {/* Product Info */}
+                    <div className="space-y-1.5">
+                      <h3 className="font-cormorant font-light text-gray-900 text-lg lg:text-xl leading-tight">
                         {product.name}
                       </h3>
+                      <p className="font-inter text-gray-500 text-sm">
+                        {product.price}
+                      </p>
                     </div>
                   </Link>
                 ))
-              )}
-            </div>
-          </div>
-
-          {/* Mobile progress line */}
-          <div className="mx-6 mt-6 h-px bg-gray-100">
-            <div
-              className="h-px bg-gray-800 transition-all duration-500"
-              style={{ width: ringProducts.length > 1 ? `${((mobileCarouselIndex + 1) / ringProducts.length) * 100}%` : '100%' }}
-            />
-          </div>
-
-          {/* View All */}
-          <div className="flex justify-center mt-6">
-            <Link
-              to="/engagement-rings"
-              className="text-[10px] font-inter font-light uppercase tracking-[0.3em] text-gray-400 hover:text-gray-800 transition-colors duration-300"
-            >
-              View All Rings
-            </Link>
+            )}
           </div>
         </div>
       </section>

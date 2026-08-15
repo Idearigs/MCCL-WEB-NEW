@@ -64,23 +64,13 @@ export default function ChatWidget({ user }: ChatWidgetProps): JSX.Element {
       {/* Chat Widget Button - Bottom Right Corner */}
       {!isOpen && (
         <div className="fixed bottom-8 right-8 z-40">
-          {/* Mobile: circle icon only */}
+          {/* Circular icon button (all screen sizes) */}
           <button
             onClick={handleOpenChat}
-            className="flex md:hidden items-center justify-center w-14 h-14 bg-gray-800 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:bg-gray-700"
+            aria-label="Can we help you?"
+            className="flex items-center justify-center w-14 h-14 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-gray-300"
           >
-            <MessageCircle size={22} strokeWidth={2} className="text-white" />
-          </button>
-
-          {/* Desktop: full pill with text */}
-          <button
-            onClick={handleOpenChat}
-            className="hidden md:flex items-center gap-3 bg-white rounded-full px-5 py-3.5 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-gray-300"
-          >
-            <div className="bg-gray-800 text-white p-2 rounded-full">
-              <MessageCircle size={18} strokeWidth={2} />
-            </div>
-            <span className="text-sm font-medium text-gray-800 pr-1">Can we help you?</span>
+            <MessageCircle size={22} strokeWidth={2} className="text-gray-800" />
           </button>
         </div>
       )}

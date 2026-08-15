@@ -89,10 +89,9 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
   }, [transparent]);
 
   const bannerItems = [
-    "FREE WORLDWIDE DELIVERY",
-    "30 DAY RETURNS / 60 DAY EXCHANGE", 
-    "5 YEAR WARRANTY",
-    "0% APR FINANCE",
+    "FREE INSURED UK DELIVERY",
+    "30 DAY RETURNS",
+    "1 YEAR WARRANTY",
     "UK HANDCRAFTED"
   ];
 
@@ -242,13 +241,11 @@ export const HeaderSection = ({ transparent = false }: HeaderSectionProps): JSX.
         <div className="w-full bg-[#2d2d2d] h-7 flex items-center justify-center text-white text-xs nav-font font-light tracking-wider uppercase">
           {/* Desktop - Static Layout */}
           <div className="hidden lg:flex items-center justify-center gap-x-8 w-full">
-            <span>FREE WORLDWIDE DELIVERY</span>
+            <span>FREE INSURED UK DELIVERY</span>
             <span className="text-gray-400">|</span>
-            <span>30 DAY RETURNS / 60 DAY EXCHANGE</span>
+            <span>30 DAY RETURNS</span>
             <span className="text-gray-400">|</span>
-            <span>5 YEAR WARRANTY</span>
-            <span className="text-gray-400">|</span>
-            <span>0% APR FINANCE</span>
+            <span>1 YEAR WARRANTY</span>
             <span className="text-gray-400">|</span>
             <span>UK HANDCRAFTED</span>
           </div>
