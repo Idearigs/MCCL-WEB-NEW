@@ -292,8 +292,8 @@ const RingsV2 = (): JSX.Element => {
                         {p.is_featured && <span style={{ position: "absolute", top: 12, left: 12, padding: "4px 9px", background: T.ink, color: T.paper, fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>Bestseller</span>}
                         {p.is_live_stock && <span style={{ position: "absolute", top: 12, right: 12, padding: "4px 9px", background: "rgba(248,246,240,0.94)", color: T.body, fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase" }}>Ready to ship</span>}
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginTop: 16, fontSize: 14.5 }}>
-                        <span>{p.name}</span><span style={{ color: "#56534D" }}>{p.price}</span>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginTop: 16, fontSize: 13 }}>
+                        <span style={{ fontSize: 12.5, lineHeight: 1.35, color: T.ink }}>{p.name}</span><span style={{ color: "#56534D", flex: "none" }}>{p.price}</span>
                       </div>
                       {meta && <div style={{ fontSize: 11.5, color: T.muted, marginTop: 5 }}>{meta}</div>}
                     </Link>
