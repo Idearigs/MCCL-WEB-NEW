@@ -29,6 +29,47 @@ const createPaymentIntent = asyncHandler(async (req, res) => {
     });
   }
 
+  // ── SECURITY: never trust the client-sent amount blindly ──────────────────
+  // Recompute an authoritative price floor from the database and reject any
+  // amount that falls implausibly below it. This closes the "pay £1 for a
+  // £10,000 ring" tampering vector. We use a floor (not an exact match) because
+  // ring/diamond prices are configured (metal, carat, stone) and computed by the
+  // pricing engine, so the exact figure legitimately varies above the base price.
+  try {
+    const { Product, ProductVariant } = getModels();
+    let serverFloor = 0;
+    for (const item of (cartItems || [])) {
+      const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+      let unit = null;
+      if (item.variant_id && ProductVariant) {
+        const v = await ProductVariant.findByPk(item.variant_id, { attributes: ['price'] });
+        if (v && v.price != null) unit = parseFloat(v.price);
+      }
+      if ((unit == null || isNaN(unit)) && item.product_id && Product) {
+        const p = await Product.findByPk(item.product_id, { attributes: ['base_price', 'sale_price'] });
+        if (p) unit = parseFloat(p.sale_price || p.base_price);
+      }
+      if (unit != null && !isNaN(unit) && unit > 0) serverFloor += unit * qty;
+    }
+    // Allow legitimate downward configuration variance (e.g. a cheaper metal) but
+    // reject anything below half the sum of base prices — no real order is that low.
+    const FLOOR_RATIO = 0.5;
+    if (serverFloor > 0 && amount < serverFloor * FLOOR_RATIO) {
+      logger.warn(`Payment amount rejected: client £${amount} is below server floor £${serverFloor.toFixed(2)} (cart ${JSON.stringify((cartItems || []).map(i => i.product_id))})`);
+      return res.status(400).json({
+        success: false,
+        message: 'Order total could not be verified. Please refresh your bag and try again.'
+      });
+    }
+  } catch (validationError) {
+    // A validation lookup failure must not silently allow an unvalidated charge.
+    logger.error('Payment amount validation error:', validationError.message);
+    return res.status(400).json({
+      success: false,
+      message: 'Unable to verify order total. Please try again.'
+    });
+  }
+
   try {
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
@@ -91,6 +132,25 @@ const confirmPayment = asyncHandler(async (req, res) => {
         success: false,
         message: 'Payment not confirmed',
         status: paymentIntent.status
+      });
+    }
+
+    // SECURITY / idempotency: one PaymentIntent = one order. If an order already
+    // exists for this intent, return it instead of creating a duplicate. This also
+    // stops a succeeded intent id from being replayed to mint extra orders.
+    const existingOrder = await Order.findOne({ where: { stripe_payment_id: paymentIntentId } });
+    if (existingOrder) {
+      logger.info(`Idempotent confirm: order ${existingOrder.order_number} already exists for intent ${paymentIntentId}`);
+      return res.json({
+        success: true,
+        data: {
+          orderId: existingOrder.id,
+          orderNumber: existingOrder.order_number,
+          totalAmount: existingOrder.total_amount,
+          status: existingOrder.status,
+          paymentStatus: existingOrder.payment_status,
+          alreadyProcessed: true
+        }
       });
     }
 

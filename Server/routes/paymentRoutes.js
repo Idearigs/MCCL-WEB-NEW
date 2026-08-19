@@ -2,17 +2,18 @@ const express = require('express');
 const router = express.Router();
 const stripeController = require('../controllers/stripeController');
 const { authMiddleware } = require('../middleware/auth');
+const { paymentRateLimit } = require('../middleware/security');
 
 /**
  * Payment Routes
  * Base path: /api/v1/payments
  */
 
-// Create payment intent
-router.post('/create-intent', stripeController.createPaymentIntent);
+// Create payment intent (rate-limited against card-testing abuse)
+router.post('/create-intent', paymentRateLimit, stripeController.createPaymentIntent);
 
-// Confirm payment and create order
-router.post('/confirm', stripeController.confirmPayment);
+// Confirm payment and create order (rate-limited)
+router.post('/confirm', paymentRateLimit, stripeController.confirmPayment);
 
 // Get order details
 router.get('/order/:orderId', stripeController.getOrder);

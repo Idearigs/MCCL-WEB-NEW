@@ -40,6 +40,12 @@ const apiRateLimit = createRateLimit({
   max: 200 // 200 requests per window for API calls
 });
 
+// Stricter limit for payment endpoints to blunt card-testing / abuse
+const paymentRateLimit = createRateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 25 // 25 payment attempts per IP per window
+});
+
 const helmetConfig = helmet({
   contentSecurityPolicy: {
     directives: {
@@ -147,6 +153,7 @@ module.exports = {
   authRateLimit,
   generalRateLimit,
   apiRateLimit,
+  paymentRateLimit,
   helmetConfig,
   securityLogger,
   ipWhitelist

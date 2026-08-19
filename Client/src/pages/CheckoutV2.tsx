@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AlertCircle, CheckCircle, Loader, Check } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, CardElement, PaymentRequestButtonElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useCart } from "../contexts/CartContext";
 import { useUserAuth } from "../contexts/UserAuthContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -49,6 +49,109 @@ const PaymentForm = ({
 }: any) => {
   const stripe = useStripe();
   const elements = useElements();
+  const [paymentRequest, setPaymentRequest] = useState<any>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
+  // Create the server-validated PaymentIntent for the current cart.
+  const createIntent = async (): Promise<{ paymentIntentId: string; clientSecret: string }> => {
+    const intentResponse = await fetch(`${API_URL}/payments/create-intent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: total,
+        currency: "gbp",
+        description: `McCulloch Jewelry Purchase - ${cartItems.length} items`,
+        cartItems: cartItems.map((item: any) => ({
+          product_id: item.id.toString(),
+          name: item.name,
+          quantity: item.quantity,
+          price: getPriceAsNumber(item.price),
+          variant_id: item.variant_id || null,
+          type: item.type || null,
+        })),
+      }),
+    });
+    if (!intentResponse.ok) {
+      const error = await intentResponse.json();
+      throw new Error(error.message || "Failed to create payment intent");
+    }
+    const intentData = await intentResponse.json();
+    return intentData.data;
+  };
+
+  // Confirm the order in our backend once Stripe reports the payment succeeded.
+  const confirmOrder = async (paymentIntentId: string, payerName?: string, payerEmail?: string) => {
+    const confirmResponse = await fetch(`${API_URL}/payments/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        paymentIntentId,
+        customerEmail: payerEmail || email,
+        customerName: payerName || `${firstName} ${lastName}`,
+        shippingAddress: { street: address, apartment: apartment || undefined, city, postalCode, country, phone },
+        cartItems: cartItems.map((item: any) => ({
+          product_id: item.id.toString(),
+          name: item.name,
+          quantity: item.quantity,
+          price: getPriceAsNumber(item.price),
+          variant_id: item.variant_id || null,
+          type: item.type || null,
+          selectedOptions: item.selectedOptions || null,
+          metal: item.metal || null,
+          diamondSize: (item as any).diamondSize || null,
+          size: item.size || null,
+          brand: item.brand || null,
+          variant_name: item.variant_name || null,
+        })),
+      }),
+    });
+    if (!confirmResponse.ok) {
+      const error = await confirmResponse.json();
+      throw new Error(error.message || "Failed to confirm payment");
+    }
+    const confirmData = await confirmResponse.json();
+    onSuccess(confirmData.data);
+  };
+
+  // ── Apple Pay / Google Pay (Payment Request Button) ──────────────────────
+  // The button only appears on devices/browsers that support a wallet with a
+  // saved card (Safari/iOS for Apple Pay, Chrome/Android for Google Pay). It
+  // reuses the exact same server-validated PaymentIntent as the card form.
+  useEffect(() => {
+    if (!stripe || !total || total <= 0) return;
+    const pr = stripe.paymentRequest({
+      country: "GB",
+      currency: "gbp",
+      total: { label: "McCulloch Fine Jewellery", amount: Math.round(total * 100) },
+      requestPayerName: true,
+      requestPayerEmail: true,
+    });
+    pr.canMakePayment().then((result) => { if (result) setPaymentRequest(pr); }).catch(() => {});
+
+    pr.on("paymentmethod", async (ev: any) => {
+      try {
+        const { paymentIntentId, clientSecret } = await createIntent();
+        const { paymentIntent, error: confirmError } = await stripe.confirmCardPayment(
+          clientSecret, { payment_method: ev.paymentMethod.id }, { handleActions: false }
+        );
+        if (confirmError) { ev.complete("fail"); onError(confirmError.message || "Wallet payment failed"); return; }
+        ev.complete("success");
+        if (paymentIntent && paymentIntent.status === "requires_action") {
+          const { error: actionError } = await stripe.confirmCardPayment(clientSecret);
+          if (actionError) { onError(actionError.message || "Authentication failed"); return; }
+        }
+        setIsProcessing(true);
+        await confirmOrder(paymentIntentId, ev.payerName, ev.payerEmail);
+      } catch (err: any) {
+        try { ev.complete("fail"); } catch { /* already completed */ }
+        onError(err.message || "Wallet payment failed. Please try again.");
+      } finally {
+        setIsProcessing(false);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stripe, total]);
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,33 +194,8 @@ const PaymentForm = ({
     setIsProcessing(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
-
-      // Step 1: Create payment intent with all cart items
-      const intentResponse = await fetch(`${API_URL}/payments/create-intent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: total,
-          currency: "gbp",
-          description: `McCulloch Jewelry Purchase - ${cartItems.length} items`,
-          cartItems: cartItems.map((item: any) => ({
-            product_id: item.id.toString(),
-            name: item.name,
-            quantity: item.quantity,
-            price: getPriceAsNumber(item.price),
-            type: item.type || null,
-          })),
-        }),
-      });
-
-      if (!intentResponse.ok) {
-        const error = await intentResponse.json();
-        throw new Error(error.message || "Failed to create payment intent");
-      }
-
-      const intentData = await intentResponse.json();
-      const { paymentIntentId, clientSecret } = intentData.data;
+      // Step 1: Create the server-validated payment intent
+      const { paymentIntentId, clientSecret } = await createIntent();
 
       // Step 2: Confirm payment with Stripe using CardElement
       const { paymentIntent, error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
@@ -141,38 +219,7 @@ const PaymentForm = ({
       if (paymentIntent?.status !== "succeeded") throw new Error(`Payment status: ${paymentIntent?.status}`);
 
       // Step 3: Confirm order in backend
-      const confirmResponse = await fetch(`${API_URL}/payments/confirm`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentIntentId,
-          customerEmail: email,
-          customerName: `${firstName} ${lastName}`,
-          shippingAddress: { street: address, apartment: apartment || undefined, city, postalCode, country, phone },
-          cartItems: cartItems.map((item: any) => ({
-            product_id: item.id.toString(),
-            name: item.name,
-            quantity: item.quantity,
-            price: getPriceAsNumber(item.price),
-            variant_id: item.variant_id || null,
-            type: item.type || null,
-            selectedOptions: item.selectedOptions || null,
-            metal: item.metal || null,
-            diamondSize: (item as any).diamondSize || null,
-            size: item.size || null,
-            brand: item.brand || null,
-            variant_name: item.variant_name || null,
-          })),
-        }),
-      });
-
-      if (!confirmResponse.ok) {
-        const error = await confirmResponse.json();
-        throw new Error(error.message || "Failed to confirm payment");
-      }
-
-      const confirmData = await confirmResponse.json();
-      onSuccess(confirmData.data);
+      await confirmOrder(paymentIntentId);
     } catch (error: any) {
       console.error("Payment error:", error);
       onError(error.message || "Payment processing failed. Please try again.");
@@ -183,6 +230,18 @@ const PaymentForm = ({
 
   return (
     <>
+      {/* Apple Pay / Google Pay — only rendered on supported devices */}
+      {paymentRequest && (
+        <div style={{ marginBottom: 18 }}>
+          <PaymentRequestButtonElement options={{ paymentRequest, style: { paymentRequestButton: { type: "default", theme: "dark", height: "48px" } } }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "18px 0 2px", color: T.muted, fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase" }}>
+            <span style={{ flex: 1, height: 1, background: T.ruleSoft }} />
+            Or pay by card
+            <span style={{ flex: 1, height: 1, background: T.ruleSoft }} />
+          </div>
+        </div>
+      )}
+
       {/* Card Element */}
       <div style={{ background: "#FFFFFF", border: `1px solid ${T.ruleStrong}`, padding: "14px 14px" }}>
         <CardElement options={cardElementOptions} />
