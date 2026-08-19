@@ -340,8 +340,8 @@ const WatchesV2 = (): JSX.Element => {
                         {w.ref && <span style={{ fontSize: 11, color: "#A9A196" }}>{w.ref}</span>}
                       </div>
                       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                        <span style={{ fontSize: 14.5, lineHeight: 1.3 }}>{w.display}</span>
-                        <span style={{ fontSize: 14, whiteSpace: "nowrap" }}>{money(w.price)}</span>
+                        <span style={{ fontSize: 14.5, lineHeight: 1.3, flex: "1 1 auto", minWidth: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{w.display}</span>
+                        <span style={{ fontSize: 14, whiteSpace: "nowrap", flex: "none" }}>{money(w.price)}</span>
                       </div>
                       {w.spec && <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.muted }}>{w.spec}</div>}
                       <div style={{ fontSize: 11.5, color: w.inStock ? GREEN : M2, marginTop: 7 }}>{w.inStock ? "In stock" : "To order, 2 weeks"}</div>

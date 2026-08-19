@@ -25,6 +25,7 @@ const getProducts = async (req, res) => {
       collection = '',
       status = '',
       featured = '',
+      liveStock = '',
       jewelryCategory = '',
       sortOrder = 'DESC'
     } = req.query;
@@ -50,6 +51,10 @@ const getProducts = async (req, res) => {
 
     if (featured !== '') {
       whereConditions.is_featured = featured === 'true';
+    }
+
+    if (liveStock !== '') {
+      whereConditions.is_live_stock = liveStock === 'true';
     }
 
     if (category) {
@@ -133,6 +138,7 @@ const getProducts = async (req, res) => {
         is_active: product.is_active,
         is_featured: product.is_featured,
         in_stock: product.in_stock,
+        is_live_stock: product.is_live_stock,
         stock_quantity: totalStock,
         variants_count: totalVariants,
         primary_image: primaryImage ? primaryImage.image_url : null,
@@ -344,6 +350,7 @@ const createProduct = async (req, res) => {
       is_active = true,
       is_featured = false,
       in_stock = true,
+      is_live_stock = false,
       stock_quantity = 0,
       // Made on Request fields
       is_made_on_request = false,
@@ -404,6 +411,7 @@ const createProduct = async (req, res) => {
       is_active,
       is_featured,
       in_stock,
+      is_live_stock,
       stock_quantity,
       // Made on Request fields
       is_made_on_request,
@@ -610,7 +618,7 @@ const updateProduct = async (req, res) => {
     if (updateData.collection_id === '') updateData.collection_id = null;
 
     // Explicitly parse boolean fields from FormData strings
-    const booleanFields = ['nivoda_enabled', 'show_stone_type', 'show_carat', 'show_clarity', 'show_colour', 'show_cut', 'show_certificate', 'is_active', 'is_featured', 'in_stock', 'is_made_on_request'];
+    const booleanFields = ['nivoda_enabled', 'show_stone_type', 'show_carat', 'show_clarity', 'show_colour', 'show_cut', 'show_certificate', 'is_active', 'is_featured', 'in_stock', 'is_live_stock', 'is_made_on_request'];
     for (const field of booleanFields) {
       if (updateData[field] === 'true') updateData[field] = true;
       else if (updateData[field] === 'false') updateData[field] = false;

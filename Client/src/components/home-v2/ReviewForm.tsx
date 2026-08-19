@@ -65,7 +65,11 @@ const ReviewForm = (): JSX.Element => {
 
   return (
     <form onSubmit={submit} style={{ background: "#FFFFFF", border: `1px solid ${T.rule}`, boxShadow: "0 24px 48px -34px rgba(28,26,23,0.28)", padding: "clamp(24px, 3vw, 40px)", fontFamily: FONT_BODY }}>
-      <style>{`.rvf-star:hover{transform:scale(1.1)} .rvf-cta:hover{background:${T.inkDeep}}`}</style>
+      <style>{`
+        .rvf-star:hover{transform:scale(1.1)} .rvf-cta:hover{background:${T.inkDeep}}
+        .rvf-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+        @media (max-width:640px){ .rvf-grid{grid-template-columns:1fr;gap:16px} }
+      `}</style>
 
       {/* Rating */}
       <div style={label}>Your rating</div>
@@ -86,12 +90,12 @@ const ReviewForm = (): JSX.Element => {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+      <div className="rvf-grid">
         <div><label style={label}>Name</label><input style={input} value={form.author_name} onChange={(e) => set("author_name", e.target.value)} required /></div>
         <div><label style={label}>Location (optional)</label><input style={input} value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Nottingham" /></div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 16 }}>
+      <div className="rvf-grid" style={{ marginTop: 16 }}>
         <div>
           <label style={label}>About (optional)</label>
           <select style={{ ...input, appearance: "none", cursor: "pointer" }} value={form.category} onChange={(e) => set("category", e.target.value)}>

@@ -193,6 +193,12 @@ const initializeModels = (sequelize) => {
       type: DataTypes.INTEGER,
       defaultValue: 0
     },
+    // Live stock: a ready-made, ready-to-ship piece (as opposed to made-to-order)
+    is_live_stock: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Whether this product is ready-made live stock (ready to ship)'
+    },
     // Made on Request fields
     is_made_on_request: {
       type: DataTypes.BOOLEAN,

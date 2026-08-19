@@ -9,6 +9,7 @@ import CartSlide from "../CartSlide";
 import SavedDrawerV2 from "./SavedDrawerV2";
 import SearchOverlayV2 from "./SearchOverlayV2";
 import AuthModal from "../AuthModalV2";
+import TrustBarV2 from "./TrustBarV2";
 import API_BASE_URL from "../../config/api";
 import { T, FONT_DISPLAY, FONT_BODY } from "./tokens";
 
@@ -250,8 +251,6 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
   const utilColor = solid ? T.muted : "rgba(255,255,255,0.78)";
   // Over the hero the bar matches the header (translucent dark); once scrolled it
   // goes solid dark ink with light text, while the header row below turns ivory.
-  const barBg = solid ? T.ink : headerBg;
-  const barColor = solid ? T.onDarkSoft : utilColor;
 
   const active = menu ? menuContent[menu] : null;
 
@@ -275,13 +274,10 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
       `}</style>
 
       <div ref={navRef} className="v2nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, fontFamily: FONT_BODY }}>
-        {/* Announcement bar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 40, padding: "9px 32px", background: barBg, color: barColor, backdropFilter: blur, WebkitBackdropFilter: blur, fontSize: 10.5, letterSpacing: "0.13em", textTransform: "uppercase", transition: "background 0.35s ease, color 0.35s ease" }}>
-          <span className="hidden sm:inline">Free insured UK delivery</span><span className="hidden sm:inline" style={{ color: T.ruleDarkStrong }}>/</span>
-          <span>30-day returns</span><span style={{ color: T.ruleDarkStrong }}>/</span>
-          <span>1-year warranty</span><span className="hidden sm:inline" style={{ color: T.ruleDarkStrong }}>/</span>
-          <span className="hidden sm:inline">Hand-finished in the UK</span>
-        </div>
+        {/* Trust / reassurance strip — sits above the header on every page.
+            Transparent over the homepage hero (forceSolid false, not yet scrolled),
+            solid dark once scrolled or on any forced-solid page. */}
+        <TrustBarV2 solid={forceSolid || scrolled} />
 
         {/* Header */}
         <header

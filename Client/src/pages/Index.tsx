@@ -3,7 +3,7 @@ import React from "react";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import MainContentV2 from "../components/home-v2/MainContentV2";
 import FooterV2 from "../components/home-v2/FooterV2";
-import PromotionPopup from "../components/PromotionPopup";
+import SeasonalOfferV2 from "../components/home-v2/SeasonalOfferV2";
 import ChatWidget from "../components/ChatWidgetV2";
 import { useUserAuth } from "../contexts/UserAuthContext";
 
@@ -20,7 +20,7 @@ const Index = (): JSX.Element => {
   return (
     <div className="flex flex-col w-full min-h-screen" style={{ background: "#F8F6F0" }}>
       <NavigationV2 />
-      <PromotionPopup delay={3000} />
+      <SeasonalOfferV2 />
       <ChatWidget user={user} />
       <MainContentV2 />
       <FooterV2 />

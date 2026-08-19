@@ -17,7 +17,7 @@ import MaintenancePage from "./pages/MaintenancePage";
 
 // ── Lazily loaded pages (split into separate chunks) ──────────────────────
 const Collections       = lazy(() => import("./pages/Collections"));
-const Jewellery         = lazy(() => import("./pages/Jewellery"));
+const Jewellery         = lazy(() => import("./pages/JewelleryAllV2"));
 const Diamonds          = lazy(() => import("./pages/Diamonds"));
 const Watches           = lazy(() => import("./pages/WatchesV2"));
 const Heritage          = lazy(() => import("./pages/Heritage"));
@@ -39,12 +39,10 @@ const RoamerSwissTradition      = lazy(() => import("./pages/RoamerSwissTraditio
 const WatchCollection   = lazy(() => import("./pages/CollectionV2"));
 
 // Jewellery categories
-const Rings             = lazy(() => import("./pages/Rings"));
+const Rings             = lazy(() => import("./pages/RingsV2"));
 const EngagementRings   = lazy(() => import("./pages/EngagementRingsV2"));
 const WeddingRings      = lazy(() => import("./pages/WeddingRingsV2"));
-const Earrings          = lazy(() => import("./pages/Earrings"));
-const Necklaces         = lazy(() => import("./pages/Necklaces"));
-const Bracelets         = lazy(() => import("./pages/Bracelets"));
+const JewelleryListing  = lazy(() => import("./pages/JewelleryListingV2"));
 
 // Product detail pages (heaviest pages — always lazy)
 const ProductDetail     = lazy(() => import("./pages/ProductDetail"));
@@ -136,9 +134,9 @@ const AppRoutes = () => {
       <Route path="/engagement-rings" element={<EngagementRings />} />
       <Route path="/wedding-rings" element={<WeddingRings />} />
       <Route path="/wedding" element={<WeddingRings />} />
-      <Route path="/earrings" element={<Earrings />} />
-      <Route path="/necklaces" element={<Necklaces />} />
-      <Route path="/bracelets" element={<Bracelets />} />
+      <Route path="/earrings" element={<JewelleryListing category="earrings" />} />
+      <Route path="/necklaces" element={<JewelleryListing category="necklaces" />} />
+      <Route path="/bracelets" element={<JewelleryListing category="bracelets" />} />
 
       {/* Watches */}
       <Route path="/watches" element={<Watches />} />
@@ -157,7 +155,7 @@ const AppRoutes = () => {
       <Route path="/engagement-rings/:productId" element={<ProductDetailV2 />} />
       <Route path="/wedding-rings/:productId" element={<WeddingRingDetail />} />
       <Route path="/wedding/:productId" element={<WeddingRingDetail />} />
-      <Route path="/rings/:productId" element={<ProductDetail />} />
+      <Route path="/rings/:productId" element={<ProductDetailV2 />} />
       <Route path="/earrings/:productId" element={<ProductDetail />} />
       <Route path="/necklaces/:productId" element={<ProductDetail />} />
       <Route path="/bracelets/:productId" element={<ProductDetail />} />

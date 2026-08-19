@@ -412,7 +412,7 @@ const CheckoutV2 = (): JSX.Element => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: T.paper, fontFamily: FONT_BODY, color: T.body }}>
+    <div style={{ minHeight: "100vh", background: T.paper, fontFamily: FONT_BODY, color: T.body, overflowX: "hidden" }}>
       <style>{`
         @keyframes cov2spin { to { transform: rotate(360deg) } }
         .cov2-spin { animation: cov2spin 0.7s linear infinite; }
@@ -431,6 +431,9 @@ const CheckoutV2 = (): JSX.Element => {
           .cov2-secure { display: none !important; }
           .cov2-secure-m { display: flex !important; }
           .cov2-back { font-size: 11px !important; }
+          .cov2-steps-full { display: none !important; }
+          .cov2-steps-mini { display: flex !important; }
+          .cov2-2col { grid-template-columns: 1fr !important; gap: 14px !important; }
         }
       `}</style>
 
@@ -486,17 +489,24 @@ const CheckoutV2 = (): JSX.Element => {
       {/* Body */}
       <div className="cov2-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(380px, 0.8fr)", minHeight: "calc(100vh - 88px)" }}>
         {/* Left — form */}
-        <div style={{ padding: "clamp(28px, 4vw, 56px) clamp(20px, 4vw, 48px)" }}>
-          <div className="cov2-left" style={{ maxWidth: 620, marginLeft: "auto", width: "100%" }}>
+        <div style={{ padding: "clamp(28px, 4vw, 56px) clamp(20px, 4vw, 48px)", minWidth: 0 }}>
+          <div className="cov2-left" style={{ maxWidth: 620, marginLeft: "auto", width: "100%", minWidth: 0 }}>
             {/* Progress row */}
             <div className="cov2-progress" style={{ marginBottom: 34 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: "max-content" }}>
+              {/* Full stepper — tablet/desktop */}
+              <div className="cov2-steps-full" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: "max-content" }}>
                 {STEP_LABELS.map((label, i) => (
                   <React.Fragment key={label}>
                     <span style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: i <= Math.max(activeStep, reached) ? T.ink : "#A9A29A", whiteSpace: "nowrap" }}>{label}</span>
                     {i < STEP_LABELS.length - 1 && <span style={{ width: 22, height: 1, background: T.ruleStrong }} />}
                   </React.Fragment>
                 ))}
+              </div>
+              {/* Compact indicator — phones (the full row is too wide to read) */}
+              <div className="cov2-steps-mini" style={{ display: "none", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.gold }}>Step {Math.min(activeStep, STEP_LABELS.length - 1) + 1} of {STEP_LABELS.length}</span>
+                <span style={{ width: 18, height: 1, background: T.ruleStrong }} />
+                <span style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink }}>{STEP_LABELS[Math.min(activeStep, STEP_LABELS.length - 1)]}</span>
               </div>
             </div>
 
@@ -529,13 +539,13 @@ const CheckoutV2 = (): JSX.Element => {
                   <option value="United States">United States</option>
                   <option value="Canada">Canada</option>
                 </select>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 14 }}>
+                <div className="cov2-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 14 }}>
                   <div><label style={fieldLabel}>First name</label><input className="cov2-input" value={firstName} onChange={(e) => setFirstName(e.target.value)} style={input} /></div>
                   <div><label style={fieldLabel}>Last name</label><input className="cov2-input" value={lastName} onChange={(e) => setLastName(e.target.value)} style={input} /></div>
                 </div>
                 <div style={{ marginTop: 14 }}><label style={fieldLabel}>Address</label><input className="cov2-input" value={address} onChange={(e) => setAddress(e.target.value)} style={input} /></div>
                 <div style={{ marginTop: 14 }}><label style={fieldLabel}>Apartment, suite, etc. (optional)</label><input className="cov2-input" value={apartment} onChange={(e) => setApartment(e.target.value)} style={input} /></div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 14 }}>
+                <div className="cov2-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 14 }}>
                   <div><label style={fieldLabel}>Town / city</label><input className="cov2-input" value={city} onChange={(e) => setCity(e.target.value)} style={input} /></div>
                   <div><label style={fieldLabel}>Postcode</label><input className="cov2-input" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} style={input} /></div>
                 </div>

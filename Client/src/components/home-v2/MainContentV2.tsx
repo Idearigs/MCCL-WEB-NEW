@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import API_BASE_URL, { getMediaUrl } from "../../config/api";
 import { T, FONT_DISPLAY, FONT_BODY, SP } from "./tokens";
 import ReviewForm from "./ReviewForm";
+import PromoBarV2 from "./PromoBarV2";
 
 /**
  * MainContentV2 — the homepage v2 body (everything between nav and footer).
@@ -26,6 +27,24 @@ const pickGoldImage = (p: any): { url: string; alt: string } | null => {
   return p.image || null;
 };
 interface Watch { id: string; name: string; slug: string; base_price: number; sale_price?: number; image: { url: string; alt: string } | null; }
+
+// Watch names arrive as long ALL-CAPS strings that repeat the brand and tack on the ref
+// ("FESTINA WOMEN'S BLACK TITANIUM WATCH BRACELET F20697/3"). Strip the brand, ref and the
+// filler word "watch", then title-case. Kept local so the eager homepage bundle doesn't have
+// to pull in the lazy WatchesV2 page just for this helper.
+const cleanWatchName = (name?: string, brand?: string, ref?: string): string => {
+  let n = name || "";
+  if (brand) n = n.replace(new RegExp(`^\\s*${brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`, "i"), "");
+  if (ref) n = n.split(ref).join(" ");
+  n = n
+    .replace(/\b[A-Z]{1,3}[- ]?\d{3,}[/\dA-Za-z.]*\b/g, " ")
+    .replace(/\bwatch(es)?\b/gi, " ")
+    .replace(/[·,\-\s]+$/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  n = n.toLowerCase().replace(/(^|\s)(\w)/g, (_, p, c) => p + c.toUpperCase());
+  return n || (name || "");
+};
 
 // Self-hosted, muted, looping background video that behaves like object-fit: cover.
 // No player chrome, no third-party branding. WebM preferred, MP4 fallback.
@@ -93,6 +112,13 @@ const MainContentV2 = (): JSX.Element => {
   // Slide the testimonials in when the section scrolls into view.
   const quotesRef = useRef<HTMLDivElement>(null);
   const [quotesIn, setQuotesIn] = useState(false);
+  const [activeQuote, setActiveQuote] = useState(0);
+  const onQuotesScroll = () => {
+    const el = quotesRef.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+    setActiveQuote(i);
+  };
   useEffect(() => {
     const el = quotesRef.current;
     if (!el) return;
@@ -163,8 +189,13 @@ const MainContentV2 = (): JSX.Element => {
           .v2-split { grid-template-columns: 1fr !important; }
           .v2-prodgrid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
           .v2-statrow { grid-template-columns: 1fr 1fr !important; row-gap: 28px !important; }
-          .v2-quotes { grid-template-columns: 1fr !important; }
-          .v2-quotes figure { border-left: none !important; padding-left: 0 !important; padding-right: 0 !important; }
+          /* Testimonials → one-at-a-time horizontal swipe carousel */
+          .v2-quotes { display: flex !important; grid-template-columns: none !important; gap: 0 !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+          .v2-quotes::-webkit-scrollbar { display: none; }
+          .v2-quotes figure { flex: 0 0 100% !important; scroll-snap-align: center; border-left: none !important; padding-left: 4px !important; padding-right: 4px !important; }
+          .v2-quotedots { display: flex !important; }
+          /* Section headers (heading + "all" link) stack so the link never clamps */
+          .v2-sechead { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
           .v2-journalgrid { grid-template-columns: 1fr !important; }
           /* Category band → horizontal snap carousel (no hover-expand on touch) */
           .v2-catband { height: auto !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 0 20px 0 20px !important; }
@@ -194,6 +225,9 @@ const MainContentV2 = (): JSX.Element => {
         </div>
       </section>
 
+      {/* Seasonal promotion strip — moved here, directly under the hero */}
+      <PromoBarV2 />
+
       {/* 2. CATEGORY BAND */}
       <section style={{ display: "flex", height: "clamp(380px, 46vh, 500px)", gap: 2, background: T.paper }} className="v2-catband">
         {[
@@ -214,12 +248,12 @@ const MainContentV2 = (): JSX.Element => {
 
       {/* 3. NEW ARRIVALS */}
       <section id="arrivals" style={{ padding: `${SP} ${pageX} 0` }}>
-        <div className="v2-reveal" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
+        <div className="v2-reveal v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
           <div>
             <div style={{ ...eyebrow, marginBottom: 14 }}>New in</div>
             <h2 style={{ ...h2Style, fontSize: "clamp(28px, 3vw, 44px)" }}>Just off the bench</h2>
           </div>
-          <Link to="/engagement-rings" className="v2-textlink">View all</Link>
+          <Link to="/engagement-rings" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>View all</Link>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(16px, 1.6vw, 28px)", marginTop: 40 }} className="v2-prodgrid">
           {(products.length ? products : Array.from({ length: 4 })).map((p: any, i) => (
@@ -254,7 +288,7 @@ const MainContentV2 = (): JSX.Element => {
             <p style={{ maxWidth: "44ch", margin: "0 0 44px", fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>You meet the person who will make it. We draw, you choose the stone, and the piece is cut, set and finished on site.</p>
             <div>
               {[["01", "Consultation, in the showroom or by video"], ["02", "Drawings and stone selection"], ["03", "Making, setting and hallmarking"]].map(([n, label], i, a) => (
-                <div key={n} style={{ display: "grid", gridTemplateColumns: "64px 1fr", gap: 24, alignItems: "baseline", padding: "20px 0", borderTop: `1px solid ${T.ruleDark}`, borderBottom: i === a.length - 1 ? `1px solid ${T.ruleDark}` : undefined }}>
+                <div key={n} style={{ display: "grid", gridTemplateColumns: "26px 1fr", gap: 14, alignItems: "baseline", padding: "20px 0", borderTop: `1px solid ${T.ruleDark}`, borderBottom: i === a.length - 1 ? `1px solid ${T.ruleDark}` : undefined }}>
                   <span style={{ fontSize: 12, letterSpacing: "0.14em", color: T.onDarkMuted }}>{n}</span>
                   <span style={{ fontSize: 14.5, color: T.onDarkStep }}>{label}</span>
                 </div>
@@ -267,12 +301,12 @@ const MainContentV2 = (): JSX.Element => {
 
       {/* 5. WATCHES */}
       <section id="watches" style={{ padding: `${SP} ${pageX} 0` }}>
-        <div className="v2-reveal" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
+        <div className="v2-reveal v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
           <div>
             <div style={{ ...eyebrow, marginBottom: 14 }}>Watches — official stockist</div>
             <h2 style={{ ...h2Style, fontSize: "clamp(30px, 3.2vw, 46px)" }}>New, pre-owned and serviced in house</h2>
           </div>
-          <Link to="/watches" className="v2-textlink">All watches</Link>
+          <Link to="/watches" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>All watches</Link>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(16px, 1.6vw, 28px)", marginTop: 40 }} className="v2-prodgrid">
           {(watches.length ? watches : Array.from({ length: 4 })).map((w: any, i) => (
@@ -284,8 +318,8 @@ const MainContentV2 = (): JSX.Element => {
                     : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: T.muted }}>{w.name}</div>}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginTop: 16, fontSize: 14 }}>
-                  <span>{w.name}</span>
-                  <span style={{ color: "#56534D" }}>£{(w.sale_price || w.base_price)?.toLocaleString?.() ?? w.base_price}</span>
+                  <span style={{ flex: "1 1 auto", minWidth: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{cleanWatchName(w.name, w.brand?.name, w.model_number || w.sku)}</span>
+                  <span style={{ color: "#56534D", flex: "none" }}>£{(w.sale_price || w.base_price)?.toLocaleString?.() ?? w.base_price}</span>
                 </div>
               </Link>
             ) : (
@@ -326,7 +360,7 @@ const MainContentV2 = (): JSX.Element => {
             <span style={{ letterSpacing: "0.18em", color: T.gold }}>★★★★★</span>Rated excellent
           </div>
         </div>
-        <div ref={quotesRef} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(24px, 2.6vw, 48px)", alignItems: "stretch" }} className="v2-quotes">
+        <div ref={quotesRef} onScroll={onQuotesScroll} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(24px, 2.6vw, 48px)", alignItems: "stretch" }} className="v2-quotes">
           {quotes.map(([q, name, cat], i) => (
             <figure key={name} style={{ margin: 0, display: "flex", flexDirection: "column", gap: 22, padding: "0 clamp(20px, 2.4vw, 44px)", borderLeft: `1px solid ${T.rule}`, opacity: quotesIn ? 1 : 0, transform: quotesIn ? "translateX(0)" : "translateX(-40px)", transition: "opacity 0.7s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1)", transitionDelay: `${i * 0.14}s` }}>
               <blockquote style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: "clamp(19px, 1.5vw, 23px)", lineHeight: 1.5, color: T.textPrimary }}>{q}</blockquote>
@@ -334,6 +368,14 @@ const MainContentV2 = (): JSX.Element => {
                 <span style={{ color: T.textPrimary }}>{name}</span><span style={{ color: "#8A8377" }}>{cat}</span>
               </figcaption>
             </figure>
+          ))}
+        </div>
+        {/* Swipe dots — mobile only (shown via .v2-quotedots media rule) */}
+        <div className="v2-quotedots" style={{ display: "none", justifyContent: "center", gap: 8, marginTop: 28 }}>
+          {quotes.map(([, name], i) => (
+            <button key={name} type="button" aria-label={`Go to review ${i + 1}`}
+              onClick={() => quotesRef.current?.scrollTo({ left: i * quotesRef.current.clientWidth, behavior: "smooth" })}
+              style={{ width: activeQuote === i ? 20 : 7, height: 7, borderRadius: 4, border: 0, padding: 0, cursor: "pointer", background: activeQuote === i ? T.gold : T.ruleStrong, transition: "width 0.3s ease, background 0.3s ease" }} />
           ))}
         </div>
       </section>
@@ -355,9 +397,9 @@ const MainContentV2 = (): JSX.Element => {
       {/* 8. JOURNAL — hidden for now (uncomment to restore) */}
       {false && (
       <section id="journal" style={{ padding: `0 ${pageX} ${SP}` }}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
+        <div className="v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
           <h2 style={{ ...h2Style, fontSize: "clamp(24px, 2.4vw, 34px)" }}>The journal</h2>
-          <Link to="/our-story" className="v2-textlink">All articles</Link>
+          <Link to="/our-story" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>All articles</Link>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(20px, 2.4vw, 40px)", marginTop: 36 }} className="v2-journalgrid">
           {[

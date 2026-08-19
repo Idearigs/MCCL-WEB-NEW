@@ -82,13 +82,15 @@ const CartV2 = (): JSX.Element => {
         @media (max-width: 900px) {
           .cv2-grid { grid-template-columns: 1fr !important; }
           .cv2-aside { position: static !important; }
-          .cv2-line { grid-template-columns: 104px 1fr !important; }
-          .cv2-linemeta { grid-column: 1 / -1 !important; }
+          .cv2-line { grid-template-columns: 108px 1fr !important; gap: 6px 16px !important; align-items: start !important; }
+          .cv2-thumb { grid-column: 1 !important; grid-row: 1 !important; }
+          .cv2-linemeta { grid-column: 2 !important; grid-row: 1 / 3 !important; }
+          .cv2-lineprice { grid-column: 1 !important; grid-row: 2 !important; text-align: left !important; margin-top: 12px !important; white-space: normal !important; }
           .cv2-bottombar { display: grid !important; }
           .cv2-page { padding-bottom: 96px !important; }
         }
         @media (max-width: 560px) {
-          .cv2-line { grid-template-columns: 84px 1fr !important; }
+          .cv2-line { grid-template-columns: 92px 1fr !important; }
         }
       `}</style>
 
@@ -135,7 +137,7 @@ const CartV2 = (): JSX.Element => {
                       style={{ display: "grid", gridTemplateColumns: "132px 1fr auto", gap: 24, padding: "28px 0", borderBottom: `1px solid ${T.rule}` }}
                     >
                       {/* Image */}
-                      <Link to={to} className="cv2-thumb" style={{ display: "block", width: 132, aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden" }}>
+                      <Link to={to} className="cv2-thumb" style={{ display: "block", width: "100%", aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden" }}>
                         <img src={getMediaUrl(item.image)} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </Link>
 
@@ -181,7 +183,7 @@ const CartV2 = (): JSX.Element => {
                       </div>
 
                       {/* Right column: line total + lead time */}
-                      <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <div className="cv2-lineprice" style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, color: T.ink }}>
                           {money(parsePrice(item.price) * item.quantity)}
                         </div>

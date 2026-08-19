@@ -24,6 +24,7 @@ interface ProductFormData {
   is_active: boolean;
   is_featured: boolean;
   in_stock: boolean;
+  is_live_stock: boolean;
   stock_quantity: string;
   // Made on Request fields
   is_made_on_request: boolean;
@@ -178,6 +179,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
     is_active: true,
     is_featured: false,
     in_stock: true,
+    is_live_stock: false,
     stock_quantity: '0',
     // Made on Request defaults
     is_made_on_request: false,
@@ -437,6 +439,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         is_active: true,
         is_featured: false,
         in_stock: true,
+        is_live_stock: false,
         stock_quantity: '0',
         is_made_on_request: false,
         made_on_request_lead_time: '4-6 weeks',
@@ -1471,6 +1474,19 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   />
                   <label htmlFor="in_stock" className="ml-2 block text-sm text-gray-700 font-satoshi">
                     In Stock
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_live_stock"
+                    checked={formData.is_live_stock}
+                    onChange={(e) => handleInputChange('is_live_stock', e.target.checked)}
+                    className="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded"
+                  />
+                  <label htmlFor="is_live_stock" className="ml-2 block text-sm text-gray-700 font-satoshi">
+                    Live Stock <span className="text-gray-400">(ready to ship)</span>
                   </label>
                 </div>
               </div>

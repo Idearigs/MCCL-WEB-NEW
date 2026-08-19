@@ -33,6 +33,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
     gemstone,
     featured,
     in_stock,
+    live_stock,
     jewelrySubType,
     diamondSize,
     search,
@@ -178,6 +179,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
   // Other filters
   if (featured !== undefined) whereClause.is_featured = featured === 'true';
   if (in_stock !== undefined) whereClause.in_stock = in_stock === 'true';
+  if (live_stock !== undefined) whereClause.is_live_stock = live_stock === 'true';
 
   // Metal filter — via metals junction table
   if (metal) {
@@ -261,6 +263,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
       gemstones: product.gemstones || [],
       is_featured: product.is_featured || false,
       in_stock: product.in_stock || false,
+      is_live_stock: product.is_live_stock || false,
       image: primaryImage ? {
         url: primaryImage.image_url || '',
         alt: primaryImage.alt_text || product.name || ''

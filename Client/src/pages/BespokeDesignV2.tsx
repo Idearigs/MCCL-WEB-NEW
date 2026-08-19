@@ -105,12 +105,16 @@ const BespokeDesignV2 = (): JSX.Element => {
           .bsp-proc-stage { flex-direction: row !important; align-items: baseline; gap: 16px; border-right: none !important; border-top: 1px solid ${T.ruleDark}; padding: 20px 0 !important; }
           .bsp-proc-when { margin-top: 0 !important; }
           .bsp-proc-body { flex: 1; }
-          .bsp-portgrid { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 78%; overflow-x: auto; scroll-snap-type: x mandatory; }
-          .bsp-portgrid > * { scroll-snap-align: start; }
           .bsp-kinds { grid-template-columns: 1fr 1fr !important; }
           .bsp-namephone { grid-template-columns: 1fr !important; }
           .bsp-contactroutes { order: 3; margin-top: 28px; }
           .bsp-herobtns { flex-direction: column !important; align-items: stretch !important; }
+        }
+        /* Portfolio → swipe carousel from the mobile-nav breakpoint (matches header) */
+        @media (max-width: 1023px) {
+          .bsp-portgrid { grid-auto-flow: column; grid-template-columns: none !important; grid-auto-columns: 82%; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+          .bsp-portgrid::-webkit-scrollbar { display: none; }
+          .bsp-portgrid > * { scroll-snap-align: start; }
         }
       `}</style>
 

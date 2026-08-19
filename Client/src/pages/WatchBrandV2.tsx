@@ -280,8 +280,8 @@ const WatchBrandV2 = (): JSX.Element => {
                         {w.featured && <span style={{ position: "absolute", top: 10, left: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>Featured</span>}
                       </div>
                       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, margin: "16px 0 7px" }}>
-                        <span style={{ fontSize: 14, lineHeight: 1.3 }}>{w.display}</span>
-                        <span style={{ fontSize: 13.5, whiteSpace: "nowrap" }}>{money(w.price)}</span>
+                        <span style={{ fontSize: 14, lineHeight: 1.3, flex: "1 1 auto", minWidth: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{w.display}</span>
+                        <span style={{ fontSize: 13.5, whiteSpace: "nowrap", flex: "none" }}>{money(w.price)}</span>
                       </div>
                       {w.spec && <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.muted }}>{w.spec}</div>}
                       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginTop: 7 }}>

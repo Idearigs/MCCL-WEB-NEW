@@ -835,25 +835,31 @@ const ProductDetail = () => {
     if (newValue) setSelectedMetalType(newValue);
   };
 
-  // Sync metal type button → metal thumbnail (image)
+  // Sync metal type button → gallery image. We only shoot renders for three metal
+  // colours (yellow / rose / white), so every pricing option maps to the nearest
+  // colour we have a photo of: silver and platinum share the white-gold render
+  // (visually identical), and if the exact colour has no image we still land on a
+  // metal that does — the gallery never blanks out.
   const handleMetalTypeClick = (value: string) => {
     setSelectedMetalType(value);
-    if (!productData?.available_metals) return;
-    let colorKeyword: string | null = null;
-    if (value.includes('yellow')) colorKeyword = 'yellow';
-    else if (value.includes('rose')) colorKeyword = 'rose';
-    else if (value.includes('white')) colorKeyword = 'white';
-    else if (value === 'silver') colorKeyword = 'silver';
-    else if (value === 'platinum') colorKeyword = 'platinum';
-    if (!colorKeyword) return;
-    const match = productData.available_metals.find((m: any) => {
-      const name = (m.name || '').toLowerCase();
-      return name.includes(colorKeyword!);
-    });
-    if (match) {
-      const img = getMetalThumbnail(match.id);
-      if (img?.url) setSelectedMetal(match.id);
-    }
+    const metals = productData?.available_metals;
+    if (!metals || metals.length === 0) return;
+
+    let colorKeywords: string[];
+    if (value.includes('yellow')) colorKeywords = ['yellow'];
+    else if (value.includes('rose')) colorKeywords = ['rose'];
+    else if (value.includes('white')) colorKeywords = ['white'];
+    else if (value === 'silver' || value === 'platinum') colorKeywords = ['white', 'platinum', 'silver'];
+    else return;
+
+    const hasImage = (m: any) => !!getMetalThumbnail(m.id);
+    const nameHits = (m: any) => colorKeywords.some(k => (m.name || '').toLowerCase().includes(k));
+    const match =
+      metals.find((m: any) => nameHits(m) && hasImage(m)) ||   // exact colour with a photo
+      metals.find((m: any) => nameHits(m)) ||                  // exact colour (any)
+      metals.find((m: any) => hasImage(m)) ||                  // any metal that has a photo
+      metals[0];
+    if (match) setSelectedMetal(match.id);
   };
 
   // Static fallback data will be replaced by API data
@@ -914,6 +920,19 @@ const ProductDetail = () => {
   const priceOverrides = productData?.ring_price_overrides;
   const purchasableMetals = priceOverrides ? metalTypeOptions.filter(o => priceOverrides[o.overrideKey]) : [];
   const metalDot = (v: string) => v.includes('yellow') ? '#E6C15A' : v.includes('rose') ? '#DCA79A' : v.includes('white') ? '#E5E4E2' : v === 'platinum' ? '#E5E4E2' : v === 'silver' ? '#C7C7C7' : '#D8D2C6';
+  // Organise the purchasable metals into tidy rows: base metals (silver / platinum)
+  // first, then each gold karat with its colours. Inside a karat group the label
+  // drops the karat prefix (the caption carries it) so the pills read cleanly.
+  const metalGroups: { key: string; caption: string; options: { value: string; label: string }[] }[] = (() => {
+    const groups: { key: string; caption: string; options: { value: string; label: string }[] }[] = [];
+    const base = purchasableMetals.filter(o => o.value === 'silver' || o.value === 'platinum');
+    if (base.length) groups.push({ key: 'base', caption: '', options: base.map(o => ({ value: o.value, label: o.label })) });
+    ['9ct', '14ct', '18ct'].forEach(k => {
+      const opts = purchasableMetals.filter(o => o.value.startsWith(k));
+      if (opts.length) groups.push({ key: k, caption: `${k} gold`, options: opts.map(o => ({ value: o.value, label: o.label.replace(`${k} `, '') })) });
+    });
+    return groups;
+  })();
   const totalPrice = calculateTotalPrice();
   const media = displayImages || [];
   const activeMedia = media[currentImageIndex] || media[0];
@@ -953,7 +972,7 @@ const ProductDetail = () => {
           <div style={{ position: 'sticky', top: NAV_H + 12 }} className="pdpv2-gallery">
             <div className="pdpv2-primary" style={{ position: 'relative', aspectRatio: '4 / 3', background: '#FFFFFF', overflow: 'hidden' }}>
               {activeMedia && isVid(activeMedia)
-                ? <video ref={videoRef} src={getMediaUrl(activeMedia.url)} autoPlay muted loop playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ? <video ref={videoRef} src={getMediaUrl(activeMedia.url)} poster={(() => { const im = media.find(m => !isVid(m)); return im ? getMediaUrl(im.url) : undefined; })()} autoPlay muted loop playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : activeMedia ? <img src={getMediaUrl(activeMedia.url)} alt={productData.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
               <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.muted }}>{isVid(activeMedia) ? 'Film' : (angleLabels[currentImageIndex] || '')}</span>
               {gallery.length > 1 && <span style={{ position: 'absolute', bottom: 12, right: 12, padding: '3px 9px', background: 'rgba(248,246,240,0.85)', fontSize: 10.5, letterSpacing: '0.08em', color: T.ink }}>{currentImageIndex + 1} / {gallery.length}</span>}
@@ -1005,17 +1024,28 @@ const ProductDetail = () => {
                     </div>
                   );
                 })()}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                  {purchasableMetals.length > 0
-                    ? purchasableMetals.map(o => {
-                        const on = selectedMetalType === o.value;
-                        return <button key={o.value} onClick={() => handleMetalTypeClick(o.value)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : T.paper, color: T.ink }}><span style={{ width: 16, height: 16, borderRadius: '50%', background: metalDot(o.value), border: '1px solid rgba(0,0,0,0.15)' }} />{o.label}</button>;
-                      })
-                    : (productData.available_metals || []).map((m: any) => {
-                        const on = selectedMetal === m.id;
-                        return <button key={m.id} onClick={() => handleMetalThumbnailClick(m.id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : T.paper, color: T.ink }}><span style={{ width: 16, height: 16, borderRadius: '50%', background: m.color_code || '#D8D2C6', border: '1px solid rgba(0,0,0,0.15)' }} />{m.name}</button>;
-                      })}
-                </div>
+                {purchasableMetals.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {metalGroups.map(group => (
+                      <div key={group.key}>
+                        {group.caption && <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.muted, marginBottom: 8 }}>{group.caption}</div>}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          {group.options.map(o => {
+                            const on = selectedMetalType === o.value;
+                            return <button key={o.value} onClick={() => handleMetalTypeClick(o.value)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : T.paper, color: T.ink }}><span style={{ width: 15, height: 15, borderRadius: '50%', background: metalDot(o.value), border: '1px solid rgba(0,0,0,0.15)' }} />{o.label}</button>;
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                    {(productData.available_metals || []).map((m: any) => {
+                      const on = selectedMetal === m.id;
+                      return <button key={m.id} onClick={() => handleMetalThumbnailClick(m.id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : T.paper, color: T.ink }}><span style={{ width: 16, height: 16, borderRadius: '50%', background: m.color_code || '#D8D2C6', border: '1px solid rgba(0,0,0,0.15)' }} />{m.name}</button>;
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
