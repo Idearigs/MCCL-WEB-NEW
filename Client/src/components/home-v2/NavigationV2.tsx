@@ -360,6 +360,12 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
 
           <div style={{ flex: 1, overflowY: "auto", padding: "8px 20px 28px" }}>
             <nav style={{ display: "flex", flexDirection: "column" }}>
+              {/* Live Stock — mobile only (ready-to-ship pieces) */}
+              <Link to="/rings?availability=live" onClick={() => setMobileOpen(false)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: `1px solid ${T.rule}`, fontSize: 15, letterSpacing: "0.02em", color: T.ink, animation: "v2itemIn 0.4s cubic-bezier(0.22,1,0.36,1) both", animationDelay: "0.03s" }}>
+                <span>Live stock</span>
+                <span style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.gold }}>Ready to ship</span>
+              </Link>
               {NAV_ITEMS.map((item, idx) => {
                 const content = menuContent[item.key];
                 const expandable = item.hasMenu && content && content.columns.length > 0;
