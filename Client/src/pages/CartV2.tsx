@@ -204,7 +204,7 @@ const CartV2 = (): JSX.Element => {
 
               {/* Summary aside */}
               <aside className="cv2-aside" style={{ position: "sticky", top: 92 }}>
-                <div style={{ background: T.tint, padding: "28px 26px", borderTop: `3px solid ${T.gold}` }}>
+                <div style={{ background: T.tint, padding: "28px 26px" }}>
                   <h2 style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: T.ink, marginBottom: 22 }}>Summary</h2>
 
                   <div style={summaryRow}><span>Subtotal</span><span style={{ color: T.ink }}>{money(subtotal)}</span></div>
@@ -213,7 +213,7 @@ const CartV2 = (): JSX.Element => {
 
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", paddingTop: 18, marginTop: 8, borderTop: `1px solid ${T.ruleSoft}` }}>
                     <span style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.ink }}>Total</span>
-                    <span style={{ fontFamily: FONT_DISPLAY, fontSize: 32, color: T.gold, lineHeight: 1 }}>{money(total)}</span>
+                    <span style={{ fontFamily: FONT_DISPLAY, fontSize: 32, color: T.ink, lineHeight: 1 }}>{money(total)}</span>
                   </div>
                   <div style={{ fontSize: 11.5, color: T.muted, marginTop: 6, textAlign: "right" }}>
                     Includes VAT · Free insured UK delivery

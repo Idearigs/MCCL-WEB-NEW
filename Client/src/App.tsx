@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -97,20 +97,6 @@ const MAINTENANCE_MODE = true;
 const PREVIEW_TOKEN = 'mcc2026';
 
 const AppRoutes = () => {
-  // Warm the chunks for the routes people reach most often (bag → checkout) once
-  // the browser is idle, so navigating to them is instant instead of waiting on a
-  // lazy chunk download.
-  useEffect(() => {
-    const warm = () => {
-      import("./pages/CartV2");
-      import("./pages/CheckoutV2");
-      import("./pages/ProductDetailV2");
-    };
-    const w = window as any;
-    const id = w.requestIdleCallback ? w.requestIdleCallback(warm, { timeout: 2500 }) : window.setTimeout(warm, 1800);
-    return () => { if (w.cancelIdleCallback) w.cancelIdleCallback(id); else window.clearTimeout(id); };
-  }, []);
-
   // Persist preview access via localStorage so client can navigate freely
   if (typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);
