@@ -457,10 +457,13 @@ const CheckoutV2 = (): JSX.Element => {
     const upcoming = i > reached && !active;
     const numeralColor = active ? T.gold : done ? T.muted : "#C4BCB0";
     return (
-      <div style={{ borderTop: `1px solid ${T.rule}`, paddingTop: 20 }}>
+      <div style={{ borderTop: active ? `2px solid ${T.gold}` : `1px solid ${T.rule}`, paddingTop: 20 }}>
         <div style={{ display: "grid", gridTemplateColumns: "34px 1fr auto", alignItems: "center", gap: 8 }}>
           <span style={{ fontFamily: FONT_DISPLAY, fontSize: 20, color: numeralColor }}>{roman}</span>
-          <span style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: upcoming ? "#A9A29A" : T.ink }}>{STEP_LABELS[i]}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: active ? T.gold : upcoming ? "#A9A29A" : T.ink }}>
+            {STEP_LABELS[i]}
+            {done && <Check size={13} strokeWidth={2.5} style={{ color: "#5B8A5B" }} />}
+          </span>
           {done && (
             <button onClick={() => editStep(i)} style={{ background: "transparent", border: 0, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: T.muted, cursor: "pointer" }}>Edit</button>
           )}
@@ -704,7 +707,7 @@ const CheckoutV2 = (): JSX.Element => {
         </div>
 
         {/* Right — summary column */}
-        <aside className="cov2-summary" style={{ background: T.tint, borderLeft: `1px solid ${T.rule}`, padding: "clamp(28px, 4vw, 56px) clamp(24px, 3vw, 44px)" }}>
+        <aside className="cov2-summary" style={{ background: T.tint, borderLeft: `1px solid ${T.rule}`, borderTop: `3px solid ${T.gold}`, padding: "clamp(28px, 4vw, 56px) clamp(24px, 3vw, 44px)" }}>
           <div style={{ position: "sticky", top: 40 }}>
             {/* Line items */}
             <div style={{ marginBottom: 22 }}>
@@ -732,7 +735,7 @@ const CheckoutV2 = (): JSX.Element => {
 
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", paddingTop: 16, marginTop: 8, borderTop: `1px solid ${T.ruleSoft}` }}>
               <span style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.ink }}>Total</span>
-              <span style={{ fontFamily: FONT_DISPLAY, fontSize: 32, color: T.ink, lineHeight: 1 }}>{money(total)}</span>
+              <span style={{ fontFamily: FONT_DISPLAY, fontSize: 32, color: T.gold, lineHeight: 1 }}>{money(total)}</span>
             </div>
             <div style={{ fontSize: 11.5, color: T.muted, marginTop: 6, textAlign: "right" }}>Includes VAT · Free insured UK delivery</div>
 
