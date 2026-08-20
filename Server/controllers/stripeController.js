@@ -8,6 +8,79 @@ const { Sequelize } = require('sequelize');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 const { generateOrderNumber } = require('../utils/orderUtils');
 
+// Metal colour (as stored on a cart item) → the price_overrides keys it can map to.
+// Used only as a fallback when the exact priceKey isn't on the cart item.
+const METAL_COLOUR_KEYS = {
+  platinum: ['platinum'],
+  silver: ['silver'],
+  rose: ['gold_9kt_rose', 'gold_14kt_rose', 'gold_18kt_rose'],
+  yellow: ['gold_9kt_yellow', 'gold_14kt_yellow', 'gold_18kt_yellow'],
+  white: ['gold_9kt', 'gold_14kt', 'gold_18kt'],
+};
+// Deliberately far below any real diamond price — only there to catch gross
+// underpayment of the centre stone, never to price it exactly.
+const MIN_DIAMOND_GBP_PER_CARAT = 150;
+
+/**
+ * Recompute an authoritative minimum price for the cart from the database.
+ * - Variants: the variant's own price (exact).
+ * - Configured rings: the stored per-metal mount override for the exact chosen
+ *   metal (via priceKey), or the cheapest mount for the chosen colour as a floor,
+ *   plus a conservative diamond floor for Nivoda rings.
+ * - Everything else: sale_price || base_price.
+ * The caller rejects any charge that falls below this (minus a small tolerance).
+ */
+async function computeServerFloor(cartItems, models) {
+  const { Product, ProductVariant, ProductPricingConfig } = models;
+  let floor = 0;
+  for (const item of (cartItems || [])) {
+    const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+    let unit = null;
+
+    if (item.variant_id && ProductVariant) {
+      const v = await ProductVariant.findByPk(item.variant_id, { attributes: ['price'] });
+      if (v && v.price != null) unit = parseFloat(v.price);
+    }
+
+    if ((unit == null || isNaN(unit)) && item.product_id && Product) {
+      const product = await Product.findByPk(item.product_id, {
+        attributes: ['base_price', 'sale_price', 'nivoda_enabled'],
+        include: ProductPricingConfig ? [{ model: ProductPricingConfig, as: 'pricingConfig', attributes: ['price_overrides'] }] : [],
+      });
+      if (product) {
+        const overrides = product.pricingConfig && product.pricingConfig.price_overrides;
+        const opts = item.selectedOptions || {};
+        if (overrides && typeof overrides === 'object') {
+          let mount = null;
+          // Exact mount for the chosen metal, when the cart carries the pricing key
+          if (opts.priceKey && overrides[opts.priceKey] != null) {
+            mount = parseFloat(overrides[opts.priceKey]);
+          }
+          // Fallback: cheapest mount for the chosen metal colour
+          if (mount == null || isNaN(mount)) {
+            const colour = String(item.metal || opts.metal || '').toLowerCase();
+            let keys = null;
+            for (const c of Object.keys(METAL_COLOUR_KEYS)) { if (colour.includes(c)) { keys = METAL_COLOUR_KEYS[c]; break; } }
+            const vals = (keys || Object.keys(overrides)).map(k => parseFloat(overrides[k])).filter(v => !isNaN(v) && v > 0);
+            mount = vals.length ? Math.min(...vals) : (parseFloat(product.sale_price || product.base_price) || 0);
+          }
+          let lineFloor = mount;
+          const carat = opts.carat != null ? parseFloat(opts.carat) : NaN;
+          if (product.nivoda_enabled && !isNaN(carat) && carat > 0) {
+            lineFloor += carat * MIN_DIAMOND_GBP_PER_CARAT;
+          }
+          unit = lineFloor;
+        } else {
+          unit = parseFloat(product.sale_price || product.base_price);
+        }
+      }
+    }
+
+    if (unit != null && !isNaN(unit) && unit > 0) floor += unit * qty;
+  }
+  return floor;
+}
+
 /**
  * Create a payment intent for the cart
  * POST /api/v1/payments/create-intent
@@ -31,30 +104,15 @@ const createPaymentIntent = asyncHandler(async (req, res) => {
 
   // ── SECURITY: never trust the client-sent amount blindly ──────────────────
   // Recompute an authoritative price floor from the database and reject any
-  // amount that falls implausibly below it. This closes the "pay £1 for a
-  // £10,000 ring" tampering vector. We use a floor (not an exact match) because
-  // ring/diamond prices are configured (metal, carat, stone) and computed by the
-  // pricing engine, so the exact figure legitimately varies above the base price.
+  // amount that falls below it. This closes the "pay £1 for a £10,000 ring"
+  // tampering vector. For configured rings the mount is priced exactly from the
+  // stored per-metal overrides (via the cart's priceKey); the centre diamond on
+  // Nivoda rings adds a conservative per-carat floor on top.
   try {
-    const { Product, ProductVariant } = getModels();
-    let serverFloor = 0;
-    for (const item of (cartItems || [])) {
-      const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
-      let unit = null;
-      if (item.variant_id && ProductVariant) {
-        const v = await ProductVariant.findByPk(item.variant_id, { attributes: ['price'] });
-        if (v && v.price != null) unit = parseFloat(v.price);
-      }
-      if ((unit == null || isNaN(unit)) && item.product_id && Product) {
-        const p = await Product.findByPk(item.product_id, { attributes: ['base_price', 'sale_price'] });
-        if (p) unit = parseFloat(p.sale_price || p.base_price);
-      }
-      if (unit != null && !isNaN(unit) && unit > 0) serverFloor += unit * qty;
-    }
-    // Allow legitimate downward configuration variance (e.g. a cheaper metal) but
-    // reject anything below half the sum of base prices — no real order is that low.
-    const FLOOR_RATIO = 0.5;
-    if (serverFloor > 0 && amount < serverFloor * FLOOR_RATIO) {
+    const models = getModels();
+    const serverFloor = await computeServerFloor(cartItems, models);
+    const TOLERANCE = 0.05; // 5% headroom for rounding / minor live-price drift
+    if (serverFloor > 0 && amount < serverFloor * (1 - TOLERANCE)) {
       logger.warn(`Payment amount rejected: client £${amount} is below server floor £${serverFloor.toFixed(2)} (cart ${JSON.stringify((cartItems || []).map(i => i.product_id))})`);
       return res.status(400).json({
         success: false,

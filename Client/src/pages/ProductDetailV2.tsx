@@ -627,6 +627,11 @@ const ProductDetail = () => {
         selectedOptions.cut = selectedCut;
       }
 
+      // Persist the exact pricing key so the server can authoritatively re-verify the
+      // mount price for this configuration (used by the payment amount guard).
+      const priceOpt = metalTypeOptions.find(m => m.value === selectedMetalType);
+      if (priceOpt) selectedOptions.priceKey = priceOpt.overrideKey;
+
       const imageUrl = displayImages[0]?.url || productData.images[0]?.url;
 
       // Use the fully calculated price (mount + diamond) as the cart price

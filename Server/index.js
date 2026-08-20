@@ -78,8 +78,10 @@ app.options('*', cors(corsOptions));
 
 // Compression and parsing middleware
 app.use(compression());
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+// JSON/urlencoded bodies are small (carts, forms); file uploads go through multer
+// (multipart) and are unaffected. A tight limit blunts oversized-payload DoS.
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // Initialize Passport
 app.use(passport.initialize());

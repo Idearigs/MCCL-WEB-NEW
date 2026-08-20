@@ -15,8 +15,9 @@ router.post('/create-intent', paymentRateLimit, stripeController.createPaymentIn
 // Confirm payment and create order (rate-limited)
 router.post('/confirm', paymentRateLimit, stripeController.confirmPayment);
 
-// Get order details
-router.get('/order/:orderId', stripeController.getOrder);
+// Get order details (auth required — returns customer PII; the confirmation page
+// itself uses the confirm response, not this endpoint)
+router.get('/order/:orderId', authMiddleware, stripeController.getOrder);
 
 // Get all orders (admin only)
 router.get('/orders', authMiddleware, stripeController.getAllOrders);

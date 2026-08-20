@@ -69,6 +69,8 @@ const PaymentForm = ({
           price: getPriceAsNumber(item.price),
           variant_id: item.variant_id || null,
           type: item.type || null,
+          metal: item.metal || null,
+          selectedOptions: item.selectedOptions || null,
         })),
       }),
     });
