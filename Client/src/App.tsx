@@ -41,14 +41,16 @@ const WatchCollection   = lazy(() => import("./pages/CollectionV2"));
 // Jewellery categories
 const Rings             = lazy(() => import("./pages/RingsV2"));
 const EngagementRings   = lazy(() => import("./pages/EngagementRingsV2"));
-const WeddingRings      = lazy(() => import("./pages/WeddingRingsV2"));
+// Wedding rings — 12th handoff configurator (listing + PDP). Real-data versions
+// preserved at WeddingRingsV2 / WeddingRingDetail; repoint here to revert.
+const WeddingRings      = lazy(() => import("./pages/WeddingListingV2"));
 const JewelleryListing  = lazy(() => import("./pages/JewelleryListingV2"));
 
 // Product detail pages (heaviest pages — always lazy)
 const ProductDetail     = lazy(() => import("./pages/ProductDetail"));
 const ProductDetailV2    = lazy(() => import("./pages/ProductDetailV2"));
 const WatchDetail       = lazy(() => import("./pages/WatchDetailV2"));
-const WeddingRingDetail = lazy(() => import("./pages/WeddingRingDetail"));
+const WeddingRingDetail = lazy(() => import("./pages/WeddingConfiguratorV2"));
 
 // Info / account pages
 const Contact           = lazy(() => import("./pages/ContactV2"));

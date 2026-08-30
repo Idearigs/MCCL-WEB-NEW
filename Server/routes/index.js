@@ -21,6 +21,7 @@ const reviewRoutes = require('./reviews');
 const addressRoutes = require('./addresses');
 const appointmentRoutes = require('./appointments');
 const pieceRoutes = require('./pieces');
+const weddingCatalogueRoutes = require('./weddingCatalogue');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -53,6 +54,7 @@ router.use('/ring-pricing', ringPricingRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/pieces', pieceRoutes);
+router.use('/wedding', weddingCatalogueRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {
