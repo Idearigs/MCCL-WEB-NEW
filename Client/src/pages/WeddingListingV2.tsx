@@ -31,7 +31,6 @@ const COLOURWAYS = [
 ] as const;
 type CW = "Y" | "W" | "R";
 
-const money = (n: number | null) => (n == null ? "" : "£" + Math.round(n).toLocaleString("en-GB"));
 const swatchFor = (id: string) => COLOURWAYS.find(c => c.id === id)?.swatch || "#E1DFDA";
 
 interface ApiDesign {
@@ -69,7 +68,6 @@ const WeddingListingV2 = (): JSX.Element => {
   const [cardPreview, setCardPreview] = useState<Record<string, CW>>({});
   const [cardPick, setCardPick] = useState<Record<string, CW>>({});
   const [sel, setSel] = useState<Record<string, string[]>>({});
-  const [maxPrice, setMaxPrice] = useState<number>(999999);
   const [sort, setSort] = useState("Featured");
   const [shown, setShown] = useState(9);
   const [pair, setPair] = useState(false);
@@ -103,9 +101,6 @@ const WeddingListingV2 = (): JSX.Element => {
 
   useEffect(() => { document.body.style.overflow = railOpen ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [railOpen]);
 
-  const priceCap = useMemo(() => Math.max(1000, ...designs.map(d => d.priceTo || d.priceFrom || 0)), [designs]);
-  useEffect(() => { if (maxPrice === 999999 && priceCap > 0) setMaxPrice(priceCap); }, [priceCap]); // eslint-disable-line
-
   const cats = useMemo(() => CAT_ORDER.filter(c => designs.some(d => d.category === c)), [designs]);
   const catCount = (c: string) => designs.filter(d => d.category === c).length;
 
@@ -128,9 +123,8 @@ const WeddingListingV2 = (): JSX.Element => {
   };
   const lbl = (dim: string, v: string) => (dim === "category" ? v : labels[dim]?.[v] || v);
 
-  const passes = (d: ApiDesign, s: Record<string, string[]>, maxP: number, skip?: string): boolean => {
+  const passes = (d: ApiDesign, s: Record<string, string[]>, skip?: string): boolean => {
     if (skip !== "category" && (s.category?.length) && !s.category.includes(d.category)) return false;
-    if (skip !== "price" && d.priceFrom != null && d.priceFrom > maxP) return false;
     for (const dim of ["metal", ...SCOPED_DIMS]) {
       if (skip === dim) continue;
       const want = s[dim]; if (!want || !want.length) continue;
@@ -141,15 +135,12 @@ const WeddingListingV2 = (): JSX.Element => {
   };
 
   const list = useMemo(() => {
-    let l = designs.filter(d => passes(d, sel, maxPrice));
-    if (sort === "Price, low to high") l = [...l].sort((a, b) => (a.priceFrom || 0) - (b.priceFrom || 0));
-    else if (sort === "Price, high to low") l = [...l].sort((a, b) => (b.priceFrom || 0) - (a.priceFrom || 0));
-    else if (sort === "Newest") l = [...l].reverse();
+    let l = designs.filter(d => passes(d, sel));
+    if (sort === "Newest") l = [...l].reverse();
     return l;
-  }, [designs, sel, maxPrice, sort]); // eslint-disable-line
+  }, [designs, sel, sort]); // eslint-disable-line
 
   const visible = list.slice(0, shown);
-  const priceActive = maxPrice < priceCap;
 
   const cardWay = (d: ApiDesign): CW => {
     const w = cardPreview[d.id] || cardPick[d.id] || colourway;
@@ -157,14 +148,14 @@ const WeddingListingV2 = (): JSX.Element => {
   };
   const heroFor = (d: ApiDesign, way: CW) => d.hero[way] || d.hero.W || d.hero.Y || d.hero.R;
 
-  const clearAll = () => { setSel({}); setMaxPrice(priceCap); setShown(9); };
+  const clearAll = () => { setSel({}); setShown(9); };
   const toggle = (dim: string, val: string) => { setSel(s => { const cur = s[dim] || []; return { ...s, [dim]: cur.includes(val) ? cur.filter(v => v !== val) : [...cur, val] }; }); setShown(9); };
 
   const activeDims = ["category", "metal", ...SCOPED_DIMS];
   const chips = activeDims.flatMap(dim => (sel[dim] || []).map(v => ({ dim, label: lbl(dim, v) })));
-  const anyChips = chips.length > 0 || priceActive;
+  const anyChips = chips.length > 0;
 
-  const countFor = (dim: string, v: string) => designs.filter(d => passes(d, { ...sel, [dim]: [v] }, maxPrice)).length;
+  const countFor = (dim: string, v: string) => designs.filter(d => passes(d, { ...sel, [dim]: [v] })).length;
 
   const eyebrow: React.CSSProperties = { fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8A8377" };
   const rememberScroll = () => { try { sessionStorage.setItem("mcc-wr-scroll", String(window.scrollY)); sessionStorage.setItem("mcc-wr-shown", String(shown)); } catch { /* ignore */ } };
@@ -300,7 +291,7 @@ const WeddingListingV2 = (): JSX.Element => {
 
         <div className="wl-mobile-refine" style={{ display: "none", position: "sticky", top: 78, zIndex: 40, gridTemplateColumns: "1fr", background: T.paper, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}` }}>
           <button type="button" onClick={() => setRailOpen(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", padding: "14px 0", background: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink }}>
-            Refine &amp; colourway{anyChips && <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: T.gold, color: "#fff", fontSize: 10.5, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>{chips.length + (priceActive ? 1 : 0)}</span>}
+            Refine &amp; colourway{anyChips && <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: T.gold, color: "#fff", fontSize: 10.5, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>{chips.length}</span>}
           </button>
         </div>
 
@@ -330,11 +321,6 @@ const WeddingListingV2 = (): JSX.Element => {
                     <span style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "#A9A196" }}>{DIM_LABEL[c.dim] || c.dim}</span>{c.label}<span style={{ color: "#8A8377" }}>×</span>
                   </button>
                 ))}
-                {priceActive && (
-                  <button type="button" onClick={() => { setMaxPrice(priceCap); setShown(9); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: "#332F2A", background: T.tint, border: 0 }}>
-                    <span style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "#A9A196" }}>Price</span>up to {money(maxPrice)}<span style={{ color: "#8A8377" }}>×</span>
-                  </button>
-                )}
                 <button type="button" onClick={clearAll} style={{ padding: "8px 10px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: T.gold, background: "transparent", border: 0 }}>Clear all</button>
               </div>
             )}
