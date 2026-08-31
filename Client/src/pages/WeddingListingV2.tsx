@@ -32,6 +32,8 @@ const COLOURWAYS = [
 type CW = "Y" | "W" | "R";
 
 const money = (n: number | null | undefined) => (n == null ? "" : "£" + Math.round(n).toLocaleString("en-GB"));
+// Listing has no single metal, so drop the "in {metal}" clause and any leftover tokens.
+const cleanDesc = (s?: string) => (s || "").replace(/,?\s*in \{metal\}/gi, "").replace(/\{[^}]+\}/g, "").replace(/\s+/g, " ").replace(/\s+\./g, ".").trim();
 const swatchFor = (id: string) => COLOURWAYS.find(c => c.id === id)?.swatch || "#E1DFDA";
 
 interface ApiDesign {
@@ -375,7 +377,7 @@ const WeddingListingV2 = (): JSX.Element => {
                             <span className="wl-name" style={{ fontSize: 14.5, color: T.ink, transition: "color 0.2s ease" }}>{d.name}</span>
                             {d.priceFrom != null && <span style={{ fontSize: 13.5, whiteSpace: "nowrap", color: "#56534D" }}>from {money(d.priceFrom)}</span>}
                           </div>
-                          {d.description && <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.muted }}>{d.description}</div>}
+                          {cleanDesc(d.description) && <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.muted }}>{cleanDesc(d.description)}</div>}
                           <div style={{ fontSize: 11.5, color: "#8A8377", marginTop: 6 }}>{pair ? "Ladies and gents widths" : (d.variations || 1).toLocaleString("en-GB") + " variations · " + (d.colourways.length) + " colourways"}</div>
                         </button>
                       </div>
