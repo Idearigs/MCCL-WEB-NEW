@@ -40,7 +40,9 @@ exports.listDesigns = async (req, res) => {
     if (category && category !== 'all') { params.push(category); where += ` AND d.category = $${params.length}`; }
 
     const { rows } = await pool.query(
-      `SELECT d.design_id, d.category, d.design_name, d.design_family, d.description,
+      `SELECT d.design_id, d.category, d.design_name, d.design_family,
+              COALESCE(d.product_name, d.design_name) AS product_name, d.collection,
+              COALESCE(d.short_description, d.description) AS description,
               d.variations, d.price_from, d.price_to, d.currency, d.colourways,
               d.hero_y, d.hero_w, d.hero_r, d.spin_w, d.spin_frames,
               COALESCE(f.facets, '{}'::jsonb) AS facets
@@ -71,7 +73,8 @@ exports.listDesigns = async (req, res) => {
       return {
         id: d.design_id,
         category: d.category,
-        name: d.design_name,
+        name: d.product_name || d.design_name,
+        collection: d.collection,
         family: d.design_family,
         description: d.description,
         variations: d.variations,
@@ -125,8 +128,13 @@ exports.getDesign = async (req, res) => {
     res.json({
       success: true,
       design: {
-        id: d.design_id, category: d.category, name: d.design_name, family: d.design_family,
-        description: d.description, variations: d.variations,
+        id: d.design_id, category: d.category,
+        name: d.product_name || d.design_name, collection: d.collection,
+        subtitle: d.subtitle, displayTitle: d.display_title, seoName: d.seo_name,
+        family: d.design_family,
+        description: d.description, shortDescription: d.short_description,
+        descriptionTemplate: d.description_template, descriptionExample: d.description_example,
+        specification: d.specification, variations: d.variations,
         priceFrom: d.price_from != null ? Number(d.price_from) : null,
         priceTo: d.price_to != null ? Number(d.price_to) : null, currency: d.currency || 'GBP',
         pricingModel: d.pricing_model, composed: /^base/i.test(d.pricing_model || ''),

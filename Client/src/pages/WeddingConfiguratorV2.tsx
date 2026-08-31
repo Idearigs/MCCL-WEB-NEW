@@ -39,6 +39,17 @@ const PROFILE_SVG: Record<string, string> = {
   D: "M2 18 L2 12 Q22 0 42 12 L42 18 Z",       // D-shape
 };
 
+// Metal notes by hallmark (from AlliedGold-Products.xlsx "How to use").
+const METAL_NOTES: Record<string, string> = {
+  "375": "9ct gold is 37.5% pure, the hardest-wearing of the golds and the most affordable.",
+  "585": "14ct gold is 58.5% pure, sitting between 9ct and 18ct in both colour depth and price.",
+  "750": "18ct gold is 75% pure — a richer, deeper colour and the choice most associated with fine jewellery.",
+  "950": "A dense, naturally white precious metal that needs no plating and keeps its colour for life.",
+  "500": "Palladium 500 is naturally white and noticeably light on the finger.",
+  "958": "Argentium is a modern silver alloy, brighter than sterling and markedly more resistant to tarnish.",
+};
+const money = (n: number | null | undefined) => (n == null ? "" : "£" + Math.round(n).toLocaleString("en-GB"));
+
 const DIM_ORDER = ["width", "profile", "weight", "quality", "carat", "origin", "coverage", "shape", "collection"];
 const DIM_LABEL: Record<string, string> = {
   metal: "Metal", width: "Width", profile: "Profile", weight: "Weight", quality: "Stone quality",
@@ -47,13 +58,14 @@ const DIM_LABEL: Record<string, string> = {
 
 interface Opt { value: string; label: string; }
 interface Design {
-  id: string; category: string; name: string; family: string; description: string;
+  id: string; category: string; name: string; collection: string; family: string;
+  description: string; shortDescription: string; descriptionTemplate: string; subtitle: string;
   variations: number; colourways: string[]; pricingModel: string; composed: boolean;
   widthMm: string; profile: string; profileCode: string; weightClass: string; series: string;
   hero: Record<CW, string | null>;
   spin: { Y: string | null; W: string | null; R: string | null; frames: number | null; start: number | null };
   options: Record<string, Opt[]>;
-  variationRows: { metal: string; metalName: string; hallmark: string; colourway: string }[];
+  variationRows: { metal: string; metalName: string; hallmark: string; colourway: string; price: number | null }[];
 }
 
 const PANELS = [
@@ -75,6 +87,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
   const drag = useRef({ on: false, x: 0, a: 0 });
   const [panel, setPanel] = useState<string | null>("about");
   const [variationsOpen, setVariationsOpen] = useState(false);
+  const [price, setPrice] = useState<number | null>(null);
 
   useEffect(() => {
     let alive = true; setLoading(true); setNotFound(false);
@@ -97,6 +110,21 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [productId]);
+
+  // Live price from the authoritative lookup, on every configuration change.
+  useEffect(() => {
+    if (!design || !sel.metal) return;
+    const params = new URLSearchParams({ design: design.id });
+    (["metal", "width", "profile", "weight", "quality", "origin"] as const).forEach(k => { if (sel[k]) params.set(k, sel[k]); });
+    let alive = true;
+    const t = setTimeout(() => {
+      fetch(`${API_BASE_URL}/wedding/price?${params.toString()}`)
+        .then(r => r.json())
+        .then(d => { if (alive) setPrice(d.success ? d.price : null); })
+        .catch(() => { if (alive) setPrice(null); });
+    }, 120);
+    return () => { alive = false; clearTimeout(t); };
+  }, [design, sel]);
 
   const colourway: CW = design && sel.metal ? cwOf(sel.metal) : "W";
   const hero = design ? (design.hero[colourway] || design.hero.W || design.hero.Y || design.hero.R) : null;
@@ -124,6 +152,14 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
   const stepDims = design ? ["metal", ...axisDims] : [];
 
   const title = design ? design.name : "";
+  const stampNow = METAL_META[sel.metal]?.stamp || "";
+  const resolvedDesc = design
+    ? (design.descriptionTemplate || design.description || "")
+        .replace(/\{metal\}/g, metalLabel(sel.metal || ""))
+        .replace(/\{hallmark\}/g, stampNow)
+        .replace(/\{metalNote\}/g, METAL_NOTES[stampNow] || "")
+    : "";
+  const descParas = resolvedDesc.split(/\n\n+/).map(s => s.trim()).filter(Boolean);
   const eyebrow: React.CSSProperties = { fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8A8377" };
   const stepLabel: React.CSSProperties = { fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: T.ink };
 
@@ -147,6 +183,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
         .wc-guide:hover { color: ${T.gold} !important; }
         .wc-cta:hover { background: ${T.gold} !important; }
         @keyframes wcStageIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes wcPriceIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
         @media (max-width: 960px){
           .wc-main{ grid-template-columns: 1fr !important; }
           .wc-stage{ position: static !important; }
@@ -213,13 +250,15 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
                 <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(30px,3vw,44px)", lineHeight: 1.08, letterSpacing: "0.005em", margin: "0 0 12px", maxWidth: "24ch" }}>{title}</h1>
                 <div style={{ ...eyebrow }}>{design.category} · {metalLabel(sel.metal || "")}</div>
 
-                <p style={{ margin: "24px 0 0", fontSize: 15, lineHeight: 1.75, color: T.body, maxWidth: "54ch" }}>{design.description || "A hand-finished wedding band, formed and hallmarked in our workshop."}</p>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, margin: "22px 0 26px", paddingBottom: 26, borderBottom: `1px solid ${T.rule}` }}>
-                  <span style={{ fontSize: 12, color: T.muted }}>Made to order · hand-finished in the UK</span>
-                  <span style={{ color: T.ruleStrong }}>·</span>
-                  <span style={{ fontSize: 12, color: T.muted }}>{(design.variations || 1).toLocaleString("en-GB")} variations</span>
+                <div key={price ?? "na"} style={{ display: "flex", alignItems: "baseline", gap: 14, margin: "24px 0 6px", animation: "wcPriceIn 0.34s cubic-bezier(0.22,1,0.36,1) both" }} aria-live="polite">
+                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: 36, lineHeight: 1 }}>{price != null ? money(price) : "—"}</div>
+                  <div style={{ fontSize: 12.5, color: T.muted }}>in {metalLabel(sel.metal || "")}</div>
                 </div>
+                <div style={{ fontSize: 12, color: "#8A8377", paddingBottom: 24, borderBottom: `1px solid ${T.rule}` }}>Indicative price · includes VAT · confirmed at order. Made to order, hand-finished in the UK.</div>
+
+                {descParas.length > 0
+                  ? descParas.map((para, i) => <p key={i} style={{ margin: i === 0 ? "24px 0 0" : "14px 0 0", fontSize: 15, lineHeight: 1.75, color: T.body, maxWidth: "54ch" }}>{para}</p>)
+                  : <p style={{ margin: "24px 0 0", fontSize: 15, lineHeight: 1.75, color: T.body, maxWidth: "54ch" }}>A hand-finished wedding band, formed and hallmarked in our workshop.</p>}
 
                 {/* Metal */}
                 {design.options.metal?.length ? (
@@ -280,9 +319,9 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
 
                 {/* Enquiry (pricing pending) */}
                 <div style={{ marginTop: 34, padding: "18px 20px", background: T.tint }}>
-                  <div style={{ fontSize: 13.5, lineHeight: 1.6, color: T.body }}>This band is made to order in your chosen metal and specification. <span style={{ color: T.ink }}>We confirm the price with you before anything is cut.</span></div>
+                  <div style={{ fontSize: 13.5, lineHeight: 1.6, color: T.body }}>Made to order in your chosen metal and specification. <span style={{ color: T.ink }}>The price is confirmed with you before anything is cut</span> — metal prices move daily.</div>
                 </div>
-                <Link to="/contact" className="wc-cta" style={{ display: "block", textAlign: "center", width: "100%", marginTop: 16, padding: 17, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.16em", textTransform: "uppercase", color: T.paper, background: T.ink, border: 0 }}>Enquire about this design</Link>
+                <Link to="/contact" className="wc-cta" style={{ display: "block", textAlign: "center", width: "100%", marginTop: 16, padding: 17, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.16em", textTransform: "uppercase", color: T.paper, background: T.ink, border: 0 }}>Enquire about this design{price != null ? " — " + money(price) : ""}</Link>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1, marginTop: 20, background: T.rule, border: `1px solid ${T.rule}` }}>
                   {[["01", "Book an appointment"], ["02", "Order by phone"], ["03", "Drop a hint"]].map(([n, label]) => (
@@ -304,12 +343,13 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
                         <div style={{ padding: "0 0 22px" }}>
                           {design.variationRows.map(v => (
                             <button key={v.metal} type="button" onClick={() => { setSel(s => ({ ...s, metal: v.metal })); setView("still"); }}
-                              style={{ display: "grid", gridTemplateColumns: "minmax(0,1.5fr) 60px auto", gap: 12, alignItems: "baseline", width: "100%", padding: "11px 8px 11px 0", cursor: "pointer", textAlign: "left", fontFamily: FONT_BODY, background: v.metal === sel.metal ? T.tint : "transparent", border: 0, borderBottom: `1px solid ${T.rule}` }}>
+                              style={{ display: "grid", gridTemplateColumns: "minmax(0,1.5fr) 52px 1fr auto", gap: 12, alignItems: "baseline", width: "100%", padding: "11px 8px 11px 0", cursor: "pointer", textAlign: "left", fontFamily: FONT_BODY, background: v.metal === sel.metal ? T.tint : "transparent", border: 0, borderBottom: `1px solid ${T.rule}` }}>
                               <span style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13, color: T.ink }}>
                                 <span style={{ flex: "none", width: 13, height: 13, borderRadius: "50%", background: METAL_META[v.metal]?.swatch || "#ccc", border: "1px solid rgba(28,26,23,0.18)" }} />{v.metalName || metalLabel(v.metal)}
                               </span>
                               <span style={{ fontSize: 11.5, color: "#A9A196" }}>{v.hallmark || METAL_META[v.metal]?.stamp}</span>
-                              <span style={{ fontSize: 11, textAlign: "right", color: "#A9A196", textTransform: "uppercase", letterSpacing: "0.1em" }}>{CW_LABEL[cwOf(v.metal)]}</span>
+                              <span style={{ fontSize: 10.5, color: "#A9A196", textTransform: "uppercase", letterSpacing: "0.1em" }}>{CW_LABEL[cwOf(v.metal)]}</span>
+                              <span style={{ fontSize: 13, textAlign: "right", color: "#56534D" }}>{v.price != null ? "from " + money(v.price) : ""}</span>
                             </button>
                           ))}
                         </div>

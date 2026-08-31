@@ -31,6 +31,7 @@ const COLOURWAYS = [
 ] as const;
 type CW = "Y" | "W" | "R";
 
+const money = (n: number | null | undefined) => (n == null ? "" : "£" + Math.round(n).toLocaleString("en-GB"));
 const swatchFor = (id: string) => COLOURWAYS.find(c => c.id === id)?.swatch || "#E1DFDA";
 
 interface ApiDesign {
@@ -370,8 +371,9 @@ const WeddingListingV2 = (): JSX.Element => {
                         </div>
 
                         <button type="button" onClick={() => goTo(d)} className="wl-card-link" style={{ display: "block", width: "100%", marginTop: 10, padding: 0, textAlign: "left", background: "transparent", border: 0, cursor: "pointer", fontFamily: FONT_BODY }}>
-                          <div style={{ marginBottom: 7 }}>
+                          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 7 }}>
                             <span className="wl-name" style={{ fontSize: 14.5, color: T.ink, transition: "color 0.2s ease" }}>{d.name}</span>
+                            {d.priceFrom != null && <span style={{ fontSize: 13.5, whiteSpace: "nowrap", color: "#56534D" }}>from {money(d.priceFrom)}</span>}
                           </div>
                           {d.description && <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.muted }}>{d.description}</div>}
                           <div style={{ fontSize: 11.5, color: "#8A8377", marginTop: 6 }}>{pair ? "Ladies and gents widths" : (d.variations || 1).toLocaleString("en-GB") + " variations · " + (d.colourways.length) + " colourways"}</div>
