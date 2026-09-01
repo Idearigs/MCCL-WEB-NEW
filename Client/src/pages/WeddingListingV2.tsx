@@ -5,6 +5,7 @@ import FooterV2 from "../components/home-v2/FooterV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 import { useIsMobile } from "../hooks/use-mobile";
 import API_BASE_URL from "../config/api";
+import { WeddingImg } from "../components/home-v2/WeddingImg";
 
 /**
  * Wedding rings — configurator listing, wired to the Allied Gold catalogue
@@ -353,7 +354,7 @@ const WeddingListingV2 = (): JSX.Element => {
                       <div key={d.id}>
                         <div className="wl-card" style={{ position: "relative", aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden" }}>
                           <button type="button" onClick={() => goTo(d)} aria-label={d.name} style={{ position: "absolute", inset: 0, display: "block", padding: 0, cursor: "pointer", background: "transparent", border: 0 }}>
-                            {hero ? <img src={hero} alt={d.name} loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : <RingTile way={way} name={d.name} />}
+                            {hero ? <WeddingImg hero={hero} alt={d.name} loading="lazy" sizes="(max-width: 700px) 46vw, 30vw" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : <RingTile way={way} name={d.name} />}
                           </button>
                           <button type="button" onClick={() => setSaved(s => isSaved ? s.filter(n => n !== d.id) : [...s, d.id])} aria-label={isSaved ? "Saved" : "Save"} aria-pressed={isSaved}
                             style={{ position: "absolute", top: 8, right: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, fontSize: 15, lineHeight: 1, color: isSaved ? T.gold : "#8A8377" }}>{isSaved ? "♥" : "♡"}</button>

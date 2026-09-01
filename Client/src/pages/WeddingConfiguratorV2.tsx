@@ -5,6 +5,7 @@ import FooterV2 from "../components/home-v2/FooterV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 import { useIsMobile } from "../hooks/use-mobile";
 import API_BASE_URL from "../config/api";
+import { WeddingImg, weddingVariant } from "../components/home-v2/WeddingImg";
 
 /**
  * Wedding ring — configurator PDP, wired to the Allied Gold catalogue
@@ -222,7 +223,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
           <div className="wc-stage" style={{ position: "sticky", top: NAV_H + 4 }}>
             <div key={colourway + view} className="wc-stagebox" style={{ position: "relative", aspectRatio: "4 / 3", background: T.tint, overflow: "hidden", animation: "wcStageIn 0.32s ease both" }}>
               {view === "still" ? (
-                hero ? <img src={hero} alt={title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                hero ? <WeddingImg hero={hero} alt={title} sizes="(max-width: 960px) 100vw, 58vw" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                      : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: "#8C8375" }}>{title}</div>
               ) : (
                 <div onMouseDown={dragStart} onMouseMove={dragMove} onMouseUp={dragEnd} onMouseLeave={dragEnd} onTouchStart={dragStart} onTouchMove={dragMove} onTouchEnd={dragEnd}
@@ -248,7 +249,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
                 return (
                   <button key={cw} type="button" onClick={() => { if (metalForCw) { setSel(s => ({ ...s, metal: metalForCw.value })); setView("still"); } }} title={CW_LABEL[cw]}
                     style={{ position: "relative", width: 84, aspectRatio: "1", padding: 0, cursor: "pointer", background: T.tint, border: `1px solid ${on ? T.ink : T.rule}`, overflow: "hidden" }}>
-                    <img src={design!.hero[cw]!} alt={CW_LABEL[cw]} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={weddingVariant(design!.hero[cw], "thumb")!} alt={CW_LABEL[cw]} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                   </button>
                 );
               })}
