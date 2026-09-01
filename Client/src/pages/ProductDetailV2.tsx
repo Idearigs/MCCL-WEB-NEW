@@ -999,7 +999,7 @@ const ProductDetail = () => {
 
       <div className="pdpv2" style={{ paddingTop: NAV_H }}>
         <div style={{ display: 'flex', gap: 10, padding: '18px clamp(24px,3vw,52px)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A8377' }}>
-          <Link to="/">Home</Link><span>/</span><Link to="/engagement-rings">Engagement rings</Link><span>/</span><span style={{ color: T.ink }}>{productData.name}</span>
+          <Link to="/">Home</Link><span>/</span><Link to={`/${productData.category?.slug || 'engagement-rings'}`}>{productData.category?.name || 'Engagement rings'}</Link><span>/</span><span style={{ color: T.ink }}>{productData.name}</span>
         </div>
 
         <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.25fr) minmax(430px, 0.75fr)', gap: 'clamp(32px,4vw,72px)', padding: 'clamp(8px,2vw,24px) clamp(24px,3vw,52px) clamp(56px,5vw,88px)', alignItems: 'start' }} className="pdpv2-main">
@@ -1028,7 +1028,7 @@ const ProductDetail = () => {
           {/* Buy column */}
           <div>
             <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(38px,3.6vw,54px)', lineHeight: 1.02, margin: '0 0 8px' }}>{productData.name}</h1>
-            <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8A8377', marginBottom: 22 }}>Engagement{productData.sku ? ' — ' + productData.sku : ''}</div>
+            <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8A8377', marginBottom: 22 }}>{productData.category?.name || 'Engagement'}{productData.sku ? ' — ' + productData.sku : ''}</div>
 
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, paddingBottom: 18, borderBottom: `1px solid ${T.rule}`, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: FONT_DISPLAY, fontSize: 38, lineHeight: 1 }}>{money(totalPrice)}</span>
