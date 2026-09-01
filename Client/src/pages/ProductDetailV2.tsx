@@ -952,6 +952,9 @@ const ProductDetail = () => {
   // ---- v2 render helpers ----
   const NAV_H = 96;
   const money = (n: number) => '£' + Math.round(n || 0).toLocaleString('en-GB');
+  // Ring-only UI (size selector, ring-size spec) is shown only for ring categories.
+  // Earrings / necklaces / bracelets reuse this template without the ring size step.
+  const isRingCat = /ring/i.test(productData.category?.name || '');
   const priceOverrides = productData?.ring_price_overrides;
   const purchasableMetals = priceOverrides ? metalTypeOptions.filter(o => priceOverrides[o.overrideKey]) : [];
   const metalDot = (v: string) => v.includes('yellow') ? '#E6C15A' : v.includes('rose') ? '#DCA79A' : v.includes('white') ? '#E5E4E2' : v === 'platinum' ? '#E5E4E2' : v === 'silver' ? '#C7C7C7' : '#D8D2C6';
@@ -980,7 +983,7 @@ const ProductDetail = () => {
   const metalName = productData?.available_metals?.find((m: any) => m.id === selectedMetal)?.name || (metalTypeOptions.find(m => m.value === selectedMetalType)?.label) || '';
   const sizeLabel = ringSizes.find(s => s.value === selectedSize)?.label || selectedSize;
   const diamondName = productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.display_name || productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.name || '';
-  const configSummary = [metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName, selectedSize && ('Size ' + selectedSize), productData?.nivoda_enabled && selectedCarat && (selectedCarat + 'ct ' + selectedColour + ' ' + selectedClarity)].filter(Boolean).join('  ·  ');
+  const configSummary = [metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName, isRingCat && selectedSize && ('Size ' + selectedSize), productData?.nivoda_enabled && selectedCarat && (selectedCarat + 'ct ' + selectedColour + ' ' + selectedClarity)].filter(Boolean).join('  ·  ');
   const isVid = (m: any) => !!m && (m.type === 'video' || isVideoFile(m.url));
 
   return (
@@ -1084,6 +1087,7 @@ const ProductDetail = () => {
               </div>
             )}
 
+            {isRingCat && (
             <div style={{ marginBottom: 28 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <div style={stepLabel}>02 — Size</div>
@@ -1101,6 +1105,7 @@ const ProductDetail = () => {
                 </div>
               )}
             </div>
+            )}
 
             {productData.nivoda_enabled && (
               <div style={{ background: T.tint, padding: 26, marginBottom: 28 }}>
@@ -1157,7 +1162,7 @@ const ProductDetail = () => {
             </div>
 
             <div className="pdpv2-spec" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: 24, marginTop: 22, borderTop: `1px solid ${T.rule}` }}>
-              {([['Metal', metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName], ['Size', sizeLabel], diamondName && ['Diamond', diamondName], productData.nivoda_enabled && selectedCarat && ['Carat', selectedCarat + ' ct'], productData.nivoda_enabled && selectedClarity && ['Clarity', selectedClarity], productData.nivoda_enabled && selectedColour && ['Colour', selectedColour], productData.sku && ['SKU', productData.sku]].filter(Boolean) as any[]).map((row: any, i: number) => (
+              {([(metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName) && ['Metal', metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName], isRingCat && ['Size', sizeLabel], diamondName && ['Diamond', diamondName], productData.nivoda_enabled && selectedCarat && ['Carat', selectedCarat + ' ct'], productData.nivoda_enabled && selectedClarity && ['Clarity', selectedClarity], productData.nivoda_enabled && selectedColour && ['Colour', selectedColour], productData.sku && ['SKU', productData.sku]].filter(Boolean) as any[]).map((row: any, i: number) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '11px 0', borderBottom: `1px solid ${T.rule}`, fontSize: 13 }}>
                   <span style={{ color: T.muted }}>{row[0]}</span><span>{row[1]}</span>
                 </div>
@@ -1171,7 +1176,7 @@ const ProductDetail = () => {
           <div style={{ maxWidth: 1240, margin: '0 auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'end', paddingBottom: 36, borderBottom: `1px solid ${T.ruleDark}` }} className="pdpv2-promise-top">
               <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(30px,3.4vw,52px)', lineHeight: 1.08, margin: 0, maxWidth: '15ch', color: '#fff' }}>Where craftsmanship meets distinction.</h2>
-              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>Every ring is cut, set and finished by hand in our own workshop — the same bench, the same care, for generations.</p>
+              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>Every piece is cut, set and finished by hand in our own workshop — the same bench, the same care, for generations.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }} className="pdpv2-promise-grid">
               {[['I', 'White glove delivery', 'Insured, tracked and hand-delivered to your door.'], ['II', 'Signature presentation', 'Every piece arrives in our signature box, ready to give.'], ['III', 'Ethical excellence', 'Responsibly sourced stones and metals, hallmarked in the UK.'], ['IV', 'Sizing expertise', 'Complimentary resizing to get the fit exactly right.']].map(([n, t, d], i) => (

@@ -158,10 +158,10 @@ const AppRoutes = () => {
       <Route path="/wedding-rings/:productId" element={<WeddingRingDetail />} />
       <Route path="/wedding/:productId" element={<WeddingRingDetail />} />
       <Route path="/rings/:productId" element={<ProductDetailV2 />} />
-      <Route path="/earrings/:productId" element={<ProductDetail />} />
-      <Route path="/necklaces/:productId" element={<ProductDetail />} />
-      <Route path="/bracelets/:productId" element={<ProductDetail />} />
-      <Route path="/jewellery/:productId" element={<ProductDetail />} />
+      <Route path="/earrings/:productId" element={<ProductDetailV2 />} />
+      <Route path="/necklaces/:productId" element={<ProductDetailV2 />} />
+      <Route path="/bracelets/:productId" element={<ProductDetailV2 />} />
+      <Route path="/jewellery/:productId" element={<ProductDetailV2 />} />
       <Route path="/watches/:productId" element={<WatchDetail />} />
       <Route path="/diamonds/:productId" element={<ProductDetail />} />
       <Route path="/product/:productId" element={<ProductDetail />} />
