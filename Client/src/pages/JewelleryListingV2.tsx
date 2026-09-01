@@ -4,6 +4,7 @@ import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 import API_BASE_URL, { getMediaUrl } from "../config/api";
+import { useFavorites } from "../contexts/FavoritesContext";
 
 /**
  * Jewellery listing — v2, one template for Earrings / Necklaces / Bracelets
@@ -127,7 +128,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
   const [maxPrice, setMaxPrice] = useState(4400);
   const [sort, setSort] = useState("featured");
   const [open, setOpen] = useState<Record<Key, boolean>>({ availability: true, style: true, metal: true, stone: false, detail: false });
-  const [saved, setSaved] = useState<string[]>([]);
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [sheet, setSheet] = useState(false);
   const [sortSheet, setSortSheet] = useState(false);
 
@@ -139,8 +140,6 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
     window.scrollTo(0, 0);
   }, [category]);
 
-  useEffect(() => { try { setSaved(JSON.parse(localStorage.getItem("mcc_saved_jewellery") || "[]")); } catch { /* ignore */ } }, []);
-  const toggleSave = (id: string) => setSaved(prev => { const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]; try { localStorage.setItem("mcc_saved_jewellery", JSON.stringify(next)); } catch { /* ignore */ } return next; });
 
   useEffect(() => {
     const lock = sheet || sortSheet; document.body.style.overflow = lock ? "hidden" : "";
@@ -343,7 +342,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="jl-grid">
                   {results.map(({ p, inStock }) => {
                     const img = p.image?.url || p.images?.find(i => i.is_primary)?.url || p.images?.[0]?.url;
-                    const on = saved.includes(p.id);
+                    const on = isFavorite(p.id);
                     return (
                       <div key={p.id} className="jl-card">
                         <div style={{ position: "relative", aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden" }}>
@@ -354,7 +353,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
                           </Link>
                           {p.is_featured && <span style={{ position: "absolute", top: 10, left: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>Most asked for</span>}
                           {p.is_live_stock && <span style={{ position: "absolute", bottom: 10, left: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>Ready to ship</span>}
-                          <button type="button" onClick={() => toggleSave(p.id)} aria-pressed={on} aria-label={`Save ${p.name}`} style={{ position: "absolute", top: 8, right: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, fontSize: 15, lineHeight: 1, color: on ? T.gold : "#8A8377" }}>{on ? "♥" : "♡"}</button>
+                          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(p.id, p.name, img, `/${cat.slug}/${p.slug}`); }} aria-pressed={on} aria-label={`Save ${p.name}`} style={{ position: "absolute", top: 8, right: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, fontSize: 15, lineHeight: 1, color: on ? T.gold : "#8A8377" }}>{on ? "♥" : "♡"}</button>
                         </div>
                         <Link to={`/${cat.slug}/${p.slug}`} style={{ display: "block" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginTop: 16, fontSize: 14.5 }}>
