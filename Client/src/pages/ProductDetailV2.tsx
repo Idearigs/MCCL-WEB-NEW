@@ -13,6 +13,55 @@ import { T, FONT_DISPLAY, FONT_BODY } from '../components/home-v2/tokens';
 import { trackViewContent, trackAddToCart } from '../services/pixelService';
 import { useCountry } from '../hooks/useCountry';
 
+/**
+ * Play product films from an in-memory blob instead of streaming the URL.
+ *
+ * iOS/WebKit only plays a <video> whose server answers HTTP Range requests with
+ * 206 Partial Content. The origin does exactly that, but Cloudflare (in front of
+ * api.buymediamonds.co.uk) serves these small cached .mp4s as a full 200 with no
+ * range support, so iPhones show nothing while Android Chrome tolerates the 200.
+ * Fetching the whole file (~1.2 MB) and playing it from an object URL needs no
+ * range support at all, so it plays everywhere. Falls back to the direct URL if
+ * the fetch fails (e.g. CORS), which is no worse than today.
+ */
+function useBlobVideoSrc(url?: string): string | undefined {
+  const [src, setSrc] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!url) { setSrc(undefined); return; }
+    let cancelled = false;
+    let objectUrl: string | undefined;
+    setSrc(undefined);
+    fetch(url)
+      .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setSrc(objectUrl);
+      })
+      .catch(() => { if (!cancelled) setSrc(url); });
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [url]);
+  return src;
+}
+
+// The primary product film — plays from an in-memory blob so iOS also plays it
+// (see useBlobVideoSrc). Poster keeps a still on screen while the blob downloads.
+function FilmVideo({ url, poster }: { url: string; poster?: string }) {
+  const src = useBlobVideoSrc(url);
+  return (
+    <video
+      src={src}
+      poster={poster}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+    />
+  );
+}
+
 const metalTypeOptions = [
   { value: 'silver',           label: 'Silver',           overrideKey: 'silver'          },
   { value: '9ct-white-gold',   label: '9ct White Gold',   overrideKey: 'gold_9kt'        },
@@ -977,7 +1026,7 @@ const ProductDetail = () => {
           <div style={{ position: 'sticky', top: NAV_H + 12 }} className="pdpv2-gallery">
             <div className="pdpv2-primary" style={{ position: 'relative', aspectRatio: '4 / 3', background: '#FFFFFF', overflow: 'hidden' }}>
               {activeMedia && isVid(activeMedia)
-                ? <video ref={videoRef} src={getMediaUrl(activeMedia.url)} poster={(() => { const im = media.find(m => !isVid(m)); return im ? getMediaUrl(im.url) : undefined; })()} autoPlay muted loop playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ? <FilmVideo url={getMediaUrl(activeMedia.url)} poster={(() => { const im = media.find(m => !isVid(m)); return im ? getMediaUrl(im.url) : undefined; })()} />
                 : activeMedia ? <img src={getMediaUrl(activeMedia.url)} alt={productData.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
               <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.muted }}>{isVid(activeMedia) ? 'Film' : (angleLabels[currentImageIndex] || '')}</span>
               {gallery.length > 1 && <span style={{ position: 'absolute', bottom: 12, right: 12, padding: '3px 9px', background: 'rgba(248,246,240,0.85)', fontSize: 10.5, letterSpacing: '0.08em', color: T.ink }}>{currentImageIndex + 1} / {gallery.length}</span>}
@@ -987,7 +1036,7 @@ const ProductDetail = () => {
                 {gallery.map((m: any, i: number) => (
                   <button key={i} onClick={() => setCurrentImageIndex(i)} className="pdpv2-tile" data-on={i === currentImageIndex ? '1' : '0'} style={{ position: 'relative', aspectRatio: '1', background: '#FFFFFF', padding: 0, overflow: 'hidden' }}>
                     {isVid(m)
-                      ? <><video src={getMediaUrl(m.url)} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /><span style={{ position: 'absolute', bottom: 6, left: 6, padding: '2px 6px', background: 'rgba(28,26,23,0.72)', color: '#fff', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Film</span></>
+                      ? <><img src={(() => { const im = media.find(x => !isVid(x)); return im ? getMediaUrl(im.url) : undefined; })()} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /><span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}><Play size={18} color="#fff" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} /></span><span style={{ position: 'absolute', bottom: 6, left: 6, padding: '2px 6px', background: 'rgba(28,26,23,0.72)', color: '#fff', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Film</span></>
                       : <img src={getMediaUrl(m.url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                   </button>
                 ))}
