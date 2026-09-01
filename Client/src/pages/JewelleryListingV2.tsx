@@ -353,7 +353,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
                               : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: "#8C8375", padding: 12, textAlign: "center" }}>{p.name}</div>}
                           </Link>
                           {p.is_featured && <span style={{ position: "absolute", top: 10, left: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>Most asked for</span>}
-                          {p.is_live_stock && <span style={{ position: "absolute", top: 10, right: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>Ready to ship</span>}
+                          {p.is_live_stock && <span style={{ position: "absolute", bottom: 10, left: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>Ready to ship</span>}
                           <button type="button" onClick={() => toggleSave(p.id)} aria-pressed={on} aria-label={`Save ${p.name}`} style={{ position: "absolute", top: 8, right: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, fontSize: 15, lineHeight: 1, color: on ? T.gold : "#8A8377" }}>{on ? "♥" : "♡"}</button>
                         </div>
                         <Link to={`/${cat.slug}/${p.slug}`} style={{ display: "block" }}>
