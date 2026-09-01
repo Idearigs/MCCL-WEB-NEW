@@ -14,46 +14,24 @@ import { trackViewContent, trackAddToCart } from '../services/pixelService';
 import { useCountry } from '../hooks/useCountry';
 
 /**
- * Play product films from an in-memory blob instead of streaming the URL.
+ * The primary product film.
  *
  * iOS/WebKit only plays a <video> whose server answers HTTP Range requests with
- * 206 Partial Content. The origin does exactly that, but Cloudflare (in front of
- * api.buymediamonds.co.uk) serves these small cached .mp4s as a full 200 with no
- * range support, so iPhones show nothing while Android Chrome tolerates the 200.
- * Fetching the whole file (~1.2 MB) and playing it from an object URL needs no
- * range support at all, so it plays everywhere. Falls back to the direct URL if
- * the fetch fails (e.g. CORS), which is no worse than today.
+ * 206 Partial Content. Cloudflare (in front of api.buymediamonds.co.uk) buffers
+ * cacheable `.mp4` responses and answers ranges with a rangeless 200 that iOS
+ * refuses to play (Android Chrome tolerates it — hence "plays on Android, black
+ * on iPhone"). The server exposes the same files on an extensionless path
+ * (/media/videos/<sku>) that Cloudflare treats as dynamic and passes byte ranges
+ * through, so native playback gets its required 206 everywhere. See Server/index.js.
  */
-function useBlobVideoSrc(url?: string): string | undefined {
-  const [src, setSrc] = useState<string | undefined>(undefined);
-  useEffect(() => {
-    if (!url) { setSrc(undefined); return; }
-    let cancelled = false;
-    let objectUrl: string | undefined;
-    setSrc(undefined);
-    // Bump this token to bypass any stale Cloudflare cache entry (older copies were
-    // cached without the wildcard CORS header the blob fetch needs).
-    const fetchUrl = url + (url.includes('?') ? '&' : '?') + 'v=2';
-    fetch(fetchUrl)
-      .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
-      .then((blob) => {
-        if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        setSrc(objectUrl);
-      })
-      .catch(() => { if (!cancelled) setSrc(url); });
-    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [url]);
-  return src;
+function toStreamUrl(url: string): string {
+  return url.replace(/\/uploads\/videos\/(.+?)\.mp4(\?.*)?$/i, '/media/videos/$1');
 }
 
-// The primary product film — plays from an in-memory blob so iOS also plays it
-// (see useBlobVideoSrc). Poster keeps a still on screen while the blob downloads.
 function FilmVideo({ url, poster }: { url: string; poster?: string }) {
-  const src = useBlobVideoSrc(url);
   return (
     <video
-      src={src}
+      src={toStreamUrl(url)}
       poster={poster}
       autoPlay
       muted
