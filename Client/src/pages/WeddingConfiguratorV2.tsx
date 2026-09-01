@@ -84,6 +84,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
   const [sel, setSel] = useState<Record<string, string>>({});
   const [view, setView] = useState<"still" | "360">("still");
   const [angle, setAngle] = useState(0);
+  const [autoRotate, setAutoRotate] = useState(true);
   const drag = useRef({ on: false, x: 0, a: 0 });
   const [panel, setPanel] = useState<string | null>("about");
   const [variationsOpen, setVariationsOpen] = useState(false);
@@ -140,7 +141,24 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
   }, [angle, frames, start]);
   const frameUrl = spinTpl ? spinTpl.replace("{index}", String(frameIdx)) : null;
 
-  const dragStart = (e: React.MouseEvent | React.TouchEvent) => { const x = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX; drag.current = { on: true, x, a: angle }; };
+  // 360 auto-rotates in a loop; the customer's first touch/drag stops it and hands over control.
+  useEffect(() => {
+    if (view !== "360" || !autoRotate || !hasSpin) return;
+    const id = setInterval(() => setAngle((a) => a + 2.4), 55);
+    return () => clearInterval(id);
+  }, [view, autoRotate, hasSpin]);
+
+  // Preload the whole spin sequence when the viewer opens, so auto-rotation and
+  // dragging stay smooth instead of fetching each frame from the CDN on demand.
+  useEffect(() => {
+    if (view !== "360" || !hasSpin || !spinTpl) return;
+    for (let i = 0; i < frames; i++) {
+      const img = new Image();
+      img.src = spinTpl.replace("{index}", String(start + i));
+    }
+  }, [view, hasSpin, spinTpl, frames, start]);
+
+  const dragStart = (e: React.MouseEvent | React.TouchEvent) => { setAutoRotate(false); const x = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX; drag.current = { on: true, x, a: angle }; };
   const dragMove = (e: React.MouseEvent | React.TouchEvent) => { if (!drag.current.on) return; const x = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX; setAngle(drag.current.a + (x - drag.current.x) * 1.1); };
   const dragEnd = () => { drag.current.on = false; };
 
@@ -188,6 +206,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
           .wc-main{ grid-template-columns: 1fr !important; }
           .wc-stage{ position: static !important; }
           .wc-metalgrid{ grid-template-columns: repeat(4,1fr) !important; }
+          .wc-stagebox{ aspect-ratio: 5 / 4 !important; }
         }
       `}</style>
       <NavigationV2 solid />
@@ -201,7 +220,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
 
           {/* Image stage */}
           <div className="wc-stage" style={{ position: "sticky", top: NAV_H + 4 }}>
-            <div key={colourway + view} style={{ position: "relative", aspectRatio: "4 / 3", background: T.tint, overflow: "hidden", animation: "wcStageIn 0.32s ease both" }}>
+            <div key={colourway + view} className="wc-stagebox" style={{ position: "relative", aspectRatio: "4 / 3", background: T.tint, overflow: "hidden", animation: "wcStageIn 0.32s ease both" }}>
               {view === "still" ? (
                 hero ? <img src={hero} alt={title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                      : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: "#8C8375" }}>{title}</div>
@@ -214,7 +233,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
               <div style={{ position: "absolute", top: 16, left: 16, pointerEvents: "none", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.muted }}>{view === "360" ? "360° — drag to rotate" : "Three-quarter"}</div>
               <div style={{ position: "absolute", bottom: 18, right: 16, pointerEvents: "none", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "#8A8377" }}>{CW_LABEL[colourway]} metal</div>
               {hasSpin && view === "still" && (
-                <button type="button" onClick={() => setView("360")} className="wc-guide" style={{ position: "absolute", bottom: 16, left: 16, padding: "8px 14px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink, background: "rgba(248,246,240,0.92)", border: `1px solid ${T.ruleSoft}` }}>View 360°</button>
+                <button type="button" onClick={() => { setView("360"); setAutoRotate(true); }} className="wc-guide" style={{ position: "absolute", bottom: 16, left: 16, padding: "8px 14px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink, background: "rgba(248,246,240,0.92)", border: `1px solid ${T.ruleSoft}` }}>View 360°</button>
               )}
               {view === "360" && (
                 <button type="button" onClick={() => setView("still")} style={{ position: "absolute", bottom: 16, left: 16, padding: "8px 14px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.paper, background: T.ink, border: `1px solid ${T.ink}` }}>Close 360°</button>

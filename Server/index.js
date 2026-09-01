@@ -105,8 +105,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res, filePath) => {
     // Check if it's a video file
     if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg')) {
+      // Keep byte-range support AND make the file cleanly cacheable at the edge.
+      // Cloudflare only serves 206 range responses out of its cache, and it will
+      // NOT cache any response carrying `Vary: Origin` (added by the CORS middleware).
+      // That left every .mp4 a permanent cache MISS, which Cloudflare downgrades to a
+      // rangeless `200` full-body response — and iOS/WebKit refuses to play a video
+      // that answers a Range request with 200 instead of 206 (Android Chrome tolerates
+      // it, hence "plays on Android, black on iPhone"). Dropping Vary + marking the
+      // file immutable lets Cloudflare cache it and serve real byte ranges. A <video>
+      // element does not send a CORS-credentialed request, so Vary:Origin is not needed.
+      res.removeHeader('Vary');
       res.set('Accept-Ranges', 'bytes');
-      res.set('Cache-Control', 'public, max-age=86400');
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
     }
   }
 }));
