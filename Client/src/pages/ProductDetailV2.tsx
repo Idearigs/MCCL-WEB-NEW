@@ -31,7 +31,10 @@ function useBlobVideoSrc(url?: string): string | undefined {
     let cancelled = false;
     let objectUrl: string | undefined;
     setSrc(undefined);
-    fetch(url)
+    // Bump this token to bypass any stale Cloudflare cache entry (older copies were
+    // cached without the wildcard CORS header the blob fetch needs).
+    const fetchUrl = url + (url.includes('?') ? '&' : '?') + 'v=2';
+    fetch(fetchUrl)
       .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
       .then((blob) => {
         if (cancelled) return;
