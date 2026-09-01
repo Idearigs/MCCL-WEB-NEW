@@ -3,6 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const compression = require('compression');
 const path = require('path');
+const fs = require('fs');
 const http = require('http');
 const socketIo = require('socket.io');
 const config = require('./config');
@@ -127,6 +128,47 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
     }
   }
 }));
+
+/*
+ * Range-capable product-video stream on an EXTENSIONLESS path.
+ *
+ * Cloudflare (in front of api.buymediamonds.co.uk) buffers cacheable `.mp4`
+ * responses and answers Range requests with a rangeless `200` full body — which
+ * iOS/WebKit refuses to play (Android Chrome tolerates it). Serving the exact
+ * same files from a path with no media extension makes Cloudflare treat the
+ * response as dynamic and forward byte ranges straight through, so iOS receives
+ * the `206 Partial Content` it requires. URL: /media/videos/<sku>  ->  file
+ * uploads/videos/<sku>.mp4.
+ */
+app.get('/media/videos/:name', (req, res) => {
+  const name = String(req.params.name || '');
+  if (!/^[A-Za-z0-9_-]+$/.test(name)) return res.status(400).end();
+  const file = path.join(__dirname, 'uploads', 'videos', `${name}.mp4`);
+  fs.stat(file, (err, stat) => {
+    if (err || !stat.isFile()) return res.status(404).end();
+    const total = stat.size;
+    res.set('Content-Type', 'video/mp4');
+    res.set('Accept-Ranges', 'bytes');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    const range = req.headers.range;
+    if (range) {
+      const m = /bytes=(\d*)-(\d*)/.exec(range);
+      let start = m && m[1] ? parseInt(m[1], 10) : 0;
+      let end = m && m[2] ? parseInt(m[2], 10) : total - 1;
+      if (!Number.isFinite(start) || start < 0) start = 0;
+      if (!Number.isFinite(end) || end >= total) end = total - 1;
+      if (start > end) return res.status(416).set('Content-Range', `bytes */${total}`).end();
+      res.status(206);
+      res.set('Content-Range', `bytes ${start}-${end}/${total}`);
+      res.set('Content-Length', end - start + 1);
+      return fs.createReadStream(file, { start, end }).pipe(res);
+    }
+    res.status(200);
+    res.set('Content-Length', total);
+    return fs.createReadStream(file).pipe(res);
+  });
+});
 
 // Health check endpoint - returns server and database status
 app.get('/health', async (req, res) => {
