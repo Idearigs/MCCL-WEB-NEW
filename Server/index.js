@@ -117,6 +117,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
       res.removeHeader('Vary');
       res.set('Accept-Ranges', 'bytes');
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
+      // Public media, fetched cross-origin as a blob by the PDP (so iOS can play
+      // it regardless of Cloudflare's byte-range handling). Use a wildcard,
+      // credential-less CORS header so a single cached copy is valid for every
+      // site origin (apex + www) — an echoed, per-origin header would be
+      // cache-poisoned now that Vary:Origin is gone.
+      res.set('Access-Control-Allow-Origin', '*');
+      res.removeHeader('Access-Control-Allow-Credentials');
     }
   }
 }));
