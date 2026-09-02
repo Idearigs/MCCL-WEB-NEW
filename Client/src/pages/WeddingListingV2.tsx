@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
@@ -63,6 +63,7 @@ const RingTile = ({ way, name }: { way: string; name: string }): JSX.Element => 
 
 const WeddingListingV2 = (): JSX.Element => {
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
 
   const [designs, setDesigns] = useState<ApiDesign[]>([]);
@@ -88,6 +89,28 @@ const WeddingListingV2 = (): JSX.Element => {
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, []);
+
+  // Apply filters passed in the URL (e.g. from the nav: /wedding?category=Classic
+  // or /wedding?metal=PT). Values may be comma-separated. Re-applied whenever the
+  // query string changes (a new nav link), but NOT on in-page filter toggles,
+  // which never touch the URL — guarded by the last-applied search ref.
+  const appliedSearch = useRef<string | null>(null);
+  useEffect(() => {
+    if (appliedSearch.current === location.search) return;
+    appliedSearch.current = location.search;
+    const params = new URLSearchParams(location.search);
+    const next: Record<string, string[]> = {};
+    const opened: Record<string, boolean> = {};
+    ["category", "metal", ...SCOPED_DIMS].forEach(dim => {
+      const raw = params.get(dim);
+      if (raw) { next[dim] = raw.split(",").map(s => s.trim()).filter(Boolean); opened[dim] = true; }
+    });
+    if (Object.keys(next).length) {
+      setSel(next);
+      setShown(9);
+      setOpen(o => ({ ...o, category: true, ...opened }));
+    }
+  }, [location.search]);
 
   // Position restore
   const restored = useRef(false);
