@@ -37,6 +37,35 @@ class NivodaService {
   }
 
   /**
+   * Run an authenticated GraphQL query, transparently re-authenticating and
+   * retrying once if Nivoda rejects the token.
+   *
+   * Nivoda's JWT lifetime is shorter than our optimistic 6-hour cache window, so
+   * a token can be rejected as expired while we still consider it valid. When the
+   * response carries an auth error ("jwt expired", "token", "unauthorized"), we
+   * drop the cached token, re-authenticate and replay the query one time. The
+   * query is built from a factory so the fresh token is injected on the retry.
+   */
+  async runAuthedQuery(buildRequest, { email = STAGING_EMAIL, password = STAGING_PASSWORD, timeout = 30000 } = {}) {
+    const isAuthError = (resp) =>
+      Array.isArray(resp?.data?.errors) &&
+      resp.data.errors.some(e => /jwt|token|unauth|expired|not authenticated/i.test(e?.message || ''));
+
+    const token = await this.ensureToken(email, password);
+    let response = await axios.post(NIVODA_API_URL, buildRequest(token), { timeout });
+
+    if (isAuthError(response)) {
+      console.warn('⚠️ Nivoda token rejected — re-authenticating and retrying once');
+      this.token = null;
+      this.tokenExpiry = null;
+      const freshToken = await this.authenticate(email, password);
+      response = await axios.post(NIVODA_API_URL, buildRequest(freshToken), { timeout });
+    }
+
+    return response;
+  }
+
+  /**
    * Search diamonds.
    * Prices returned are in GBP cents (e.g. 295000 = £2,950.00).
    * Divide by 100 in the controller to get pounds.
@@ -48,8 +77,6 @@ class NivodaService {
     if (cached) return cached;
 
     try {
-      const token = await this.ensureToken(email, password);
-
       const colorArray   = filters.color?.length   ? filters.color.map(c => c.toUpperCase()).join(',')   : 'D,E,F,G,H,I';
       const clarityArray = filters.clarity?.length  ? filters.clarity.map(c => c.toUpperCase()).join(',') : 'VS1,VS2,VVS1,VVS2,IF';
       const cutArray     = filters.cut?.length      ? filters.cut.map(c => c.toUpperCase()).join(',')     : 'EX,VG,G';
@@ -108,7 +135,10 @@ class NivodaService {
         }
       }`;
 
-      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } }, { timeout: 30000 });
+      const response = await this.runAuthedQuery(
+        (token) => ({ query, variables: { token } }),
+        { email, password, timeout: 30000 }
+      );
 
       if (response.data.errors) {
         console.error('Nivoda GraphQL Errors:', JSON.stringify(response.data.errors, null, 2));
@@ -134,7 +164,6 @@ class NivodaService {
 
   async getDiamondById(diamondId, email = STAGING_EMAIL, password = STAGING_PASSWORD) {
     try {
-      const token = await this.ensureToken(email, password);
       const query = `query ($token: String!) {
         as(token: $token) {
           get_diamond_by_id(diamond_id: "${diamondId}") {
@@ -160,7 +189,10 @@ class NivodaService {
         }
       }`;
 
-      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } });
+      const response = await this.runAuthedQuery(
+        (token) => ({ query, variables: { token } }),
+        { email, password }
+      );
       if (response.data.errors) throw new Error(response.data.errors[0].message);
       return response.data.data.as.get_diamond_by_id;
     } catch (error) {
@@ -171,7 +203,6 @@ class NivodaService {
 
   async searchGemstones(filters = {}, email = STAGING_EMAIL, password = STAGING_PASSWORD) {
     try {
-      const token = await this.ensureToken(email, password);
       const colorArray = filters.color?.length
         ? filters.color.join('","')
         : 'Red","Pink","Blue","Green","Yellow';
@@ -198,7 +229,10 @@ class NivodaService {
         }
       }`;
 
-      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } });
+      const response = await this.runAuthedQuery(
+        (token) => ({ query, variables: { token } }),
+        { email, password }
+      );
       if (response.data.errors) throw new Error(response.data.errors[0].message);
       return response.data.data.as.gemstones_by_query;
     } catch (error) {
@@ -210,7 +244,6 @@ class NivodaService {
   // Returns the median GBP price from the cheapest 5 matching diamonds, or null on failure.
   async estimateDiamondPrice(shape, carats, labgrown = false, email = STAGING_EMAIL, password = STAGING_PASSWORD) {
     try {
-      const token = await this.ensureToken(email, password);
       const ct = parseFloat(carats) || 0;
       if (ct <= 0) return null;
 
@@ -243,7 +276,10 @@ class NivodaService {
         }
       }`;
 
-      const response = await axios.post(NIVODA_API_URL, { query, variables: { token } }, { timeout: 15000 });
+      const response = await this.runAuthedQuery(
+        (token) => ({ query, variables: { token } }),
+        { email, password, timeout: 15000 }
+      );
       if (response.data.errors) return null;
 
       const items = response.data.data?.as?.diamonds_by_query?.items || [];
