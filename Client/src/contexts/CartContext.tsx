@@ -9,6 +9,9 @@ export interface CartItem {
   size?: string;
   image: string;
   quantity: number;
+  // Canonical product-page path captured when the item was added, so the
+  // checkout summary can link each line straight back to its product.
+  productUrl?: string;
   // Watch-specific fields
   brand?: string;
   type?: string;

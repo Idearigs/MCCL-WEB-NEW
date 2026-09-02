@@ -416,6 +416,18 @@ const CheckoutV2 = (): JSX.Element => {
   const goNext = (i: number) => { setReached((r) => Math.max(r, i + 1)); setActiveStep(i + 1); };
   const editStep = (i: number) => setActiveStep(i);
 
+  // Where a summary line item links back to. Prefer the exact path captured when
+  // it was added; otherwise fall back to a slug-based route by product type.
+  const productHref = (item: any): string | null => {
+    if (item.productUrl) return item.productUrl;
+    if (item.type === "watch" && item.slug) return `/watches/${item.slug}`;
+    if (item.slug) return `/product/${item.slug}`;
+    return null;
+  };
+  // Flag the intent to return so a "Jump to checkout" tab appears on the product
+  // page (rendered globally by ReturnToCheckout, cleared on arriving at checkout).
+  const markReturnToCheckout = () => { try { sessionStorage.setItem("mcc_return_checkout", "1"); } catch { /* storage blocked */ } };
+
   // ── Shared styles ─────────────────────────────────────────────────────────
   const input: React.CSSProperties = {
     width: "100%", padding: "12px 0", background: "transparent", border: 0, borderBottom: `1px solid ${T.ruleStrong}`,
@@ -480,6 +492,8 @@ const CheckoutV2 = (): JSX.Element => {
         .cov2-place:hover { background: ${T.inkDeep} !important; }
         .cov2-continue:hover { background: ${T.inkDeep}; }
         .cov2-input:focus { border-bottom-color: ${T.ink} !important; }
+        .cov2-prodname { transition: color 0.2s; }
+        a:hover .cov2-prodname { color: ${T.gold} !important; }
         .cov2-mobilesum { display: none; }
         @media (max-width: 940px) {
           .cov2-grid { grid-template-columns: 1fr !important; }
@@ -551,7 +565,7 @@ const CheckoutV2 = (): JSX.Element => {
       <div className="cov2-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(380px, 0.8fr)", minHeight: "calc(100vh - 88px)" }}>
         {/* Left — form */}
         <div style={{ padding: "clamp(28px, 4vw, 56px) clamp(20px, 4vw, 48px)", minWidth: 0 }}>
-          <div className="cov2-left" style={{ maxWidth: 620, marginLeft: "auto", width: "100%", minWidth: 0 }}>
+          <div className="cov2-left" style={{ maxWidth: 620, margin: "0 auto", width: "100%", minWidth: 0 }}>
             {/* Progress row */}
             <div className="cov2-progress" style={{ marginBottom: 34 }}>
               {/* Full stepper — tablet/desktop */}
@@ -708,21 +722,30 @@ const CheckoutV2 = (): JSX.Element => {
           <div style={{ position: "sticky", top: 40 }}>
             {/* Line items */}
             <div style={{ marginBottom: 22 }}>
-              {cartItems.map((item, i) => (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "68px 1fr auto", gap: 16, alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${T.ruleSoft}` }}>
+              {cartItems.map((item, i) => {
+                const href = productHref(item);
+                const img = (
                   <div style={{ position: "relative", width: 68, aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden" }}>
                     <img src={getMediaUrl(item.image)} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     <span style={{ position: "absolute", top: -8, right: -8, width: 22, height: 22, borderRadius: "50%", background: T.ink, color: T.paper, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>{item.quantity}</span>
                   </div>
+                );
+                const details = (
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontFamily: FONT_DISPLAY, fontSize: 17, color: T.ink, lineHeight: 1.2 }}>{item.name}</div>
+                    <div className={href ? "cov2-prodname" : undefined} style={{ fontFamily: FONT_DISPLAY, fontSize: 17, color: T.ink, lineHeight: 1.2 }}>{item.name}</div>
                     <div style={{ fontSize: 11.5, color: T.muted, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {item.type === "watch" ? [item.brand, item.variant_name].filter(Boolean).join(" · ") : [item.metal, item.size && `Size ${item.size}`].filter(Boolean).join(" · ")}
                     </div>
                   </div>
-                  <div style={{ fontSize: 13.5, color: T.ink, whiteSpace: "nowrap" }}>{money(getPriceAsNumber(item.price) * item.quantity)}</div>
-                </div>
-              ))}
+                );
+                return (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "68px 1fr auto", gap: 16, alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${T.ruleSoft}` }}>
+                    {href ? <Link to={href} onClick={markReturnToCheckout} title={`View ${item.name}`} style={{ display: "block", textDecoration: "none", color: "inherit" }}>{img}</Link> : img}
+                    {href ? <Link to={href} onClick={markReturnToCheckout} title={`View ${item.name}`} style={{ display: "block", minWidth: 0, textDecoration: "none", color: "inherit" }}>{details}</Link> : details}
+                    <div style={{ fontSize: 13.5, color: T.ink, whiteSpace: "nowrap" }}>{money(getPriceAsNumber(item.price) * item.quantity)}</div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Totals */}

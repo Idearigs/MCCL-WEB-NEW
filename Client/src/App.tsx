@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
+import ReturnToCheckout from "./components/home-v2/ReturnToCheckout";
 import { CartProvider } from "./contexts/CartContext";
 import { UserAuthProvider } from "./contexts/UserAuthContext";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
@@ -228,6 +229,7 @@ const App = () => (
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <ScrollToTop />
               <PixelPageViewTracker />
+              <ReturnToCheckout />
               <Suspense fallback={<PageLoader />}>
                 <AppRoutes />
               </Suspense>

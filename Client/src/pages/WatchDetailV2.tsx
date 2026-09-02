@@ -140,7 +140,7 @@ const WatchDetailV2 = (): JSX.Element => {
     const opts: any = { brand: watch.brand?.name };
     if (selStrap) opts.strap = `${selStrap.name}${selStrap.price_gbp ? ` (+${money(Number(selStrap.price_gbp))})` : ""}`;
     if (engrave && engraveText.trim()) opts.engraving = engraveText.trim();
-    addToCart({ id: watch.id, name: watch.name, price: money(total), image: heroImg ? getMediaUrl(heroImg) : "", brand: watch.brand?.name, type: "watch", selectedOptions: opts });
+    addToCart({ id: watch.id, name: watch.name, price: money(total), image: heroImg ? getMediaUrl(heroImg) : "", brand: watch.brand?.name, type: "watch", productUrl: window.location.pathname, selectedOptions: opts });
   };
 
   const save = () => { if (watch) { addFavorite(watch.id).catch(() => {}); setSaved(true); } };

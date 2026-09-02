@@ -677,6 +677,7 @@ const ProductDetail = () => {
         diamondSize: selectedDiamondSizeName,
         image: imageUrl ? getMediaUrl(imageUrl) : '',
         type: 'jewelry',
+        productUrl: location.pathname,
         selectedOptions: selectedOptions
       };
 
