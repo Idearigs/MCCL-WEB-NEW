@@ -973,9 +973,18 @@ const ProductDetail = () => {
     return groups;
   })();
   const totalPrice = calculateTotalPrice();
-  const media = displayImages || [];
+  const isVid = (m: any) => !!m && (m.type === 'video' || isVideoFile(m.url));
+  // Gallery = up to 5 stills, then EVERY film. Films are appended last in
+  // displayImages, so on a product with many metal renders a plain slice(0,5)
+  // dropped them off the end and they never showed. Keep them explicitly.
+  const media = (() => {
+    const src = displayImages || [];
+    const stills = src.filter((m: any) => !isVid(m)).slice(0, 5);
+    const films = src.filter(isVid);
+    return [...stills, ...films];
+  })();
   const activeMedia = media[currentImageIndex] || media[0];
-  const gallery = media.slice(0, 5);
+  const gallery = media;
   const angleLabels = ['Three-quarter', 'Top', 'Front', 'Profile', 'Detail'];
   const chip = (on: boolean): React.CSSProperties => ({ padding: '9px 14px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.ink : T.paper, color: on ? T.paper : T.body });
   const eyebrow: React.CSSProperties = { fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: T.gold };
@@ -985,7 +994,6 @@ const ProductDetail = () => {
   const sizeLabel = ringSizes.find(s => s.value === selectedSize)?.label || selectedSize;
   const diamondName = productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.display_name || productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.name || '';
   const configSummary = [metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName, isRingCat && selectedSize && ('Size ' + selectedSize), productData?.nivoda_enabled && selectedCarat && (selectedCarat + 'ct ' + selectedColour + ' ' + selectedClarity)].filter(Boolean).join('  ·  ');
-  const isVid = (m: any) => !!m && (m.type === 'video' || isVideoFile(m.url));
 
   return (
     <div style={{ background: T.paper, color: T.ink, fontFamily: FONT_BODY, minHeight: '100vh' }}>
