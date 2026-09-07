@@ -5,6 +5,16 @@ const FROM_ADDRESS = process.env.EMAIL_FROM || 'noreply@buymediamonds.co.uk';
 const FROM_NAME    = process.env.EMAIL_FROM_NAME || 'McCulloch Jewellery';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@buymediamonds.co.uk';
 const FRONTEND_URL  = process.env.FRONTEND_URL  || 'https://buymediamonds.co.uk';
+// Owner/admin address that receives a notification for every new order.
+// Comma-separate OWNER_ORDER_EMAIL in the env to notify more than one person.
+const OWNER_ORDER_EMAIL = process.env.OWNER_ORDER_EMAIL || 'has@mccullochjewellers.co.uk';
+// Media host for product images inside emails (must be absolute URLs for mail clients).
+const MEDIA_BASE = (process.env.MEDIA_BASE || 'https://api.buymediamonds.co.uk').replace(/\/$/, '');
+const absMedia = (u) => {
+  if (!u) return '';
+  if (/^https?:\/\//i.test(u)) return u;
+  return MEDIA_BASE + (u.startsWith('/') ? u : '/' + u);
+};
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -39,6 +49,7 @@ const emailFooter = `
  */
 const sendOrderConfirmationEmail = async (orderData) => {
   const {
+    id: orderId,
     customerEmail,
     customerName,
     orderNumber,
@@ -48,6 +59,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
     shippingAddress,
     createdAt,
   } = orderData;
+  const orderStatusUrl = orderId ? `${FRONTEND_URL}/orders/${orderId}` : `${FRONTEND_URL}/orders`;
 
   const orderDate = new Date(createdAt).toLocaleDateString('en-GB', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -72,8 +84,13 @@ const sendOrderConfirmationEmail = async (orderData) => {
       .filter(([k]) => !['variant_name'].includes(k))
       .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`)
       .join(' · ') : '';
+    const img = absMedia(item.image);
+    const thumb = img
+      ? `<img src="${img}" alt="${item.product_name}" width="60" height="60" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #f0e8da; display:block;" />`
+      : `<div style="width:60px; height:60px; border-radius:6px; border:1px solid #f0e8da; background:#faf6ee;"></div>`;
     return `
       <tr>
+        <td style="padding:14px 12px 14px 0; border-bottom:1px solid #f0e8da; vertical-align:top; width:60px;">${thumb}</td>
         <td style="padding:14px 0; border-bottom:1px solid #f0e8da; vertical-align:top;">
           <div style="font-weight:500; color:#1a1a1a;">${item.product_name}</div>
           ${attrs ? `<div style="font-size:12px; color:#9a8a70; margin-top:3px;">${attrs}</div>` : ''}
@@ -115,7 +132,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <thead>
                   <tr>
-                    <th style="text-align:left; font-size:12px; color:#9ca3af; font-weight:400; padding-bottom:10px; border-bottom:2px solid #C9A96E;">Product</th>
+                    <th colspan="2" style="text-align:left; font-size:12px; color:#9ca3af; font-weight:400; padding-bottom:10px; border-bottom:2px solid #C9A96E;">Product</th>
                     <th style="text-align:center; font-size:12px; color:#9ca3af; font-weight:400; padding-bottom:10px; border-bottom:2px solid #C9A96E; width:50px;">Qty</th>
                     <th style="text-align:right; font-size:12px; color:#9ca3af; font-weight:400; padding-bottom:10px; border-bottom:2px solid #C9A96E; width:100px;">Amount</th>
                   </tr>
@@ -151,7 +168,8 @@ const sendOrderConfirmationEmail = async (orderData) => {
             </div>
 
             <div style="text-align:center; margin-top:32px;">
-              <a href="${FRONTEND_URL}" style="display:inline-block; background:#C9A96E; color:#ffffff; padding:14px 36px; text-decoration:none; border-radius:4px; font-size:14px; letter-spacing:1px; text-transform:uppercase;">Continue Shopping</a>
+              <a href="${orderStatusUrl}" style="display:inline-block; background:#C9A96E; color:#ffffff; padding:14px 36px; text-decoration:none; border-radius:4px; font-size:14px; letter-spacing:1px; text-transform:uppercase;">View Order Status</a>
+              <div style="margin-top:14px;"><a href="${FRONTEND_URL}" style="color:#9a8a70; font-size:13px; text-decoration:none;">Continue shopping</a></div>
             </div>
 
           </div>
@@ -175,6 +193,151 @@ const sendOrderConfirmationEmail = async (orderData) => {
   });
 
   logger.info(`Order confirmation email sent to ${customerEmail} (${orderNumber})`);
+  return result;
+};
+
+/**
+ * Notify the shop owner of a new order (sent to OWNER_ORDER_EMAIL).
+ * Same order data shape as sendOrderConfirmationEmail.
+ */
+const sendOwnerOrderNotificationEmail = async (orderData) => {
+  const {
+    customerEmail,
+    customerName,
+    customerPhone,
+    orderNumber,
+    totalAmount,
+    currency = 'GBP',
+    items = [],
+    shippingAddress,
+    createdAt,
+  } = orderData;
+
+  const orderDate = new Date(createdAt).toLocaleString('en-GB', {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+
+  let address = shippingAddress;
+  if (typeof shippingAddress === 'string') {
+    try { address = JSON.parse(shippingAddress); } catch { address = {}; }
+  }
+  const addressLines = [
+    address?.name || '',
+    address?.street || address?.line1 || '',
+    address?.street2 || address?.line2 || '',
+    address?.city || '',
+    address?.county || address?.state || '',
+    address?.postalCode || address?.postal_code || '',
+    address?.country || 'United Kingdom',
+  ].filter(Boolean).join('<br>');
+
+  const itemsHTML = items.map(item => {
+    const attrs = item.attributes ? Object.entries(item.attributes)
+      .filter(([k]) => !['variant_name'].includes(k))
+      .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`)
+      .join(' · ') : '';
+    const img = absMedia(item.image);
+    const thumb = img
+      ? `<img src="${img}" alt="${item.product_name}" width="60" height="60" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #f0e8da; display:block;" />`
+      : `<div style="width:60px; height:60px; border-radius:6px; border:1px solid #f0e8da; background:#faf6ee;"></div>`;
+    return `
+      <tr>
+        <td style="padding:14px 12px 14px 0; border-bottom:1px solid #f0e8da; vertical-align:top; width:60px;">${thumb}</td>
+        <td style="padding:14px 0; border-bottom:1px solid #f0e8da; vertical-align:top;">
+          <div style="font-weight:500; color:#1a1a1a;">${item.product_name}</div>
+          ${item.sku ? `<div style="font-size:12px; color:#9a8a70; margin-top:3px;">SKU: ${item.sku}</div>` : ''}
+          ${attrs ? `<div style="font-size:12px; color:#9a8a70; margin-top:3px;">${attrs}</div>` : ''}
+        </td>
+        <td style="padding:14px 8px; border-bottom:1px solid #f0e8da; text-align:center; color:#4b5563; vertical-align:top;">×${item.quantity}</td>
+        <td style="padding:14px 0; border-bottom:1px solid #f0e8da; text-align:right; font-weight:500; color:#1a1a1a; vertical-align:top;">
+          £${parseFloat(item.total_price).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </td>
+      </tr>`;
+  }).join('');
+
+  const totalFormatted = parseFloat(totalAmount).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Order – ${orderNumber}</title></head>
+<body style="margin:0; padding:0; background:#f9f6f1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f6f1; padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+        <tr><td style="padding:0 40px 40px;">
+
+          ${emailHeader}
+
+          <div style="margin-top:32px; color:#374151; font-size:15px; line-height:1.7;">
+
+            <div style="background:#fdf8f2; border:1px solid #e8d5b7; border-radius:6px; padding:20px; margin-bottom:28px;">
+              <div style="font-size:12px; letter-spacing:2px; color:#9a8a70; text-transform:uppercase; margin-bottom:6px;">New Order Received</div>
+              <div style="font-size:22px; font-weight:300; letter-spacing:2px; color:#C9A96E;">${orderNumber}</div>
+              <div style="font-size:13px; color:#9ca3af; margin-top:4px;">${orderDate}</div>
+            </div>
+
+            <div style="margin-bottom:28px;">
+              <div style="font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#1a1a1a; margin-bottom:12px;">Customer</div>
+              <div style="color:#4b5563; line-height:1.8;">
+                <strong>${customerName || '—'}</strong><br>
+                <a href="mailto:${customerEmail}" style="color:#C9A96E; text-decoration:none;">${customerEmail}</a>
+                ${customerPhone ? `<br>${customerPhone}` : ''}
+              </div>
+            </div>
+
+            <div style="margin-bottom:28px;">
+              <div style="font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#1a1a1a; margin-bottom:16px;">Items Ordered</div>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <thead>
+                  <tr>
+                    <th colspan="2" style="text-align:left; font-size:12px; color:#9ca3af; font-weight:400; padding-bottom:10px; border-bottom:2px solid #C9A96E;">Product</th>
+                    <th style="text-align:center; font-size:12px; color:#9ca3af; font-weight:400; padding-bottom:10px; border-bottom:2px solid #C9A96E; width:50px;">Qty</th>
+                    <th style="text-align:right; font-size:12px; color:#9ca3af; font-weight:400; padding-bottom:10px; border-bottom:2px solid #C9A96E; width:100px;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>${itemsHTML}</tbody>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+                <tr>
+                  <td style="text-align:right; padding:14px 0 0; font-size:18px; font-weight:500; color:#C9A96E; border-top:2px solid #C9A96E;">
+                    Total: £${totalFormatted} ${currency}
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="margin-bottom:28px;">
+              <div style="font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#1a1a1a; margin-bottom:12px;">Ship To</div>
+              <div style="color:#4b5563; line-height:1.8;">${addressLines}</div>
+            </div>
+
+            <div style="text-align:center; margin-top:32px;">
+              <a href="${FRONTEND_URL}/admin/orders" style="display:inline-block; background:#C9A96E; color:#ffffff; padding:14px 36px; text-decoration:none; border-radius:4px; font-size:14px; letter-spacing:1px; text-transform:uppercase;">View in Admin</a>
+            </div>
+
+          </div>
+
+          ${emailFooter}
+
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const recipients = OWNER_ORDER_EMAIL.split(',').map(s => s.trim()).filter(Boolean);
+  const transporter = createTransporter();
+  const result = await transporter.sendMail({
+    from:    `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+    to:      recipients,
+    subject: `New Order – ${orderNumber} – £${totalFormatted}`,
+    html,
+    replyTo: customerEmail, // owner can reply straight to the customer
+  });
+
+  logger.info(`Owner order notification sent to ${recipients.join(', ')} (${orderNumber})`);
   return result;
 };
 
@@ -290,4 +453,4 @@ const sendOrderStatusUpdateEmail = async (orderData, newStatus) => {
   return result;
 };
 
-module.exports = { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail };
+module.exports = { sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail };

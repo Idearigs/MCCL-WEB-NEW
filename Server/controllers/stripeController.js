@@ -5,7 +5,7 @@ const asyncHandler = require('../middleware/asyncHandler');
 const { getModels } = require('../models');
 const { logger } = require('../config/database');
 const { Sequelize } = require('sequelize');
-const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
+const { sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 const { generateOrderNumber } = require('../utils/orderUtils');
 
 // Metal colour (as stored on a cart item) → the price_overrides keys it can map to.
@@ -170,7 +170,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
     });
   }
 
-  const { paymentIntentId, customerEmail, customerName, shippingAddress, cartItems } = req.body;
+  const { paymentIntentId, customerEmail, customerName, customerPhone, shippingAddress, cartItems } = req.body;
 
   if (!paymentIntentId || !cartItems || cartItems.length === 0) {
     return res.status(400).json({
@@ -180,7 +180,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
   }
 
   try {
-    const { Order, OrderItem, Product, ProductVariant } = getModels();
+    const { Order, OrderItem, Product, ProductVariant, ProductImage } = getModels();
 
     // Get the payment intent from Stripe
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -262,7 +262,25 @@ const confirmPayment = asyncHandler(async (req, res) => {
         attributes: Object.keys(attributes).length > 0 ? attributes : null
       });
 
-      createdItems.push(orderItem);
+      // Resolve a product image for the confirmation emails: prefer the cart-supplied
+      // image, else fall back to the product's primary image.
+      let itemImage = item.image || item.image_url || null;
+      if (!itemImage && ProductImage && item.product_id) {
+        try {
+          const primaryImg = await ProductImage.findOne({
+            where: { product_id: item.product_id },
+            order: [['is_primary', 'DESC'], ['sort_order', 'ASC']],
+          });
+          if (primaryImg) itemImage = primaryImg.image_url;
+        } catch (imgErr) {
+          logger.warn(`Could not load image for product ${item.product_id}: ${imgErr.message}`);
+        }
+      }
+
+      const emailItem = typeof orderItem.toJSON === 'function' ? orderItem.toJSON() : { ...orderItem };
+      emailItem.image = itemImage;
+      emailItem.sku = item.sku || null;
+      createdItems.push(emailItem);
       logger.info(`Order item created: ${orderItem.id}`);
 
       // Update inventory if applicable
@@ -300,6 +318,25 @@ const confirmPayment = asyncHandler(async (req, res) => {
     } catch (emailError) {
       logger.error(`Failed to send confirmation email: ${emailError.message}`);
       // Don't fail the order creation if email fails
+    }
+
+    // Notify the shop owner of the new order (independent of the customer email)
+    try {
+      await sendOwnerOrderNotificationEmail({
+        id: order.id,
+        customerEmail,
+        customerName,
+        customerPhone: customerPhone || shippingAddress?.phone,
+        orderNumber: order.order_number,
+        totalAmount: order.total_amount,
+        currency: order.currency,
+        items: createdItems,
+        shippingAddress: order.shipping_address,
+        createdAt: order.createdAt
+      });
+      logger.info(`Owner order notification sent: ${order.order_number}`);
+    } catch (emailError) {
+      logger.error(`Failed to send owner notification: ${emailError.message}`);
     }
 
     res.json({

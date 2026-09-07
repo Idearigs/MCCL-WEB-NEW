@@ -401,9 +401,7 @@ const ProductDetail = () => {
       const response = await fetch(`${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params}`);
       const data = await response.json();
 
-      console.log('API Response:', data);
       if (data.success && data.data?.prices && data.data.prices.avg > 0) {
-        console.log('Price updated:', data.data.prices);
         setNivodaPrice(data.data.prices);
       } else if (data.success && data.data?.count === 0) {
         setNivodaPrice(null);

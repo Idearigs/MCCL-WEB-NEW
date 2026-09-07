@@ -4,7 +4,7 @@
  * Centralized service for tracking Facebook Pixel events.
  * All fbq() calls are wrapped with safety checks for ad-blockers.
  *
- * Pixel ID: 276484950137071 (initialized in index.html)
+ * Pixel ID: 1045549528353285 (initialized in index.html)
  */
 
 // Extend Window interface to include fbq
