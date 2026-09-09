@@ -294,24 +294,24 @@ const EngagementRingsV2 = (): JSX.Element => {
           </div>
         </main>
 
-        {/* Bespoke band */}
-        <section style={{ background: T.ink, color: T.onDarkSoft, padding: "clamp(64px,6vw,108px) clamp(24px,3vw,52px)" }}>
+        {/* Bespoke band — light, so it reads distinct from the dark footer below */}
+        <section style={{ background: T.tint, color: T.body, padding: "clamp(64px,6vw,108px) clamp(24px,3vw,52px)" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center" }}>
             <div style={{ ...eyebrow, marginBottom: 26 }}>Bespoke</div>
-            <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(32px,3.8vw,58px)", lineHeight: 1.08, margin: "0 auto 24px", maxWidth: "16ch", color: "#FFFFFF" }}>Nothing here quite right?</h2>
-            <p style={{ maxWidth: "50ch", margin: "0 auto 48px", fontSize: 15.5, lineHeight: 1.75, color: T.onDarkBody }}>Bring us a sketch, a photograph, or an inherited stone. We draw, you choose, and the piece is made on the bench in our workshop.</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderTop: `1px solid ${T.ruleDark}`, borderBottom: `1px solid ${T.ruleDark}`, marginBottom: 48 }}>
+            <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(32px,3.8vw,58px)", lineHeight: 1.08, margin: "0 auto 24px", maxWidth: "16ch", color: T.ink }}>Nothing here quite right?</h2>
+            <p style={{ maxWidth: "50ch", margin: "0 auto 48px", fontSize: 15.5, lineHeight: 1.75, color: T.body }}>Bring us a sketch, a photograph, or an inherited stone. We draw, you choose, and the piece is made on the bench in our workshop.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderTop: `1px solid ${T.ruleStrong}`, borderBottom: `1px solid ${T.ruleStrong}`, marginBottom: 48 }}>
               {[["I", "Consultation", "In the showroom or by video, free of charge"], ["II", "Design & stone", "Drawings, CAD, and your choice of stone"], ["III", "Making", "Cut, set, finished and hallmarked on site"]].map(([n, t, d], i) => (
-                <div key={n} style={{ padding: "28px 20px", borderLeft: i ? `1px solid ${T.ruleDark}` : undefined }}>
+                <div key={n} style={{ padding: "28px 20px", borderLeft: i ? `1px solid ${T.ruleStrong}` : undefined }}>
                   <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, color: T.gold, marginBottom: 12 }}>{n}</div>
-                  <div style={{ fontSize: 14, color: "#FFFFFF", marginBottom: 7 }}>{t}</div>
-                  <div style={{ fontSize: 13, lineHeight: 1.6, color: T.onDarkMuted }}>{d}</div>
+                  <div style={{ fontSize: 14, color: T.ink, marginBottom: 7 }}>{t}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: T.muted }}>{d}</div>
                 </div>
               ))}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 12 }}>
-              <Link to="/bespoke-design" style={{ padding: "14px 30px", background: T.paper, color: T.ink, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Start a commission</Link>
-              <Link to="/contact" style={{ padding: "14px 30px", border: `1px solid ${T.ruleDarkStrong}`, color: "#FFFFFF", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Book an appointment</Link>
+              <Link to="/bespoke-design" style={{ padding: "14px 30px", background: T.ink, color: T.paper, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Start a commission</Link>
+              <Link to="/contact" style={{ padding: "14px 30px", border: `1px solid ${T.ruleStrong}`, color: T.ink, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Book an appointment</Link>
             </div>
           </div>
         </section>

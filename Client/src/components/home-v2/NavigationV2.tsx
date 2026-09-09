@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User as UserIcon } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoritesContext";
 import { useUserAuth } from "../../contexts/UserAuthContext";
@@ -85,7 +85,8 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
   const isMobile = useIsMobile();
   const { cartItems, isCartOpen, isCartVisible, openCart, closeCart, updateQuantity, removeItem, getCartCount } = useCart();
   const { favoritesCount } = useFavorites();
-  const { isAuthenticated } = useUserAuth();
+  const { isAuthenticated, user } = useUserAuth();
+  const accountFirstName = (user?.firstName || user?.fullName?.split(" ")[0] || user?.email?.split("@")[0] || "Account");
 
   const [wishOpen, setWishOpen] = useState(false);
   const [wishVisible, setWishVisible] = useState(false);
@@ -302,7 +303,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
               <button className="v2nav-util" onMouseEnter={() => setMenu(null)} onClick={() => setSearchOpen(true)}>Search</button>
               <button className="v2nav-util" onClick={openWishlist} style={{ display: "flex", alignItems: "baseline", gap: 5 }}>Saved{favoritesCount > 0 ? <span style={{ color: T.gold }}>{favoritesCount}</span> : null}</button>
               {isAuthenticated
-                ? <Link to="/account" className="v2nav-util">Account</Link>
+                ? <Link to="/account" className="v2nav-util" title={`Signed in as ${user?.email || accountFirstName}`} style={{ display: "flex", alignItems: "center", gap: 6 }}><UserIcon size={15} strokeWidth={1.6} /><span style={{ textTransform: "none", letterSpacing: "0.02em" }}>{accountFirstName}</span></Link>
                 : <button className="v2nav-util" onClick={() => setAuthOpen(true)}>Account</button>}
               <button className="v2nav-util" onClick={openCart}>Bag ({getCartCount()})</button>
             </div>
@@ -404,7 +405,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
                 <button onClick={() => { setMobileOpen(false); setSearchOpen(true); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Search</button>
                 <button onClick={() => { setMobileOpen(false); openWishlist(); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Saved{favoritesCount > 0 ? ` (${favoritesCount})` : ""}</button>
                 {isAuthenticated
-                  ? <Link to="/account" onClick={() => setMobileOpen(false)} style={{ textAlign: "center", padding: "13px 0", border: `1px solid ${T.ruleStrong}`, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink, gridColumn: "span 2" }}>Account</Link>
+                  ? <Link to="/account" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "13px 0", border: `1px solid ${T.ruleStrong}`, fontSize: 11, letterSpacing: "0.04em", color: T.ink, gridColumn: "span 2" }}><UserIcon size={15} strokeWidth={1.6} />{accountFirstName}</Link>
                   : <button onClick={() => { setMobileOpen(false); setAuthOpen(true); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink, gridColumn: "span 2" }}>Account</button>}
               </div>
             </div>

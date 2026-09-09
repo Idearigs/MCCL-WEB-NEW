@@ -252,7 +252,7 @@ const AuthModalV2: React.FC<AuthModalV2Props> = ({ isOpen, onClose, initialView 
     <div style={{ position: "fixed", inset: 0, zIndex: 90, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: FONT_BODY }}>
       {styleTag}
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(20,18,15,0.52)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", animation: "amScrimIn 0.3s ease both" }} />
-      <div className="am-panel" style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)", gridTemplateRows: "minmax(0, 1fr)", width: "min(880px, 100%)", height: "min(680px, 92vh)", overflow: "hidden", background: T.paper, animation: "amModalIn 0.36s cubic-bezier(0.22,1,0.36,1) both" }}>
+      <div className="am-panel" style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)", gridTemplateRows: "auto", width: "min(880px, 100%)", maxHeight: "92vh", overflow: "hidden", background: T.paper, animation: "amModalIn 0.36s cubic-bezier(0.22,1,0.36,1) both" }}>
         {/* Left plate */}
         <div style={{ position: "relative", minHeight: 0, background: T.tint, overflow: "hidden" }}>
           <img src="/images/Wedding.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />

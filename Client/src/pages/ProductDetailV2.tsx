@@ -257,43 +257,28 @@ const ProductDetail = () => {
   const getMetalSpecificMedia = (allImages: any[], selectedMetalId: string, selectedDiamondSizeId?: string) => {
     if (!allImages || allImages.length === 0) return [];
 
-    // Videos always show regardless of metal selection
-    const videos = allImages.filter(img => img.type === 'video');
-
-    // If diamond size is selected, try to get images for both metal AND diamond size
-    if (selectedDiamondSizeId) {
-      const metalAndDiamondImages = allImages.filter(img =>
-        img.metal_id === selectedMetalId && img.diamond_size_id === selectedDiamondSizeId
-      );
-      if (metalAndDiamondImages.length > 0) return [...metalAndDiamondImages, ...videos];
-
-      // Fallback: try diamond size only (no specific metal)
-      const diamondOnlyImages = allImages.filter(img =>
-        !img.metal_id && img.diamond_size_id === selectedDiamondSizeId
-      );
-      if (diamondOnlyImages.length > 0) return [...diamondOnlyImages, ...videos];
-    }
-
-    // Try metal-specific images (exclude videos and diamond-size specific)
-    const metalSpecificImages = allImages.filter(img =>
-      img.metal_id === selectedMetalId && !img.diamond_size_id && img.type !== 'video'
+    // Films tied to a diamond size show ONLY when that size is selected; films with
+    // no size (the normal turntable clips) always show. Metal is ignored for films.
+    const videos = allImages.filter(img =>
+      img.type === 'video' && (!img.diamond_size_id || img.diamond_size_id === selectedDiamondSizeId)
     );
-    if (metalSpecificImages.length > 0) return [...metalSpecificImages, ...videos];
 
-    // Fallback: show first available metal's images + videos (never show only the video)
-    const firstMetalId = allImages.find(img => img.metal_id && !img.diamond_size_id && img.type !== 'video')?.metal_id;
-    if (firstMetalId) {
-      const fallbackImages = allImages.filter(img =>
-        img.metal_id === firstMetalId && !img.diamond_size_id && img.type !== 'video'
-      );
-      return [...fallbackImages, ...videos];
+    const stills = allImages.filter(img => img.type !== 'video');
+
+    // Choose the most specific set of stills, always falling back so the gallery
+    // never blanks out (e.g. a diamond size that has no photos of its own).
+    let chosen: any[] = [];
+    if (selectedDiamondSizeId && selectedMetalId)
+      chosen = stills.filter(img => img.metal_id === selectedMetalId && img.diamond_size_id === selectedDiamondSizeId);
+    if (chosen.length === 0 && selectedDiamondSizeId)
+      chosen = stills.filter(img => img.diamond_size_id === selectedDiamondSizeId);        // this size, any metal
+    if (chosen.length === 0 && selectedMetalId)
+      chosen = stills.filter(img => img.metal_id === selectedMetalId);                     // this metal, any size
+    if (chosen.length === 0) {
+      const firstMetalId = stills.find(img => img.metal_id)?.metal_id;                     // first metal that has photos
+      chosen = firstMetalId ? stills.filter(img => img.metal_id === firstMetalId) : stills;
     }
-
-    // Products whose images aren't tied to a metal at all (e.g. live stock uploads)
-    const generalImages = allImages.filter(img =>
-      !img.metal_id && !img.diamond_size_id && img.type !== 'video'
-    );
-    return [...generalImages, ...videos];
+    return [...chosen, ...videos];
   };
 
   // Helper function to get the primary image for a specific metal

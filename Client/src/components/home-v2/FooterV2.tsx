@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { T, FONT_DISPLAY, FONT_BODY } from "./tokens";
+import PaymentBadges from "../PaymentBadges";
 
 /**
  * FooterV2 — the homepage v2 dark footer. Visual design from the handoff;
@@ -114,7 +115,11 @@ const FooterV2 = (): JSX.Element => {
           })}
         </div>
 
-        <div className="v2-footbottom" style={{ display: "flex", justifyContent: "space-between", gap: 20, paddingTop: 22, fontSize: 10.5, letterSpacing: "0.08em", color: T.onDarkMuted, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, paddingTop: 24, flexWrap: "wrap" }}>
+          <PaymentBadges textColor={T.onDarkSoft} align="flex-start" />
+        </div>
+
+        <div className="v2-footbottom" style={{ display: "flex", justifyContent: "space-between", gap: 20, paddingTop: 18, fontSize: 10.5, letterSpacing: "0.08em", color: T.onDarkMuted, flexWrap: "wrap" }}>
           <span>© {new Date().getFullYear()} Andrew McCulloch Jewellers — 7 The Square, Beeston, Nottingham · 0115 925 7552</span>
           <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
             <Link to="/privacy">Privacy</Link>

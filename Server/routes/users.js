@@ -8,6 +8,7 @@ const { adminAuth } = require('../middleware/adminAuth');
 const { authRateLimit } = require('../middleware/security');
 const crypto = require('crypto');
 const { sendVerificationEmail, sendWelcomeEmail } = require('../utils/emailService');
+const { sendWelcomeEmail: sendLuxuryWelcomeEmail } = require('../services/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
@@ -121,6 +122,11 @@ router.post('/signup', async (req, res) => {
       [user.id]
     );
     user.email_verified = true;
+
+    // Send the luxury welcome email on first sign-up (non-blocking)
+    sendLuxuryWelcomeEmail(user.email, user.first_name).catch(emailError => {
+      console.error('Failed to send welcome email:', emailError.message);
+    });
 
     // Send verification email (disabled until SMTP configured)
     // try {

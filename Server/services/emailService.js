@@ -453,4 +453,78 @@ const sendOrderStatusUpdateEmail = async (orderData, newStatus) => {
   return result;
 };
 
-module.exports = { sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail };
+/**
+ * Luxury welcome email — sent once, when a customer first creates an account
+ * (email sign-up or first Google sign-in).
+ */
+const sendWelcomeEmail = async (customerEmail, firstName) => {
+  const name = (firstName && String(firstName).trim()) || 'there';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to McCulloch</title></head>
+<body style="margin:0; padding:0; background:#f9f6f1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f6f1; padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+        <tr><td style="padding:0 40px 40px;">
+
+          ${emailHeader}
+
+          <div style="margin-top:34px; color:#374151; font-size:15px; line-height:1.75;">
+
+            <div style="font-size:11px; letter-spacing:3px; color:#C9A96E; text-transform:uppercase; margin-bottom:14px;">Welcome</div>
+            <h1 style="font-family:Cambria,'Times New Roman',serif; font-weight:400; font-size:30px; line-height:1.15; color:#1a1a1a; margin:0 0 18px;">Welcome to McCulloch, ${name}.</h1>
+
+            <p style="margin:0 0 20px; color:#4b5563;">Thank you for joining us. For over seventy years our workshop in Beeston has cut, set and finished fine jewellery by hand — and your account is now the home for everything we make with and for you.</p>
+
+            <div style="border-top:1px solid #efe7d8; border-bottom:1px solid #efe7d8; padding:8px 0; margin:28px 0;">
+              ${[
+                ['Saved pieces', 'Keep the rings and stones you love in one place.'],
+                ['Order tracking', 'Follow every commission from bench to hand.'],
+                ['Your record', 'A private history of everything we have made for you.'],
+                ['Bespoke', 'Bring a sketch, a photograph or an inherited stone — we design around it.'],
+              ].map(([t, d]) => `
+                <table width="100%" cellpadding="0" cellspacing="0"><tr>
+                  <td style="padding:14px 0; border-bottom:1px solid #f5efe3;">
+                    <div style="font-weight:600; color:#1a1a1a; font-size:14px; margin-bottom:3px;">${t}</div>
+                    <div style="font-size:13.5px; color:#6b7280; line-height:1.6;">${d}</div>
+                  </td>
+                </tr></table>`).join('')}
+            </div>
+
+            <div style="text-align:center; margin:34px 0 10px;">
+              <a href="${FRONTEND_URL}/account" style="display:inline-block; background:#C9A96E; color:#ffffff; padding:14px 40px; text-decoration:none; border-radius:4px; font-size:13px; letter-spacing:1.5px; text-transform:uppercase;">Visit your account</a>
+            </div>
+            <div style="text-align:center;">
+              <a href="${FRONTEND_URL}/engagement-rings" style="color:#9a8a70; font-size:13px; text-decoration:none;">Explore the collection</a>
+            </div>
+
+            <p style="margin:30px 0 0; color:#6b7280; font-size:14px;">If ever we can help — a question, a repair, a commission — simply reply to this email or contact us at <a href="mailto:${SUPPORT_EMAIL}" style="color:#C9A96E; text-decoration:none;">${SUPPORT_EMAIL}</a>.</p>
+
+          </div>
+
+          ${emailFooter}
+
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const transporter = createTransporter();
+  const result = await transporter.sendMail({
+    from:    `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+    to:      customerEmail,
+    subject: 'Welcome to McCulloch Fine Jewellery',
+    html,
+    replyTo: SUPPORT_EMAIL,
+  });
+
+  logger.info(`Welcome email sent to ${customerEmail}`);
+  return result;
+};
+
+module.exports = { sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail, sendWelcomeEmail };

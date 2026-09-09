@@ -9,6 +9,7 @@ import CheckoutAuthModal from "../components/CheckoutAuthModal";
 import { trackInitiateCheckout, trackPurchase } from "../services/pixelService";
 import { getMediaUrl } from "../config/api";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
+import PaymentBadges from "../components/PaymentBadges";
 
 /**
  * Checkout — v2 restyle (design_handoff_mcculloch_bag_checkout_contact).
@@ -644,7 +645,8 @@ const CheckoutV2 = (): JSX.Element => {
             <div style={{ marginTop: 22 }}><StepHeader i={3} /></div>
             {activeStep === 3 && (
               <div style={{ marginLeft: 42, marginTop: 16, marginBottom: 8 }}>
-                <p style={{ fontSize: 12.5, color: T.muted, marginBottom: 14 }}>All transactions are secure and encrypted.</p>
+                <p style={{ fontSize: 12.5, color: T.muted, marginBottom: 12 }}>All transactions are secure and encrypted.</p>
+                <PaymentBadges align="flex-start" style={{ marginBottom: 16 }} />
                 <div style={{ display: "grid", gap: 10 }}>
                   {PAYMENT_OPTIONS.map((o) => (
                     <RadioCard key={o.id} selected={payment === o.id} name={o.name} note={o.note} onClick={() => setPayment(o.id)} />

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Plus, Minus } from 'lucide-react';
+import { X, Plus, Minus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getMediaUrl } from '../config/api';
 import { CartItem } from '../contexts/CartContext';
@@ -70,7 +70,7 @@ const CartSlide: React.FC<CartSlideProps> = ({
         .cs2-step:hover { border-color: ${T.ink} !important; color: ${T.ink} !important; }
         .cs2-checkout:hover { background: ${T.inkDeep} !important; }
         .cs2-viewbag:hover { background: ${T.tint} !important; }
-        .cs2-remove:hover { color: ${T.ink} !important; }
+        .cs2-remove:hover { color: #B4442F !important; }
         .cs2-close:hover { color: ${T.ink} !important; }
         .cs2-thumblink img { transition: opacity 0.25s; }
         .cs2-thumblink:hover img { opacity: 0.85; }
@@ -198,9 +198,11 @@ const CartSlide: React.FC<CartSlideProps> = ({
                       <button
                         className="cs2-remove"
                         onClick={() => onRemoveItem(index)}
-                        style={{ background: 'transparent', border: 0, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.muted, cursor: 'pointer', transition: 'color 0.2s' }}
+                        aria-label={`Remove ${item.name} from bag`}
+                        title="Remove"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: 'transparent', border: 0, color: T.muted, cursor: 'pointer', transition: 'color 0.2s' }}
                       >
-                        Remove
+                        <Trash2 size={17} strokeWidth={1.6} />
                       </button>
                     </div>
                   </div>

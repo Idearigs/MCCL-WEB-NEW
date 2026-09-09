@@ -442,13 +442,13 @@ const WeddingListingV2 = (): JSX.Element => {
           </div>
         </main>
 
-        <section style={{ background: T.ink, color: T.onDarkSoft, padding: "clamp(52px,5vw,88px) clamp(24px,3vw,52px)" }}>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1fr) minmax(0,1.4fr)", gap: "clamp(28px,5vw,80px)", alignItems: "center", paddingBottom: "clamp(32px,3.4vw,52px)", borderBottom: `1px solid ${T.ruleDark}` }}>
+        <section style={{ background: T.tint, color: T.body, padding: "clamp(52px,5vw,88px) clamp(24px,3vw,52px)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1fr) minmax(0,1.4fr)", gap: "clamp(28px,5vw,80px)", alignItems: "center", paddingBottom: "clamp(32px,3.4vw,52px)", borderBottom: `1px solid ${T.ruleStrong}` }}>
             <div>
               <div style={{ fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: T.gold, marginBottom: 18 }}>Before you choose</div>
-              <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(28px,3vw,44px)", lineHeight: 1.12, margin: 0, maxWidth: "15ch", color: "#FFFFFF" }}>A band is worn every day for fifty years.</h2>
+              <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(28px,3vw,44px)", lineHeight: 1.12, margin: 0, maxWidth: "15ch", color: T.ink }}>A band is worn every day for fifty years.</h2>
             </div>
-            <p style={{ margin: 0, maxWidth: "46ch", fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>Which is why width, profile and weight matter more than the photograph. A 6mm band feels quite different from a 3mm one, and a heavy court holds its shape where a light flat band will not. Come and try them on if you can.</p>
+            <p style={{ margin: 0, maxWidth: "46ch", fontSize: 15, lineHeight: 1.75, color: T.body }}>Which is why width, profile and weight matter more than the photograph. A 6mm band feels quite different from a 3mm one, and a heavy court holds its shape where a light flat band will not. Come and try them on if you can.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)" }}>
             {[
@@ -456,11 +456,11 @@ const WeddingListingV2 = (): JSX.Element => {
               { n: "II", title: "Profile is comfort", note: "Court profiles curve inside as well as out, which is why they disappear on the hand. Flat bands read sharper.", meta: "Court for daily wear" },
               { n: "III", title: "Weight is longevity", note: "A heavy band resists going out of round. On anything above 5mm we would not recommend the lightest weight.", meta: "Medium or above" },
             ].map((a, i) => (
-              <div key={a.n} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "clamp(28px,2.6vw,40px) clamp(18px,2.2vw,36px) 0 0", borderRight: (!isMobile && i !== 2) ? `1px solid ${T.ruleDark}` : "none" }}>
+              <div key={a.n} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "clamp(28px,2.6vw,40px) clamp(18px,2.2vw,36px) 0 0", borderRight: (!isMobile && i !== 2) ? `1px solid ${T.ruleStrong}` : "none" }}>
                 <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(26px,2.2vw,34px)", lineHeight: 1, color: T.gold, marginBottom: 18 }}>{a.n}</div>
-                <div style={{ fontSize: 15, color: "#FFFFFF", marginBottom: 10 }}>{a.title}</div>
-                <div style={{ fontSize: 13.5, lineHeight: 1.7, color: T.onDarkMuted, marginBottom: 20 }}>{a.note}</div>
-                <div style={{ marginTop: "auto", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E6259" }}>{a.meta}</div>
+                <div style={{ fontSize: 15, color: T.ink, marginBottom: 10 }}>{a.title}</div>
+                <div style={{ fontSize: 13.5, lineHeight: 1.7, color: T.muted, marginBottom: 20 }}>{a.note}</div>
+                <div style={{ marginTop: "auto", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.gold }}>{a.meta}</div>
               </div>
             ))}
           </div>

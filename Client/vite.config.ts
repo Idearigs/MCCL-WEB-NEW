@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       '/api': { target: 'https://api.buymediamonds.co.uk', changeOrigin: true, secure: true },
       '/uploads': { target: 'https://api.buymediamonds.co.uk', changeOrigin: true, secure: true },
+      // Extensionless streaming path the PDP rewrites video URLs to (byte-range friendly).
+      '/media': { target: 'https://api.buymediamonds.co.uk', changeOrigin: true, secure: true },
     },
   },
   plugins: [

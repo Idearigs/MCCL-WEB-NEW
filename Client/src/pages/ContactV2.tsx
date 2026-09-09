@@ -95,22 +95,22 @@ const ContactV2 = (): JSX.Element => {
           <Link to="/">Home</Link><span>/</span><span style={{ color: T.ink }}>Contact</span>
         </div>
 
-        {/* Title block */}
-        <section className="cv2-title" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "end", gap: "clamp(24px,4vw,72px)", padding: `clamp(16px,2vw,32px) ${pageX} clamp(32px,4vw,52px)`, borderBottom: `1px solid ${T.rule}` }}>
-          <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(44px, 5.2vw, 84px)", lineHeight: 1, letterSpacing: "0.005em", margin: 0 }}>Contact</h1>
-          <p style={{ margin: 0, maxWidth: "46ch", fontSize: 15.5, lineHeight: 1.75, color: T.body }}>Questions about a piece, a commission or a repair? Speak to the people who make and mend our jewellery — by phone, by email, or across the counter in Beeston.</p>
+        {/* Title block — single centred column, kept simple */}
+        <section className="cv2-title" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: `clamp(24px,4vw,56px) ${pageX} clamp(36px,4vw,56px)`, borderBottom: `1px solid ${T.rule}` }}>
+          <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(44px, 5.2vw, 84px)", lineHeight: 1, letterSpacing: "0.005em", margin: "0 0 20px" }}>Contact</h1>
+          <p style={{ margin: 0, maxWidth: "52ch", fontSize: 15.5, lineHeight: 1.75, color: T.body }}>Questions about a piece, a commission or a repair? Speak to the people who make and mend our jewellery — by phone, by email, or across the counter in Beeston.</p>
         </section>
 
         {/* Channel row */}
         <section className="cv2-channels" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderBottom: `1px solid ${T.rule}` }}>
           {channels.map((c, i) => (
             (c.href.startsWith("/")
-              ? <Link key={c.eyebrow} to={c.href} className="cv2-channel" style={{ padding: "clamp(28px,3vw,44px)", borderRight: i < 2 ? `1px solid ${T.rule}` : undefined, display: "block" }}>
+              ? <Link key={c.eyebrow} to={c.href} className="cv2-channel" style={{ padding: "clamp(28px,3vw,44px)", borderRight: i < 2 ? `1px solid ${T.rule}` : undefined, display: "block", textAlign: "center" }}>
                   <div style={{ ...eyebrow, marginBottom: 14 }}>{c.eyebrow}</div>
                   <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(22px,2vw,30px)", lineHeight: 1.1, marginBottom: 10 }}>{c.value}</div>
                   <div style={{ fontSize: 13, color: T.muted }}>{c.note}</div>
                 </Link>
-              : <a key={c.eyebrow} href={c.href} className="cv2-channel" style={{ padding: "clamp(28px,3vw,44px)", borderRight: i < 2 ? `1px solid ${T.rule}` : undefined, display: "block" }}>
+              : <a key={c.eyebrow} href={c.href} className="cv2-channel" style={{ padding: "clamp(28px,3vw,44px)", borderRight: i < 2 ? `1px solid ${T.rule}` : undefined, display: "block", textAlign: "center" }}>
                   <div style={{ ...eyebrow, marginBottom: 14 }}>{c.eyebrow}</div>
                   <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(22px,2vw,30px)", lineHeight: 1.1, marginBottom: 10, wordBreak: "break-word" }}>{c.value}</div>
                   <div style={{ fontSize: 13, color: T.muted }}>{c.note}</div>

@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const pool = require('./pool');
+const { sendWelcomeEmail } = require('../services/emailService');
 
 passport.use(
   new GoogleStrategy(
@@ -43,7 +44,13 @@ passport.use(
           ]
         );
 
-        return done(null, newUser.rows[0]);
+        // First Google sign-in → luxury welcome email (non-blocking)
+        const created = newUser.rows[0];
+        sendWelcomeEmail(created.email, created.first_name).catch(emailError => {
+          console.error('Failed to send welcome email:', emailError.message);
+        });
+
+        return done(null, created);
       } catch (error) {
         console.error('Google OAuth error:', error);
         return done(error, null);

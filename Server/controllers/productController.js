@@ -250,6 +250,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
       id: product.id,
       name: product.name || '',
       slug: product.slug || '',
+      sku: product.sku || '',
       price: currentPrice ? `£${parseFloat(currentPrice).toLocaleString()}` : '£0',
       base_price: product.base_price ? parseFloat(product.base_price) : 0,
       sale_price: product.sale_price ? parseFloat(product.sale_price) : null,
@@ -371,7 +372,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
         model: DiamondSizes,
         as: 'diamondSizes',
         attributes: ['id', 'name', 'display_name', 'sort_order'],
-        through: { attributes: [] },
+        through: { attributes: ['video_url'] },
         required: false
       },
       ...(StoneShapes ? [{
@@ -480,7 +481,17 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     });
   });
 
-  // Add videos after images (with their sort order)
+  // Map each per-size film (stored on the product_diamond_sizes junction) to its
+  // diamond_size_id, so a video can be shown only when its size is selected.
+  const videoUrlToSize = {};
+  (product.diamondSizes || []).forEach(ds => {
+    const vUrl = ds.ProductDiamondSizes && ds.ProductDiamondSizes.video_url;
+    if (vUrl) videoUrlToSize[vUrl] = ds.id;
+  });
+
+  // Add videos after images (with their sort order). A video tied to a diamond
+  // size (via the junction video_url) carries that diamond_size_id so the gallery
+  // shows only the film for the selected size; untagged films always show.
   product.videos.forEach(video => {
     mediaItems.push({
       id: video.id,
@@ -489,7 +500,8 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       is_primary: false,
       type: 'video',
       sort_order: video.sort_order + 1000, // Offset to place videos after images
-      metal_id: video.metal_id || null
+      metal_id: video.metal_id || null,
+      diamond_size_id: videoUrlToSize[video.video_url] || null
     });
   });
 
@@ -574,12 +586,16 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       name: size.size_name,
       value: size.size_value
     })),
-    available_diamond_sizes: (product.diamondSizes || []).map(diamondSize => ({
-      id: diamondSize.id,
-      name: diamondSize.name,
-      display_name: diamondSize.display_name,
-      sort_order: diamondSize.sort_order
-    })),
+    available_diamond_sizes: (product.diamondSizes || [])
+      .slice()
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map(diamondSize => ({
+        id: diamondSize.id,
+        name: diamondSize.name,
+        display_name: diamondSize.display_name,
+        sort_order: diamondSize.sort_order,
+        video_url: (diamondSize.ProductDiamondSizes && diamondSize.ProductDiamondSizes.video_url) || null
+      })),
     breadcrumbs: [
       {
         name: product.category.name,

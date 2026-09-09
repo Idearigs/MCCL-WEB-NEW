@@ -217,7 +217,7 @@ const MainContentV2 = (): JSX.Element => {
             <div style={{ maxWidth: 340, paddingBottom: 6, marginLeft: "auto", marginRight: "clamp(40px, 7vw, 130px)" }}>
               <p style={{ margin: "0 0 22px", fontSize: 14.5, lineHeight: 1.65, color: "#D3CCC1" }}>Every ring is set by hand in our own workshop. Choose a stone with us, or start from a blank sheet.</p>
               <div className="v2-hero-cta" style={{ display: "flex", gap: 10, pointerEvents: "auto" }}>
-                <Link to="/engagement-rings" className="v2-btn-ivory" style={{ padding: "13px 24px", background: T.paper, color: T.ink, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>Shop new in</Link>
+                <Link to="/rings?availability=live" className="v2-btn-ivory" style={{ padding: "13px 24px", background: T.paper, color: T.ink, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>Shop new in</Link>
                 <Link to="/contact" className="v2-btn-outline-l" style={{ padding: "13px 24px", border: "1px solid rgba(248,246,240,0.5)", color: "#FFFFFF", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>Book a fitting</Link>
               </div>
             </div>
