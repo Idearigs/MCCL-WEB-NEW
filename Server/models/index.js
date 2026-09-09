@@ -1252,6 +1252,10 @@ const initializeModels = (sequelize) => {
         model: 'diamond_sizes',
         key: 'id'
       }
+    },
+    video_url: {
+      type: DataTypes.STRING(500),
+      allowNull: true
     }
   }, {
     tableName: 'product_diamond_sizes',
