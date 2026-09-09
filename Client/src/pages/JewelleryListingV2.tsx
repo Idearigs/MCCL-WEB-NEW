@@ -343,8 +343,12 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="jl-grid">
                   {results.map(({ p, inStock }) => {
-                    const img = p.image?.url || p.images?.find(i => i.is_primary)?.url || p.images?.[0]?.url;
-                    const second = (p.images || []).map(i => i.url).find(u => u && u !== img);
+                    const imgs = p.images || [];
+                    const primaryObj = imgs.find(i => i.is_primary) || imgs[0];
+                    const img = p.image?.url || primaryObj?.url;
+                    const pMetal = (primaryObj as any)?.metal_id;
+                    const second = imgs.find(i => i.url && i.url !== img && (i as any).metal_id === pMetal)?.url
+                      || imgs.find(i => i.url && i.url !== img)?.url;
                     const on = isFavorite(p.id);
                     return (
                       <div key={p.id} className="jl-card">

@@ -283,8 +283,13 @@ const RingsV2 = (): JSX.Element => {
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="rv2-grid">
                 {results.map(({ p }) => {
-                  const img = p.image?.url || p.images?.find(i => i.is_primary)?.url || p.images?.[0]?.url;
-                  const second = (p.images || []).map(i => i.url).find(u => u && u !== img);
+                  const imgs = p.images || [];
+                  const primaryObj = imgs.find(i => i.is_primary) || imgs[0];
+                  const img = p.image?.url || primaryObj?.url;
+                  const pMetal = (primaryObj as any)?.metal_id;
+                  // Prefer another angle of the same metal colour; fall back to any other image.
+                  const second = imgs.find(i => i.url && i.url !== img && (i as any).metal_id === pMetal)?.url
+                    || imgs.find(i => i.url && i.url !== img)?.url;
                   const meta = [p.ringTypes?.[0]?.name, p.gemstones?.[0]?.name].filter(Boolean).join(" · ");
                   return (
                     <Link key={p.id} to={linkFor(p)} className="rv2-card" style={{ display: "block" }}>
