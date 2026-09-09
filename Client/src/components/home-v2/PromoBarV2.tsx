@@ -68,8 +68,14 @@ const PromoBarV2 = (): JSX.Element | null => {
 
   if (dismissed) return null;
 
-  const dur = messages.length * 6; // derived, not fixed
-  const track = [...messages, ...messages];
+  // Build a seamless loop: one "half" of the track must be at least as wide as the
+  // viewport, or a gap appears on wide screens before it repeats. Repeat the messages
+  // enough times (aim for ~16 items) so a half always overflows, then duplicate the
+  // half and translate by -50% for a continuous loop.
+  const REPEAT = Math.max(2, Math.ceil(16 / Math.max(messages.length, 1)));
+  const half = Array.from({ length: REPEAT }, () => messages).flat();
+  const track = [...half, ...half];
+  const dur = half.length * 6; // constant per-item speed regardless of REPEAT
 
   const dismiss = () => { try { sessionStorage.setItem("mcc_promo_dismissed", "1"); } catch { /* ignore */ } setDismissed(true); };
 

@@ -49,6 +49,7 @@ const fmtTime = (iso?: string) => {
 export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.Element {
   const isMobile = useIsMobile();
   const [state, setState] = useState<"closed" | "form" | "live">("closed");
+  const [onDark, setOnDark] = useState(false); // launcher sits over a dark section (e.g. footer)
   const [topic, setTopic] = useState<string>("A commission");
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", message: "" });
   const [chatId, setChatId] = useState<string | null>(null);
@@ -70,6 +71,34 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
   const open = isOpenNow();
 
   useEffect(() => { setForm((f) => ({ ...f, name: user?.name || f.name, email: user?.email || f.email })); }, [user]);
+
+  // Flip the launcher to a light style when it overlaps a dark section (footer / hero),
+  // otherwise the dark button vanishes against the dark background.
+  useEffect(() => {
+    if (state !== "closed") return;
+    const check = () => {
+      const y = window.innerHeight - (typeof window !== "undefined" && window.innerWidth <= 768 ? 40 : 50); // launcher centre from bottom
+      const x = window.innerWidth - 80;
+      let dark = false;
+      const els = document.elementsFromPoint(x, y);
+      for (const el of els) {
+        if ((el as HTMLElement).closest?.("[data-cw-launch]")) continue; // skip the launcher itself
+        const bg = getComputedStyle(el as HTMLElement).backgroundColor;
+        const m = bg.match(/rgba?\(([^)]+)\)/);
+        if (!m) continue;
+        const [r, g, b, a = "1"] = m[1].split(",").map((s) => parseFloat(s));
+        if (a < 0.5) continue; // transparent — keep looking underneath
+        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        dark = lum < 0.4;
+        break;
+      }
+      setOnDark(dark);
+    };
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => { window.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
+  }, [state]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, theyTyping]);
 
   // Socket + history once a chat exists
@@ -198,10 +227,10 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
 
       {/* Launcher */}
       {state === "closed" && (
-        <button type="button" onClick={() => setState("form")} className="cw2-launch"
-          style={{ position: "fixed", right: isMobile ? 18 : 28, bottom: isMobile ? "calc(18px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", gap: 12, padding: "15px 22px", cursor: "pointer", background: T.ink, border: 0, boxShadow: "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.25s ease" }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : M2 }} />
-          <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: T.paper }}>{isMobile ? "Ask us" : "Ask the workshop"}</span>
+        <button type="button" onClick={() => setState("form")} className="cw2-launch" data-cw-launch
+          style={{ position: "fixed", right: isMobile ? 18 : 28, bottom: isMobile ? "calc(18px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", gap: 12, padding: "15px 22px", cursor: "pointer", background: onDark ? T.paper : T.ink, border: onDark ? `1px solid ${T.ruleStrong}` : 0, boxShadow: onDark ? "0 12px 32px rgba(20,18,15,0.45)" : "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.25s ease, color 0.25s ease" }}>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : (onDark ? T.gold : M2) }} />
+          <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: onDark ? T.ink : T.paper }}>{isMobile ? "Ask us" : "Ask the workshop"}</span>
         </button>
       )}
 

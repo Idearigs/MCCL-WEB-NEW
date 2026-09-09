@@ -210,6 +210,8 @@ const RingsV2 = (): JSX.Element => {
         .rv2-chip:hover { border-color: ${T.ink} !important; }
         .rv2-card img { transition: transform 0.5s ease; }
         .rv2-card:hover img { transform: scale(1.04); }
+        .rv2-card-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
+        .rv2-card:hover .rv2-card-alt { opacity: 1; }
         .rv2-clear:hover { color: ${T.ink} !important; }
         .rv2-range { -webkit-appearance:none; appearance:none; width:100%; height:1px; background:${T.ruleStrong}; outline:none; }
         .rv2-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%; background:${T.gold}; cursor:pointer; }
@@ -282,6 +284,7 @@ const RingsV2 = (): JSX.Element => {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="rv2-grid">
                 {results.map(({ p }) => {
                   const img = p.image?.url || p.images?.find(i => i.is_primary)?.url || p.images?.[0]?.url;
+                  const second = (p.images || []).map(i => i.url).find(u => u && u !== img);
                   const meta = [p.ringTypes?.[0]?.name, p.gemstones?.[0]?.name].filter(Boolean).join(" · ");
                   return (
                     <Link key={p.id} to={linkFor(p)} className="rv2-card" style={{ display: "block" }}>
@@ -289,6 +292,7 @@ const RingsV2 = (): JSX.Element => {
                         {img
                           ? <img src={getMediaUrl(img)} alt={p.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                           : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: "#8C8375" }}>{p.name}</div>}
+                        {second && <img src={getMediaUrl(second)} alt="" aria-hidden="true" className="rv2-card-alt" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
                         {p.is_featured && <span style={{ position: "absolute", top: 12, left: 12, padding: "4px 9px", background: T.ink, color: T.paper, fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>Bestseller</span>}
                         {p.is_live_stock && <span style={{ position: "absolute", top: 12, right: 12, padding: "4px 9px", background: "rgba(248,246,240,0.94)", color: T.body, fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase" }}>Ready to ship</span>}
                       </div>
