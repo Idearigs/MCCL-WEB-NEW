@@ -195,8 +195,8 @@ const EngagementRingsV2 = (): JSX.Element => {
         .erv2-chip:hover { border-color: ${T.ink} !important; }
         .erv2-card img { transition: transform 0.5s ease; }
         .erv2-card:hover img { transform: scale(1.04); }
-        .erv2-card-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
-        .erv2-card:hover .erv2-card-alt { opacity: 1; }
+        .erv2-card img.erv2-card-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
+        .erv2-card:hover img.erv2-card-alt { opacity: 1; }
         .erv2-clear:hover { color: ${T.ink} !important; }
         .erv2-range { -webkit-appearance:none; appearance:none; width:100%; height:1px; background:${T.ruleStrong}; outline:none; }
         .erv2-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%; background:${T.gold}; cursor:pointer; }

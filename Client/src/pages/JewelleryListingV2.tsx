@@ -257,8 +257,8 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
         .jl-chip:hover { border-color: ${T.ink} !important; }
         .jl-card img { transition: transform 0.5s ease; }
         .jl-card:hover img { transform: scale(1.04); }
-        .jl-card-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
-        .jl-card:hover .jl-card-alt { opacity: 1; }
+        .jl-card img.jl-card-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
+        .jl-card:hover img.jl-card-alt { opacity: 1; }
         .jl-range { -webkit-appearance:none; appearance:none; width:100%; height:1px; background:${T.ruleStrong}; outline:none; }
         .jl-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%; background:${T.gold}; cursor:pointer; }
         .jl-range::-moz-range-thumb { width:15px; height:15px; border:0; border-radius:50%; background:${T.gold}; cursor:pointer; }

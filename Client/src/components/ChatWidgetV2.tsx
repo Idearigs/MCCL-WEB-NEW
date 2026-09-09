@@ -228,9 +228,9 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
       {/* Launcher */}
       {state === "closed" && (
         <button type="button" onClick={() => setState("form")} className="cw2-launch" data-cw-launch
-          style={{ position: "fixed", right: isMobile ? 18 : 28, bottom: isMobile ? "calc(18px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", gap: 12, padding: "15px 22px", cursor: "pointer", background: onDark ? T.paper : T.ink, border: onDark ? `1px solid ${T.ruleStrong}` : 0, boxShadow: onDark ? "0 12px 32px rgba(20,18,15,0.45)" : "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.25s ease, color 0.25s ease" }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : (onDark ? T.gold : M2) }} />
-          <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: onDark ? T.ink : T.paper }}>{isMobile ? "Ask us" : "Ask the workshop"}</span>
+          style={{ position: "fixed", right: isMobile ? 18 : 28, bottom: isMobile ? "calc(18px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", gap: 12, padding: "15px 22px", cursor: "pointer", background: onDark ? T.paper : T.ink, border: `1px solid ${onDark ? T.ruleStrong : "transparent"}`, boxShadow: onDark ? "0 12px 32px rgba(20,18,15,0.45)" : "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease" }}>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : (onDark ? T.gold : M2), transition: "background 0.4s ease" }} />
+          <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: onDark ? T.ink : T.paper, transition: "color 0.4s ease" }}>{isMobile ? "Ask us" : "Ask the workshop"}</span>
         </button>
       )}
 

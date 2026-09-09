@@ -210,8 +210,8 @@ const RingsV2 = (): JSX.Element => {
         .rv2-chip:hover { border-color: ${T.ink} !important; }
         .rv2-card img { transition: transform 0.5s ease; }
         .rv2-card:hover img { transform: scale(1.04); }
-        .rv2-card-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
-        .rv2-card:hover .rv2-card-alt { opacity: 1; }
+        .rv2-card img.rv2-card-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
+        .rv2-card:hover img.rv2-card-alt { opacity: 1; }
         .rv2-clear:hover { color: ${T.ink} !important; }
         .rv2-range { -webkit-appearance:none; appearance:none; width:100%; height:1px; background:${T.ruleStrong}; outline:none; }
         .rv2-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%; background:${T.gold}; cursor:pointer; }
