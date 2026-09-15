@@ -1,6 +1,22 @@
 const { getModels } = require('../models');
 const metalPriceService = require('../services/metalPriceService');
 const ringPricingService = require('../services/ringPricingService');
+const { displayBasePrice } = require('../services/engagementFloor');
+
+/**
+ * Sync products.base_price from a chosen mount, adding the engagement diamond floor
+ * for Nivoda rings so listing cards show a realistic ">£1,000 from" price.
+ */
+async function syncBasePrice(productId, mountPrice) {
+  const { Product, ProductRingSpecs } = getModels();
+  const prod = await Product.findByPk(productId, { attributes: ['id', 'nivoda_enabled'] });
+  const specs = await ProductRingSpecs.findOne({ where: { product_id: productId }, attributes: ['stone_shape'] });
+  const base = displayBasePrice(mountPrice, prod ? prod.nivoda_enabled : false, specs ? specs.stone_shape : null);
+  await Product.update(
+    { base_price: base, currency: 'GBP', updated_at: new Date() },
+    { where: { id: productId } }
+  );
+}
 
 function models() {
   const m = getModels();
@@ -103,11 +119,7 @@ async function saveRingSpecs(req, res) {
         const preferred = ['gold_18kt', 'gold_18kt_yellow', 'gold_18kt_rose', 'gold_14kt', 'gold_14kt_yellow', 'gold_14kt_rose', 'gold_9kt', 'gold_9kt_yellow', 'gold_9kt_rose', 'platinum', 'silver'];
         const bestKey = preferred.find(k => overrides[k] && parseFloat(overrides[k]) > 0);
         if (bestKey) {
-          const { Product } = getModels();
-          await Product.update(
-            { base_price: parseFloat(overrides[bestKey]), currency: 'GBP', updated_at: new Date() },
-            { where: { id: productId } }
-          );
+          await syncBasePrice(productId, parseFloat(overrides[bestKey]));
         }
       }
     }
@@ -178,13 +190,10 @@ async function calculatePrice(req, res) {
       await ProductPricingConfig.create({ ...configData, product_id: productId });
     }
 
-    // Sync best metal price to products.base_price
+    // Sync best metal price to products.base_price (+ engagement diamond floor)
     const bestKey = PREFERRED_METALS.find(k => newOverrides[k] && newOverrides[k] > 0);
     if (bestKey) {
-      await Product.update(
-        { base_price: newOverrides[bestKey], currency: 'GBP', updated_at: new Date() },
-        { where: { id: productId } }
-      );
+      await syncBasePrice(productId, newOverrides[bestKey]);
     }
 
     return res.json({ success: true, data: result });

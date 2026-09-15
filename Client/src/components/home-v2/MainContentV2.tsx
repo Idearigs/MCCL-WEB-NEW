@@ -11,20 +11,28 @@ import PromoBarV2 from "./PromoBarV2";
  * imagery are the site's real assets; every link points at a real route.
  */
 
-interface Product { id: string; name: string; slug: string; price: string; image: { url: string; alt: string } | null; }
+interface Product { id: string; name: string; slug: string; price: string; image: { url: string; alt: string } | null; hoverImage?: { url: string; alt: string } | null; }
 
-// Pick a product's Yellow Gold render for the card, falling back to its primary
-// image. The list API returns images[] (with metal_id + is_metal_preview) and
-// available_metals[] (with id + name), so we can resolve the gold metal locally.
-const pickGoldImage = (p: any): { url: string; alt: string } | null => {
-  const gold = (p.available_metals || []).find((m: any) => /yellow\s*gold/i.test(m?.name || ""));
+// Resolve a product's preview render for a given metal name (e.g. "yellow gold",
+// "white gold"). Prefers the metal-preview image, then any image of that metal.
+const pickMetalImage = (p: any, re: RegExp): { url: string; alt: string } | null => {
+  const metal = (p.available_metals || []).find((m: any) => re.test(m?.name || ""));
   const imgs = p.images || [];
-  if (gold) {
-    const g = imgs.find((i: any) => i.metal_id === gold.id && i.is_metal_preview)
-      || imgs.find((i: any) => i.metal_id === gold.id);
+  if (metal) {
+    const g = imgs.find((i: any) => i.metal_id === metal.id && i.is_metal_preview)
+      || imgs.find((i: any) => i.metal_id === metal.id);
     if (g?.url) return { url: g.url, alt: g.alt || p.name || "" };
   }
-  return p.image || null;
+  return null;
+};
+// Card shows the Yellow Gold render, falling back to the primary image.
+const pickGoldImage = (p: any): { url: string; alt: string } | null =>
+  pickMetalImage(p, /yellow\s*gold/i) || p.image || null;
+// On hover, cross-fade to a different metal (White, else Rose) to signal versatility.
+const pickHoverImage = (p: any): { url: string; alt: string } | null => {
+  const primary = pickGoldImage(p);
+  const alt = pickMetalImage(p, /white\s*gold/i) || pickMetalImage(p, /rose\s*gold/i);
+  return alt && alt.url !== primary?.url ? alt : null;
 };
 interface Watch { id: string; name: string; slug: string; base_price: number; sale_price?: number; image: { url: string; alt: string } | null; }
 
@@ -88,6 +96,7 @@ const MainContentV2 = (): JSX.Element => {
       .then(d => {
         if (d.success && d.data?.products) {
           setProducts(d.data.products.slice(0, 4).map((p: any) => ({
+            hoverImage: pickHoverImage(p),
             id: p.id, name: p.name, slug: p.slug, price: p.price,
             image: pickGoldImage(p),
           })));
@@ -165,6 +174,8 @@ const MainContentV2 = (): JSX.Element => {
         .v2-textlink:hover { color: ${T.gold}; }
         .v2-prodcard img { transition: transform 0.5s ease; }
         .v2-prodcard:hover img { transform: scale(1.04); }
+        .v2-prodcard img.v2-prodcard-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
+        .v2-prodcard:hover img.v2-prodcard-alt { opacity: 1; }
         .v2-igcell img { transition: transform 0.6s ease; }
         .v2-igcell:hover img { transform: scale(1.06); }
         .v2-reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.85s cubic-bezier(0.22,1,0.36,1), transform 0.85s cubic-bezier(0.22,1,0.36,1); will-change: opacity, transform; }
@@ -263,6 +274,7 @@ const MainContentV2 = (): JSX.Element => {
                   {p.image?.url
                     ? <img src={getMediaUrl(p.image.url)} alt={p.image.alt || p.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                     : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: T.muted }}>{p.name}</div>}
+                  {p.hoverImage?.url && <img src={getMediaUrl(p.hoverImage.url)} alt="" aria-hidden="true" className="v2-prodcard-alt" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 16, fontSize: 14 }}><span>{p.name}</span><span style={{ color: "#56534D" }}>{p.price}</span></div>
               </Link>

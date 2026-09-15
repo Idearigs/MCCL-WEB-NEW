@@ -1,6 +1,7 @@
 const { getModels } = require('../models');
 const ringPricingService = require('../services/ringPricingService');
 const metalPriceService = require('../services/metalPriceService');
+const { displayBasePrice } = require('../services/engagementFloor');
 const { logger } = require('../config/database');
 
 const PREFERRED_METALS = ['gold_18kt', 'gold_18kt_yellow', 'gold_18kt_rose', 'gold_14kt', 'gold_14kt_yellow', 'gold_14kt_rose', 'gold_9kt', 'gold_9kt_yellow', 'gold_9kt_rose', 'platinum', 'silver'];
@@ -83,11 +84,13 @@ async function refreshAllRingPrices() {
       await ProductPricingConfig.create({ ...configData, product_id: product.id });
     }
 
-    // Sync best price to products.base_price
+    // Sync best price to products.base_price. For Nivoda engagement rings, add a
+    // per-shape diamond floor so listing cards show a realistic ">£1,000 from" price.
     const bestKey = PREFERRED_METALS.find(k => newOverrides[k] > 0);
     if (bestKey) {
+      const base = displayBasePrice(newOverrides[bestKey], nivodaEnabled, specs.stone_shape);
       await Product.update(
-        { base_price: newOverrides[bestKey], currency: 'GBP', updated_at: new Date() },
+        { base_price: base, currency: 'GBP', updated_at: new Date() },
         { where: { id: product.id } }
       );
     }
@@ -241,8 +244,9 @@ async function recalculateAllWithReport() {
 
     const bestKey = PREFERRED_METALS.find(k => newOverrides[k] > 0);
     if (bestKey) {
+      const base = displayBasePrice(newOverrides[bestKey], nivodaEnabled, specs.stone_shape);
       await Product.update(
-        { base_price: newOverrides[bestKey], currency: 'GBP', updated_at: new Date() },
+        { base_price: base, currency: 'GBP', updated_at: new Date() },
         { where: { id: product.id } }
       );
     }
