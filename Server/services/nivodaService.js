@@ -113,6 +113,7 @@ class NivodaService {
             items {
               id
               price
+              markup_price
               diamond {
                 id
                 image
@@ -146,6 +147,14 @@ class NivodaService {
       }
 
       const result = response.data.data.as.diamonds_by_query;
+      // Apply the account's Nivoda markup (Feeds Hub → Markups): the API returns
+      // `price` (base/cost) and `markup_price` (retail with the owner's tiered markup).
+      // Normalise `price` to the marked-up value so all downstream pricing shows retail.
+      if (result?.items) {
+        for (const it of result.items) {
+          if (it.markup_price != null && it.markup_price > 0) it.price = it.markup_price;
+        }
+      }
       await cache.set(cacheKey, result, 2 * 60 * 60); // 2 hours
       return result;
     } catch (error) {
@@ -247,9 +256,11 @@ class NivodaService {
       const ct = parseFloat(carats) || 0;
       if (ct <= 0) return null;
 
-      const margin = Math.max(ct * 0.08, 0.03);
-      const caratMin = parseFloat((ct - margin).toFixed(2));
-      const caratMax = parseFloat((ct + margin).toFixed(2));
+      // Carat band: from the exact carat up to +10%. Diamond prices jump hard at
+      // round carats, so including sub-carat stones (e.g. 0.90 for a "1ct") badly
+      // under-prices the selection.
+      const caratMin = ct;
+      const caratMax = parseFloat((ct * 1.10).toFixed(2));
       const nivodaShape = shape?.toUpperCase().replace(/[\s-]/g, '_') || '';
 
       // Base quality standard: G/H colour + VS2 clarity.
@@ -271,7 +282,7 @@ class NivodaService {
             offset: 0
             order: { type: price, direction: ASC }
           ) {
-            items { id price }
+            items { id price markup_price }
           }
         }
       }`;
@@ -285,9 +296,10 @@ class NivodaService {
       const items = response.data.data?.as?.diamonds_by_query?.items || [];
       if (!items.length) return null;
 
-      // Prices are in USD cents → convert to USD dollars.
-      // Use trimmed mean (drop bottom & top 25%) to avoid outlier distortion.
-      const prices = items.map(d => d.price / 100).sort((a, b) => a - b);
+      // Prices are in USD cents → convert to USD dollars. Use markup_price (retail,
+      // with the owner's Nivoda markup) so the estimate reflects selling price.
+      // Trimmed mean (drop bottom & top 25%) to avoid outlier distortion.
+      const prices = items.map(d => (d.markup_price != null && d.markup_price > 0 ? d.markup_price : d.price) / 100).sort((a, b) => a - b);
       const drop = Math.floor(prices.length * 0.25);
       const trimmed = prices.slice(drop, prices.length - drop || undefined);
       const avg = trimmed.reduce((s, p) => s + p, 0) / trimmed.length;

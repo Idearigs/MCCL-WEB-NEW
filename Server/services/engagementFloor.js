@@ -12,20 +12,24 @@
  * outliers curated and a >=820 minimum so every combination clears £1,000.
  */
 
+// Marked-up (retail) 1ct G/VS2 diamond price per shape, in GBP — measured from
+// Nivoda's markup_price for the 1.00–1.10ct band. These are the diamond component
+// of the card "from" price so it aligns with the PDP (mount + live marked-up stone).
 const SHAPE_DIAMOND_FLOOR = {
-  Round: 890,
-  Oval: 980,
-  Emerald: 820,
-  Pear: 970,
-  Princess: 820,
-  Heart: 820,
-  Marquise: 950,
-  Cushion: 880,
-  Baguette: 860,
-  Trillion: 880,
-  Radiant: 840,
+  Round: 3520,
+  Oval: 3060,
+  Emerald: 3820,
+  Pear: 3170,
+  Princess: 3170,
+  Heart: 3530,
+  Marquise: 4510,
+  Cushion: 3890,
+  Baguette: 4410,
+  Trillion: 3500,
+  Radiant: 3160,
+  Asscher: 3650,
 };
-const DEFAULT_FLOOR = 860;
+const DEFAULT_FLOOR = 3500;
 
 function diamondFloorGBP(stoneShape) {
   if (!stoneShape) return DEFAULT_FLOOR;

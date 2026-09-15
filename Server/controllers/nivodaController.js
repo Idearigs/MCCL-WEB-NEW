@@ -99,13 +99,14 @@ async function getDiamondPriceBySuggestions(req, res) {
     const labgrown = stoneType === 'lab-grown';
     const shapeNivoda = shape ? shape.toUpperCase().replace(/[\s-]/g, '_') : undefined;
 
-    // Tight carat band: ±10% of target carat (min ±0.05) for accurate pricing
+    // Carat band: from the exact carat up to +10%. Diamond prices step up sharply
+    // at round carats, so including sub-carat stones (e.g. 0.90 for a "1ct") badly
+    // under-prices the selection. Start AT the target carat, not below it.
     const ct = parseFloat(carat) || 1.0;
-    const caratMargin = Math.max(ct * 0.10, 0.05);
 
     const filters = {
-      minCarat: parseFloat(Math.max(0.1, ct - caratMargin).toFixed(2)),
-      maxCarat: parseFloat((ct + caratMargin).toFixed(2)),
+      minCarat: ct,
+      maxCarat: parseFloat((ct * 1.10).toFixed(2)),
       minPrice: 0,
       maxPrice: 500000,
       clarity: clarity ? [clarity] : undefined,
