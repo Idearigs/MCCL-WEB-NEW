@@ -185,6 +185,17 @@ const MainContentV2 = (): JSX.Element => {
         .v2-reveal-d3 { transition-delay: 0.24s; }
         @media (prefers-reduced-motion: reduce) { .v2-reveal { opacity: 1; transform: none; transition: none; } }
 
+        /* ── Hero entrance: staggered rise-in on load ── */
+        @keyframes v2HeroRise { from { opacity: 0; transform: translateY(115%); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes v2HeroFade { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        .v2-hero-line { display: block; overflow: hidden; }
+        .v2-hero-line > span { display: block; animation: v2HeroRise 1.05s cubic-bezier(0.16,1,0.3,1) both; }
+        .v2-hero-eyebrow { animation: v2HeroFade 0.9s cubic-bezier(0.22,1,0.36,1) both; }
+        .v2-hero-copy { animation: v2HeroFade 1s cubic-bezier(0.22,1,0.36,1) both; animation-delay: 0.75s; }
+        @media (prefers-reduced-motion: reduce) {
+          .v2-hero-line > span, .v2-hero-eyebrow, .v2-hero-copy { animation: none !important; opacity: 1 !important; transform: none !important; }
+        }
+
         /* ── Tablet ── */
         @media (max-width: 1023px) {
           .v2-prodgrid { grid-template-columns: 1fr 1fr !important; }
@@ -222,11 +233,14 @@ const MainContentV2 = (): JSX.Element => {
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: `132px ${pageX} clamp(32px, 4vw, 72px)`, background: "linear-gradient(to top, rgba(18,16,13,0.8), rgba(18,16,13,0.12) 46%, rgba(18,16,13,0.38))" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "end", gap: 48, width: "100%" }} className="v2-hero-grid">
             <div>
-              <div style={{ fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "#DED7CB", marginBottom: 20 }}>The Celestial Collection — 2026</div>
-              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(40px, 5vw, 78px)", lineHeight: 0.98, margin: 0, maxWidth: "15ch", color: "#FFFFFF" }}>Made once, for one person.</h1>
+              <div className="v2-hero-eyebrow" style={{ fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "#DED7CB", marginBottom: 20 }}>The Celestial Collection — 2026</div>
+              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(40px, 5vw, 78px)", lineHeight: 0.98, margin: 0, maxWidth: "15ch", color: "#FFFFFF" }}>
+                <span className="v2-hero-line"><span style={{ animationDelay: "0.15s" }}>Made once, for one</span></span>
+                <span className="v2-hero-line"><span style={{ animationDelay: "0.32s" }}>person.</span></span>
+              </h1>
             </div>
             <div style={{ maxWidth: 340, paddingBottom: 6, marginLeft: "auto", marginRight: "clamp(40px, 7vw, 130px)" }}>
-              <p style={{ margin: "0 0 22px", fontSize: 14.5, lineHeight: 1.65, color: "#D3CCC1" }}>Every ring is set by hand in our own workshop. Choose a stone with us, or start from a blank sheet.</p>
+              <p className="v2-hero-copy" style={{ margin: "0 0 22px", fontSize: 14.5, lineHeight: 1.65, color: "#D3CCC1" }}>Every ring is set by hand in our own workshop. Choose a stone with us, or start from a blank sheet.</p>
               <div className="v2-hero-cta" style={{ display: "flex", gap: 10, pointerEvents: "auto" }}>
                 <Link to="/rings?availability=live" className="v2-btn-ivory" style={{ padding: "13px 24px", background: T.paper, color: T.ink, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>Shop new in</Link>
                 <Link to="/contact" className="v2-btn-outline-l" style={{ padding: "13px 24px", border: "1px solid rgba(248,246,240,0.5)", color: "#FFFFFF", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>Book a fitting</Link>
