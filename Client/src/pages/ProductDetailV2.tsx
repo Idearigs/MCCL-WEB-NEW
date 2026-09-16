@@ -1025,13 +1025,17 @@ const ProductDetail = () => {
             <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(38px,3.6vw,54px)', lineHeight: 1.02, margin: '0 0 8px' }}>{productData.name}</h1>
             <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8A8377', marginBottom: 22 }}>{productData.category?.name || 'Engagement'}{productData.sku ? ' — ' + productData.sku : ''}</div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, paddingBottom: 18, borderBottom: `1px solid ${T.rule}`, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: FONT_DISPLAY, fontSize: 38, lineHeight: 1 }}>{money(totalPrice)}</span>
-              <span style={{ fontSize: 12.5, color: T.muted }}>Includes VAT · Free insured UK delivery</span>
+            {/* Sticky summary — price + add-to-bag stay in view while the customer configures (desktop). */}
+            <div className="pdpv2-summary" style={{ position: 'sticky', top: NAV_H + 12, zIndex: 20, background: T.paper, paddingBottom: 20, marginBottom: 8, borderBottom: `1px solid ${T.rule}` }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: FONT_DISPLAY, fontSize: 40, lineHeight: 1 }}>{money(totalPrice)}</span>
+                <span style={{ fontSize: 12.5, color: T.muted }}>Includes VAT · Free insured UK delivery</span>
+              </div>
+              <div style={{ fontSize: 12, color: T.muted, margin: '8px 0 14px' }}>{configSummary}{nivodaPriceLoading ? '  ·  updating price…' : ''}</div>
+              <button onClick={handleAddToCart} disabled={isLoading} className="pdpv2-addbtn pdpv2-summary-cta" style={{ width: '100%', padding: 15, cursor: isLoading ? 'default' : 'pointer', background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', transition: 'background .3s' }}>
+                {isLoading ? 'Adding…' : `Add to bag — ${money(totalPrice)}`}
+              </button>
             </div>
-            <div style={{ fontSize: 12, color: T.muted, margin: '10px 0 26px' }}>{configSummary}{nivodaPriceLoading ? '  ·  updating price…' : ''}</div>
-
-            {productData.description && <p style={{ fontSize: 15, lineHeight: 1.75, color: T.body, maxWidth: '52ch', margin: '0 0 30px', whiteSpace: 'pre-line', display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{String(productData.description)}</p>}
 
             {(purchasableMetals.length > 0 || (productData.available_metals || []).length > 0) && (
               <div style={{ marginBottom: 28 }}>
@@ -1101,13 +1105,34 @@ const ProductDetail = () => {
 
             {productData.nivoda_enabled && (
               <div style={{ background: T.tint, padding: 26, marginBottom: 28 }}>
-                <div style={stepLabel}>03 — Centre stone</div>
+                <div style={stepLabel}>03 — Choose your diamond</div>
+                <p style={{ fontSize: 12.5, color: T.muted, margin: '-6px 0 14px', lineHeight: 1.55 }}>The centre stone. Not sure what to pick? Use our recommendation — you can change anything.</p>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: T.paper, border: `1px solid ${T.rule}`, padding: '11px 14px', marginBottom: 18 }}>
+                  <div style={{ fontSize: 12.5, color: T.body }}>Most-loved: <strong style={{ color: T.ink, fontWeight: 500 }}>1ct · G · VS2</strong></div>
+                  <button onClick={() => { handleStoneTypeSelect('natural'); handleCaratSelect('1.00'); handleColourSelect('G'); handleClaritySelect('VS2'); }} style={{ border: `1px solid ${T.ink}`, background: 'transparent', color: T.ink, padding: '8px 13px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Use recommendation</button>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 18 }}>
                   {stoneOptions.stoneType.map((o: any) => { const on = selectedStoneType === o.value; return <button key={o.value} onClick={() => handleStoneTypeSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}
                 </div>
-                {stoneOptions.carat.length > 0 && <><div style={subLabel}>Carat</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>{stoneOptions.carat.map((o: any) => { const on = selectedCarat === o.value; return <button key={o.value} onClick={() => handleCaratSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div></>}
-                {stoneOptions.clarity.length > 0 && <><div style={subLabel}>Clarity</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>{stoneOptions.clarity.map((o: any) => { const on = selectedClarity === o.value; return <button key={o.value} onClick={() => handleClaritySelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div></>}
-                {stoneOptions.colour.length > 0 && <><div style={subLabel}>Colour</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.colour.map((o: any) => { const on = selectedColour === o.value; return <button key={o.value} onClick={() => handleColourSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div></>}
+                {stoneOptions.carat.length > 0 && <>
+                  <div style={subLabel}>Carat — the size of the stone</div>
+                  <div style={{ fontSize: 12, color: T.muted, margin: '-4px 0 8px', lineHeight: 1.5 }}>How big the diamond is. 1 carat is the most popular size.</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>{stoneOptions.carat.map((o: any) => { const on = selectedCarat === o.value; return <button key={o.value} onClick={() => handleCaratSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div>
+                </>}
+                {stoneOptions.colour.length > 0 && <>
+                  <div style={subLabel}>Colour <span style={{ color: T.gold }}>· G recommended</span></div>
+                  <div style={{ fontSize: 12, color: T.muted, margin: '-4px 0 8px', lineHeight: 1.5 }}>How icy-white the diamond is. G looks bright white for far less than a top D.</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.colour.map((o: any) => { const on = selectedColour === o.value; return <button key={o.value} onClick={() => handleColourSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.muted, marginTop: 7, letterSpacing: '0.04em' }}><span>◀ Icy white (pricier)</span><span>Warmer ▶</span></div>
+                </>}
+                {stoneOptions.clarity.length > 0 && <>
+                  <div style={{ ...subLabel, marginTop: 18 }}>Clarity <span style={{ color: T.gold }}>· VS2 recommended</span></div>
+                  <div style={{ fontSize: 12, color: T.muted, margin: '-4px 0 8px', lineHeight: 1.5 }}>How clean it looks inside. From VS2 up, no marks are visible to the naked eye.</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.clarity.map((o: any) => { const on = selectedClarity === o.value; return <button key={o.value} onClick={() => handleClaritySelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.muted, marginTop: 7, letterSpacing: '0.04em' }}><span>◀ Cleaner (pricier)</span><span>More marks ▶</span></div>
+                </>}
                 {stoneOptions.cut && stoneOptions.cut.length > 0 && <><div style={{ ...subLabel, marginTop: 18 }}>Cut</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.cut.map((o: any) => { const on = selectedCut === o.value; return <button key={o.value} onClick={() => handleCutSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div></>}
 
                 {(((stoneOptions as any).polish && (stoneOptions as any).polish.length) || ((stoneOptions as any).symmetry && (stoneOptions as any).symmetry.length) || ((stoneOptions as any).certificate && (stoneOptions as any).certificate.length)) ? (
@@ -1229,6 +1254,10 @@ const ProductDetail = () => {
           .pdpv2-rec{ grid-template-columns:repeat(2,1fr) !important }
           .pdpv2-spec{ grid-template-columns:1fr !important }
           .pdpv2-bottombar{ display:grid !important }
+          /* on mobile the fixed bottom bar carries the price + CTA, so the top summary
+             is static and its inline button is hidden to avoid duplication */
+          .pdpv2-summary{ position:static !important }
+          .pdpv2-summary-cta{ display:none !important }
           .pdpv2{ padding-bottom: 84px; }
         }
       `}</style>
