@@ -92,87 +92,99 @@ async function searchDiamonds(req, res) {
  * Query params: carat, clarity, color, cut, certificate (optional)
  * Returns: matching diamonds with prices, filtered by certificate if specified
  */
+// Relative price multipliers used only to scale an INDICATIVE (made-to-order) estimate
+// when live stock for the exact spec is momentarily unavailable. VS2 / G are the 1.00 base.
+const CLARITY_MULT = { FL: 1.36, IF: 1.24, VVS1: 1.15, VVS2: 1.08, VS1: 1.05, VS2: 1.00, SI1: 0.90, SI2: 0.82, I1: 0.70, I2: 0.62 };
+const COLOUR_MULT = { D: 1.12, E: 1.08, F: 1.05, G: 1.00, H: 0.95, I: 0.90, J: 0.85, K: 0.80 };
+
 async function getDiamondPriceBySuggestions(req, res) {
   try {
     const { carat, clarity, color, cut, certificate, stoneType, shape, polish, symmetry, fluorescence } = req.query;
 
     const labgrown = stoneType === 'lab-grown';
     const shapeNivoda = shape ? shape.toUpperCase().replace(/[\s-]/g, '_') : undefined;
-
-    // Carat band: from the exact carat up to +10%. Diamond prices step up sharply
-    // at round carats, so including sub-carat stones (e.g. 0.90 for a "1ct") badly
-    // under-prices the selection. Start AT the target carat, not below it.
     const ct = parseFloat(carat) || 1.0;
 
-    const filters = {
-      minCarat: ct,
-      maxCarat: parseFloat((ct * 1.10).toFixed(2)),
-      minPrice: 0,
-      maxPrice: 500000,
-      clarity: clarity ? [clarity] : undefined,
-      color: color ? [color] : undefined,
+    const metalPrices = await metalPriceService.fetchMetalPrices();
+    const usdToGbp = metalPrices.usd_to_gbp || 0.79;
+
+    // Run one Nivoda search with the given filter overrides, apply the client-side cert
+    // filter, and return the summarised GBP prices (or null when nothing matched).
+    const priceFor = async (overrides, applyCert) => {
+      const filters = {
+        minCarat: ct, maxCarat: parseFloat((ct * 1.10).toFixed(2)),
+        minPrice: 0, maxPrice: 500000, labgrown, shape: shapeNivoda, limit: 10,
+        ...overrides,
+      };
+      const diamonds = await nivodaService.searchDiamonds(filters);
+      let items = diamonds.items || [];
+      if (applyCert && certificate) {
+        const certList = certificate.split(',').map(c => c.trim().toUpperCase());
+        items = items.filter(d => certList.includes(d.diamond?.certificate?.lab?.toUpperCase()));
+      }
+      if (!items.length) return null;
+      return { ...summarisePrices(items, usdToGbp), items };
+    };
+
+    // Cascade: exact spec → broaden refinements → widen carat → indicative model estimate.
+    // McCulloch sources the stone to spec, so the customer should always see a price.
+    let result = null, estimated = false, note = 'exact';
+
+    // 1) Exact spec (all refinements + certificate).
+    result = await priceFor({
+      clarity: clarity ? [clarity] : undefined, color: color ? [color] : undefined,
       cut: cut ? cut.split(',') : undefined,
-      labgrown,
-      shape: shapeNivoda,
-      labs: certificate ? certificate.split(',') : undefined,
       polish: polish ? polish.split(',') : undefined,
       symmetry: symmetry ? symmetry.split(',') : undefined,
       fluorescence: fluorescence ? fluorescence.split(',') : undefined,
-      limit: 10
-    };
+      labs: certificate ? certificate.split(',') : undefined,
+    }, true);
 
-    const diamonds = await nivodaService.searchDiamonds(filters);
+    // 2) Broaden: keep carat/clarity/colour/shape/type, drop cut/polish/symmetry/fluor/cert.
+    if (!result) { note = 'broadened'; result = await priceFor({ clarity: clarity ? [clarity] : undefined, color: color ? [color] : undefined }, false); }
 
-    // Filter by certificate client-side (lab filter removed from Nivoda GraphQL)
-    let filteredDiamonds = diamonds.items || [];
-    if (certificate) {
-      const certList = certificate.split(',').map(c => c.trim().toUpperCase());
-      filteredDiamonds = filteredDiamonds.filter(d =>
-        certList.includes(d.diamond?.certificate?.lab?.toUpperCase())
-      );
+    // 3) Widen the carat band a little (stones just off the target size), still exact clarity/colour.
+    if (!result) {
+      note = 'estimated'; estimated = true;
+      result = await priceFor({ clarity: clarity ? [clarity] : undefined, color: color ? [color] : undefined, minCarat: parseFloat((ct * 0.85).toFixed(2)), maxCarat: parseFloat((ct * 1.30).toFixed(2)) }, false);
     }
 
-    if (filteredDiamonds.length > 0) {
-      const metalPrices = await metalPriceService.fetchMetalPrices();
-      const usdToGbp = metalPrices.usd_to_gbp || 0.79;
-      const { min: minPrice, avg: avgPrice, max: maxPrice } = summarisePrices(filteredDiamonds, usdToGbp);
+    // 4) Model estimate: any clarity/colour at ~this carat/shape/type, scaled to the target
+    //    clarity & colour via the premium multipliers. Purely indicative.
+    if (!result) {
+      note = 'estimated'; estimated = true;
+      const anyStock = await priceFor({ minCarat: parseFloat((ct * 0.85).toFixed(2)), maxCarat: parseFloat((ct * 1.30).toFixed(2)) }, false);
+      if (anyStock) {
+        const cMult = (CLARITY_MULT[clarity] ?? 1) / 1.0;      // vs VS2 base
+        const colMult = (COLOUR_MULT[color] ?? 1) / 1.0;       // vs G base
+        const k = cMult * colMult;
+        result = { min: Math.round(anyStock.min * k), avg: Math.round(anyStock.avg * k), max: Math.round(anyStock.max * k), items: [] };
+      }
+    }
 
+    if (result) {
       return res.json({
         success: true,
         data: {
-          specs: {
-            carat: carat || 'N/A',
-            clarity: clarity || 'N/A',
-            color: color || 'N/A',
-            cut: cut || 'N/A',
-            shape: shape || 'Any',
-            stoneType: stoneType || 'natural',
-            certificate: certificate || 'Any'
-          },
-          prices: { min: minPrice, avg: avgPrice, max: maxPrice },
-          matchingDiamonds: filteredDiamonds,
-          count: filteredDiamonds.length
+          specs: { carat: carat || 'N/A', clarity: clarity || 'N/A', color: color || 'N/A', cut: cut || 'N/A', shape: shape || 'Any', stoneType: stoneType || 'natural', certificate: certificate || 'Any' },
+          prices: { min: result.min, avg: result.avg, max: result.max },
+          matchingDiamonds: result.items || [],
+          count: (result.items || []).length,
+          estimated,          // true => indicative made-to-order price, not a specific in-stock stone
+          priceBasis: note,   // 'exact' | 'broadened' | 'estimated'
         },
-        message: 'Diamond price suggestions retrieved'
-      });
-    } else {
-      return res.json({
-        success: true,
-        data: {
-          specs: { carat, clarity, color, cut },
-          prices: { min: 0, avg: 0, max: 0 },
-          matchingDiamonds: [],
-          count: 0
-        },
-        message: 'No matching diamonds found for these specs'
+        message: estimated ? 'Indicative made-to-order price' : 'Diamond price suggestions retrieved',
       });
     }
+
+    return res.json({
+      success: true,
+      data: { specs: { carat, clarity, color, cut }, prices: { min: 0, avg: 0, max: 0 }, matchingDiamonds: [], count: 0, estimated: false, priceBasis: 'none' },
+      message: 'No matching diamonds found for these specs',
+    });
   } catch (error) {
     console.error('Error getting diamond price suggestions:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to get price suggestions'
-    });
+    return res.status(500).json({ success: false, error: error.message || 'Failed to get price suggestions' });
   }
 }
 
