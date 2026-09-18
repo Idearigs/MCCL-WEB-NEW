@@ -6,6 +6,7 @@
 const nivodaService = require('../services/nivodaService');
 const { centsToGBP, summarisePrices } = require('../services/pricingService');
 const metalPriceService = require('../services/metalPriceService');
+const { diamondFloorGBP } = require('../services/engagementFloor');
 
 /**
  * Get available Nivoda diamond options
@@ -155,11 +156,20 @@ async function getDiamondPriceBySuggestions(req, res) {
       note = 'estimated'; estimated = true;
       const anyStock = await priceFor({ minCarat: parseFloat((ct * 0.85).toFixed(2)), maxCarat: parseFloat((ct * 1.30).toFixed(2)) }, false);
       if (anyStock) {
-        const cMult = (CLARITY_MULT[clarity] ?? 1) / 1.0;      // vs VS2 base
-        const colMult = (COLOUR_MULT[color] ?? 1) / 1.0;       // vs G base
-        const k = cMult * colMult;
+        const k = (CLARITY_MULT[clarity] ?? 1) * (COLOUR_MULT[color] ?? 1);
         result = { min: Math.round(anyStock.min * k), avg: Math.round(anyStock.avg * k), max: Math.round(anyStock.max * k), items: [] };
       }
+    }
+
+    // 5) Pure model estimate (no live stock at all for this shape/size, e.g. Cushion 0.5ct):
+    //    anchor to the marked-up 0.5ct G/VS2 diamond floor for the shape, scale by carat
+    //    (price rises ~carat^1.9) and the clarity/colour multipliers. Always yields a price.
+    if (!result) {
+      note = 'estimated'; estimated = true;
+      const shapeBase = diamondFloorGBP(shape);                 // marked-up 0.5ct G/VS2 for the shape
+      const caratFactor = Math.pow((ct || 0.5) / 0.5, 1.9);
+      const est = shapeBase * caratFactor * (CLARITY_MULT[clarity] ?? 1) * (COLOUR_MULT[color] ?? 1) * (labgrown ? 0.35 : 1);
+      result = { min: Math.round(est * 0.9), avg: Math.round(est), max: Math.round(est * 1.15), items: [] };
     }
 
     if (result) {
