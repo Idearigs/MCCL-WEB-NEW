@@ -12,24 +12,28 @@
  * outliers curated and a >=820 minimum so every combination clears £1,000.
  */
 
-// Marked-up (retail) 1ct G/VS2 diamond price per shape, in GBP — measured from
-// Nivoda's markup_price for the 1.00–1.10ct band. These are the diamond component
-// of the card "from" price so it aligns with the PDP (mount + live marked-up stone).
+// Marked-up (retail) 0.5ct G/VS2 diamond price per shape, in GBP — measured from
+// Nivoda's markup_price for the 0.50ct band. These are the diamond component of the
+// card "from" price so it aligns with the PDP default (mount + live marked-up 0.5ct
+// stone). The default carat is 0.50, so the "from" price reads ~£1,500–2,000; the PDP
+// still shows exact live pricing as the customer sizes the stone up. (Cushion/Trillion
+// have thin 0.5ct stock, so they are estimated at ~0.28× their 1ct value; Baguette's
+// 0.5ct average is a low-stock outlier and is curated to the shape family.)
 const SHAPE_DIAMOND_FLOOR = {
-  Round: 3520,
-  Oval: 3060,
-  Emerald: 3820,
-  Pear: 3170,
-  Princess: 3170,
-  Heart: 3530,
-  Marquise: 4510,
-  Cushion: 3890,
-  Baguette: 4410,
-  Trillion: 3500,
-  Radiant: 3160,
-  Asscher: 3650,
+  Round: 980,
+  Oval: 900,
+  Emerald: 960,
+  Pear: 880,
+  Princess: 980,
+  Heart: 925,
+  Marquise: 1125,
+  Cushion: 1090,
+  Baguette: 1240,
+  Trillion: 980,
+  Radiant: 965,
+  Asscher: 1080,
 };
-const DEFAULT_FLOOR = 3500;
+const DEFAULT_FLOOR = 950;
 
 function diamondFloorGBP(stoneShape) {
   if (!stoneShape) return DEFAULT_FLOOR;
