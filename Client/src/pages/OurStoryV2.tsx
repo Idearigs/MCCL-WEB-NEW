@@ -12,7 +12,8 @@ import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
  * jewellers since 1895, when J. A. de Silva opened inside the Grand Hotel, Nuwara Eliya,
  * Sri Lanka (still there today); Hasita de Silva, fifth-generation jeweller and
  * great-grandson of J. A. de Silva, brought the family legacy to Nottingham by taking on
- * Andrew McCulloch's in 2017. Archival photo (public/our-story/willingdon-1921.jpg): a
+ * Andrew McCulloch's in 2017. Archival photo (public/images/willingdon-1921.jpg — NOT under
+ * /our-story/, which collides with the SPA route and 403s in prod): a
  * framed portrait of Lord & Lady Willingdon, Governor of Madras, beside a 1921 endorsement
  * of J. A. de Silva & Co. Earlier Beeston-1952 draft preserved in git history.
  */
@@ -190,7 +191,7 @@ const OurStoryV2 = (): JSX.Element => {
 
         <div className="os-archive" style={{ display: "grid", gridTemplateColumns: "1fr 0.9fr", gap: "clamp(32px, 5vw, 72px)", alignItems: "center", marginTop: "clamp(40px, 5vw, 64px)" }}>
           <div className="os-rise os-kenwrap" style={{ background: T.tint, overflow: "hidden", padding: "clamp(20px, 3vw, 40px)", border: `1px solid ${T.rule}` }}>
-            <img src="/our-story/willingdon-1921.jpg" alt="Framed portrait of H.E. Lord Willingdon, Governor of Madras, and Lady Willingdon, beside a 1921 note endorsing J. A. de Silva & Co." style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 24px 60px -24px rgba(28,26,23,0.45)" }} />
+            <img src="/images/willingdon-1921.jpg" alt="Framed portrait of H.E. Lord Willingdon, Governor of Madras, and Lady Willingdon, beside a 1921 note endorsing J. A. de Silva & Co." style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 24px 60px -24px rgba(28,26,23,0.45)" }} />
           </div>
           <div className="os-rise os-d2">
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(22px, 2.2vw, 30px)", lineHeight: 1.18, color: T.ink }}>
