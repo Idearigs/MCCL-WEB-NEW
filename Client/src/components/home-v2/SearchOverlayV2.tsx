@@ -64,8 +64,43 @@ const ALIASES: Record<string, string[]> = {
   "3-stone": ["trilogy", "three stone"], trilogy: ["three stone", "3 stone"],
 };
 
+// Global metal ids (same across every product; see render-audit) → colour, so a query that
+// names a metal can pick the matching per-metal render and pre-select it on the PDP.
+const METAL_COLOUR_ID: Record<string, string> = {
+  yellow: "39b04f2f-1d7f-442a-b1f6-dc355c7b5976",
+  white: "99297e85-1558-40e3-9e32-be59384da430",
+  rose: "15d201d9-089b-43d8-9306-85f61971ae44",
+};
+
+interface DetectedMetal { colour?: "yellow" | "white" | "rose"; base?: "platinum" | "silver"; karat?: "9ct" | "14ct" | "18ct"; metalId?: string; }
+
+// Pull a metal intent out of the raw query text: a gold colour (+ optional karat),
+// or platinum / silver. Karat "9ct/14ct/18ct" is metal; a plain "1ct/0.5ct" is a
+// diamond weight and deliberately ignored here.
+const detectMetal = (text: string): DetectedMetal => {
+  const t = ` ${text.toLowerCase()} `;
+  const d: DetectedMetal = {};
+  if (/\bplatinum\b|\bplat\b/.test(t)) d.base = "platinum";
+  else if (/\bsilver\b/.test(t)) d.base = "silver";
+  if (/\byellow\b/.test(t)) d.colour = "yellow";
+  else if (/\bwhite\b/.test(t)) d.colour = "white";
+  else if (/\brose\b/.test(t)) d.colour = "rose";
+  const k = t.match(/\b(9|14|18)\s?(?:ct|k|kt|carat)\b/);
+  if (k) d.karat = (k[1] + "ct") as DetectedMetal["karat"];
+  if (d.colour) d.metalId = METAL_COLOUR_ID[d.colour];
+  return d;
+};
+
+// Metal-type value understood by the PDP (metalTypeOptions), when both parts are known.
+const metalTypeValue = (d: DetectedMetal): string | undefined => {
+  if (d.base) return d.base;
+  if (d.colour) return `${d.karat || "18ct"}-${d.colour}-gold`;
+  return undefined;
+};
+
 interface Entry {
-  id: string; name: string; spec: string; price?: number; image?: string; to: string; group: string;
+  id: string; name: string; spec: string; price?: number; image?: string; to: string; slug: string; group: string;
+  images: { url: string; metalId?: string; preview?: boolean }[]; // per-metal renders for metal-aware thumbnails
   nameLc: string;   // name only (highest search weight)
   attr: string;     // category + ring types + gemstones + metals + collection (medium weight)
   desc: string;     // description paragraph (low weight, broad coverage)
@@ -77,6 +112,16 @@ const groupOf = (p: any): string => {
   if (c.includes("wedding")) return "Wedding bands";
   if (c.includes("watch")) return "Watches";
   return "Jewellery";
+};
+
+// Route a search hit to the correct (V2) product page for its category, not the legacy
+// /product/:slug page. Rings/jewellery use ProductDetailV2; wedding + watches have their own.
+const routeForGroup = (group: string, slug: string): string => {
+  if (!slug) return "#";
+  if (group === "Engagement rings") return `/engagement-rings/${slug}`;
+  if (group === "Wedding bands") return `/wedding-rings/${slug}`;
+  if (group === "Watches") return `/watches/${slug}`;
+  return `/jewellery/${slug}`;
 };
 
 interface SearchOverlayV2Props {
@@ -114,14 +159,22 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
             const spec = styleBits || [collection, cat].filter(Boolean).join(" · ");
             // list serializer returns a pre-formatted price string; use the numeric fields
             const priceNum = p.sale_price ?? p.base_price ?? (typeof p.price === "number" ? p.price : undefined);
+            const group = groupOf(p);
+            const images = (p.images || []).map((im: any) => ({
+              url: typeof im === "string" ? im : im.url,
+              metalId: im?.metal_id || undefined,
+              preview: !!im?.is_metal_preview,
+            })).filter((im: any) => im.url);
             return {
               id: String(p.id),
               name: p.name,
               spec,
               price: priceNum != null ? Number(priceNum) : undefined,
-              image: p.image?.url || p.images?.[0]?.url || p.featured_image,
-              to: p.slug ? `/product/${p.slug}` : "#",
-              group: groupOf(p),
+              image: p.image?.url || images[0]?.url || p.featured_image,
+              to: routeForGroup(group, p.slug),
+              slug: String(p.slug || ""),
+              group,
+              images,
               nameLc: String(p.name || "").toLowerCase(),
               attr: `${cat} ${ringTypes} ${gems} ${metals} ${collection}`.toLowerCase(),
               desc: String(p.description || "").toLowerCase(),
@@ -263,6 +316,51 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
   const go = (to: string) => { onClose(); navigate(to); };
   const seeAll = () => { pushRecent(query); go("/products"); };
 
+  // Metal intent parsed from the (corrected) query — drives both the thumbnail shown and
+  // the metal pre-selected on the product page.
+  const detected = useMemo(() => detectMetal(correction.text || q), [correction, q]);
+  const hasMetal = !!(detected.metalId || detected.base);
+
+  // Thumbnail: when the query names a gold colour, show that colour's render (prefer the
+  // metal-preview shot) instead of the default; otherwise the product's default image.
+  const imageFor = (e: Entry): string | undefined => {
+    if (detected.metalId && e.images?.length) {
+      const pool = e.images.filter((im) => im.metalId === detected.metalId);
+      if (pool.length) return (pool.find((im) => im.preview) || pool[0]).url;
+    }
+    return e.image;
+  };
+
+  // Link: carry the metal choice to engagement PDPs so the ring opens already switched to
+  // the searched metal (and karat, when given). Other groups just open normally.
+  const linkFor = (e: Entry): string => {
+    if (hasMetal && e.group === "Engagement rings") {
+      const sp = new URLSearchParams();
+      if (detected.base) sp.set("metal", detected.base);
+      else if (detected.colour) { sp.set("metal", detected.colour); if (detected.karat) sp.set("karat", detected.karat); }
+      const qs = sp.toString();
+      return qs ? `${e.to}?${qs}` : e.to;
+    }
+    return e.to;
+  };
+
+  // Warm the detail endpoint on hover so the click into a product feels instant.
+  const prefetched = useRef<Set<string>>(new Set());
+  const prefetch = (slug: string) => {
+    if (!slug || prefetched.current.has(slug)) return;
+    prefetched.current.add(slug);
+    fetch(`${API_BASE_URL}/products/${slug}`).catch(() => {});
+  };
+
+  // Graceful image fallback: the CDN occasionally 5xx's a cold image; retry once without the
+  // cache-busting query, then hide the broken tile so no empty box is left.
+  const onImgError = (ev: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = ev.currentTarget;
+    if (!img.dataset.retry && /\?/.test(img.src)) { img.dataset.retry = "1"; img.src = img.src.split("?")[0]; return; }
+    if (!img.dataset.retry) { img.dataset.retry = "1"; img.src = img.src + (img.src.includes("?") ? "&" : "?") + "r=1"; return; }
+    img.style.visibility = "hidden";
+  };
+
   if (!isOpen) return null;
 
   // ————— Shared inner blocks —————
@@ -307,7 +405,7 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
           {browse.map((b) => (
             <button key={b.label} type="button" onClick={() => go(b.to)} style={{ display: "block", textAlign: "left", background: "transparent", border: 0, padding: 0, cursor: "pointer", fontFamily: FONT_BODY }}>
               <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
-                {b.image && <img src={getMediaUrl(b.image)} alt={b.label} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
+                {b.image && <img src={getMediaUrl(b.image)} alt={b.label} onError={onImgError} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
               </div>
               <div style={{ fontSize: 13, marginTop: 12, color: T.ink }}>{b.label}</div>
               <div style={{ fontSize: 11.5, color: M2, marginTop: 4 }}>{b.count}</div>
@@ -339,9 +437,9 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
           {isMobile ? (
             <div style={{ marginTop: 6 }}>
               {g.items.slice(0, 4).map((it) => (
-                <Link key={it.id} to={it.to} onClick={onClose} style={{ display: "grid", gridTemplateColumns: "64px 1fr", gap: 14, alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${T.rule}` }}>
+                <Link key={it.id} to={linkFor(it)} onClick={() => { prefetch(it.slug); onClose(); }} style={{ display: "grid", gridTemplateColumns: "64px 1fr", gap: 14, alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${T.rule}` }}>
                   <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
-                    {it.image && <img src={getMediaUrl(it.image)} alt={it.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
+                    {imageFor(it) && <img src={getMediaUrl(imageFor(it)!)} alt={it.name} onError={onImgError} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
                   </div>
                   <div>
                     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
@@ -356,10 +454,10 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "clamp(12px, 1.6vw, 22px)", marginTop: 18 }}>
               {g.items.slice(0, 5).map((it) => (
-                <Link key={it.id} to={it.to} onClick={onClose} style={{ display: "block" }}>
+                <Link key={it.id} to={linkFor(it)} onClick={onClose} onMouseEnter={() => prefetch(it.slug)} style={{ display: "block" }}>
                   {/* height capped (not 4:5) so the name + price stay above the panel fold */}
                   <div style={{ position: "relative", height: "clamp(150px, 19vh, 210px)", background: T.tint, overflow: "hidden" }}>
-                    {it.image && <img src={getMediaUrl(it.image)} alt={it.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
+                    {imageFor(it) && <img src={getMediaUrl(imageFor(it)!)} alt={it.name} onError={onImgError} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
                   </div>
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, margin: "13px 0 5px" }}>
                     <span style={{ fontSize: 13.5 }}>{it.name}</span>

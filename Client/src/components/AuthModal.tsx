@@ -154,7 +154,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView = 'l
               {/* Logo/Brand */}
               <div className="text-center mb-12">
                 <h1 className="text-2xl tracking-[0.3em] font-light text-gray-900 mb-1">
-                  MCCULLOCH
+                  McCulloch
                 </h1>
                 <p className="text-xs tracking-[0.2em] text-gray-500 font-light">1798</p>
               </div>

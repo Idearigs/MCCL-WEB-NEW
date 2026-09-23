@@ -84,7 +84,7 @@ const FooterV2 = (): JSX.Element => {
       <div className="v2ft">
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.5fr) repeat(5, minmax(0, 1fr))", gap: "clamp(20px, 2.4vw, 44px)", paddingBottom: 52, borderBottom: `1px solid ${T.ruleDark}` }} className="v2-footgrid">
           <div>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 23, letterSpacing: "0.26em", textTransform: "uppercase", color: "#FFFFFF" }}>McCulloch</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 23, letterSpacing: "0.16em", color: "#FFFFFF" }}>McCulloch</div>
             <div style={{ fontSize: 8.5, letterSpacing: "0.44em", textTransform: "uppercase", color: T.onDarkMuted, margin: "5px 0 26px 3px" }}>Fine jewellery</div>
             <p style={{ margin: "0 0 20px", maxWidth: "32ch", fontSize: 13.5, lineHeight: 1.7 }}>£25 off your first order, plus new pieces before they reach the site.</p>
             <form onSubmit={onSubmit} style={{ display: "flex", maxWidth: 320, borderBottom: `1px solid ${T.ruleDarkStrong}` }}>

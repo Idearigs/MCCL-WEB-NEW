@@ -194,7 +194,7 @@ const SeasonalOfferV2 = (): JSX.Element | null => {
       {!isMobile && (
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22 }}>
           <div>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, letterSpacing: "0.26em", textTransform: "uppercase", color: T.ink }}>McCulloch</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, letterSpacing: "0.26em", color: T.ink }}>McCulloch</div>
             <div style={{ fontSize: 8, letterSpacing: "0.42em", textTransform: "uppercase", color: T.muted, marginTop: 4, paddingLeft: 2 }}>Fine jewellery</div>
           </div>
           <button type="button" onClick={close} aria-label="Close" style={{ background: "transparent", border: 0, cursor: "pointer", fontSize: 22, lineHeight: 1, color: T.muted }}>×</button>

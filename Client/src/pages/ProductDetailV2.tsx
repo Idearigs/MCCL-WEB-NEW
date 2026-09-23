@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, ChevronUp, Plus, X, Minus, ZoomIn, ZoomOut, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Heart, Phone, MessageCircle, ChevronDown, ChevronUp, Plus, X, Minus, ZoomIn, ZoomOut, Play, Pause, Volume2, VolumeX, Check } from 'lucide-react';
 import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
 import { FooterSection } from '@/components/FooterSection';
 import { useCart } from '../contexts/CartContext';
@@ -12,6 +12,7 @@ import FooterV2 from '../components/home-v2/FooterV2';
 import { T, FONT_DISPLAY, FONT_BODY } from '../components/home-v2/tokens';
 import { trackViewContent, trackAddToCart } from '../services/pixelService';
 import { useCountry } from '../hooks/useCountry';
+import DiamondHelpNudge from '../components/DiamondHelpNudge';
 
 /**
  * The primary product film.
@@ -192,6 +193,7 @@ const ProductDetail = () => {
   const [nivodaPrice, setNivodaPrice] = useState<{ min: number; avg: number; max: number } | null>(null);
   const [nivodaPriceLoading, setNivodaPriceLoading] = useState(false);
   const [nivodaPriceError, setNivodaPriceError] = useState<string | null>(null);
+  const [priceEstimated, setPriceEstimated] = useState(false); // indicative made-to-order price
 
   const [expandedStoneOptions, setExpandedStoneOptions] = useState<{ [key: string]: boolean }>({
     stoneType: true,
@@ -204,6 +206,8 @@ const ProductDetail = () => {
   // Use global cart context
   const { addToCart } = useCart();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [playingTiles, setPlayingTiles] = useState<Record<number, boolean>>({});
+  const mosaicRef = useRef<HTMLDivElement>(null); // mobile carousel scroller
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
 
@@ -360,6 +364,89 @@ const ProductDetail = () => {
   const stoneOptions = buildStoneOptions();
 
   // Fetch price from Nivoda API based on selected specs
+  // Per-clarity diamond prices (for the "+£" deltas on the clarity cards). Fetched for
+  // the current carat/colour/type; deltas are shown relative to the cheapest grade.
+  const [clarityPrices, setClarityPrices] = useState<Record<string, number>>({});
+  const fetchClarityDeltas = useCallback(async () => {
+    if (!productData?.nivoda_enabled || !selectedCarat || !selectedColour) return;
+    const config = productData.nivoda_options_config;
+    const clarities: string[] = (config?.clarityOptions && config.clarityOptions.length ? config.clarityOptions : ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2']);
+    const shapeName = productData.stone_shapes?.[0]?.name;
+    try {
+      const results = await Promise.all(clarities.map(async (cl) => {
+        try {
+          const params = new URLSearchParams({ carat: selectedCarat, clarity: cl, color: selectedColour, stoneType: selectedStoneType });
+          if (shapeName) params.set('shape', shapeName);
+          const r = await fetch(`${API_BASE_URL}/nivoda/diamonds/price-suggestions?${params}`);
+          const d = await r.json();
+          return [cl, d?.data?.prices?.avg || 0] as [string, number];
+        } catch { return [cl, 0] as [string, number]; }
+      }));
+      const map: Record<string, number> = {};
+      results.forEach(([cl, avg]) => { if (avg > 0) map[cl] = avg; });
+      setClarityPrices(map);
+    } catch { /* ignore */ }
+  }, [productData, selectedCarat, selectedColour, selectedStoneType]);
+  useEffect(() => { fetchClarityDeltas(); }, [fetchClarityDeltas]);
+
+  // Single source of truth for the gallery: the IMAGE metal always follows the selected
+  // metal TYPE. However the type gets set (load, family/colour/carat pick), the photo
+  // re-syncs here — so we can never show e.g. a white ring while "Yellow Gold" is chosen.
+  // We only shoot three colours (white/yellow/rose); silver & platinum share the white render.
+  useEffect(() => {
+    const metals = productData?.available_metals;
+    if (!metals || metals.length === 0 || !selectedMetalType) return;
+    const imgs = productData?.images || [];
+    const hasImg = (m: any) => imgs.some((img: any) => img.metal_id === m.id);
+    const base = getMetalBase(selectedMetalType);
+    const colour = (base === 'platinum' || base === 'silver' || base.includes('white')) ? 'white'
+      : base.includes('yellow') ? 'yellow' : base.includes('rose') ? 'rose' : '';
+    const match =
+      (colour && metals.find((m: any) => (m.name || '').toLowerCase().includes(colour) && hasImg(m))) ||
+      metals.find((m: any) => hasImg(m)) ||
+      metals[0];
+    if (match && match.id !== selectedMetal) setSelectedMetal(match.id);
+  }, [selectedMetalType, productData]);
+
+  // Arriving from search with a metal intent (e.g. …?metal=yellow&karat=14ct): pre-select
+  // that metal so the ring opens already switched to the searched option. Applied once,
+  // after the product loads, and only to a metal the product actually offers.
+  const appliedMetalParam = useRef(false);
+  useEffect(() => {
+    if (appliedMetalParam.current || !productData) return;
+    const sp = new URLSearchParams(location.search);
+    const metal = (sp.get('metal') || '').toLowerCase();
+    const karat = (sp.get('karat') || '').toLowerCase();
+    if (!metal) return;
+    const overrides = productData.ring_price_overrides;
+    const purchasable = (v: string) => { const opt = metalTypeOptions.find(m => m.value === v); return !!(opt && overrides?.[opt.overrideKey]); };
+    let desired: string | undefined;
+    if (metal === 'platinum' || metal === 'silver') { if (purchasable(metal)) desired = metal; }
+    else if (['yellow', 'white', 'rose'].includes(metal)) {
+      desired = [karat, '18ct', '14ct', '9ct'].filter(Boolean).map(k => `${k}-${metal}-gold`).find(purchasable);
+    }
+    if (desired) { setSelectedMetalType(desired); appliedMetalParam.current = true; }
+  }, [productData, location.search]);
+
+  // When the metal changes, keep the SAME angle/view the customer was looking at (the
+  // renders are ordered by a consistent angle sequence across metals), only clamping if
+  // the new metal happens to have fewer views. This is what makes switching metal show
+  // the same angle rather than jumping back to the first shot.
+  useEffect(() => {
+    const media = getMetalSpecificMedia(productData?.images || [], selectedMetal, selectedDiamondSize);
+    const len = Math.max(1, media.length);
+    setCurrentImageIndex(i => {
+      const clamped = Math.min(i, len - 1);
+      const el = mosaicRef.current;
+      if (el) el.scrollTo({ left: clamped * el.clientWidth, behavior: 'auto' });
+      return clamped;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMetal]);
+
+  // Colour grades we have diamond imagery for (D–H); the colour selector shows only these.
+  const COLOUR_IMG = ['D', 'E', 'F', 'G', 'H'];
+
   const fetchNivodaPrice = useCallback(async (carat?: string, clarity?: string, colour?: string, cut?: string) => {
     if (!productData?.nivoda_enabled) return;
     if (!carat || !clarity || !colour) return; // cut is optional — many products have no cut options
@@ -387,13 +474,17 @@ const ProductDetail = () => {
       const data = await response.json();
 
       if (data.success && data.data?.prices && data.data.prices.avg > 0) {
+        // The server returns an exact live price where stock exists, otherwise an
+        // indicative made-to-order price (data.estimated) — either way we always
+        // show a price so the customer is never left at a dead end.
         setNivodaPrice(data.data.prices);
-      } else if (data.success && data.data?.count === 0) {
-        setNivodaPrice(null);
-        setNivodaPriceError('No diamonds available for this specification — try adjusting clarity or colour');
+        setPriceEstimated(!!data.data.estimated);
+        setNivodaPriceError(null);
       } else {
+        // Truly nothing to price from — reassure rather than alarm.
         setNivodaPrice(null);
-        setNivodaPriceError('Could not fetch price for this specification');
+        setPriceEstimated(false);
+        setNivodaPriceError('We hand-source this combination — contact us for a tailored quote.');
       }
     } catch (error) {
       console.error('Error fetching Nivoda price:', error);
@@ -452,24 +543,29 @@ const ProductDetail = () => {
           setProductData(data.data.product);
           setRecommendedProducts(data.data.recommended_products || []);
 
-          // Set initial metal selection to first metal that has images, else first available
-          if (data.data.product.available_metals && data.data.product.available_metals.length > 0) {
-            const imgs = data.data.product.images || [];
-            const firstWithImages = data.data.product.available_metals.find((m: any) =>
-              imgs.some((img: any) => img.metal_id === m.id)
-            );
-            setSelectedMetal(firstWithImages ? firstWithImages.id : data.data.product.available_metals[0].id);
+          // Choose the default metal TYPE first (price/selector) — prefer 18ct white gold,
+          // then fall back through the other karats/colours that actually have a price.
+          const overrides = data.data.product.ring_price_overrides;
+          let defaultType = '';
+          if (overrides) {
+            const preferred = ['18ct-white-gold', '18ct-yellow-gold', '18ct-rose-gold', '14ct-white-gold', '14ct-yellow-gold', '14ct-rose-gold', '9ct-white-gold', '9ct-yellow-gold', '9ct-rose-gold', 'platinum', 'silver'];
+            defaultType = preferred.find(v => { const opt = metalTypeOptions.find(m => m.value === v); return opt && overrides[opt.overrideKey]; }) || '';
+            if (defaultType) setSelectedMetalType(defaultType);
           }
 
-          // Set initial metal type to first option that has a price override (preferring 18kt gold)
-          const overrides = data.data.product.ring_price_overrides;
-          if (overrides) {
-            const preferred = ['18ct-white-gold', '14ct-white-gold', '9ct-white-gold', 'platinum', 'silver'];
-            const first = preferred.find(v => {
-              const opt = metalTypeOptions.find(m => m.value === v);
-              return opt && overrides[opt.overrideKey];
-            });
-            if (first) setSelectedMetalType(first);
+          // Sync the initial IMAGE metal to that default type's colour, so the photo shown
+          // matches the selected metal (silver/platinum share the white-gold render). Fall
+          // back to any metal that has images, then the first metal.
+          if (data.data.product.available_metals && data.data.product.available_metals.length > 0) {
+            const imgs = data.data.product.images || [];
+            const hasImg = (m: any) => imgs.some((img: any) => img.metal_id === m.id);
+            const base = getMetalBase(defaultType); // white-gold | yellow-gold | rose-gold | platinum | silver
+            const colour = (base === 'platinum' || base === 'silver' || base.includes('white')) ? 'white' : base.includes('yellow') ? 'yellow' : base.includes('rose') ? 'rose' : '';
+            const match =
+              (colour && data.data.product.available_metals.find((m: any) => (m.name || '').toLowerCase().includes(colour) && hasImg(m))) ||
+              data.data.product.available_metals.find((m: any) => hasImg(m)) ||
+              data.data.product.available_metals[0];
+            if (match) setSelectedMetal(match.id);
           }
 
           // Set initial diamond size selection to first available diamond size (for Engagement Rings)
@@ -708,6 +804,10 @@ const ProductDetail = () => {
   const goToImage = (index: number) => {
     setCurrentImageIndex(index);
   };
+
+  // Mobile carousel: track the active slide from scroll, and step with the arrow.
+  const onMosaicScroll = () => { const el = mosaicRef.current; if (!el || el.scrollWidth <= el.clientWidth + 4) return; setCurrentImageIndex(Math.round(el.scrollLeft / el.clientWidth)); };
+  const goToSlide = (i: number) => { const el = mosaicRef.current; if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }); };
 
   const openLightbox = (imageIndex: number) => {
     setLightboxImageIndex(imageIndex);
@@ -969,7 +1069,7 @@ const ProductDetail = () => {
   const activeMedia = media[currentImageIndex] || media[0];
   const gallery = media;
   const angleLabels = ['Three-quarter', 'Top', 'Front', 'Profile', 'Detail'];
-  const chip = (on: boolean): React.CSSProperties => ({ padding: '9px 14px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.ink : T.paper, color: on ? T.paper : T.body });
+  const chip = (on: boolean): React.CSSProperties => ({ padding: '9px 14px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.ink : '#FFFFFF', color: on ? T.paper : T.body });
   const eyebrow: React.CSSProperties = { fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: T.gold };
   const stepLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.muted, marginBottom: 14 };
   const subLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.muted, margin: '4px 0 8px' };
@@ -978,13 +1078,90 @@ const ProductDetail = () => {
   const diamondName = productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.display_name || productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.name || '';
   const configSummary = [metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName, isRingCat && selectedSize && ('Size ' + selectedSize), productData?.nivoda_enabled && selectedCarat && (selectedCarat + 'ct ' + selectedColour + ' ' + selectedClarity)].filter(Boolean).join('  ·  ');
 
+  // Guided-step helpers (redesigned buy flow)
+  const subHelp: React.CSSProperties = { fontSize: 12.5, color: T.muted, margin: '-2px 0 16px 38px', lineHeight: 1.5 };
+  const metalBtn = (on: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 15px', minHeight: 44, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 13, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : '#FFFFFF', color: T.ink });
+  const StepHead = ({ n, title, right }: { n: string; title: string; right?: React.ReactNode }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+      <span style={{ width: 26, height: 26, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BODY, fontSize: 12, fontWeight: 600, flex: 'none', border: `1px solid ${T.ruleStrong}`, color: T.ink }}>{n}</span>
+      <span style={{ fontFamily: FONT_DISPLAY, fontSize: 24, color: T.ink, lineHeight: 1, flex: 1 }}>{title}</span>
+      {right}
+    </div>
+  );
+  // Minimal, separated option rows for the diamond step (each divided by a hairline)
+  const optRow: React.CSSProperties = { padding: '18px 0', borderTop: `1px solid ${T.rule}` };
+  const optHeadRow: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 };
+  const optName: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.ink, fontWeight: 500 };
+  const optRecTag: React.CSSProperties = { fontSize: 10.5, letterSpacing: '0.06em', color: T.gold };
+  const optCurVal: React.CSSProperties = { marginLeft: 'auto', fontSize: 12.5, color: T.body };
+  const infoBtn: React.CSSProperties = { width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.ruleStrong}`, color: T.muted, fontSize: 10, cursor: 'pointer', background: 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontStyle: 'italic', lineHeight: 1, flex: 'none' };
+  const helpLine: React.CSSProperties = { fontSize: 12, color: T.muted, lineHeight: 1.55, margin: '-4px 0 12px' };
+  const scaleRow: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 500, color: T.body, marginTop: 10, letterSpacing: '0.02em' };
+  const InfoI = ({ k, label }: { k: string; label: string }) => (
+    <button onClick={() => toggleSection(k)} aria-label={label} title={label} style={infoBtn}>i</button>
+  );
+  const useRecommendation = () => { handleStoneTypeSelect('natural'); handleCaratSelect('1.00'); handleColourSelect('G'); handleClaritySelect('VS2'); };
+  // Round-brilliant diamond illustration; inclusion dots increase as clarity drops.
+  const CLARITY_INCL: Record<string, number> = { FL: 0, IF: 0, VVS1: 1, VVS2: 2, VS1: 3, VS2: 4, SI1: 7, SI2: 9, I1: 12, I2: 15 };
+  // Relative clarity price multipliers (VS2 = 1.00 baseline), tuned to real Nivoda
+  // ratios. Used to derive a clean, complete, monotonic clarity delta from the live
+  // price of the SELECTED stone — so every grade shows a sensible figure even where
+  // live per-grade stock is thin (e.g. lab-grown) and would otherwise read blank.
+  const CLARITY_MULT: Record<string, number> = { FL: 1.36, IF: 1.24, VVS1: 1.15, VVS2: 1.08, VS1: 1.05, VS2: 1.00, SI1: 0.90, SI2: 0.82, I1: 0.70, I2: 0.62 };
+  const DiamondIcon = ({ grade }: { grade: string }) => {
+    const inclusions = CLARITY_INCL[grade] ?? 3;
+    const isIF = grade === 'IF'; // Internally Flawless — clean inside, one tiny surface blemish at the edge
+    const c = 50, Rg = 46, rA = 36, rt = 15, g = '#C6A24C';
+    const A = (d: number) => (Math.PI / 180) * d;
+    const P = (r: number, d: number): [number, number] => [+(c + r * Math.cos(A(d))).toFixed(2), +(c + r * Math.sin(A(d))).toFixed(2)];
+    const tv = Array.from({ length: 8 }, (_, i) => P(rt, i * 45));        // table vertices (main dirs)
+    const kite = Array.from({ length: 8 }, (_, i) => P(rA, i * 45));      // crown ring at main dirs
+    const star = Array.from({ length: 8 }, (_, i) => P(rA, i * 45 + 22.5)); // crown ring at half dirs
+    const crown16: [number, number][] = [];
+    for (let i = 0; i < 8; i++) { crown16.push(kite[i]); crown16.push(star[i]); }
+    const lines: [[number, number], [number, number]][] = [];
+    for (let i = 0; i < 8; i++) {
+      lines.push([tv[i], kite[i]]);            // kite ridge (table corner → girdle)
+      lines.push([tv[i], star[i]]);            // kite side +
+      lines.push([tv[i], star[(i + 7) % 8]]);  // kite side −
+    }
+    // Imperfection marks — a spread of dots and tiny "feather" lines so grades read at a glance.
+    const marks: { x: number; y: number; t: 'dot' | 'line'; s?: number; a?: number }[] = [
+      { x: 46, y: 47, t: 'dot', s: 2.3 }, { x: 57, y: 43, t: 'line', a: 35 }, { x: 50, y: 58, t: 'dot', s: 2 },
+      { x: 41, y: 52, t: 'dot', s: 1.9 }, { x: 59, y: 54, t: 'line', a: -20 }, { x: 48, y: 41, t: 'dot', s: 2.2 },
+      { x: 55, y: 50, t: 'dot', s: 1.8 }, { x: 43, y: 60, t: 'line', a: 60 }, { x: 61, y: 47, t: 'dot', s: 2 },
+      { x: 39, y: 46, t: 'dot', s: 1.9 }, { x: 52, y: 62, t: 'line', a: 10 }, { x: 45, y: 55, t: 'dot', s: 2.1 },
+      { x: 58, y: 60, t: 'dot', s: 1.8 }, { x: 50, y: 38, t: 'line', a: 80 }, { x: 36, y: 55, t: 'dot', s: 2 },
+    ];
+    const ink = '#3D3A36';
+    return (
+      <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', display: 'block' }} aria-hidden="true">
+        <circle cx={c} cy={c} r={Rg} fill="#FFFFFF" stroke={g} strokeWidth="1.4" />
+        {crown16.map((p, i) => { const o = P(Rg, i * 22.5); return <line key={'g' + i} x1={p[0]} y1={p[1]} x2={o[0]} y2={o[1]} stroke={g} strokeWidth="0.6" opacity="0.8" />; })}
+        <polygon points={crown16.map(p => p.join(',')).join(' ')} fill="none" stroke={g} strokeWidth="0.9" opacity="0.9" />
+        {lines.map((l, i) => <line key={'l' + i} x1={l[0][0]} y1={l[0][1]} x2={l[1][0]} y2={l[1][1]} stroke={g} strokeWidth="0.7" opacity="0.85" />)}
+        <polygon points={tv.map(p => p.join(',')).join(' ')} fill="none" stroke={g} strokeWidth="1" opacity="0.9" />
+        {isIF && <circle cx={66} cy={38} r={1.7} fill="none" stroke={ink} strokeWidth="1.1" />}
+        {marks.slice(0, inclusions).map((m, i) => m.t === 'dot'
+          ? <circle key={'i' + i} cx={m.x} cy={m.y} r={m.s || 2} fill={ink} />
+          : <line key={'i' + i} x1={m.x - 2.6 * Math.cos((m.a || 0) * Math.PI / 180)} y1={m.y - 2.6 * Math.sin((m.a || 0) * Math.PI / 180)} x2={m.x + 2.6 * Math.cos((m.a || 0) * Math.PI / 180)} y2={m.y + 2.6 * Math.sin((m.a || 0) * Math.PI / 180)} stroke={ink} strokeWidth="1.4" strokeLinecap="round" />
+        )}
+      </svg>
+    );
+  };
+
   return (
-    <div style={{ background: T.paper, color: T.ink, fontFamily: FONT_BODY, minHeight: '100vh' }}>
+    <div style={{ background: '#FFFFFF', color: T.ink, fontFamily: FONT_BODY, minHeight: '100vh' }}>
       <style>{`
         .pdpv2 a{color:inherit;text-decoration:none}
         .pdpv2-tile{border:1px solid ${T.rule};cursor:pointer;transition:border-color .2s}
         .pdpv2-tile:hover,.pdpv2-tile[data-on="1"]{border-color:${T.ink}}
         .pdpv2-chip:hover{border-color:${T.ink}}
+        .pdpv2-sizeopt{transition:background-color .12s}
+        .pdpv2-sizeopt:hover[data-on="0"]{background:${T.paper}}
+        .pdpv2-sizemenu{scrollbar-width:thin;scrollbar-color:${T.ruleStrong} transparent}
+        .pdpv2-sizemenu::-webkit-scrollbar{width:8px}
+        .pdpv2-sizemenu::-webkit-scrollbar-thumb{background:${T.ruleStrong};border-radius:4px;border:2px solid #fff}
         .pdpv2-card img{transition:transform .5s}
         .pdpv2-card:hover img{transform:scale(1.04)}
         .pdpv2-addbtn:not(:disabled):hover{background:${T.gold}}
@@ -998,147 +1175,228 @@ const ProductDetail = () => {
         </div>
 
         <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.25fr) minmax(430px, 0.75fr)', gap: 'clamp(32px,4vw,72px)', padding: 'clamp(8px,2vw,24px) clamp(24px,3vw,52px) clamp(56px,5vw,88px)', alignItems: 'start' }} className="pdpv2-main">
-          {/* Gallery */}
-          <div style={{ position: 'sticky', top: NAV_H + 12 }} className="pdpv2-gallery">
-            <div className="pdpv2-primary" style={{ position: 'relative', aspectRatio: '4 / 3', background: '#FFFFFF', overflow: 'hidden' }}>
-              {activeMedia && isVid(activeMedia)
-                ? <FilmVideo url={getMediaUrl(activeMedia.url)} poster={(() => { const im = media.find(m => !isVid(m)); return im ? getMediaUrl(im.url) : undefined; })()} />
-                : activeMedia ? <img src={getMediaUrl(activeMedia.url)} alt={productData.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
-              <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.muted }}>{isVid(activeMedia) ? 'Film' : (angleLabels[currentImageIndex] || '')}</span>
-              {gallery.length > 1 && <span style={{ position: 'absolute', bottom: 12, right: 12, padding: '3px 9px', background: 'rgba(248,246,240,0.85)', fontSize: 10.5, letterSpacing: '0.08em', color: T.ink }}>{currentImageIndex + 1} / {gallery.length}</span>}
-            </div>
-            {gallery.length > 1 && (
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${gallery.length}, 1fr)`, gap: 10, marginTop: 10 }}>
-                {gallery.map((m: any, i: number) => (
-                  <button key={i} onClick={() => setCurrentImageIndex(i)} className="pdpv2-tile" data-on={i === currentImageIndex ? '1' : '0'} style={{ position: 'relative', aspectRatio: '1', background: '#FFFFFF', padding: 0, overflow: 'hidden' }}>
-                    {isVid(m)
-                      ? <><video src={getMediaUrl(m.url) + '#t=0.1'} muted playsInline preload="metadata" tabIndex={-1} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} /><span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}><Play size={18} color="#fff" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} /></span><span style={{ position: 'absolute', bottom: 6, left: 6, padding: '2px 6px', background: 'rgba(28,26,23,0.72)', color: '#fff', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Film</span></>
-                      : <img src={getMediaUrl(m.url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                  </button>
-                ))}
+          {/* Gallery — mosaic showing every render + film at once; sticks while the
+              details column scrolls, so no white space opens up on the left. */}
+          <div className="pdpv2-gallery" style={{ top: NAV_H + 12 }}>
+            {gallery.length === 1 ? (
+              <div style={{ position: 'relative', aspectRatio: '1', background: '#FFFFFF', border: `1px solid ${T.rule}`, overflow: 'hidden' }}>
+                {isVid(gallery[0])
+                  ? <FilmVideo url={getMediaUrl(gallery[0].url)} poster={undefined} />
+                  : <img src={getMediaUrl(gallery[0].url)} alt={productData.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              </div>
+            ) : (
+              // Desktop: masonry (2 balanced columns), full images never cropped.
+              // Mobile: the same items become a swipeable single-image carousel (CSS).
+              <div style={{ position: 'relative' }}>
+                <div className="pdpv2-mosaic" ref={mosaicRef} onScroll={onMosaicScroll} style={{ columnCount: 2, columnGap: 8 }}>
+                  {gallery.map((m: any, i: number) => (
+                    <div key={i} className="pdpv2-tile2" style={{ breakInside: 'avoid', WebkitColumnBreakInside: 'avoid', marginBottom: 8, position: 'relative', overflow: 'hidden', background: '#FFFFFF', border: `1px solid ${T.rule}` }}>
+                      {isVid(m)
+                        ? <><video src={getMediaUrl(m.url)} autoPlay muted loop playsInline preload="auto" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                            <span style={{ position: 'absolute', bottom: 8, left: 8, padding: '2px 7px', background: 'rgba(28,26,23,0.72)', color: '#fff', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', pointerEvents: 'none' }}>Film</span></>
+                        : <img src={getMediaUrl(m.url)} alt={productData.name} style={{ width: '100%', height: 'auto', display: 'block' }} loading="lazy" />}
+                    </div>
+                  ))}
+                </div>
+                {/* Mobile carousel controls */}
+                <button className="pdpv2-galnav" aria-label="Next image" onClick={() => goToSlide((currentImageIndex + 1) % gallery.length)}>
+                  <ChevronRight size={20} />
+                </button>
+                <div className="pdpv2-galdots">
+                  {gallery.map((_: any, i: number) => (
+                    <button key={i} aria-label={`Image ${i + 1}`} onClick={() => goToSlide(i)} className="pdpv2-galdot" data-on={i === currentImageIndex ? '1' : '0'} />
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           {/* Buy column */}
           <div>
-            <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(38px,3.6vw,54px)', lineHeight: 1.02, margin: '0 0 8px' }}>{productData.name}</h1>
-            <div style={{ fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8A8377', marginBottom: 22 }}>{productData.category?.name || 'Engagement'}{productData.sku ? ' — ' + productData.sku : ''}</div>
+            <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(34px,3.6vw,54px)', lineHeight: 1.02, margin: '0 0 16px' }}>{productData.name}</h1>
 
-            {/* Sticky summary — price + add-to-bag stay in view while the customer configures (desktop). */}
-            <div className="pdpv2-summary" style={{ position: 'sticky', top: NAV_H + 12, zIndex: 20, background: T.paper, paddingBottom: 20, marginBottom: 8, borderBottom: `1px solid ${T.rule}` }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: FONT_DISPLAY, fontSize: 40, lineHeight: 1 }}>{money(totalPrice)}</span>
-                <span style={{ fontSize: 12.5, color: T.muted }}>Includes VAT · Free insured UK delivery</span>
-              </div>
-              <div style={{ fontSize: 12, color: T.muted, margin: '8px 0 14px' }}>{configSummary}{nivodaPriceLoading ? '  ·  updating price…' : ''}</div>
-              <button onClick={handleAddToCart} disabled={isLoading} className="pdpv2-addbtn pdpv2-summary-cta" style={{ width: '100%', padding: 15, cursor: isLoading ? 'default' : 'pointer', background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', transition: 'background .3s' }}>
-                {isLoading ? 'Adding…' : `Add to bag — ${money(totalPrice)}`}
-              </button>
+            {/* Simple header: name (above), small live price, then the current spec.
+                The prominent live total + Add to bag live in the fixed bottom bar. */}
+            <div style={{ padding: '4px 0 22px', marginBottom: 28, borderBottom: `1px solid ${T.rule}` }}>
+              <div className="pdpv2-price" style={{ fontFamily: "'Lora', Georgia, serif", fontWeight: 400, fontSize: 26, lineHeight: 1.2, letterSpacing: '0.005em', fontVariantNumeric: 'tabular-nums', color: T.ink, padding: '2px 0' }}>{money(totalPrice)}<span style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: 11, color: T.muted, marginLeft: 8 }}>incl. VAT</span></div>
+              <div style={{ fontSize: 12, color: T.muted, marginTop: 8 }}>{configSummary}{nivodaPriceLoading ? '  ·  updating…' : ''}</div>
+              {priceEstimated && !nivodaPriceLoading && (
+                <div style={{ fontSize: 11.5, color: T.gold, marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.gold, flex: 'none' }} />
+                  Made to order — indicative price, hand-sourced and confirmed before payment
+                </div>
+              )}
             </div>
 
             {(purchasableMetals.length > 0 || (productData.available_metals || []).length > 0) && (
-              <div style={{ marginBottom: 28 }}>
-                <div style={stepLabel}>01 — Metal</div>
-                {(() => {
-                  const swatches = (productData.available_metals || []).filter((m: any) => { const img = getMetalThumbnail(m.id); return img && img.url; });
-                  if (swatches.length === 0) return null;
+              <div style={{ marginBottom: 30 }}>
+                <StepHead n="1" title="Choose your metal" />
+                <div style={subHelp}>The band. Pick a metal{purchasableMetals.some(o => getMetalKarat(o.value)) ? ', then a colour and carat.' : '.'}</div>
+                {purchasableMetals.length > 0 ? (() => {
+                  const golds = purchasableMetals.filter(o => getMetalKarat(o.value));
+                  const families = [
+                    golds.length > 0 && { k: 'gold', label: 'Gold', dot: 'linear-gradient(135deg,#F4DFA6,#E3B85E)' },
+                    purchasableMetals.some(o => o.value === 'platinum') && { k: 'platinum', label: 'Platinum', dot: '#E5E4E2' },
+                    purchasableMetals.some(o => o.value === 'silver') && { k: 'silver', label: 'Silver', dot: '#C7C7C7' },
+                  ].filter(Boolean) as { k: string; label: string; dot: string }[];
+                  const curBase = getMetalBase(selectedMetalType);
+                  const curKarat = getMetalKarat(selectedMetalType) || '18ct';
+                  const curFamily = selectedMetalType === 'platinum' ? 'platinum' : selectedMetalType === 'silver' ? 'silver' : (curBase.endsWith('gold') ? 'gold' : (families[0]?.k || 'gold'));
+                  const colourLabel: Record<string, string> = { 'white-gold': 'White', 'yellow-gold': 'Yellow', 'rose-gold': 'Rose' };
+                  const availColours = ['white-gold', 'yellow-gold', 'rose-gold'].filter(c => golds.some(o => getMetalBase(o.value) === c));
+                  const availKarats = ['9ct', '14ct', '18ct'].filter(k => golds.some(o => getMetalKarat(o.value) === k));
+                  const comboValid = (c: string, k: string) => golds.some(o => o.value === `${k}-${c}`);
+                  const dotOf = (c: string) => c === 'yellow-gold' ? 'linear-gradient(135deg,#F4DFA6,#E3B85E)' : c === 'rose-gold' ? 'linear-gradient(135deg,#F1D2C4,#DCA98E)' : 'linear-gradient(135deg,#F1F0F2,#DCDBDE)';
+                  const pickFamily = (fk: string) => {
+                    if (fk === 'platinum') return handleMetalTypeClick('platinum');
+                    if (fk === 'silver') return handleMetalTypeClick('silver');
+                    const pref = golds.find(o => o.value === '18ct-white-gold') || golds.find(o => getMetalBase(o.value) === 'white-gold') || golds[0];
+                    if (pref) handleMetalTypeClick(pref.value);
+                  };
+                  const pickColour = (c: string) => { let k = curKarat; if (!comboValid(c, k)) k = availKarats.find(kk => comboValid(c, kk)) || availKarats[0]; handleMetalTypeClick(`${k}-${c}`); };
+                  const pickKarat = (k: string) => { let c = curBase.endsWith('gold') ? curBase : 'white-gold'; if (!comboValid(c, k)) c = availColours.find(cc => comboValid(cc, k)) || availColours[0]; handleMetalTypeClick(`${k}-${c}`); };
                   return (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-                      {swatches.map((m: any) => {
-                        const img = getMetalThumbnail(m.id);
-                        const on = selectedMetal === m.id;
-                        return (
-                          <button key={m.id} onClick={() => handleMetalThumbnailClick(m.id)} title={m.name} aria-label={m.name}
-                            style={{ width: 58, height: 58, padding: 0, cursor: 'pointer', overflow: 'hidden', background: '#FFFFFF', border: `1px solid ${on ? T.ink : T.ruleSoft}`, boxShadow: on ? `inset 0 0 0 1px ${T.ink}` : 'none' }}>
-                            <img src={getMediaUrl(img!.url)} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-                {purchasableMetals.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {metalGroups.map(group => (
-                      <div key={group.key}>
-                        {group.caption && <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.muted, marginBottom: 8 }}>{group.caption}</div>}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                          {group.options.map(o => {
-                            const on = selectedMetalType === o.value;
-                            return <button key={o.value} onClick={() => handleMetalTypeClick(o.value)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : T.paper, color: T.ink }}><span style={{ width: 15, height: 15, borderRadius: '50%', background: metalDot(o.value), border: '1px solid rgba(0,0,0,0.15)' }} />{o.label}</button>;
-                          })}
-                        </div>
+                    <>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {families.map(f => <button key={f.k} onClick={() => pickFamily(f.k)} style={metalBtn(curFamily === f.k)}><span style={{ width: 16, height: 16, borderRadius: '50%', background: f.dot, border: '1px solid rgba(0,0,0,0.15)' }} />{f.label}</button>)}
                       </div>
-                    ))}
-                  </div>
-                ) : (
+                      {curFamily === 'gold' && (
+                        <>
+                          <div style={{ ...subLabel, marginTop: 18 }}>Colour</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {availColours.map(c => <button key={c} onClick={() => pickColour(c)} style={metalBtn(curBase === c)}><span style={{ width: 16, height: 16, borderRadius: '50%', background: dotOf(c), border: '1px solid rgba(0,0,0,0.15)' }} />{colourLabel[c]} Gold</button>)}
+                          </div>
+                          <div style={{ ...subLabel, marginTop: 18 }}>Carat</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {availKarats.map(k => <button key={k} onClick={() => pickKarat(k)} style={metalBtn(curKarat === k)}>{k}</button>)}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })() : (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                     {(productData.available_metals || []).map((m: any) => {
                       const on = selectedMetal === m.id;
-                      return <button key={m.id} onClick={() => handleMetalThumbnailClick(m.id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : T.paper, color: T.ink }}><span style={{ width: 16, height: 16, borderRadius: '50%', background: m.color_code || '#D8D2C6', border: '1px solid rgba(0,0,0,0.15)' }} />{m.name}</button>;
+                      return <button key={m.id} onClick={() => handleMetalThumbnailClick(m.id)} style={metalBtn(on)}><span style={{ width: 16, height: 16, borderRadius: '50%', background: m.color_code || '#D8D2C6', border: '1px solid rgba(0,0,0,0.15)' }} />{m.name}</button>;
                     })}
                   </div>
                 )}
               </div>
             )}
 
-            {isRingCat && (
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <div style={stepLabel}>02 — Size</div>
-                <Link to="/customer-service" style={{ fontSize: 11, color: T.gold, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Size guide</Link>
-              </div>
-              <select value={selectedSize} onChange={e => setSelectedSize(e.target.value)} style={{ width: '100%', padding: '12px 14px', fontFamily: FONT_BODY, fontSize: 14, color: T.ink, background: T.paper, border: `1px solid ${T.ruleStrong}`, borderRadius: 0, cursor: 'pointer' }}>
-                {ringSizes.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-              </select>
-              {(productData.available_diamond_sizes || []).length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-                  {productData.available_diamond_sizes.map((d: any) => {
-                    const on = selectedDiamondSize === d.id;
-                    return <button key={d.id} onClick={() => setSelectedDiamondSize(d.id)} className="pdpv2-chip" style={chip(on)}>{d.display_name || d.name}</button>;
-                  })}
-                </div>
-              )}
-            </div>
-            )}
-
             {productData.nivoda_enabled && (
-              <div style={{ background: T.tint, padding: 26, marginBottom: 28 }}>
-                <div style={stepLabel}>03 — Choose your diamond</div>
-                <p style={{ fontSize: 12.5, color: T.muted, margin: '-6px 0 14px', lineHeight: 1.55 }}>The centre stone. Not sure what to pick? Use our recommendation — you can change anything.</p>
+              <div style={{ marginBottom: 30, borderTop: `1px solid ${T.rule}`, paddingTop: 26 }}>
+                <StepHead n="2" title="Choose your diamond" />
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: T.paper, border: `1px solid ${T.rule}`, padding: '11px 14px', marginBottom: 18 }}>
-                  <div style={{ fontSize: 12.5, color: T.body }}>Most-loved: <strong style={{ color: T.ink, fontWeight: 500 }}>1ct · G · VS2</strong></div>
-                  <button onClick={() => { handleStoneTypeSelect('natural'); handleCaratSelect('1.00'); handleColourSelect('G'); handleClaritySelect('VS2'); }} style={{ border: `1px solid ${T.ink}`, background: 'transparent', color: T.ink, padding: '8px 13px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Use recommendation</button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: T.tint, border: `1px solid ${T.rule}`, padding: '11px 14px', marginBottom: 4, marginTop: 6 }}>
+                  <div style={{ fontSize: 12.5, color: T.body }}>Recommended: <strong style={{ color: T.ink, fontWeight: 500 }}>1ct · G · VS2</strong></div>
+                  <button onClick={useRecommendation} style={{ border: `1px solid ${T.ink}`, background: 'transparent', color: T.ink, padding: '8px 13px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Use recommendation</button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 18 }}>
-                  {stoneOptions.stoneType.map((o: any) => { const on = selectedStoneType === o.value; return <button key={o.value} onClick={() => handleStoneTypeSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}
+                <div style={optRow}>
+                  <div style={optHeadRow}><span style={optName}>Type</span></div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    {stoneOptions.stoneType.map((o: any) => { const on = selectedStoneType === o.value; return <button key={o.value} onClick={() => handleStoneTypeSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}
+                  </div>
                 </div>
-                {stoneOptions.carat.length > 0 && <>
-                  <div style={subLabel}>Carat — the size of the stone</div>
-                  <div style={{ fontSize: 12, color: T.muted, margin: '-4px 0 8px', lineHeight: 1.5 }}>How big the diamond is. 1 carat is the most popular size.</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>{stoneOptions.carat.map((o: any) => { const on = selectedCarat === o.value; return <button key={o.value} onClick={() => handleCaratSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div>
-                </>}
-                {stoneOptions.colour.length > 0 && <>
-                  <div style={subLabel}>Colour <span style={{ color: T.gold }}>· G recommended</span></div>
-                  <div style={{ fontSize: 12, color: T.muted, margin: '-4px 0 8px', lineHeight: 1.5 }}>How icy-white the diamond is. G looks bright white for far less than a top D.</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.colour.map((o: any) => { const on = selectedColour === o.value; return <button key={o.value} onClick={() => handleColourSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.muted, marginTop: 7, letterSpacing: '0.04em' }}><span>◀ Icy white (pricier)</span><span>Warmer ▶</span></div>
-                </>}
-                {stoneOptions.clarity.length > 0 && <>
-                  <div style={{ ...subLabel, marginTop: 18 }}>Clarity <span style={{ color: T.gold }}>· VS2 recommended</span></div>
-                  <div style={{ fontSize: 12, color: T.muted, margin: '-4px 0 8px', lineHeight: 1.5 }}>How clean it looks inside. From VS2 up, no marks are visible to the naked eye.</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.clarity.map((o: any) => { const on = selectedClarity === o.value; return <button key={o.value} onClick={() => handleClaritySelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.muted, marginTop: 7, letterSpacing: '0.04em' }}><span>◀ Cleaner (pricier)</span><span>More marks ▶</span></div>
-                </>}
-                {stoneOptions.cut && stoneOptions.cut.length > 0 && <><div style={{ ...subLabel, marginTop: 18 }}>Cut</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.cut.map((o: any) => { const on = selectedCut === o.value; return <button key={o.value} onClick={() => handleCutSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div></>}
+                {stoneOptions.carat.length > 0 && (() => {
+                  const carats = stoneOptions.carat;
+                  const n = carats.length;
+                  const idx = Math.max(0, carats.findIndex((o: any) => o.value === selectedCarat));
+                  const at = (i: number) => `calc(11px + ${n > 1 ? i / (n - 1) : 0} * (100% - 22px))`;
+                  return (
+                    <div style={optRow}>
+                      <div style={optHeadRow}><span style={optName}>Total carat</span><InfoI k="help-carat" label="What is carat?" /><span style={{ ...optCurVal, color: T.gold, fontWeight: 600 }}>{carats[idx]?.value}ct</span></div>
+                      {expandedSections['help-carat'] && <div style={helpLine}>Carat is the diamond's size — bigger looks more impressive and costs more. 1 carat is the most popular.</div>}
+                      <div className="carat-slider" style={{ position: 'relative', height: 30, marginTop: 12 }}>
+                        <div className="carat-track" />
+                        {carats.map((o: any, i: number) => <div key={'t' + o.value} className="carat-tick" style={{ left: at(i) }} />)}
+                        <div className="carat-handle" style={{ left: at(idx) }} />
+                        <input type="range" className="carat-input" min={0} max={n - 1} step={1} value={idx} onChange={e => handleCaratSelect(carats[+e.target.value].value)} aria-label="Total carat" />
+                      </div>
+                      <div style={{ position: 'relative', height: 16, marginTop: 6 }}>
+                        {carats.map((o: any, i: number) => (
+                          <span key={'l' + o.value} onClick={() => handleCaratSelect(o.value)} style={{ position: 'absolute', left: at(i), transform: 'translateX(-50%)', fontSize: 10.5, cursor: 'pointer', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', color: i === idx ? T.ink : T.muted, fontWeight: i === idx ? 700 : 400 }}>{parseFloat(o.value).toFixed(2)}</span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+                {stoneOptions.colour.length > 0 && (() => {
+                  const avail = COLOUR_IMG.filter(col => stoneOptions.colour.some((o: any) => o.value === col));
+                  const colours = avail.length ? avail : COLOUR_IMG;
+                  return (
+                    <div style={optRow}>
+                      <div style={optHeadRow}><span style={optName}>Colour</span><span style={optRecTag}>G recommended</span><InfoI k="help-colour" label="What is colour?" /><span style={optCurVal}>{selectedColour}</span></div>
+                      {expandedSections['help-colour'] && <div style={helpLine}>How icy-white the diamond is. D is the most colourless (and priciest); G still looks bright white for far less.</div>}
+                      <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }} className="pdpv2-nobar">
+                        {colours.map((col) => {
+                          const on = selectedColour === col;
+                          return (
+                            <button key={col} onClick={() => handleColourSelect(col)} style={{ flex: '0 0 auto', width: 92, padding: '10px 8px 9px', cursor: 'pointer', background: on ? T.tint : '#FFFFFF', border: `1px solid ${on ? T.ink : T.ruleSoft}`, boxShadow: on ? `inset 0 0 0 1px ${T.ink}` : 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                              <img src={`/diamond-colours/${col}.webp`} alt={`${col} colour diamond`} style={{ width: 64, height: 64, objectFit: 'cover' }} loading="lazy" />
+                              <span style={{ fontSize: 11.5, fontWeight: on ? 600 : 500, color: T.ink }}>{col}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div style={scaleRow}><span>◀ Icy white (pricier)</span><span>Warmer ▶</span></div>
+                    </div>
+                  );
+                })()}
+                {stoneOptions.clarity.length > 0 && (() => {
+                  // Build one stable VS2-baseline diamond price from EVERY grade that currently
+                  // has live stock (each normalised by its clarity multiplier, then median-ed so
+                  // a thin-stock outlier can't skew it). Every grade's price is then derived from
+                  // that baseline — so the preview is always complete and monotonic, even when the
+                  // SELECTED grade itself is out of stock (its narrow spec returns nothing).
+                  const baseVS2 = (() => {
+                    // Primary anchor: the live price of the SELECTED stone (the server always
+                    // returns one — exact or indicative), normalised to the VS2 base.
+                    if (nivodaPrice?.avg && CLARITY_MULT[selectedClarity]) return nivodaPrice.avg / CLARITY_MULT[selectedClarity];
+                    // Fallback: median of whatever per-grade previews we have.
+                    const xs = Object.keys(clarityPrices)
+                      .map(g => (clarityPrices[g] > 0 && CLARITY_MULT[g]) ? clarityPrices[g] / CLARITY_MULT[g] : 0)
+                      .filter(x => x > 0)
+                      .sort((a, b) => a - b);
+                    return xs.length ? xs[Math.floor((xs.length - 1) / 2)] : 0;
+                  })();
+                  const selPrice = baseVS2 * (CLARITY_MULT[selectedClarity] ?? 1);
+                  return (
+                    <div style={optRow}>
+                      <div style={optHeadRow}><span style={optName}>Clarity</span><span style={optRecTag}>VS2 recommended</span><InfoI k="help-clarity" label="What is clarity?" /><span style={optCurVal}>{selectedClarity}</span></div>
+                      {expandedSections['help-clarity'] && <div style={helpLine}>How clean the diamond looks inside. From VS2 up, no marks are visible to the naked eye.</div>}
+                      <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }} className="pdpv2-nobar">
+                        {stoneOptions.clarity.map((o: any) => {
+                          const on = selectedClarity === o.value;
+                          const gMult = CLARITY_MULT[o.value] ?? 1;
+                          const delta = baseVS2 ? Math.round(baseVS2 * gMult - selPrice) : 0;
+                          const priceText = on ? 'Included' : !baseVS2 ? '' : delta > 0 ? '+' + money(delta) : delta < 0 ? '−' + money(-delta) : '±£0';
+                          return (
+                            <button key={o.value} onClick={() => handleClaritySelect(o.value)} style={{ flex: '0 0 auto', width: 92, padding: '12px 8px 10px', cursor: 'pointer', background: on ? T.tint : '#FFFFFF', border: `1px solid ${on ? T.ink : T.ruleSoft}`, boxShadow: on ? `inset 0 0 0 1px ${T.ink}` : 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
+                              <span style={{ width: 64, height: 64 }}><DiamondIcon grade={o.value} /></span>
+                              <span style={{ fontSize: 11.5, fontWeight: on ? 600 : 500, color: T.ink }}>{o.value}</span>
+                              <span style={{ fontSize: 10, fontWeight: 500, color: delta > 0 ? T.gold : T.muted, minHeight: 12, fontVariantNumeric: 'tabular-nums' }}>{priceText}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div style={scaleRow}><span>◀ Cleaner (pricier)</span><span>More marks ▶</span></div>
+                    </div>
+                  );
+                })()}
+                {stoneOptions.cut && stoneOptions.cut.length > 0 && (
+                  <div style={optRow}>
+                    <div style={optHeadRow}><span style={optName}>Cut</span><span style={optCurVal}>{selectedCut}</span></div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.cut.map((o: any) => { const on = selectedCut === o.value; return <button key={o.value} onClick={() => handleCutSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div>
+                  </div>
+                )}
 
                 {(((stoneOptions as any).polish && (stoneOptions as any).polish.length) || ((stoneOptions as any).symmetry && (stoneOptions as any).symmetry.length) || ((stoneOptions as any).certificate && (stoneOptions as any).certificate.length)) ? (
-                  <div style={{ marginTop: 18, borderTop: `1px solid ${T.rule}`, paddingTop: 14 }}>
-                    <button onClick={() => toggleStoneOption('advanced')} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', background: 'transparent', border: 0, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.ink, padding: 0 }}>
-                      <span>Grading &amp; certification</span><span>{expandedStoneOptions.advanced ? '−' : '+'}</span>
+                  <div style={optRow}>
+                    <button onClick={() => toggleStoneOption('advanced')} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', background: 'transparent', border: 0, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.ink, padding: 0, fontWeight: 500 }}>
+                      <span>Grading &amp; certification</span><span style={{ color: T.muted, fontSize: 16, lineHeight: 1 }}>{expandedStoneOptions.advanced ? '−' : '+'}</span>
                     </button>
                     {expandedStoneOptions.advanced && (
                       <div style={{ marginTop: 14 }}>
@@ -1153,10 +1411,56 @@ const ProductDetail = () => {
               </div>
             )}
 
-            <button onClick={handleAddToCart} disabled={isLoading} className="pdpv2-addbtn" style={{ width: '100%', padding: 17, cursor: isLoading ? 'default' : 'pointer', background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', transition: 'background .3s' }}>
-              {isLoading ? 'Adding…' : `Add to bag — ${money(totalPrice)}`}
-            </button>
-            <div style={{ textAlign: 'center', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.muted, padding: '18px 0', borderBottom: `1px solid ${T.rule}`, borderTop: `1px solid ${T.rule}`, margin: '18px 0' }}>Free insured delivery</div>
+            {isRingCat && (
+            <div style={{ marginBottom: 30 }}>
+              <StepHead n={productData.nivoda_enabled ? '3' : '2'} title="Ring size" right={<Link to="/customer-service" style={{ fontSize: 11, color: T.gold, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Size guide</Link>} />
+              <div style={subHelp}>Not sure of the size? Order anyway — we offer complimentary resizing.</div>
+              {(() => {
+                const splitLbl = (l: string) => { const m = l.match(/^(.*?)\s*\((.*)\)\s*$/); return { uk: m ? m[1] : l, conv: m ? m[2] : '' }; };
+                const cur = splitLbl(sizeLabel);
+                return (
+                  <div className="size-dropdown-container" style={{ position: 'relative' }}>
+                    <button type="button" onClick={() => setSizeDropdownOpen(o => !o)} aria-haspopup="listbox" aria-expanded={sizeDropdownOpen}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 16px', fontFamily: FONT_BODY, background: '#FFFFFF', border: `1px solid ${sizeDropdownOpen ? T.ink : T.ruleStrong}`, cursor: 'pointer', textAlign: 'left', transition: 'border-color .15s' }}>
+                      <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{cur.uk}</span>
+                        {cur.conv && <span style={{ fontSize: 12, color: T.muted }}>{cur.conv}</span>}
+                      </span>
+                      <ChevronDown size={16} style={{ color: T.muted, transform: sizeDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s', flex: 'none' }} />
+                    </button>
+                    {sizeDropdownOpen && (
+                      <div role="listbox" className="pdpv2-sizemenu" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, maxHeight: 288, overflowY: 'auto', background: '#FFFFFF', border: `1px solid ${T.ruleStrong}`, boxShadow: '0 14px 36px rgba(20,18,15,0.16)', zIndex: 40, padding: 5 }}>
+                        {ringSizes.map(s => {
+                          const on = s.value === selectedSize; const p = splitLbl(s.label);
+                          return (
+                            <button key={s.value} type="button" role="option" aria-selected={on} onClick={() => { setSelectedSize(s.value); setSizeDropdownOpen(false); }} className="pdpv2-sizeopt" data-on={on ? '1' : '0'}
+                              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '11px 12px', border: 'none', borderLeft: `2px solid ${on ? T.gold : 'transparent'}`, background: on ? T.tint : 'transparent', cursor: 'pointer', textAlign: 'left' }}>
+                              <span style={{ fontSize: 13.5, fontWeight: on ? 600 : 500, color: T.ink }}>{p.uk}</span>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ fontSize: 12, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>{p.conv}</span>
+                                {on && <Check size={14} style={{ color: T.gold, flex: 'none' }} />}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+              {(productData.available_diamond_sizes || []).length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+                  {productData.available_diamond_sizes.map((d: any) => {
+                    const on = selectedDiamondSize === d.id;
+                    return <button key={d.id} onClick={() => setSelectedDiamondSize(d.id)} className="pdpv2-chip" style={chip(on)}>{d.display_name || d.name}</button>;
+                  })}
+                </div>
+              )}
+            </div>
+            )}
+
+            {/* Primary CTA lives in the fixed bottom bar (always in view). */}
+            <div style={{ textAlign: 'center', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.muted, padding: '18px 0', borderBottom: `1px solid ${T.rule}`, borderTop: `1px solid ${T.rule}`, margin: '4px 0 18px' }}>Free insured delivery</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: T.rule, marginBottom: 8 }}>
               {[['01', 'Book an appointment', '/contact'], ['02', 'Order by phone', '/contact'], ['03', 'Drop a hint', '/contact']].map(([n, l, href]) => (
@@ -1179,11 +1483,23 @@ const ProductDetail = () => {
             </div>
 
             <div className="pdpv2-spec" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: 24, marginTop: 22, borderTop: `1px solid ${T.rule}` }}>
-              {([(metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName) && ['Metal', metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName], isRingCat && ['Size', sizeLabel], diamondName && ['Diamond', diamondName], productData.nivoda_enabled && selectedCarat && ['Carat', selectedCarat + ' ct'], productData.nivoda_enabled && selectedClarity && ['Clarity', selectedClarity], productData.nivoda_enabled && selectedColour && ['Colour', selectedColour], productData.sku && ['SKU', productData.sku]].filter(Boolean) as any[]).map((row: any, i: number) => (
+              {([(metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName) && ['Metal', metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName], isRingCat && ['Size', sizeLabel], diamondName && ['Diamond', diamondName], productData.nivoda_enabled && selectedCarat && ['Carat', selectedCarat + ' ct'], productData.nivoda_enabled && selectedClarity && ['Clarity', selectedClarity], productData.nivoda_enabled && selectedColour && ['Colour', selectedColour]].filter(Boolean) as any[]).map((row: any, i: number) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '11px 0', borderBottom: `1px solid ${T.rule}`, fontSize: 13 }}>
                   <span style={{ color: T.muted }}>{row[0]}</span><span>{row[1]}</span>
                 </div>
               ))}
+            </div>
+
+            {/* Price bar — aligned to this column, pinned to the viewport bottom while the
+                customer scrolls the options (Diamond-Heaven style). */}
+            <div className="pdpv2-pricebar" style={{ position: 'sticky', bottom: 0, zIndex: 30, marginTop: 30, background: T.tint, border: `1px solid ${T.rule}`, boxShadow: '0 -8px 24px rgba(33,30,25,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '15px 18px calc(15px + env(safe-area-inset-bottom))' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 11, color: T.muted, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{configSummary}{nivodaPriceLoading ? '  ·  updating…' : ''}</div>
+                  <div className="pdpv2-price" style={{ fontFamily: "'Lora', Georgia, serif", fontWeight: 400, fontSize: 25, lineHeight: 1.15, letterSpacing: '0.005em', fontVariantNumeric: 'tabular-nums', color: T.ink }}>{money(totalPrice)}<span style={{ fontFamily: FONT_BODY, fontSize: 11, fontWeight: 400, color: T.muted, marginLeft: 8 }}>incl. VAT</span></div>
+                </div>
+                <button onClick={handleAddToCart} disabled={isLoading} className="pdpv2-addbtn" style={{ padding: '16px clamp(24px,3vw,44px)', cursor: isLoading ? 'default' : 'pointer', background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{isLoading ? 'Adding…' : 'Add to bag'}</button>
+              </div>
             </div>
           </div>
         </main>
@@ -1212,7 +1528,7 @@ const ProductDetail = () => {
         </section>
 
         {(recommendedProducts || []).length > 0 && (
-          <section style={{ padding: 'clamp(48px,5vw,80px) clamp(24px,3vw,52px)' }}>
+          <section style={{ padding: 'clamp(48px,5vw,80px) clamp(24px,3vw,52px)', background: T.paper }}>
             <div style={{ ...eyebrow, marginBottom: 14 }}>You may also like</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'clamp(16px,1.6vw,28px)', marginTop: 20 }} className="pdpv2-rec">
               {recommendedProducts.slice(0, 4).map((r: any) => {
@@ -1233,34 +1549,48 @@ const ProductDetail = () => {
         )}
       </div>
 
-      {/* Mobile sticky price + add-to-bag bar */}
-      <div className="pdpv2-bottombar" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 55, gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 14, background: 'rgba(248,246,240,0.96)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderTop: `1px solid ${T.rule}`, padding: '12px 16px calc(12px + env(safe-area-inset-bottom))' }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: 22, lineHeight: 1 }}>{money(totalPrice)}</div>
-          <div style={{ fontSize: 10.5, color: T.muted, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{configSummary}{nivodaPriceLoading ? '  ·  updating…' : ''}</div>
-        </div>
-        <button onClick={handleAddToCart} disabled={isLoading} className="pdpv2-addbtn" style={{ padding: '16px 26px', cursor: isLoading ? 'default' : 'pointer', background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{isLoading ? 'Adding…' : 'Add to bag'}</button>
-      </div>
-
       <FooterV2 />
 
       <style>{`
-        .pdpv2-bottombar { display: none; }
+        .pdpv2-gallery{ position: sticky; align-self: start; }
+        .pdpv2-galnav, .pdpv2-galdots{ display:none; }
+        .pdpv2-galnav{ position:absolute; top:50%; right:12px; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.94); border:1px solid ${T.rule}; align-items:center; justify-content:center; cursor:pointer; color:${T.ink}; box-shadow:0 2px 12px rgba(28,26,23,0.16); z-index:4; }
+        .pdpv2-galdots{ position:absolute; bottom:14px; left:0; right:0; justify-content:center; gap:7px; z-index:4; }
+        .pdpv2-galdot{ width:7px; height:7px; border-radius:50%; border:0; padding:0; background:rgba(28,26,23,0.28); cursor:pointer; transition:background .2s,width .2s; }
+        .pdpv2-galdot[data-on="1"]{ background:${T.gold}; }
+        .pdpv2-nobar{ scrollbar-width:thin; }
+        .pdpv2-nobar::-webkit-scrollbar{ height:5px; }
+        .pdpv2-nobar::-webkit-scrollbar-thumb{ background:${T.ruleStrong}; border-radius:3px; }
+        .carat-track{ position:absolute; left:11px; right:11px; top:50%; height:5px; transform:translateY(-50%); background:${T.ink}; border-radius:3px; }
+        .carat-tick{ position:absolute; top:50%; width:2px; height:13px; transform:translate(-50%,-50%); background:${T.ink}; border-radius:1px; z-index:2; }
+        .carat-handle{ position:absolute; top:50%; width:13px; height:26px; transform:translate(-50%,-50%); border-radius:4px; background:linear-gradient(180deg,#F7EFD8,#E7D3A2); border:1.5px solid ${T.gold}; box-shadow:0 1px 5px rgba(33,30,25,0.32); pointer-events:none; z-index:3; }
+        .carat-handle::after{ content:''; position:absolute; left:50%; top:5px; bottom:5px; width:1px; transform:translateX(-50%); background:rgba(184,146,63,0.75); }
+        .carat-input{ position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:grab; z-index:4; -webkit-appearance:none; appearance:none; background:transparent; }
+        .carat-input:active{ cursor:grabbing; }
+        .carat-input::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:26px; height:26px; cursor:grab; }
+        .carat-input::-moz-range-thumb{ width:26px; height:26px; border:0; background:transparent; cursor:grab; }
         @media (max-width:900px){
-          .pdpv2-main{ grid-template-columns:1fr !important }
-          .pdpv2-gallery{ position:static !important }
-          .pdpv2-primary{ aspect-ratio:1 !important }
+          .pdpv2-main{ grid-template-columns:minmax(0,1fr) !important; padding-left:16px !important; padding-right:16px !important }
+          .pdpv2-gallery{ position:static !important; min-width:0; margin:0 -16px 30px; width:calc(100% + 32px) }
+          /* on mobile the price bar is fixed to the viewport bottom so it's never cut off */
+          .pdpv2-pricebar{ position:fixed !important; left:0; right:0; bottom:0; margin:0 !important; border-left:0 !important; border-right:0 !important; z-index:55 }
+          .pdpv2{ padding-bottom:92px }
+          /* gallery becomes a full-bleed, borderless, swipeable single-image carousel */
+          .pdpv2-mosaic{ column-count:1 !important; display:flex !important; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:0 !important; }
+          .pdpv2-mosaic::-webkit-scrollbar{ display:none }
+          .pdpv2-tile2{ flex:0 0 100% !important; margin:0 !important; scroll-snap-align:center; aspect-ratio:1/1; border:0 !important; }
+          .pdpv2-tile2 img, .pdpv2-tile2 video{ width:100% !important; height:100% !important; }
+          .pdpv2-tile2 img{ object-fit:contain !important; }
+          .pdpv2-tile2 video{ object-fit:cover !important; }
+          .pdpv2-galnav{ display:flex !important }
+          .pdpv2-galdots{ display:flex !important }
+          .pdpv2-price{ font-size:20px !important }
           .pdpv2-promise-top,.pdpv2-promise-grid{ grid-template-columns:1fr !important }
           .pdpv2-rec{ grid-template-columns:repeat(2,1fr) !important }
           .pdpv2-spec{ grid-template-columns:1fr !important }
-          .pdpv2-bottombar{ display:grid !important }
-          /* on mobile the fixed bottom bar carries the price + CTA, so the top summary
-             is static and its inline button is hidden to avoid duplication */
-          .pdpv2-summary{ position:static !important }
-          .pdpv2-summary-cta{ display:none !important }
-          .pdpv2{ padding-bottom: 84px; }
         }
       `}</style>
+      {productData?.nivoda_enabled && <DiamondHelpNudge productName={productData?.name} />}
     </div>
   );
 };

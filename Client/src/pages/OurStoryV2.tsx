@@ -6,29 +6,32 @@ import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 
 /**
  * Our Story — v2 redesign (design_handoff_mcculloch_bespoke_story_thankyou).
- * Title block, heritage imagery, the house, the real milestone line, how we work,
- * a sourcing statement and a visit block.
- * CONTENT: rewritten 2026-08-14 from the client's Website Essentials — Andrew McCulloch
- * Jewellers established in Beeston 1952; owned since 2017 by the de Silva family (Has de
- * Silva, a fifth-generation jeweller, BA Hons Univ. of Kent); Bespoke Jeweller of the Year
- * 2021. Original preserved at pages/OurStory.original.tsx.
+ * Title block, heritage imagery, the house, the real milestone line, an archival
+ * section, how we work, a sourcing statement and a visit block.
+ * CONTENT: rewritten 2026-09-21 from the owner's own account of the de Silva family —
+ * jewellers since 1895, when J. A. de Silva opened inside the Grand Hotel, Nuwara Eliya,
+ * Sri Lanka (still there today); Hasita de Silva, fifth-generation jeweller and
+ * great-grandson of J. A. de Silva, brought the family legacy to Nottingham by taking on
+ * Andrew McCulloch's in 2017. Archival photo (public/our-story/willingdon-1921.jpg): a
+ * framed portrait of Lord & Lady Willingdon, Governor of Madras, beside a 1921 endorsement
+ * of J. A. de Silva & Co. Earlier Beeston-1952 draft preserved in git history.
  */
 
 const NAV_H = 96;
 const pageX = "clamp(24px, 4vw, 64px)";
 const eyebrow: React.CSSProperties = { fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: T.gold };
 
-// Real milestones from the client's Website Essentials.
+// Real milestones from the owner's account of the de Silva family's history.
 const GENERATIONS = [
-  { year: "1952", name: "Andrew McCulloch Jewellers", role: "Established in Beeston", note: "A jeweller opens on The Square in Beeston, working to commission and looking after the town's jewellery — a trusted independent name for decades." },
-  { year: "2017", name: "The de Silva family take over", role: "Current ownership", note: "Has de Silva — a fifth-generation jeweller — takes on the business, keeping the same bench and the same personal service the shop has always been known for." },
-  { year: "Trained", name: "Has de Silva", role: "Founder & master jeweller", note: "BA (Hons) in Jewellery Design and Manufacturing at the University of Kent, then years with respected jewellers in Mayfair, London and in Winchester before leading the bench here." },
-  { year: "2021", name: "Bespoke Jeweller of the Year", role: "Award", note: "Recognised for bespoke work — every commission designed and made by hand on our own bench in Beeston." },
+  { year: "1895", name: "J. A. de Silva", role: "The first jewellers", note: "J. A. de Silva opens his first jewellers inside the Grand Hotel in Nuwara Eliya, Sri Lanka, where it remains to this day." },
+  { year: "Five", name: "A family of jewellers", role: "Generations at the bench", note: "For five generations the de Silva family has handcrafted fine jewellery, creating pieces for everyone from royalty to young couples beginning a life together." },
+  { year: "2017", name: "Hasita de Silva", role: "Nottingham", note: "Hasita de Silva, fifth-generation jeweller and great-grandson of J. A. de Silva, brings the family's legacy of handcrafted jewellery to Nottingham, taking on Andrew McCulloch's." },
+  { year: "Today", name: "Andrew McCulloch", role: "A fixture of the community", note: "The store is a fixture of the local community, providing bespoke pieces, repairs and watch services, with every commission made by hand." },
 ];
 
 const PRINCIPLES = [
-  "No finished stock — every piece is made to order",
-  "Nothing outsourced — designed and made on our own bench",
+  "No finished stock; every piece is made to order",
+  "Nothing outsourced; designed and made on our own bench",
   "Certified stones only, with documentation",
   "Servicing for life, by the people who made it",
 ];
@@ -82,7 +85,8 @@ const OurStoryV2 = (): JSX.Element => {
           .os-kenwrap.in .os-ken { animation: none !important; transform: none !important; }
         }
         @media (max-width: 900px) {
-          .os-title, .os-house, .os-work, .os-visit, .os-linetop { grid-template-columns: 1fr !important; }
+          .os-title, .os-house, .os-work, .os-visit, .os-linetop, .os-archive { grid-template-columns: 1fr !important; }
+          .os-archive { row-gap: 28px; }
           .os-title { row-gap: 18px; }
           .os-workimg { order: -1; }
           .os-fullimg { aspect-ratio: 4 / 3 !important; height: auto !important; }
@@ -99,13 +103,13 @@ const OurStoryV2 = (): JSX.Element => {
       <section style={{ maxWidth: 1240, margin: "0 auto", padding: `${NAV_H + 48}px ${pageX} clamp(36px, 4vw, 56px)` }}>
         <div className="os-title" style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: "clamp(24px, 4vw, 72px)", alignItems: "baseline", paddingBottom: 30 }}>
           <div>
-            <div className="os-rise" style={{ ...eyebrow, marginBottom: 20 }}>Since 1952</div>
+            <div className="os-rise" style={{ ...eyebrow, marginBottom: 20 }}>Since 1895</div>
             <h1 className="os-hero" style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(44px, 5.4vw, 86px)", lineHeight: 1.02, color: T.ink, fontWeight: 400, margin: 0 }}>
-              A family jeweller in Beeston.
+              Five generations of jewellers.
             </h1>
           </div>
           <p className="os-rise os-d2" style={{ fontSize: 15.5, color: T.body, lineHeight: 1.75, alignSelf: "end" }}>
-            An independent jeweller on The Square since 1952, owned since 2017 by the de Silva family — making and mending fine jewellery by hand, by people you can meet.
+            The de Silva family has been in the jewellery world since 1895, from a first shop inside the Grand Hotel in Nuwara Eliya, Sri Lanka, to a bench in Nottingham today, making and mending fine jewellery by hand.
           </p>
         </div>
         <div className="os-draw" style={{ height: 1, background: T.rule }} />
@@ -122,18 +126,18 @@ const OurStoryV2 = (): JSX.Element => {
           <div className="os-rise">
             <div style={{ ...eyebrow, marginBottom: 16 }}>The house</div>
             <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(28px, 3vw, 46px)", lineHeight: 1.08, color: T.ink, fontWeight: 400, margin: 0 }}>
-              A workshop, not a chain.
+              From Nuwara Eliya to Nottingham.
             </h2>
           </div>
           <div className="os-rise os-d2">
             <p style={p}>
-              Andrew McCulloch Jewellers has always been a bench before it was a shop. Every ring, every setting and every repair passes through the hands of the jewellers who work here — there is no central factory and no anonymous supplier.
+              In 1895, J. A. de Silva opened his first jewellers inside the Grand Hotel in Nuwara Eliya, Sri Lanka, where it remains to this day. Our resident jeweller, Hasita de Silva, is a fifth-generation jeweller and the great-grandson of J. A. de Silva.
             </p>
             <p style={{ ...p, marginTop: 18 }}>
-              That is unusual now, and deliberately so. It means the person who designs your piece is the person who makes it, and the person you will see again when it needs looking after years from now.
+              Over more than a century the de Silva family has created countless pieces for everyone from royalty to young couples looking to begin a life together. It is the same handcrafted work, carried down through five generations.
             </p>
             <p style={{ ...p, marginTop: 18 }}>
-              Traditional bench craftsmanship, alongside modern CAD design, on our own premises in Beeston — made and cared for with passion and precision.
+              Hasita brought his family's legacy of handcrafted jewellery to Nottingham after taking on Andrew McCulloch's in 2017. Today the store is a fixture of the local community, providing bespoke pieces, repairs and watch services.
             </p>
           </div>
         </div>
@@ -146,11 +150,11 @@ const OurStoryV2 = (): JSX.Element => {
             <div className="os-rise">
               <div style={{ ...eyebrow, marginBottom: 16 }}>The line</div>
               <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(28px, 3vw, 46px)", lineHeight: 1.08, color: "#F4EFE6", fontWeight: 400, margin: 0 }}>
-                A Beeston name, in family hands.
+                One family, five generations.
               </h2>
             </div>
             <p className="os-rise os-d2" style={{ fontSize: 15.5, color: T.onDarkBody, lineHeight: 1.75, margin: 0 }}>
-              Andrew McCulloch has been a Beeston jeweller since 1952. It is now owned by the de Silva family — jewellers for five generations — who have kept the same bench, and the same personal service, exactly where they should be.
+              From a first shop in Nuwara Eliya in 1895 to Andrew McCulloch's in Nottingham today, the de Silva family has kept the same craft and the same personal service, passed hand to hand, generation to generation.
             </p>
           </div>
 
@@ -172,6 +176,41 @@ const OurStoryV2 = (): JSX.Element => {
         </div>
       </section>
 
+      {/* 4b — From the archive */}
+      <section style={{ maxWidth: 1240, margin: "0 auto", padding: `clamp(56px, 7vw, 104px) ${pageX}` }}>
+        <div className="os-rise" style={{ maxWidth: 620 }}>
+          <div style={{ ...eyebrow, marginBottom: 16 }}>From the archive</div>
+          <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(28px, 3vw, 46px)", lineHeight: 1.08, color: T.ink, fontWeight: 400, margin: 0 }}>
+            Names in the ledger.
+          </h2>
+          <p style={{ ...p, marginTop: 20 }}>
+            The de Silva family has served notable customers across its history, among them Wilhelm, the German Crown Prince and great-great grandson of Queen Victoria, and Lord &amp; Lady Willingdon, Governor of Madras from 1919 to 1924.
+          </p>
+        </div>
+
+        <div className="os-archive" style={{ display: "grid", gridTemplateColumns: "1fr 0.9fr", gap: "clamp(32px, 5vw, 72px)", alignItems: "center", marginTop: "clamp(40px, 5vw, 64px)" }}>
+          <div className="os-rise os-kenwrap" style={{ background: T.tint, overflow: "hidden", padding: "clamp(20px, 3vw, 40px)", border: `1px solid ${T.rule}` }}>
+            <img src="/our-story/willingdon-1921.jpg" alt="Framed portrait of H.E. Lord Willingdon, Governor of Madras, and Lady Willingdon, beside a 1921 note endorsing J. A. de Silva & Co." style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 24px 60px -24px rgba(28,26,23,0.45)" }} />
+          </div>
+          <div className="os-rise os-d2">
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(22px, 2.2vw, 30px)", lineHeight: 1.18, color: T.ink }}>
+              H.E. Lord Willingdon
+            </div>
+            <div style={{ fontSize: 13.5, color: T.muted, marginTop: 6, letterSpacing: "0.02em" }}>
+              Governor of Madras &nbsp;·&nbsp; &amp; Lady Willingdon
+            </div>
+            <div style={{ height: 1, background: T.rule, margin: "22px 0" }} />
+            <p style={{ fontSize: 15, color: T.body, lineHeight: 1.8, fontStyle: "italic", margin: 0 }}>
+              “I have bought some tortoiseshell combs etc. from J. A. de Silva &amp; Co. for Their Excellencies and have found them most satisfactory &amp; their prices quite moderate.”
+            </p>
+            <div style={{ fontSize: 12.5, color: T.muted, marginTop: 16, lineHeight: 1.6 }}>
+              Capt. D. Bonall, A.D.C. to H.E. the Governor of Madras<br />
+              The Queen’s Cottage, Nuwara Eliya · 19 August 1921
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 5 — How we work */}
       <section style={{ maxWidth: 1240, margin: "0 auto", padding: `clamp(56px, 7vw, 104px) ${pageX}` }}>
         <div className="os-work" style={{ display: "grid", gridTemplateColumns: "1.05fr 1fr", gap: "clamp(32px, 5vw, 80px)", alignItems: "center" }}>
@@ -181,7 +220,7 @@ const OurStoryV2 = (): JSX.Element => {
               Made to order, without exception.
             </h2>
             <p style={{ fontSize: 15.5, color: T.body, lineHeight: 1.75, marginTop: 22 }}>
-              A few rules do not change here. They make the work slower and the workshop smaller than it could be — which is the point.
+              A few rules do not change here. They make the work slower and the workshop smaller than it could be, which is the point.
             </p>
             <div style={{ marginTop: 28 }}>
               {PRINCIPLES.map((x, i) => (
@@ -223,7 +262,7 @@ const OurStoryV2 = (): JSX.Element => {
               Come and see the bench.
             </h2>
             <p style={{ fontSize: 15.5, color: T.body, lineHeight: 1.75, marginTop: 20 }}>
-              You’re welcome to visit the showroom in Beeston — to talk through a commission, bring in a piece, or simply see how the work is done.
+              You’re welcome to visit the showroom in Beeston, to talk through a commission, bring in a piece, or simply see how the work is done.
             </p>
             <div className="os-addr2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginTop: 28, padding: "24px 0", borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}` }}>
               <div>

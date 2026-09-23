@@ -240,7 +240,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
           {/* Header */}
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "start", gap: 14, padding: "20px 22px", background: T.ink, flex: "none" }}>
             <div>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 21, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FFFFFF", lineHeight: 1 }}>McCulloch</div>
+              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 21, letterSpacing: "0.2em", color: "#FFFFFF", lineHeight: 1 }}>McCulloch</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: open ? T.gold : M2 }} />
                 <span style={{ fontSize: 11, color: T.onDarkBody }}>{presence}</span>
@@ -296,7 +296,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                 })}
                 {theyTyping && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#A09889", marginBottom: 7 }}>McCulloch</span>
+                    <span style={{ fontSize: 10, letterSpacing: "0.12em", color: "#A09889", marginBottom: 7 }}>McCulloch</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 5, padding: 15, background: T.tint, border: `1px solid ${T.rule}` }}>
                       {[0, 0.2, 0.4].map((d) => <span key={d} style={{ width: 5, height: 5, borderRadius: "50%", background: M2, animation: `cw2Blink 1.4s ease-in-out ${d}s infinite` }} />)}
                     </span>

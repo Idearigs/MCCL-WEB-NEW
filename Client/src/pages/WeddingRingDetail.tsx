@@ -1,738 +1,394 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import LuxuryNavigationWhite from '@/components/LuxuryNavigationWhite';
-import { FooterSection } from '@/components/FooterSection';
-import FavoriteButton from '@/components/FavoriteButton';
+import NavigationV2 from '../components/home-v2/NavigationV2';
+import FooterV2 from '../components/home-v2/FooterV2';
+import { T, FONT_DISPLAY, FONT_BODY } from '../components/home-v2/tokens';
 import { useCart } from '../contexts/CartContext';
 import API_BASE_URL, { getMediaUrl } from '../config/api';
+import DiamondHelpNudge from '../components/DiamondHelpNudge';
+import { useIsMobile } from '../hooks/use-mobile';
 
-// ── UK ring sizes ─────────────────────────────────────────────────────────────
-const UK_SIZES = [
-  'A','B','C','D','E','F','G','H','I','J','K','L','M',
-  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
-];
+/**
+ * Wedding ring PDP — collection-aware. One "collection" (e.g. Papplewick) is made of many
+ * per-(width·weight·gender) designs in the Allied Gold catalogue (/wedding/designs). The
+ * customer chooses style → width → weight → metal → size here in one simple guided flow;
+ * switching a collection-level option loads the matching design. Kept intentionally minimal:
+ * short labels, no walls of text.
+ */
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
-interface Variant {
-  id: string;
-  sku: string;
-  variant_name: string;
-  price: number | null;
-  metal_type: string | null;
-  metal_id: string | null;
-  size: string | null;          // finish/weight or diamond_spread
-  mm_width: number | null;
-  carat_weight: number | null;
-  ai_description: string | null; // "Sleeve: 9ct White" for Two Color
-}
+const NAV_H = 96;
+const money = (n: number | null | undefined) => (n == null ? '' : '£' + Math.round(n).toLocaleString('en-GB'));
+const RING_SIZES = ['H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V'];
+const WEIGHT_ORDER = ['Light', 'Medium', 'Heavy', 'Ultra Heavy'];
+const cleanDesc = (s?: string) => (s || '').replace(/,?\s*in \{metal\}/gi, '').replace(/\{[^}]+\}/g, '').replace(/\s+/g, ' ').replace(/\s+\./g, '.').trim();
+const genderOf = (m: any) => (/gents/i.test(m?.family || m?.name || '') ? 'Gents' : 'Ladies');
 
-interface ProductImage {
-  id: string;
-  url: string;
-  alt: string;
-  is_primary: boolean;
-  metal_id?: string;
-}
+// colourway → swatch for the metal dots
+const WAY_SWATCH: Record<string, string> = { Y: 'linear-gradient(135deg,#F4DFA6,#E3B85E)', R: 'linear-gradient(135deg,#F1D2C4,#DCA98E)', W: 'linear-gradient(135deg,#F1F0F2,#DCDBDE)' };
 
-interface ProductData {
-  id: string;
-  name: string;
-  slug: string;
-  sku: string;
-  price: string;
-  base_price: number;
-  description?: string;
-  category: { id: string; name: string; slug: string };
-  images: ProductImage[];
-  variants: Variant[];
-  breadcrumbs?: Array<{ name: string; href: string }>;
-  available_metals?: Array<{ id: string; name: string; color?: string }>;
-  jewelry_sub_type_id?: string | null;
-}
+// Drag / swipe to rotate a 360° spin (Allied blob frame sequence, {index} → 1..frames).
+const Spin360 = ({ spin, way }: { spin: any; way: string }): JSX.Element | null => {
+  const total: number = spin?.frames || 144;
+  const start: number = spin?.start || 1;
+  const tmpl: string = spin?.[way] || spin?.W || spin?.Y || spin?.R || '';
+  // Subsample to ~48 frames — smooth enough for a spin at a third of the load, so the
+  // page never freezes decoding 144 full-size JPGs at once.
+  const frameList = React.useMemo(() => {
+    const step = Math.max(1, Math.round(total / 48));
+    const list: number[] = [];
+    for (let i = 0; i < total; i += step) list.push(start + i);
+    return list;
+  }, [total, start]);
+  const N = frameList.length;
+  const [pos, setPos] = useState(0);
+  const [ready, setReady] = useState(false);
+  const drag = React.useRef<{ x: number; p: number } | null>(null);
 
-// ── Ring type detection ───────────────────────────────────────────────────────
-// Diamond Set:  SKU has 6 parts  (code|metal|quality|spread|carat|mm)
-// Two Color:    SKU has 5 parts, 3rd part is a metal name (not a number)
-// Diamond Cut:  SKU has 5 parts, 3rd part is a number (width)
-type RingType = 'diamond-cut' | 'diamond-set' | 'two-color' | 'unknown';
+  // Preload the small frame set in staggered batches (smooth drag, no main-thread freeze).
+  useEffect(() => {
+    if (!tmpl) return;
+    let alive = true; let loaded = 0; setReady(false);
+    let idx = 0;
+    const loadBatch = () => {
+      if (!alive) return;
+      const end = Math.min(idx + 6, N);
+      for (; idx < end; idx++) {
+        const im = new Image();
+        im.onload = im.onerror = () => { loaded++; if (alive && loaded >= Math.min(12, N)) setReady(true); };
+        im.src = tmpl.replace('{index}', String(frameList[idx]));
+      }
+      if (idx < N) setTimeout(loadBatch, 80);
+    };
+    loadBatch();
+    return () => { alive = false; };
+  }, [tmpl, frameList, N]);
 
-const detectRingType = (variants: Variant[]): RingType => {
-  if (!variants.length) return 'unknown';
-  const first = variants[0];
-  // Two Color stores sleeve metal in ai_description
-  if (first.ai_description && first.ai_description.startsWith('Sleeve:')) return 'two-color';
-  // Diamond Set has carat_weight
-  if (first.carat_weight !== null && first.carat_weight !== undefined) return 'diamond-set';
-  return 'diamond-cut';
-};
-
-// ── SKU parsers ───────────────────────────────────────────────────────────────
-const parseDiamondCutSku = (sku: string) => {
-  const p = sku.split('|');
-  return { metal: p[1] ?? '', width: p[2] ?? '', profile: p[3] ?? '', finish: p[4] ?? '' };
-};
-
-const parseDiamondSetSku = (sku: string) => {
-  const p = sku.split('|');
-  // quality stored as single char: N=Natural, L=Lab-grown
-  const qualityChar = p[2] ?? '';
-  const quality = qualityChar === 'N' ? 'Natural' : qualityChar === 'L' ? 'Lab-Grown' : qualityChar;
-  return { metal: p[1] ?? '', quality, spread: p[3] ?? '', carat: p[4] ?? '', width: p[5] ?? '' };
-};
-
-const parseTwoColorSku = (sku: string) => {
-  const p = sku.split('|');
-  return { baseMetal: p[1] ?? '', sleeveMetal: p[2] ?? '', width: p[3] ?? '', weight: p[4] ?? '' };
-};
-
-// ── Utility ───────────────────────────────────────────────────────────────────
-const unique = <T,>(arr: T[]): T[] => Array.from(new Set(arr));
-const fmt = (n: number) =>
-  `£${n.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-
-// ── Option button ─────────────────────────────────────────────────────────────
-const Opt = ({
-  active, onClick, children, className = ''
-}: { active: boolean; onClick: () => void; children: React.ReactNode; className?: string }) => (
-  <button
-    onClick={onClick}
-    className={`px-4 py-2 text-xs font-inter font-light border transition-all ${className} ${
-      active
-        ? 'border-gray-900 bg-gray-900 text-white'
-        : 'border-gray-300 text-gray-700 hover:border-gray-600'
-    }`}
-  >
-    {children}
-  </button>
-);
-
-// ── Size grid button ──────────────────────────────────────────────────────────
-const SizeBtn = ({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) => (
-  <button
-    onClick={onClick}
-    className={`w-9 h-9 text-xs font-inter font-light border transition-all ${
-      active
-        ? 'border-gray-900 bg-gray-900 text-white'
-        : 'border-gray-200 text-gray-700 hover:border-gray-600'
-    }`}
-  >
-    {label}
-  </button>
-);
-
-// ── Accordion row ─────────────────────────────────────────────────────────────
-const renderDescription = (text: string | undefined) => {
-  if (!text) return null;
-
-  const isSectionHeader = (line: string) =>
-    line.length < 65 &&
-    !line.endsWith('.') &&
-    !line.endsWith(':') &&
-    /^[A-Z]/.test(line) &&
-    line.split(' ').length >= 2;
-
-  const blocks: { type: 'title' | 'header' | 'body'; text: string }[] = [];
-  let bodyAccum = '';
-
-  const flushBody = () => {
-    const t = bodyAccum.trim();
-    if (t) { blocks.push({ type: 'body', text: t }); bodyAccum = ''; }
+  if (!tmpl) return null;
+  const url = tmpl.replace('{index}', String(frameList[pos] ?? frameList[0]));
+  const px = (e: any) => (e.touches?.[0]?.clientX ?? e.clientX ?? 0);
+  const down = (e: any) => { drag.current = { x: px(e), p: pos }; };
+  const move = (e: any) => {
+    if (!drag.current) return;
+    const dx = px(e) - drag.current.x;
+    let np = Math.round(drag.current.p - dx / 12);
+    np = ((np % N) + N) % N; // wrap
+    setPos(np);
   };
-
-  for (const raw of text.split('\n')) {
-    const line = raw.trim();
-    if (!line) { flushBody(); continue; }
-    if (line.includes('–') && line.length < 120) { flushBody(); blocks.push({ type: 'title', text: line }); continue; }
-    if (isSectionHeader(line)) { flushBody(); blocks.push({ type: 'header', text: line }); continue; }
-    bodyAccum += (bodyAccum ? ' ' : '') + line;
-  }
-  flushBody();
-
+  const up = () => { drag.current = null; };
   return (
-    <div>
-      {blocks.map((block, i) => {
-        if (block.type === 'title') return (
-          <p key={i} className="font-medium text-gray-900 text-sm leading-snug mb-4">{block.text}</p>
-        );
-        if (block.type === 'header') return (
-          <p key={i} className="font-medium text-gray-800 text-[11px] uppercase tracking-[0.14em] mt-5 mb-2">{block.text}</p>
-        );
-        return (
-          <p key={i} className="text-sm font-inter font-light text-gray-600 leading-[1.75] mb-3">{block.text}</p>
-        );
-      })}
+    <div
+      onMouseDown={down} onMouseMove={move} onMouseUp={up} onMouseLeave={up}
+      onTouchStart={down} onTouchMove={move} onTouchEnd={up}
+      style={{ position: 'absolute', inset: 0, cursor: 'grab', touchAction: 'pan-y', userSelect: 'none' }}
+    >
+      <img src={url} alt="360° view" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+      {!ready && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8A8377', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', pointerEvents: 'none' }}>Loading 360°…</div>}
+      <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.9)', padding: '6px 12px', borderRadius: 20, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#56534D', pointerEvents: 'none' }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M3 12a9 4.5 0 0 0 18 0M3 12a9 4.5 0 0 1 18 0" /><path d="M8 5l-2 2 2 2" /></svg>
+        Drag to spin
+      </div>
     </div>
   );
 };
 
-const AccordionRow = ({ label, content }: { label: string; content: string }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b border-gray-200">
-      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between py-4 text-left">
-        <span className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900">{label}</span>
-        <span className="text-gray-500 text-lg leading-none">{open ? '−' : '+'}</span>
-      </button>
-      {open && <div className="pb-4">{renderDescription(content)}</div>}
-    </div>
+// Small ring thumbnail with a graceful fallback when a design has no photo (or it 404s).
+const RingThumb = ({ src }: { src: string }): JSX.Element => {
+  const [err, setErr] = useState(false);
+  if (!src || err) return (
+    <span style={{ width: 54, height: 54, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F2EFEA' }}>
+      <svg width="32" height="32" viewBox="0 0 40 40" fill="none" stroke="#C7BFB1" strokeWidth="3" aria-hidden="true"><circle cx="20" cy="21" r="12.5" /></svg>
+    </span>
   );
+  return <img src={src} alt="" loading="lazy" onError={() => setErr(true)} style={{ width: 54, height: 54, objectFit: 'cover' }} />;
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ── CONFIGURATORS ─────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── Diamond Cut Configurator ──────────────────────────────────────────────────
-const DiamondCutConfigurator = ({
-  variants,
-  onVariantMatch,
-}: {
-  variants: Variant[];
-  onVariantMatch: (v: Variant | null) => void;
-}) => {
-  const metals   = useMemo(() => unique(variants.map(v => parseDiamondCutSku(v.sku).metal).filter(Boolean)).sort(), [variants]);
-  const [metal,   setMetal]   = useState(metals[0] ?? '');
-  const [width,   setWidth]   = useState('');
-  const [profile, setProfile] = useState('');
-  const [finish,  setFinish]  = useState('');
-
-  const widths = useMemo(() =>
-    unique(variants.filter(v => parseDiamondCutSku(v.sku).metal === metal).map(v => parseDiamondCutSku(v.sku).width).filter(Boolean))
-      .sort((a, b) => parseFloat(a) - parseFloat(b)),
-    [variants, metal]);
-
-  const profiles = useMemo(() =>
-    unique(variants.filter(v => { const p = parseDiamondCutSku(v.sku); return p.metal === metal && p.width === width; }).map(v => parseDiamondCutSku(v.sku).profile).filter(Boolean)).sort(),
-    [variants, metal, width]);
-
-  const finishes = useMemo(() =>
-    unique(variants.filter(v => { const p = parseDiamondCutSku(v.sku); return p.metal === metal && p.width === width && p.profile === profile; }).map(v => parseDiamondCutSku(v.sku).finish).filter(Boolean)).sort(),
-    [variants, metal, width, profile]);
-
-  // Cascade auto-select
-  useEffect(() => { if (widths.length && !widths.includes(width)) setWidth(widths[0]); }, [widths]);
-  useEffect(() => { if (profiles.length && !profiles.includes(profile)) setProfile(profiles[0]); }, [profiles]);
-  useEffect(() => { if (finishes.length && !finishes.includes(finish)) setFinish(finishes[0]); }, [finishes]);
-
-  // Match variant
-  useEffect(() => {
-    const matched = variants.find(v => {
-      const p = parseDiamondCutSku(v.sku);
-      return p.metal === metal && p.width === width && p.profile === profile && (!finish || p.finish === finish);
-    }) ?? null;
-    onVariantMatch(matched);
-  }, [metal, width, profile, finish, variants]);
-
-  return (
-    <div className="space-y-6">
-      {metals.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Metal — <span className="font-normal">{metal}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {metals.map(m => <Opt key={m} active={metal === m} onClick={() => setMetal(m)}>{m}</Opt>)}
-          </div>
-        </div>
-      )}
-
-      {widths.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Width — <span className="font-normal">{width ? `${width}mm` : '—'}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {widths.map(w => <Opt key={w} active={width === w} onClick={() => setWidth(w)}>{w}mm</Opt>)}
-          </div>
-        </div>
-      )}
-
-      {profiles.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Profile — <span className="font-normal">{profile || '—'}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {profiles.map(p => <Opt key={p} active={profile === p} onClick={() => setProfile(p)}>{p}</Opt>)}
-          </div>
-        </div>
-      )}
-
-      {finishes.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Finish — <span className="font-normal">{finish || '—'}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {finishes.map(f => <Opt key={f} active={finish === f} onClick={() => setFinish(f)}>{f}</Opt>)}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ── Diamond Set Configurator ──────────────────────────────────────────────────
-const DiamondSetConfigurator = ({
-  variants,
-  onVariantMatch,
-}: {
-  variants: Variant[];
-  onVariantMatch: (v: Variant | null) => void;
-}) => {
-  const metals   = useMemo(() => unique(variants.map(v => parseDiamondSetSku(v.sku).metal).filter(Boolean)).sort(), [variants]);
-  const qualities = useMemo(() => unique(variants.map(v => parseDiamondSetSku(v.sku).quality).filter(Boolean)).sort(), [variants]);
-
-  const [metal,   setMetal]   = useState(metals[0] ?? '');
-  const [quality, setQuality] = useState(qualities[0] ?? '');
-  const [spread,  setSpread]  = useState('');
-  const [width,   setWidth]   = useState('');
-
-  const spreads = useMemo(() =>
-    unique(variants.filter(v => { const p = parseDiamondSetSku(v.sku); return p.metal === metal && p.quality === quality; }).map(v => parseDiamondSetSku(v.sku).spread).filter(Boolean)).sort(),
-    [variants, metal, quality]);
-
-  const widths = useMemo(() =>
-    unique(
-      variants
-        .filter(v => { const p = parseDiamondSetSku(v.sku); return p.metal === metal && p.quality === quality && p.spread === spread; })
-        .map(v => parseDiamondSetSku(v.sku).width)
-        .filter(Boolean)
-    ).sort((a, b) => parseFloat(a) - parseFloat(b)),
-    [variants, metal, quality, spread]);
-
-  useEffect(() => { if (spreads.length && !spreads.includes(spread)) setSpread(spreads[0]); }, [spreads]);
-  useEffect(() => { if (widths.length && !widths.includes(width)) setWidth(widths[0]); }, [widths]);
-
-  useEffect(() => {
-    const matched = variants.find(v => {
-      const p = parseDiamondSetSku(v.sku);
-      return p.metal === metal && p.quality === quality && p.spread === spread && (!width || p.width === width);
-    }) ?? null;
-    onVariantMatch(matched);
-  }, [metal, quality, spread, width, variants]);
-
-  return (
-    <div className="space-y-6">
-      {metals.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Metal — <span className="font-normal">{metal}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {metals.map(m => <Opt key={m} active={metal === m} onClick={() => setMetal(m)}>{m}</Opt>)}
-          </div>
-        </div>
-      )}
-
-      {qualities.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Diamond Quality — <span className="font-normal">{quality}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {qualities.map(q => <Opt key={q} active={quality === q} onClick={() => setQuality(q)}>{q}</Opt>)}
-          </div>
-        </div>
-      )}
-
-      {spreads.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Diamond Coverage — <span className="font-normal">{spread}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {spreads.map(s => <Opt key={s} active={spread === s} onClick={() => setSpread(s)}>{s}</Opt>)}
-          </div>
-          <p className="mt-2 text-[10px] font-inter font-light text-gray-400 leading-snug">
-            50% = diamonds set halfway around · 100% = full eternity
-          </p>
-        </div>
-      )}
-
-      {widths.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Ring Width — <span className="font-normal">{width ? `${width}mm` : '—'}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {widths.map(w => <Opt key={w} active={width === w} onClick={() => setWidth(w)}>{w}mm</Opt>)}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ── Two Color Configurator ────────────────────────────────────────────────────
-const TwoColorConfigurator = ({
-  variants,
-  onVariantMatch,
-}: {
-  variants: Variant[];
-  onVariantMatch: (v: Variant | null) => void;
-}) => {
-  const baseMetals = useMemo(() => unique(variants.map(v => parseTwoColorSku(v.sku).baseMetal).filter(Boolean)).sort(), [variants]);
-  const [baseMetal,   setBaseMetal]   = useState(baseMetals[0] ?? '');
-  const [sleeveMetal, setSleeveMetal] = useState('');
-  const [width,       setWidth]       = useState('');
-  const [weight,      setWeight]      = useState('');
-
-  const sleeveMetals = useMemo(() =>
-    unique(variants.filter(v => parseTwoColorSku(v.sku).baseMetal === baseMetal).map(v => parseTwoColorSku(v.sku).sleeveMetal).filter(Boolean)).sort(),
-    [variants, baseMetal]);
-
-  const widths = useMemo(() =>
-    unique(variants.filter(v => { const p = parseTwoColorSku(v.sku); return p.baseMetal === baseMetal && p.sleeveMetal === sleeveMetal; }).map(v => parseTwoColorSku(v.sku).width).filter(Boolean))
-      .sort((a, b) => parseFloat(a) - parseFloat(b)),
-    [variants, baseMetal, sleeveMetal]);
-
-  const weights = useMemo(() =>
-    unique(variants.filter(v => { const p = parseTwoColorSku(v.sku); return p.baseMetal === baseMetal && p.sleeveMetal === sleeveMetal && p.width === width; }).map(v => parseTwoColorSku(v.sku).weight).filter(Boolean)).sort(),
-    [variants, baseMetal, sleeveMetal, width]);
-
-  useEffect(() => { if (sleeveMetals.length && !sleeveMetals.includes(sleeveMetal)) setSleeveMetal(sleeveMetals[0]); }, [sleeveMetals]);
-  useEffect(() => { if (widths.length && !widths.includes(width)) setWidth(widths[0]); }, [widths]);
-  useEffect(() => { if (weights.length && !weights.includes(weight)) setWeight(weights[0]); }, [weights]);
-
-  useEffect(() => {
-    const matched = variants.find(v => {
-      const p = parseTwoColorSku(v.sku);
-      return p.baseMetal === baseMetal && p.sleeveMetal === sleeveMetal && (!width || p.width === width) && (!weight || p.weight === weight);
-    }) ?? null;
-    onVariantMatch(matched);
-  }, [baseMetal, sleeveMetal, width, weight, variants]);
-
-  return (
-    <div className="space-y-6">
-      {baseMetals.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Base Metal — <span className="font-normal">{baseMetal}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {baseMetals.map(m => <Opt key={m} active={baseMetal === m} onClick={() => setBaseMetal(m)}>{m}</Opt>)}
-          </div>
-        </div>
-      )}
-
-      {sleeveMetals.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Sleeve Metal — <span className="font-normal">{sleeveMetal}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {sleeveMetals.map(m => <Opt key={m} active={sleeveMetal === m} onClick={() => setSleeveMetal(m)}>{m}</Opt>)}
-          </div>
-          <p className="mt-2 text-[10px] font-inter font-light text-gray-400 leading-snug">
-            The sleeve is the contrasting inner band visible at the edges
-          </p>
-        </div>
-      )}
-
-      {widths.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Width — <span className="font-normal">{width ? `${width}mm` : '—'}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {widths.map(w => <Opt key={w} active={width === w} onClick={() => setWidth(w)}>{w}mm</Opt>)}
-          </div>
-        </div>
-      )}
-
-      {weights.length > 0 && (
-        <div>
-          <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-            Weight — <span className="font-normal">{weight || '—'}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {weights.map(w => <Opt key={w} active={weight === w} onClick={() => setWeight(w)}>{w}</Opt>)}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ── MAIN PAGE ────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
 
 const WeddingRingDetail = (): JSX.Element => {
   const { productId } = useParams<{ productId: string }>();
   const { addToCart } = useCart();
+  const isMobile = useIsMobile();
 
-  const [productData, setProductData] = useState<ProductData | null>(null);
+  const [design, setDesign] = useState<any>(null);
+  const [members, setMembers] = useState<any[]>([]);
+  const [labels, setLabels] = useState<Record<string, Record<string, string>>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [matchedVariant, setMatchedVariant] = useState<Variant | null>(null);
-  const [selectedSize, setSelectedSize] = useState('L');
-  const [addingToCart, setAddingToCart] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
 
-  // Fetch product
+  const [metal, setMetal] = useState('');
+  const [size, setSize] = useState('L');
+  const [imgWay, setImgWay] = useState('W');
+  const [added, setAdded] = useState(false);
+  // Gallery is always the interactive 360 spin (with a static-photo fallback when a design
+  // has no spin frames); the colourway thumbnails only switch metal — no photo/360 toggle.
+  const [navH, setNavH] = useState(NAV_H); // real fixed-nav height, so the sticky image tucks flush
+
+  useEffect(() => {
+    const measure = () => { const el = document.querySelector('.v2nav'); if (el) setNavH(Math.round(el.getBoundingClientRect().height)); };
+    measure();
+    const t = setTimeout(measure, 400); // after the trust-bar/animation settle
+    window.addEventListener('resize', measure);
+    return () => { window.removeEventListener('resize', measure); clearTimeout(t); };
+  }, []);
+
+  // Current design detail
   useEffect(() => {
     if (!productId) return;
-    setLoading(true);
-    setError(null);
-    fetch(`${API_BASE_URL}/products/${productId}`)
+    setLoading(true); setError(null);
+    fetch(`${API_BASE_URL}/wedding/designs/${encodeURIComponent(productId)}`)
       .then(r => r.json())
-      .then(data => {
-        if (data.success) setProductData(data.data.product);
-        else setError(data.message || 'Failed to load product');
-      })
-      .catch(() => setError('Failed to load product'))
+      .then(d => { if (d.success) setDesign(d.design); else setError(d.message || 'Ring not found'); })
+      .catch(() => setError('Failed to load'))
       .finally(() => setLoading(false));
   }, [productId]);
 
-  const variants = productData?.variants ?? [];
-  const ringType = useMemo(() => detectRingType(variants), [variants]);
-  const displayImages = productData?.images ?? [];
-  const currentImage = displayImages[currentImageIndex];
+  // All designs in this collection (for the style/width/weight/gender selectors)
+  useEffect(() => {
+    const col = design?.collection; if (!col) return;
+    fetch(`${API_BASE_URL}/wedding/designs`)
+      .then(r => r.json())
+      .then(d => { if (d.success) { setLabels(d.labels || {}); setMembers((d.designs || []).filter((x: any) => x.collection === col)); } })
+      .catch(() => {});
+  }, [design?.collection]);
 
-  const displayPrice = matchedVariant?.price
-    ? fmt(matchedVariant.price)
-    : productData?.price ?? '';
+  // Keep the chosen metal across width/weight switches; only fall back to a default
+  // (prefer 18ct white) when the current metal isn't offered on the new design. No scroll
+  // reset here — switching an option updates in place, it must not jump the page.
+  useEffect(() => {
+    if (!design) return;
+    const rows = design.variationRows || [];
+    setMetal(prev => {
+      const keep = rows.find((r: any) => r.metal === prev);
+      const pick = keep || rows.find((r: any) => r.metal === '18W') || rows.find((r: any) => r.colourway === 'W') || rows[0];
+      if (pick?.colourway) setImgWay(pick.colourway);
+      return pick?.metal || '';
+    });
+  }, [design?.id]);
 
-  const handleAddToCart = () => {
-    if (!productData) return;
-    setAddingToCart(true);
-    setTimeout(() => {
-      addToCart({
-        id: productData.id,
-        name: productData.name,
-        price: displayPrice,
-        size: selectedSize,
-        image: currentImage?.url ? getMediaUrl(currentImage.url) : '',
-        type: 'jewelry',
-        selectedOptions: {
-          ...(matchedVariant ? buildSelectedOptions(ringType, matchedVariant) : {}),
-          size: `UK ${selectedSize}`,
-        },
-      });
-      setAddingToCart(false);
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 2500);
-    }, 800);
+  const wlabel = (code: string) => labels.weight?.[code] || code;
+  const plabel = (code: string) => labels.profile?.[code] || code;
+  const facet = (m: any, dim: string) => m?.facets?.[dim]?.[0];
+
+  const me = useMemo(() => members.find(m => m.id === design?.id), [members, design?.id]);
+  const curGender = design ? (/gents/i.test(design.family || '') ? 'Gents' : 'Ladies') : 'Ladies';
+  const curProfile = facet(me, 'profile');
+  const curWidth = design ? String(design.widthMm) : facet(me, 'width');
+  const curWeight = facet(me, 'weight');
+
+  const genders = useMemo(() => [...new Set(members.map(genderOf))], [members]);
+  const profiles = useMemo(() => [...new Set(members.filter(m => genderOf(m) === curGender).map(m => facet(m, 'profile')).filter(Boolean))], [members, curGender]);
+  const widths = useMemo(() => [...new Set(members.filter(m => genderOf(m) === curGender && (!curProfile || facet(m, 'profile') === curProfile)).map(m => facet(m, 'width')).filter(Boolean))].sort((a, b) => parseFloat(a) - parseFloat(b)), [members, curGender, curProfile]);
+  const weights = useMemo(() => [...new Set(members.filter(m => genderOf(m) === curGender && (!curProfile || facet(m, 'profile') === curProfile) && facet(m, 'width') === curWidth).map(m => facet(m, 'weight')).filter(Boolean))].sort((a, b) => WEIGHT_ORDER.indexOf(wlabel(a)) - WEIGHT_ORDER.indexOf(wlabel(b))), [members, curGender, curProfile, curWidth, labels]);
+
+  const find = (g: string, p: string, w: string, wt: string) => members.find(m => genderOf(m) === g && facet(m, 'profile') === p && facet(m, 'width') === w && facet(m, 'weight') === wt);
+  // Switch design IN PLACE (no route change) so choosing an option never reloads the page;
+  // the URL is updated silently so the link still reflects the current selection.
+  const go = (m: any) => {
+    if (!m || m.id === design?.id) return;
+    fetch(`${API_BASE_URL}/wedding/designs/${encodeURIComponent(m.id)}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) { setDesign(d.design); try { window.history.replaceState(null, '', `/wedding-rings/${encodeURIComponent(m.id)}`); } catch { /* ignore */ } } })
+      .catch(() => {});
+  };
+  const pickGender = (g: string) => go(find(g, curProfile, curWidth, curWeight) || members.find(m => genderOf(m) === g));
+  const pickProfile = (p: string) => go(find(curGender, p, curWidth, curWeight) || members.find(m => facet(m, 'profile') === p && genderOf(m) === curGender));
+  const pickWidth = (w: string) => go(find(curGender, curProfile, w, curWeight) || members.find(m => facet(m, 'width') === w && genderOf(m) === curGender && facet(m, 'profile') === curProfile));
+  const pickWeight = (wt: string) => go(find(curGender, curProfile, curWidth, wt));
+
+  const rows = design?.variationRows || [];
+  const curRow = rows.find((r: any) => r.metal === metal) || rows[0];
+  const price = curRow?.price ?? design?.priceFrom ?? null;
+  const hero = design?.hero || {};
+  const heroImg = hero[imgWay] || hero.W || hero.Y || hero.R;
+  // A design can carry a `spin` object whose per-colour templates are all null (no 360
+  // shot for it). Only treat it as spinnable when at least one real frame template exists —
+  // otherwise the gallery falls back to the default hero photo.
+  const hasSpin = !!(design?.spin && (design.spin.W || design.spin.Y || design.spin.R));
+  // Switch the shown colourway AND select a matching metal (so price updates too).
+  const pickColourway = (w: string) => { setImgWay(w); const r = rows.find((x: any) => x.colourway === w); if (r) setMetal(r.metal); };
+
+  const handleAdd = () => {
+    if (!design || !curRow) return;
+    addToCart({
+      id: design.id, name: design.name, price: money(price), size: `UK ${size}`,
+      image: heroImg ? getMediaUrl(heroImg) : '',
+      type: 'jewelry',
+      selectedOptions: { metal: curRow.metalName, width: `${curWidth}mm`, weight: wlabel(curWeight), profile: plabel(curProfile), size: `UK ${size}` },
+    } as any);
+    setAdded(true); setTimeout(() => setAdded(false), 2200);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto mb-4" />
-          <p className="text-gray-500 font-cormorant text-lg">Loading…</p>
-        </div>
-      </div>
-    );
-  }
+  // ---- shared styles ----
+  const stepHead = (n: string, title: string, right?: React.ReactNode): JSX.Element => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 12px' }}>
+      <span style={{ width: 22, height: 22, borderRadius: '50%', border: `1px solid ${T.ruleStrong}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BODY, fontWeight: 600, fontSize: 12, color: T.muted, flex: 'none' }}>{n}</span>
+      <span style={{ fontFamily: FONT_DISPLAY, fontSize: 19, color: T.ink, flex: 1 }}>{title}</span>
+      {right}
+    </div>
+  );
+  const pill = (on: boolean): React.CSSProperties => ({ padding: '10px 16px', minHeight: 42, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 13, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : '#FFFFFF', color: T.ink, display: 'inline-flex', alignItems: 'center', gap: 8 });
+  const rowWrap: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 26 };
+  const prevCard = (on: boolean): React.CSSProperties => ({ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '8px 12px 9px', cursor: 'pointer', background: on ? T.tint : '#FFFFFF', border: `1px solid ${on ? T.ink : T.ruleSoft}`, minWidth: 74 });
+  const memberThumb = (m: any) => (m && m.hero) ? getMediaUrl(m.hero[imgWay] || m.hero.W || m.hero.Y || m.hero.R || '') : '';
+  const hasStyle = genders.length > 1 || profiles.length > 1;
+  const sn = (i: number) => String(hasStyle ? i : i - 1); // step numbering shifts when Style is hidden
 
-  if (error || !productData) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-700 font-cormorant text-xl mb-4">{error || 'Product not found'}</p>
-          <Link to="/wedding-rings" className="text-sm uppercase tracking-widest underline font-inter">
-            Back to Wedding Rings
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (<div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ fontFamily: FONT_DISPLAY, color: T.muted }}>Loading…</div></div>);
+  if (error || !design) return (
+    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+      <div style={{ fontFamily: FONT_DISPLAY, fontSize: 20, color: T.ink }}>{error || 'Ring not found'}</div>
+      <Link to="/wedding" style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.gold }}>Back to wedding rings</Link>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-white">
-      <LuxuryNavigationWhite />
+    <div className="wrd" style={{ background: '#FFFFFF', minHeight: '100vh', color: T.ink, ['--navh' as any]: navH + 'px' }}>
+      <NavigationV2 solid />
+      <style>{`
+        .wrd a{color:inherit;text-decoration:none}
+        /* Desktop layout (restored to the earlier version). Mobile is overridden below and
+           must not change. */
+        .wrd-main{ display:grid; grid-template-columns: minmax(0,1.18fr) minmax(0,1fr); gap: clamp(28px,4vw,56px); max-width:1360px; margin:0 auto; padding: calc(${NAV_H}px + 46px) clamp(20px,4vw,56px) 80px; align-items:start; }
+        .wrd-gallery{ position:sticky; top:${NAV_H + 16}px; align-self:start; }
+        .wrd-metalbtn:hover{ border-color:${T.ink} !important; }
+        @media (max-width: 900px){
+          /* Top padding uses the MEASURED nav height (not the hardcoded 96px) so there's no gap. */
+          .wrd-main{ grid-template-columns:1fr !important; gap:16px; padding: var(--navh, 84px) 16px 40px !important; }
+          /* Innovative mobile flow: the ring image PINS just under the nav while the customer
+             scrolls the options below, so it stays in view (and draggable to spin) the whole
+             time. True full-bleed (100vw) so the image fills the width. */
+          .wrd-gallery{ position:sticky !important; top:var(--navh, 84px); z-index:5; background:#F7F5F0; width:100vw; margin-left:calc(50% - 50vw); padding:0 0 6px; box-shadow:0 10px 14px -12px rgba(20,18,15,0.22); }
+          .wrd-stage{ aspect-ratio:auto !important; height:40vh !important; background:#F7F5F0; }
+          .wrd-stage img{ object-fit:cover !important; transform:none !important; }
+          /* Clearance for the fixed price bar sits BELOW the footer and matches its dark
+             colour, so there is no white strip between the footer and the bar. */
+          .wrd-footpad{ display:block !important; height: calc(84px + env(safe-area-inset-bottom, 0px)); }
+          .wrd-pricebar{ position:fixed !important; left:0; right:0; bottom:0; margin:0 !important; z-index:55; border-left:0; border-right:0; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; }
+        }
+      `}</style>
 
-      {/* Breadcrumb */}
-      <nav className="w-full px-4 lg:px-10 pt-36 lg:pt-48 pb-4">
-        <div className="flex items-center gap-2 text-xs text-gray-500 font-inter font-light">
-          <Link to="/" className="hover:text-gray-900">Home</Link>
-          <span>›</span>
-          <Link to="/wedding-rings" className="hover:text-gray-900">Wedding Rings</Link>
-          <span>›</span>
-          <span className="text-gray-900">{productData.name}</span>
+      <div className="wrd-main">
+        {/* Gallery — MOBILE keeps the single sticky/spin stage (unchanged); DESKTOP shows a
+            multi-image mosaic (hero photo + several 360 angle frames) that fills the column. */}
+        <div className="wrd-gallery">
+          {isMobile ? (
+            <div className="wrd-stage" style={{ position: 'relative', aspectRatio: '1 / 1', background: '#F7F5F0', overflow: 'hidden' }}>
+              {hasSpin
+                ? <Spin360 spin={design.spin} way={imgWay} />
+                : (heroImg
+                  ? <img src={getMediaUrl(heroImg)} alt={design.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.muted, fontFamily: FONT_DISPLAY }}>{design.name}</div>)}
+              {/* Tell the shopper whether this design spins or is a photo only */}
+              <span style={{ position: 'absolute', top: 12, left: 12, zIndex: 3, padding: '6px 11px', background: 'rgba(255,255,255,0.9)', color: T.ink, fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', pointerEvents: 'none' }}>{hasSpin ? '360°' : 'Photo only'}</span>
+            </div>
+          ) : (
+            <>
+              {/* Large main image — always the interactive 360 spin; metal label + colourway thumbnails below */}
+              <div style={{ position: 'relative', aspectRatio: '1 / 1', background: '#F7F5F0', border: `1px solid ${T.rule}`, overflow: 'hidden' }}>
+                {hasSpin
+                  ? <Spin360 spin={design.spin} way={imgWay} />
+                  : (heroImg
+                    ? <img src={getMediaUrl(heroImg)} alt={design.name} style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.15)' }} />
+                    : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.muted, fontFamily: FONT_DISPLAY }}>{design.name}</div>)}
+                {curRow?.metalName && <span style={{ position: 'absolute', bottom: 14, right: 16, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.muted }}>{curRow.metalName}</span>}
+              </div>
+              {(design.colourways || []).length > 1 && (
+                <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                  {(design.colourways || []).map((w: string) => {
+                    const t = design.hero?.[w] ? getMediaUrl(design.hero[w]) : '';
+                    const on = imgWay === w;
+                    return (
+                      <button key={w} onClick={() => pickColourway(w)} aria-label={w} style={{ width: 92, aspectRatio: '1 / 1', border: `1px solid ${on ? T.ink : T.rule}`, background: '#F7F5F0', overflow: 'hidden', padding: 0, cursor: 'pointer' }}>
+                        {t ? <img src={t} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <span style={{ display: 'block', width: '100%', height: '100%', background: WAY_SWATCH[w] || '#eee' }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
         </div>
-      </nav>
 
-      <div className="w-full px-4 lg:px-10 pb-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+        {/* Buy column */}
+        <div>
+          {/* Title is the COLLECTION (matches the listing card). Profile/width/weight/gender
+              are configuration of this one product — switching Style must not read as jumping
+              to a different, differently-named product. */}
+          <div style={{ fontSize: 10.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: T.gold, marginBottom: 10 }}>Wedding ring</div>
+          <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(30px,3.4vw,46px)', lineHeight: 1.05, margin: '0 0 10px' }}>{design.collection || design.name}</h1>
+          <div style={{ padding: '2px 0 20px', marginBottom: 26, borderBottom: `1px solid ${T.rule}` }}>
+            <div style={{ fontFamily: "'Lora', Georgia, serif", fontWeight: 400, fontSize: 25, fontVariantNumeric: 'tabular-nums', color: T.ink }}>{money(price)}<span style={{ fontFamily: FONT_BODY, fontSize: 11, color: T.muted, marginLeft: 8 }}>incl. VAT</span></div>
+            <div style={{ fontSize: 12, color: T.muted, marginTop: 6 }}>{[curRow?.metalName, `${curWidth}mm`, wlabel(curWeight), curGender].filter(Boolean).join('  ·  ')}</div>
+          </div>
 
-            {/* ── Images ── */}
-            <div className="flex flex-col gap-4">
-              <div className="relative bg-white overflow-hidden" style={{ aspectRatio: '1' }}>
-                {currentImage ? (
-                  <img
-                    src={getMediaUrl(currentImage.url)}
-                    alt={currentImage.alt || productData.name}
-                    className="w-full h-full object-contain"
-                    fetchPriority="high"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-                    <span className="text-gray-400 font-cormorant">No image available</span>
-                  </div>
-                )}
-                {displayImages.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setCurrentImageIndex(i => (i - 1 + displayImages.length) % displayImages.length)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow transition-colors z-10"
-                    >
-                      <ChevronLeft className="w-4 h-4 text-gray-700" />
-                    </button>
-                    <button
-                      onClick={() => setCurrentImageIndex(i => (i + 1) % displayImages.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow transition-colors z-10"
-                    >
-                      <ChevronRight className="w-4 h-4 text-gray-700" />
-                    </button>
-                  </>
-                )}
-                <div className="absolute top-3 right-3 z-20">
-                  <FavoriteButton productId={productData.id} productName={productData.name} imageUrl={displayImages[0]?.url} productUrl={`/${productData.category?.slug}/${productData.slug}`} size="sm" />
-                </div>
-              </div>
-
-              {displayImages.length > 1 && (
-                <div className="flex gap-2 flex-wrap">
-                  {displayImages.map((img, idx) => (
-                    <button
-                      key={img.id}
-                      onClick={() => setCurrentImageIndex(idx)}
-                      className={`w-16 h-16 overflow-hidden flex-shrink-0 transition-all ${
-                        idx === currentImageIndex
-                          ? 'ring-2 ring-gray-900 ring-offset-1'
-                          : 'ring-1 ring-gray-200 opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      <img src={getMediaUrl(img.url)} alt={img.alt || `View ${idx + 1}`} className="w-full h-full object-contain" />
-                    </button>
-                  ))}
-                </div>
-              )}
+          {/* Style: gender + profile */}
+          {(genders.length > 1 || profiles.length > 1) && (
+            <div>
+              {stepHead('1', 'Style')}
+              {genders.length > 1 && (<><div style={{ ...rowWrap, marginBottom: 12 }}>{genders.map(g => <button key={g} className="wrd-metalbtn" onClick={() => pickGender(g)} style={pill(curGender === g)}>{g}</button>)}</div></>)}
+              {profiles.length > 1 && (<div style={rowWrap}>{profiles.map(p => <button key={p} className="wrd-metalbtn" onClick={() => pickProfile(p)} style={pill(curProfile === p)}>{plabel(p)}</button>)}</div>)}
             </div>
+          )}
 
-            {/* ── Right: info + configurator ── */}
-            <div className="flex flex-col">
-              <h1 className="text-3xl lg:text-4xl font-cormorant font-light text-gray-900 leading-tight mb-2">
-                {productData.name}
-              </h1>
-              <div className="text-xl lg:text-2xl font-cormorant font-light text-gray-800 mb-6 transition-all">
-                {displayPrice}
-              </div>
+          {/* Metal — first, so the colour change shows on the image without scrolling */}
+          {rows.length > 0 && (<div>{stepHead(sn(2), 'Metal')}<div style={rowWrap}>{rows.map((r: any) => <button key={r.metal} className="wrd-metalbtn" onClick={() => { setMetal(r.metal); if (r.colourway) setImgWay(r.colourway); }} style={pill(metal === r.metal)}><span style={{ width: 15, height: 15, borderRadius: '50%', background: WAY_SWATCH[r.colourway] || '#ddd', border: '1px solid rgba(0,0,0,0.12)' }} />{r.metalName}</button>)}</div></div>)}
 
-              {productData.description && (
-                <div className="mb-8">
-                  {renderDescription(productData.description)}
-                </div>
-              )}
+          {/* Width — with a preview of each band */}
+          {widths.length > 0 && (<div>{stepHead(sn(3), 'Width')}<div style={rowWrap}>{widths.map(w => {
+            const m = find(curGender, curProfile, w, curWeight) || members.find(x => facet(x, 'width') === w && genderOf(x) === curGender && facet(x, 'profile') === curProfile);
+            const t = memberThumb(m);
+            return <button key={w} className="wrd-metalbtn" onClick={() => pickWidth(w)} style={prevCard(curWidth === w)}><RingThumb src={t} /><span style={{ fontSize: 12.5 }}>{w}mm</span></button>;
+          })}</div></div>)}
 
-              {/* Ring type badge */}
-              {ringType !== 'unknown' && (
-                <div className="mb-6">
-                  <span className="inline-block px-3 py-1 text-[10px] font-inter font-light uppercase tracking-[0.2em] border border-gray-200 text-gray-500">
-                    {ringType === 'diamond-cut' ? 'Diamond Cut' : ringType === 'diamond-set' ? 'Diamond Set' : 'Two Colour'}
-                  </span>
-                </div>
-              )}
+          {/* Weight — with a preview of each */}
+          {weights.length > 0 && (<div>{stepHead(sn(4), 'Weight')}<div style={rowWrap}>{weights.map(wt => {
+            const m = find(curGender, curProfile, curWidth, wt);
+            const t = memberThumb(m);
+            return <button key={wt} className="wrd-metalbtn" onClick={() => pickWeight(wt)} style={prevCard(curWeight === wt)}><RingThumb src={t} /><span style={{ fontSize: 12.5 }}>{wlabel(wt)}</span></button>;
+          })}</div></div>)}
 
-              <div className="border-t border-gray-100 mb-6" />
+          {/* Size */}
+          <div>
+            {stepHead(sn(5), 'Ring size', <Link to="/customer-service" style={{ fontSize: 11, color: T.gold, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Size guide</Link>)}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>{RING_SIZES.map(s => <button key={s} onClick={() => setSize(s)} style={{ ...pill(size === s), padding: '9px 0', width: 44, justifyContent: 'center' }}>{s}</button>)}</div>
+            <div style={{ fontSize: 12, color: T.muted, marginBottom: 26 }}>Made to your finger size — complimentary resizing if it’s not quite right.</div>
+          </div>
 
-              {/* Configurator — type-specific */}
-              {variants.length > 0 ? (
-                <>
-                  {ringType === 'diamond-cut' && (
-                    <DiamondCutConfigurator variants={variants} onVariantMatch={setMatchedVariant} />
-                  )}
-                  {ringType === 'diamond-set' && (
-                    <DiamondSetConfigurator variants={variants} onVariantMatch={setMatchedVariant} />
-                  )}
-                  {ringType === 'two-color' && (
-                    <TwoColorConfigurator variants={variants} onVariantMatch={setMatchedVariant} />
-                  )}
-                </>
-              ) : (
-                <p className="text-sm font-inter font-light text-gray-400 mb-6">
-                  Contact us for pricing and availability on this style.
-                </p>
-              )}
-
-              {/* Ring Size */}
-              {variants.length > 0 && (
-                <div className="mt-6">
-                  <p className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-900 mb-3">
-                    Ring Size — <span className="font-normal">UK {selectedSize}</span>
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {UK_SIZES.map(s => (
-                      <SizeBtn key={s} active={selectedSize === s} onClick={() => setSelectedSize(s)} label={s} />
-                    ))}
+          {/* Details — styled spec block + promises (not a bare text dump) */}
+          <div style={{ borderTop: `1px solid ${T.rule}`, marginTop: isMobile ? 40 : 28, paddingTop: isMobile ? 26 : 22 }}>
+            <div style={{ fontSize: 10.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: T.gold, marginBottom: 12 }}>Details</div>
+            {cleanDesc(design.shortDescription || design.description) && (
+              <p style={{ fontSize: 13.5, lineHeight: 1.65, color: T.body, margin: '0 0 18px' }}>{cleanDesc(design.shortDescription || design.description)}</p>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', columnGap: 24 }}>
+              {([['Profile', plabel(curProfile)], ['Width', `${curWidth}mm`], ['Weight', `${wlabel(curWeight)}${curGender ? ` · ${curGender}` : ''}`], ['Metal', curRow?.metalName], ['Hallmark', curRow?.hallmark], ['Ring size', 'Made to your size']] as [string, string][])
+                .filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5, padding: '9px 0', borderBottom: `1px solid ${T.ruleSoft}` }}>
+                    <span style={{ color: T.muted }}>{k}</span><span style={{ color: T.ink, textAlign: 'right' }}>{v}</span>
                   </div>
-                  <p className="mt-2 text-[11px] font-inter font-light text-gray-400">
-                    Not sure of your size?{' '}
-                    <Link to="/ring-size-guide" className="underline hover:text-gray-700">
-                      Ring size guide
-                    </Link>
-                  </p>
-                </div>
-              )}
-
-              {/* Price + CTA */}
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <div className="flex items-baseline justify-between mb-6">
-                  <span className="text-[11px] font-inter font-light uppercase tracking-[0.18em] text-gray-500">Total</span>
-                  <span className="text-2xl font-cormorant font-light text-gray-900">{displayPrice}</span>
-                </div>
-
-                <button
-                  onClick={handleAddToCart}
-                  disabled={addingToCart}
-                  className="w-full py-4 bg-gray-900 text-white text-xs font-inter font-light uppercase tracking-[0.2em] hover:bg-gray-800 transition-colors disabled:opacity-60"
-                >
-                  {addingToCart ? 'Adding…' : addedToCart ? '✓ Added to Bag' : 'Add to Bag'}
-                </button>
-
-                <button className="w-full mt-3 py-4 border border-gray-300 text-gray-700 text-xs font-inter font-light uppercase tracking-[0.2em] hover:border-gray-600 transition-colors">
-                  Enquire
-                </button>
-              </div>
-
-              {/* Accordion */}
-              <div className="mt-8 space-y-0 border-t border-gray-200">
-                <AccordionRow label="Product Details" content={productData.description || 'Crafted to the highest standard with exceptional attention to detail.'} />
-                <AccordionRow label="Delivery & Returns" content="Complimentary UK delivery on all orders. International delivery available. Free returns within 30 days." />
-                <AccordionRow label="Engraving" content="Personalise your ring with a complimentary engraving. Contact us to arrange." />
-              </div>
+                ))}
             </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
+              {['Free insured UK delivery', '1-year warranty', 'Complimentary resizing'].map(x => (
+                <span key={x} style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.muted, border: `1px solid ${T.ruleSoft}`, padding: '7px 11px' }}>{x}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Sticky price bar (fixed full-width on mobile) — mirrors the engagement PDP */}
+          <div className="wrd-pricebar" style={{ position: 'sticky', bottom: 0, zIndex: 30, marginTop: 30, background: T.tint, border: `1px solid ${T.rule}`, boxShadow: '0 -6px 20px rgba(20,18,15,0.06)', display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, color: T.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[curRow?.metalName, `${curWidth}mm`, wlabel(curWeight), `Size ${size}`].filter(Boolean).join('  ·  ')}</div>
+              <div style={{ fontFamily: "'Lora', Georgia, serif", fontWeight: 400, fontSize: 22, color: T.ink, fontVariantNumeric: 'tabular-nums' }}>{money(price)}</div>
+            </div>
+            <button onClick={handleAdd} style={{ flex: 'none', padding: '14px 26px', background: T.ink, color: T.paper, border: 0, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: '0.14em', textTransform: 'uppercase', transition: 'background .2s' }}>{added ? 'Added ✓' : 'Add to bag'}</button>
           </div>
         </div>
       </div>
-
-      <FooterSection />
+      <DiamondHelpNudge productName={design.name} title="Got lost customising your ring?" subtitle="Width, weight, metal — we’ll help you choose the perfect band." />
+      <FooterV2 />
+      {/* Mobile-only dark clearance behind the fixed price bar (no white strip) */}
+      <div className="wrd-footpad" style={{ display: 'none', background: T.ink }} />
     </div>
   );
 };
-
-// ── Build cart selectedOptions from matched variant ───────────────────────────
-function buildSelectedOptions(ringType: RingType, v: Variant): Record<string, string> {
-  if (ringType === 'diamond-cut') {
-    const p = parseDiamondCutSku(v.sku);
-    return { metal: p.metal, width: `${p.width}mm`, profile: p.profile, finish: p.finish };
-  }
-  if (ringType === 'diamond-set') {
-    const p = parseDiamondSetSku(v.sku);
-    return { metal: p.metal, quality: p.quality, spread: p.spread, width: `${p.width}mm` };
-  }
-  if (ringType === 'two-color') {
-    const p = parseTwoColorSku(v.sku);
-    return { baseMetal: p.baseMetal, sleeveMetal: p.sleeveMetal, width: `${p.width}mm`, weight: p.weight };
-  }
-  return {};
-}
 
 export default WeddingRingDetail;

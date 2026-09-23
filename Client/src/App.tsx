@@ -42,6 +42,7 @@ const WatchCollection   = lazy(() => import("./pages/CollectionV2"));
 // Jewellery categories
 const Rings             = lazy(() => import("./pages/RingsV2"));
 const EngagementRings   = lazy(() => import("./pages/EngagementRingsV2"));
+const DevEngagementRings = lazy(() => import("./pages/DevEngagementRings")); // dev: product-code lookup
 // Wedding rings — 12th handoff configurator (listing + PDP). Real-data versions
 // preserved at WeddingRingsV2 / WeddingRingDetail; repoint here to revert.
 const WeddingRings      = lazy(() => import("./pages/WeddingListingV2"));
@@ -51,7 +52,7 @@ const JewelleryListing  = lazy(() => import("./pages/JewelleryListingV2"));
 const ProductDetail     = lazy(() => import("./pages/ProductDetail"));
 const ProductDetailV2    = lazy(() => import("./pages/ProductDetailV2"));
 const WatchDetail       = lazy(() => import("./pages/WatchDetailV2"));
-const WeddingRingDetail = lazy(() => import("./pages/WeddingConfiguratorV2"));
+const WeddingRingDetail = lazy(() => import("./pages/WeddingRingDetail"));
 
 // Info / account pages
 const Contact           = lazy(() => import("./pages/ContactV2"));
@@ -135,6 +136,7 @@ const AppRoutes = () => {
       <Route path="/diamonds" element={<Diamonds />} />
       <Route path="/rings" element={<Rings />} />
       <Route path="/engagement-rings" element={<EngagementRings />} />
+      <Route path="/dev/engagement-rings" element={<DevEngagementRings />} />
       <Route path="/wedding-rings" element={<WeddingRings />} />
       <Route path="/wedding" element={<WeddingRings />} />
       <Route path="/earrings" element={<JewelleryListing category="earrings" />} />

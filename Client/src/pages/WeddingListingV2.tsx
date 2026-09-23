@@ -79,6 +79,8 @@ const WeddingListingV2 = (): JSX.Element => {
   const [open, setOpen] = useState<Record<string, boolean>>({ category: true, metal: false });
   const [saved, setSaved] = useState<string[]>([]);
   const [railOpen, setRailOpen] = useState(false);
+  const [railClosing, setRailClosing] = useState(false);
+  const closeRail = () => { setRailClosing(true); setTimeout(() => { setRailOpen(false); setRailClosing(false); }, 280); };
 
   useEffect(() => {
     let alive = true;
@@ -167,7 +169,23 @@ const WeddingListingV2 = (): JSX.Element => {
     return l;
   }, [designs, sel, sort]); // eslint-disable-line
 
-  const visible = list.slice(0, shown);
+  // Collapse the many per-design rows (e.g. the 81 "Papplewick" width/weight/gent variants)
+  // into ONE card per collection. Width/weight/gender/metal/size are chosen in the PDP.
+  const grouped = useMemo(() => {
+    const by = new Map<string, ApiDesign[]>();
+    for (const d of list) { const k = d.collection || d.name; if (!by.has(k)) by.set(k, []); by.get(k)!.push(d); }
+    return [...by.entries()].map(([col, arr]) => {
+      const rep = arr.reduce((a, b) => (b.priceFrom != null && (a.priceFrom == null || b.priceFrom < a.priceFrom) ? b : a), arr[0]);
+      const priceFrom = arr.reduce<number | null>((m, d) => (d.priceFrom != null && (m == null || d.priceFrom < m) ? d.priceFrom : m), null);
+      const colourways = [...new Set(arr.flatMap(d => d.colourways))];
+      const hero: any = { Y: null, W: null, R: null };
+      (["Y", "W", "R"] as const).forEach(w => { hero[w] = arr.map(d => d.hero[w]).find(Boolean) || null; });
+      const widths = new Set<string>(); arr.forEach(d => (d.facets.width || []).forEach(w => widths.add(w)));
+      return { ...rep, name: col, collection: col, priceFrom, colourways, hero, _members: arr.length, _widths: widths.size } as ApiDesign & { _members: number; _widths: number };
+    });
+  }, [list]);
+
+  const visible = grouped.slice(0, shown);
 
   const cardWay = (d: ApiDesign): CW => {
     const w = cardPreview[d.id] || cardPick[d.id] || colourway;
@@ -184,7 +202,7 @@ const WeddingListingV2 = (): JSX.Element => {
 
   const countFor = (dim: string, v: string) => designs.filter(d => passes(d, { ...sel, [dim]: [v] })).length;
 
-  const eyebrow: React.CSSProperties = { fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "#8A8377" };
+  const eyebrow: React.CSSProperties = { fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "#6E6A60" };
   const rememberScroll = () => { try { sessionStorage.setItem("mcc-wr-scroll", String(window.scrollY)); sessionStorage.setItem("mcc-wr-shown", String(shown)); } catch { /* ignore */ } };
   const goTo = (d: ApiDesign) => { rememberScroll(); navigate(`/wedding-rings/${encodeURIComponent(d.id)}`); };
 
@@ -208,11 +226,11 @@ const WeddingListingV2 = (): JSX.Element => {
                   style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", background: "transparent", border: 0, textAlign: "left", fontFamily: FONT_BODY }}>
                   <span style={{ flex: "none", width: 15, height: 15, background: isSel ? T.ink : "transparent", border: `1px solid ${isSel ? T.ink : T.ruleStrong}` }} />
                   <span style={{ flex: 1, fontSize: 13, color: isSel ? T.ink : T.body }}>{lbl(dim, v)}</span>
-                  <span style={{ fontSize: 11, color: "#A9A196" }}>{countFor(dim, v)}</span>
+                  <span style={{ fontSize: 11, color: "#6E6A60" }}>{countFor(dim, v)}</span>
                 </button>
               );
             })}
-            {vals.length === 0 && <span style={{ fontSize: 12, color: "#A9A196", padding: "4px 0" }}>—</span>}
+            {vals.length === 0 && <span style={{ fontSize: 12, color: "#6E6A60", padding: "4px 0" }}>—</span>}
           </div>
         )}
       </div>
@@ -227,7 +245,7 @@ const WeddingListingV2 = (): JSX.Element => {
     <>
       <div style={{ paddingBottom: 18, borderBottom: `1px solid ${T.rule}` }}>
         <div style={{ ...eyebrow, marginBottom: 4 }}>Colourway</div>
-        <div style={{ fontSize: 11.5, lineHeight: 1.55, color: "#A9A196", marginBottom: 14 }}>Changes the photographs, not the results</div>
+        <div style={{ fontSize: 11.5, lineHeight: 1.55, color: "#6E6A60", marginBottom: 14 }}>Changes the photographs, not the results</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }} role="radiogroup" aria-label="Colourway">
           {COLOURWAYS.map(c => {
             const isOn = c.id === colourway;
@@ -245,7 +263,7 @@ const WeddingListingV2 = (): JSX.Element => {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "20px 0 12px" }}>
         <div>
           <div style={eyebrow}>Refine</div>
-          <div style={{ fontSize: 11.5, color: "#A9A196", marginTop: 4 }}>{scopedDims.length ? "Filters for " + scopeLabel.toLowerCase() : "Choose a category for more"}</div>
+          <div style={{ fontSize: 11.5, color: "#6E6A60", marginTop: 4 }}>{scopedDims.length ? "Filters for " + scopeLabel.toLowerCase() : "Choose a category for more"}</div>
         </div>
         <button type="button" onClick={clearAll} style={{ padding: 0, cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 11, color: anyChips ? T.gold : "#C4BCB0" }}>Clear</button>
       </div>
@@ -268,7 +286,7 @@ const WeddingListingV2 = (): JSX.Element => {
           <span style={{ flex: "none", marginTop: 2, width: 15, height: 15, background: pair ? T.ink : "transparent", border: `1px solid ${pair ? T.ink : T.ruleStrong}` }} />
           <span style={{ display: "block" }}>
             <span style={{ display: "block", fontSize: 13, color: pair ? T.ink : "#332F2A", marginBottom: 6 }}>Shop as a pair</span>
-            <span style={{ display: "block", fontSize: 11.5, lineHeight: 1.55, color: pair ? T.muted : "#8A8377" }}>Show ladies and gents widths together, priced as two</span>
+            <span style={{ display: "block", fontSize: 11.5, lineHeight: 1.55, color: pair ? T.muted : "#6E6A60" }}>Show ladies and gents widths together, priced as two</span>
           </span>
         </button>
       </div>
@@ -292,13 +310,18 @@ const WeddingListingV2 = (): JSX.Element => {
         @keyframes wlGroupIn { from { opacity:0; } to { opacity:1; } }
         @keyframes wlCardIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
         @keyframes wlSheetIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes wlSheetOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
+        @keyframes wlScrimIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes wlScrimOut { from { opacity: 1; } to { opacity: 0; } }
         @media (max-width: 900px){
           .wl-main{ grid-template-columns: 1fr !important; }
           .wl-aside-desktop{ display:none !important; }
           .wl-grid{ grid-template-columns: repeat(2,1fr) !important; gap:14px !important; }
           .wl-mobile-refine{ display:flex !important; }
         }
-        @media (max-width: 560px){ .wl-grid{ grid-template-columns: 1fr !important; } }
+        /* Keep a compact 2-up grid on phones (matching the earlier mobile view) rather than
+           one full-width image per row, which made each ring photo oversized. */
+        @media (max-width: 560px){ .wl-grid{ grid-template-columns: repeat(2,1fr) !important; gap:12px !important; } }
       `}</style>
 
       <NavigationV2 solid />
@@ -307,7 +330,7 @@ const WeddingListingV2 = (): JSX.Element => {
         <section style={{ padding: "clamp(30px,4vw,60px) clamp(24px,3vw,52px) clamp(22px,3vw,36px)" }}>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.2fr) minmax(0,0.8fr)", gap: "clamp(24px,4vw,72px)", alignItems: "end" }}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6E6A60", marginBottom: 20 }}>
                 <Link to="/">Home</Link><span style={{ color: T.ruleStrong }}>/</span><span style={{ color: T.ink }}>Wedding rings</span>
               </div>
               <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(40px,5vw,78px)", lineHeight: 1.02, letterSpacing: "0.005em", margin: 0, maxWidth: "16ch" }}>Bands made for wearing.</h1>
@@ -317,8 +340,9 @@ const WeddingListingV2 = (): JSX.Element => {
         </section>
 
         <div className="wl-mobile-refine" style={{ display: "none", position: "sticky", top: 78, zIndex: 40, gridTemplateColumns: "1fr", background: T.paper, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}` }}>
-          <button type="button" onClick={() => setRailOpen(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", padding: "14px 0", background: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink }}>
-            Refine &amp; colourway{anyChips && <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: T.gold, color: "#fff", fontSize: 10.5, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>{chips.length}</span>}
+          <button type="button" onClick={() => setRailOpen(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, width: "calc(100% - 32px)", margin: "10px 16px", padding: "13px 0", background: T.ink, border: 0, borderRadius: 2, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: T.paper }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+            Filter &amp; colourway{anyChips && <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: T.gold, color: "#fff", fontSize: 10.5, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>{chips.length}</span>}
           </button>
         </div>
 
@@ -328,14 +352,14 @@ const WeddingListingV2 = (): JSX.Element => {
           <div>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", gap: 16, paddingBottom: 14, borderBottom: `1px solid ${T.rule}` }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
-                <span style={{ fontSize: 13, color: T.ink }}>{loading ? "Loading…" : (list.length === 1 ? "1 design" : list.length.toLocaleString() + " designs")}</span>
-                <span style={{ fontSize: 11.5, letterSpacing: "0.1em", textTransform: "uppercase", color: "#A9A196" }}>shown in {COLOURWAYS.find(c => c.id === colourway)?.label.toLowerCase()}</span>
+                <span style={{ fontSize: 13, color: T.ink }}>{loading ? "Loading…" : (grouped.length === 1 ? "1 design" : grouped.length.toLocaleString() + " designs")}</span>
+                <span style={{ fontSize: 11.5, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6E6A60" }}>shown in {COLOURWAYS.find(c => c.id === colourway)?.label.toLowerCase()}</span>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 4 }}>
-                <span style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "#A9A196", marginRight: 8 }}>Sort</span>
+                <span style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E6A60", marginRight: 8 }}>Sort</span>
                 {SORTS.map(x => (
                   <button key={x} type="button" onClick={() => { setSort(x); setShown(9); }}
-                    style={{ padding: "7px 11px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, color: x === sort ? T.ink : "#8A8377", background: x === sort ? T.tint : "transparent", border: 0 }}>{x}</button>
+                    style={{ padding: "7px 11px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, color: x === sort ? T.ink : "#6E6A60", background: x === sort ? T.tint : "transparent", border: 0 }}>{x}</button>
                 ))}
               </div>
             </div>
@@ -345,7 +369,7 @@ const WeddingListingV2 = (): JSX.Element => {
                 {chips.map((c, i) => (
                   <button key={i} type="button" onClick={() => toggle(c.dim, (sel[c.dim] || []).find(v => lbl(c.dim, v) === c.label) || c.label)}
                     style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: "#332F2A", background: T.tint, border: 0 }}>
-                    <span style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "#A9A196" }}>{DIM_LABEL[c.dim] || c.dim}</span>{c.label}<span style={{ color: "#8A8377" }}>×</span>
+                    <span style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6E6A60" }}>{DIM_LABEL[c.dim] || c.dim}</span>{c.label}<span style={{ color: "#6E6A60" }}>×</span>
                   </button>
                 ))}
                 <button type="button" onClick={clearAll} style={{ padding: "8px 10px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: T.gold, background: "transparent", border: 0 }}>Clear all</button>
@@ -366,7 +390,7 @@ const WeddingListingV2 = (): JSX.Element => {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "clamp(18px,2vw,34px)", marginTop: 30 }} className="wl-grid">
                 {Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ aspectRatio: "4 / 5", background: T.tint }} />)}
               </div>
-            ) : list.length > 0 ? (
+            ) : grouped.length > 0 ? (
               <>
                 <div key={colourway + sort + pair} className="wl-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "clamp(18px,2vw,34px)", marginTop: 30, animation: "wlCardIn 0.3s cubic-bezier(0.22,1,0.36,1) both" }}>
                   {visible.map(d => {
@@ -380,7 +404,7 @@ const WeddingListingV2 = (): JSX.Element => {
                             {hero ? <WeddingImg hero={hero} alt={d.name} loading="lazy" sizes="(max-width: 700px) 46vw, 30vw" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : <RingTile way={way} name={d.name} />}
                           </button>
                           <button type="button" onClick={() => setSaved(s => isSaved ? s.filter(n => n !== d.id) : [...s, d.id])} aria-label={isSaved ? "Saved" : "Save"} aria-pressed={isSaved}
-                            style={{ position: "absolute", top: 8, right: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, fontSize: 15, lineHeight: 1, color: isSaved ? T.gold : "#8A8377" }}>{isSaved ? "♥" : "♡"}</button>
+                            style={{ position: "absolute", top: 8, right: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, fontSize: 15, lineHeight: 1, color: isSaved ? T.gold : "#6E6A60" }}>{isSaved ? "♥" : "♡"}</button>
                         </div>
 
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 14 }}>
@@ -393,7 +417,7 @@ const WeddingListingV2 = (): JSX.Element => {
                                 style={{ width: 16, height: 16, padding: 0, cursor: "pointer", borderRadius: "50%", background: c.swatch, border: `1px solid ${c.id === way ? T.ink : "rgba(28,26,23,0.18)"}`, boxShadow: "inset 0 -2px 4px rgba(28,26,23,0.14)", transition: "border-color 0.2s ease" }} />
                             ))}
                           </div>
-                          <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#A9A196" }}>{d.category}</span>
+                          <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#6E6A60" }}>{d.category}</span>
                         </div>
 
                         <button type="button" onClick={() => goTo(d)} className="wl-card-link" style={{ display: "block", width: "100%", marginTop: 10, padding: 0, textAlign: "left", background: "transparent", border: 0, cursor: "pointer", fontFamily: FONT_BODY }}>
@@ -402,7 +426,7 @@ const WeddingListingV2 = (): JSX.Element => {
                             {d.priceFrom != null && <span style={{ fontSize: 13.5, whiteSpace: "nowrap", color: "#56534D" }}>from {money(d.priceFrom)}</span>}
                           </div>
                           {cleanDesc(d.description) && <div style={{ fontSize: 12.5, lineHeight: 1.55, color: T.muted }}>{cleanDesc(d.description)}</div>}
-                          <div style={{ fontSize: 11.5, color: "#8A8377", marginTop: 6 }}>{pair ? "Ladies and gents widths" : (d.variations || 1).toLocaleString("en-GB") + " variations · " + (d.colourways.length) + " colourways"}</div>
+                          <div style={{ fontSize: 11.5, color: "#6E6A60", marginTop: 6 }}>{((d as any)._widths ? (d as any)._widths + ((d as any)._widths === 1 ? " width" : " widths") : "Multiple widths") + " · " + (d.colourways.length) + " colourways"}</div>
                         </button>
                       </div>
                     );
@@ -412,15 +436,15 @@ const WeddingListingV2 = (): JSX.Element => {
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, marginTop: "clamp(40px,4vw,64px)", paddingTop: "clamp(28px,3vw,44px)", borderTop: `1px solid ${T.rule}` }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", maxWidth: 280 }}>
                     <span style={{ flex: 1, height: 2, background: T.rule, display: "block" }}>
-                      <span style={{ display: "block", width: (list.length ? Math.round((visible.length / list.length) * 100) : 100) + "%", height: 2, background: T.gold }} />
+                      <span style={{ display: "block", width: (grouped.length ? Math.round((visible.length / grouped.length) * 100) : 100) + "%", height: 2, background: T.gold }} />
                     </span>
                   </div>
-                  <div style={{ fontSize: 12, letterSpacing: "0.06em", color: "#8A8377" }}>Showing {visible.length} of {list.length.toLocaleString()} {list.length === 1 ? "design" : "designs"}</div>
-                  {visible.length < list.length ? (
+                  <div style={{ fontSize: 12, letterSpacing: "0.06em", color: "#6E6A60" }}>Showing {visible.length} of {grouped.length.toLocaleString()} {grouped.length === 1 ? "design" : "designs"}</div>
+                  {visible.length < grouped.length ? (
                     <button type="button" className="wl-more" onClick={() => setShown(s => s + 9)} style={{ padding: "15px 32px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase", color: T.ink, background: "transparent", border: `1px solid ${T.ruleStrong}` }}>Show 9 more</button>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-                      <div style={{ fontSize: 12.5, color: "#8A8377" }}>That is every design in this selection.</div>
+                      <div style={{ fontSize: 12.5, color: "#6E6A60" }}>That is every design in this selection.</div>
                       <Link to="/bespoke-design" style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", paddingBottom: 4, borderBottom: `1px solid ${T.ruleStrong}` }}>Have one made instead</Link>
                     </div>
                   )}
@@ -469,16 +493,16 @@ const WeddingListingV2 = (): JSX.Element => {
 
       {railOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 80, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-          <div onClick={() => setRailOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(20,18,15,0.45)" }} />
-          <div style={{ position: "relative", background: T.paper, maxHeight: "88vh", display: "flex", flexDirection: "column", animation: "wlSheetIn 0.32s cubic-bezier(0.22,1,0.36,1)" }}>
+          <div onClick={closeRail} style={{ position: "absolute", inset: 0, background: "rgba(20,18,15,0.45)", animation: `${railClosing ? "wlScrimOut" : "wlScrimIn"} 0.28s ease both` }} />
+          <div style={{ position: "relative", background: T.paper, maxHeight: "88vh", display: "flex", flexDirection: "column", borderTopLeftRadius: 12, borderTopRightRadius: 12, animation: `${railClosing ? "wlSheetOut" : "wlSheetIn"} 0.3s cubic-bezier(0.22,1,0.36,1) both` }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: `1px solid ${T.rule}` }}>
               <span style={{ fontFamily: FONT_DISPLAY, fontSize: 20 }}>Refine</span>
-              <button onClick={() => setRailOpen(false)} aria-label="Close" style={{ background: "none", border: 0, cursor: "pointer", fontSize: 24, lineHeight: 1, color: T.ink }}>×</button>
+              <button onClick={closeRail} aria-label="Close" style={{ background: "none", border: 0, cursor: "pointer", fontSize: 24, lineHeight: 1, color: T.ink }}>×</button>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "4px 20px 0" }}>{rail}</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 10, padding: "14px 20px calc(14px + env(safe-area-inset-bottom))", borderTop: `1px solid ${T.rule}` }}>
               <button onClick={clearAll} style={{ padding: "15px 0", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink }}>Clear</button>
-              <button onClick={() => setRailOpen(false)} style={{ padding: "15px 0", background: T.ink, color: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.1em", textTransform: "uppercase" }}>Show {list.length.toLocaleString()} designs</button>
+              <button onClick={closeRail} style={{ padding: "15px 0", background: T.ink, color: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.1em", textTransform: "uppercase" }}>Show {grouped.length.toLocaleString()} designs</button>
             </div>
           </div>
         </div>

@@ -287,7 +287,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
           {/* Desktop row */}
           <div className="hidden lg:grid" style={{ gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "clamp(20px, 3vw, 48px)", padding: "16px clamp(24px, 3vw, 52px)" }}>
             <Link to="/" onMouseEnter={() => setMenu(null)} style={{ display: "block", lineHeight: 1 }}>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 25, letterSpacing: "0.26em", textTransform: "uppercase", color: navColor, transition: "color 0.35s ease" }}>McCulloch</div>
+              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 25, letterSpacing: "0.16em", color: navColor, transition: "color 0.35s ease" }}>McCulloch</div>
               <div style={{ fontSize: 8.5, letterSpacing: "0.44em", textTransform: "uppercase", color: utilColor, marginTop: 5, paddingLeft: 3, transition: "color 0.35s ease" }}>Fine jewellery</div>
             </Link>
 
@@ -313,7 +313,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
           <div className="flex lg:hidden" style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
             <button className="v2nav-util" onClick={() => setMobileOpen(true)} aria-label="Menu"><Menu style={{ width: 22, height: 22, color: navColor }} /></button>
             <Link to="/" style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, letterSpacing: "0.24em", textTransform: "uppercase", color: navColor }}>McCulloch</div>
+              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, letterSpacing: "0.15em", color: navColor }}>McCulloch</div>
             </Link>
             <button className="v2nav-util" onClick={openCart} style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor }}>Bag ({getCartCount()})</button>
           </div>
@@ -354,7 +354,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
       {mobileOpen && (
         <div className="v2drawer" style={{ position: "fixed", inset: 0, zIndex: 70, background: T.paper, fontFamily: FONT_BODY, display: "flex", flexDirection: "column", animation: "v2drawerIn 0.34s cubic-bezier(0.22,1,0.36,1)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${T.rule}`, flex: "none" }}>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 20, letterSpacing: "0.24em", textTransform: "uppercase", color: T.ink }}>McCulloch</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 20, letterSpacing: "0.15em", color: T.ink }}>McCulloch</div>
             <button className="v2nav-util" onClick={() => setMobileOpen(false)} aria-label="Close"><X style={{ width: 24, height: 24, color: T.ink }} /></button>
           </div>
 

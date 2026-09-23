@@ -101,7 +101,7 @@ const AuthModalV2: React.FC<AuthModalV2Props> = ({ isOpen, onClose, initialView 
       {/* Wordmark + close */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
         <div style={{ lineHeight: 1 }}>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, letterSpacing: "0.26em", textTransform: "uppercase" }}>McCulloch</div>
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, letterSpacing: "0.26em" }}>McCulloch</div>
           <div style={{ fontSize: 8, letterSpacing: "0.42em", textTransform: "uppercase", color: T.muted, marginTop: 6, paddingLeft: 3 }}>Fine jewellery</div>
         </div>
         <button type="button" onClick={onClose} aria-label="Close" className="am-x" style={{ width: 34, height: 34, margin: "-6px -8px 0 0", cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 20, color: M2 }}>×</button>

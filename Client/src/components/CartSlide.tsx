@@ -61,11 +61,16 @@ const CartSlide: React.FC<CartSlideProps> = ({
     <div className="cs2-shell" style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', justifyContent: 'flex-end' }}>
       <style>{`
         @keyframes cs2ScrimIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes cs2ScrimOut { from { opacity: 1 } to { opacity: 0 } }
         @keyframes cs2DrawerIn { from { transform: translateX(100%) } to { transform: translateX(0) } }
+        @keyframes cs2DrawerOut { from { transform: translateX(0) } to { transform: translateX(100%) } }
         @keyframes cs2RowIn { from { opacity: 0; transform: translateX(16px) } to { opacity: 1; transform: translateX(0) } }
         @keyframes cs2SheetUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
-        .cs2-scrim { animation: cs2ScrimIn 0.3s ease both; }
-        .cs2-panel { animation: cs2DrawerIn 0.36s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes cs2SheetDown { from { transform: translateY(0) } to { transform: translateY(100%) } }
+        .cs2-scrim[data-open="1"] { animation: cs2ScrimIn 0.3s ease both; }
+        .cs2-scrim[data-open="0"] { animation: cs2ScrimOut 0.26s ease both; }
+        .cs2-panel[data-open="1"] { animation: cs2DrawerIn 0.36s cubic-bezier(0.22,1,0.36,1) both; }
+        .cs2-panel[data-open="0"] { animation: cs2DrawerOut 0.3s cubic-bezier(0.4,0,1,1) both; }
         .cs2-row { animation: cs2RowIn 0.4s cubic-bezier(0.22,1,0.36,1) both; }
         .cs2-step:hover { border-color: ${T.ink} !important; color: ${T.ink} !important; }
         .cs2-checkout:hover { background: ${T.inkDeep} !important; }
@@ -78,10 +83,11 @@ const CartSlide: React.FC<CartSlideProps> = ({
           .cs2-shell { align-items: flex-end; }
           .cs2-panel {
             max-width: 100% !important; width: 100% !important; height: auto !important;
-            max-height: 88vh !important; border-left: 0 !important;
-            border-top-left-radius: 4px; border-top-right-radius: 4px;
-            animation: cs2SheetUp 0.36s cubic-bezier(0.22,1,0.36,1) both !important;
+            min-height: 62vh !important; max-height: 90vh !important; border-left: 0 !important;
+            border-top-left-radius: 12px; border-top-right-radius: 12px;
           }
+          .cs2-panel[data-open="1"] { animation: cs2SheetUp 0.36s cubic-bezier(0.22,1,0.36,1) both !important; }
+          .cs2-panel[data-open="0"] { animation: cs2SheetDown 0.3s cubic-bezier(0.4,0,1,1) both !important; }
           .cs2-footer { padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important; }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -92,6 +98,7 @@ const CartSlide: React.FC<CartSlideProps> = ({
       {/* Scrim */}
       <div
         className="cs2-scrim"
+        data-open={isOpen ? '1' : '0'}
         onClick={onClose}
         style={{ position: 'absolute', inset: 0, background: 'rgba(20,18,15,0.42)', cursor: 'pointer' }}
       />
@@ -99,6 +106,7 @@ const CartSlide: React.FC<CartSlideProps> = ({
       {/* Panel */}
       <div
         className="cs2-panel"
+        data-open={isOpen ? '1' : '0'}
         role="dialog"
         aria-modal="true"
         aria-label="Your bag"
