@@ -125,7 +125,12 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
         columns: [
           {
             title: "Ring types",
-            links: (navigationData?.ring_types || []).slice(0, 8).map(i => ({ label: i.name, to: `/engagement-rings?ringType=${enc(i.name)}` })),
+            // Cluster is an engagement setting (moved here from Wedding). Shown explicitly
+            // so it appears regardless of the dynamic ring_types ordering/slice.
+            links: [
+              ...(navigationData?.ring_types || []).filter(i => !/cluster/i.test(i.name)).slice(0, 8).map(i => ({ label: i.name, to: `/engagement-rings?ringType=${enc(i.name)}` })),
+              { label: "Cluster", to: `/engagement-rings?ringType=${enc("Cluster")}` },
+            ],
             shopAll: { label: "Shop all", to: "/engagement-rings" },
           },
           {
@@ -157,7 +162,6 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
               { label: "Diamond set", to: `/wedding?category=${enc("Diamond Set")}` },
               { label: "Two colour", to: `/wedding?category=${enc("Two Colour")}` },
               { label: "Shaped", to: `/wedding?category=${enc("Shaped")}` },
-              { label: "Cluster", to: `/wedding?category=${enc("Cluster")}` },
             ],
             shopAll: { label: "Shop all wedding", to: "/wedding" },
           },
