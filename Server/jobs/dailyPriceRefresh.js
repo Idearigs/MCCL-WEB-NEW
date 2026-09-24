@@ -58,14 +58,17 @@ async function refreshAllRingPrices() {
       }
     }
 
-    // Skip update if prices are unchanged (within £0.01)
+    // Client rule: check daily, but only re-price on a BIG move. Small daily metal
+    // wiggles are ignored so shelf prices stay stable; update when any tracked metal
+    // moves more than DAILY_UPDATE_THRESHOLD_PCT (or a metal appears/disappears).
+    const DAILY_UPDATE_THRESHOLD_PCT = 3;
     const existing = pricingConfig.price_overrides || {};
     const changed = PREFERRED_METALS.some(k => {
       const n = newOverrides[k];
       const o = existing[k] ? parseFloat(existing[k]) : undefined;
       if (n === undefined && o === undefined) return false;
       if (n === undefined || o === undefined) return true;
-      return Math.abs(n - o) > 0.01;
+      return Math.abs(n - o) / Math.max(o, 1) * 100 > DAILY_UPDATE_THRESHOLD_PCT;
     });
 
     if (!changed) { skipped++; continue; }
