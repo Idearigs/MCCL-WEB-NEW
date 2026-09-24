@@ -20,10 +20,19 @@ const MOUNT_SURCHARGE = 1.022; // 2.2% surcharge applied to all metal mount cost
 async function calculateRingPrice({ ringSpecs, sideStones = [], pricingConfig = {}, nivodaDiamondPriceGBP = 0 }) {
   const metalPrices     = await metalPriceService.fetchMetalPrices();
   const premiumMult     = 1 + (parseFloat(pricingConfig.metal_premium_pct ?? 5) / 100);
-  const sideStoneRate   = parseFloat(pricingConfig.side_stone_rate_per_ct ?? 500);
   const diamondRate     = parseFloat(pricingConfig.diamond_rate_per_ct ?? 2000);
   const marginType      = pricingConfig.margin_type  || 'percent';
   const marginValue     = parseFloat(pricingConfig.margin_value ?? 0);
+
+  // Side-stone (melee) pricing — client rule 2026-09:
+  //   cost/ct: lab £100, natural £1,000.  Sale = cost × (1 + profit multiple).
+  //   profit: lab 3× cost (→ £400/ct sale), natural 2× cost (→ £3,000/ct sale).
+  // Stone type follows the ring's centre stone (ringSpecs.stone_type). An explicit
+  // pricingConfig.side_stone_rate_per_ct still overrides if set.
+  const ringIsLab   = (ringSpecs.stone_type || '').toLowerCase().includes('lab');
+  const SIDE_CFG    = ringIsLab ? { cost: 100, profitX: 3 } : { cost: 1000, profitX: 2 };
+  const sideStoneRate     = SIDE_CFG.cost * (1 + SIDE_CFG.profitX);   // lab £400/ct, natural £3,000/ct
+  const sideStoneCostBasis = SIDE_CFG.cost;                          // our cost/ct (for margin reporting)
 
   // Only price rows where ALL 4 fields are complete (shape, dimensions, pieces, carats)
   const completeSideStones = sideStones.filter(s =>
