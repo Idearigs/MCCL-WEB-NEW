@@ -7,6 +7,7 @@ const nivodaService = require('../services/nivodaService');
 const { centsToGBP, summarisePrices } = require('../services/pricingService');
 const metalPriceService = require('../services/metalPriceService');
 const { diamondFloorGBP } = require('../services/engagementFloor');
+const { applyMarkupGbp } = require('../services/diamondMarkup');
 
 /**
  * Get available Nivoda diamond options
@@ -124,7 +125,9 @@ async function getDiamondPriceBySuggestions(req, res) {
         items = items.filter(d => certList.includes(d.diamond?.certificate?.lab?.toUpperCase()));
       }
       if (!items.length) return null;
-      return { ...summarisePrices(items, usdToGbp), items };
+      // Apply the owner's tiered markup to each stone's BASE price (Nivoda markup_price
+      // comes back == price for this account, so we add the only markup here).
+      return { ...summarisePrices(items, usdToGbp, (base) => applyMarkupGbp(base, labgrown)), items };
     };
 
     // Cascade: exact spec → broaden refinements → widen carat → indicative model estimate.
@@ -166,9 +169,10 @@ async function getDiamondPriceBySuggestions(req, res) {
     //    (price rises ~carat^1.9) and the clarity/colour multipliers. Always yields a price.
     if (!result) {
       note = 'estimated'; estimated = true;
-      const shapeBase = diamondFloorGBP(shape);                 // marked-up 0.5ct G/VS2 for the shape
+      const shapeBase = diamondFloorGBP(shape);                 // BASE 0.5ct G/VS2 for the shape
       const caratFactor = Math.pow((ct || 0.5) / 0.5, 1.9);
-      const est = shapeBase * caratFactor * (CLARITY_MULT[clarity] ?? 1) * (COLOUR_MULT[color] ?? 1) * (labgrown ? 0.35 : 1);
+      const baseEst = shapeBase * caratFactor * (CLARITY_MULT[clarity] ?? 1) * (COLOUR_MULT[color] ?? 1) * (labgrown ? 0.35 : 1);
+      const est = applyMarkupGbp(baseEst, labgrown);            // apply the owner's diamond markup
       result = { min: Math.round(est * 0.9), avg: Math.round(est), max: Math.round(est * 1.15), items: [] };
     }
 

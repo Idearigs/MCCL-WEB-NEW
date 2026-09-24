@@ -4,9 +4,16 @@ const FALLBACK_USD_TO_GBP = 0.79;
 const centsToGBP = (cents, usdToGbp = FALLBACK_USD_TO_GBP) =>
   Math.round((cents / 100) * usdToGbp);
 
-/** Summarise an array of Nivoda items into { min, avg, max } in GBP */
-const summarisePrices = (items = [], usdToGbp = FALLBACK_USD_TO_GBP) => {
-  const prices = items.map(d => centsToGBP(d.price, usdToGbp));
+/**
+ * Summarise an array of Nivoda items into { min, avg, max } in GBP.
+ * `markupFn(baseGbp) => retailGbp` applies the owner's diamond markup per stone
+ * (the tier depends on each stone's own base price), if provided.
+ */
+const summarisePrices = (items = [], usdToGbp = FALLBACK_USD_TO_GBP, markupFn = null) => {
+  const prices = items.map(d => {
+    const base = centsToGBP(d.price, usdToGbp);
+    return markupFn ? markupFn(base) : base;
+  });
   if (!prices.length) return { min: 0, avg: 0, max: 0 };
   return {
     min: Math.min(...prices),

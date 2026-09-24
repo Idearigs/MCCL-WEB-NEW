@@ -12,6 +12,8 @@
  * outliers curated and a >=820 minimum so every combination clears £1,000.
  */
 
+const { applyMarkupGbp } = require('./diamondMarkup');
+
 // Marked-up (retail) 0.5ct G/VS2 diamond price per shape, in GBP — measured from
 // Nivoda's markup_price for the 0.50ct band. These are the diamond component of the
 // card "from" price so it aligns with the PDP default (mount + live marked-up 0.5ct
@@ -49,7 +51,9 @@ function diamondFloorGBP(stoneShape) {
 function displayBasePrice(mountPrice, nivodaEnabled, stoneShape) {
   const m = parseFloat(mountPrice) || 0;
   if (!nivodaEnabled) return m; // non-Nivoda prices already include a diamond estimate
-  return Math.round(m + diamondFloorGBP(stoneShape));
+  // The "from" diamond floor is a BASE (cost) 0.5ct price; apply the owner's diamond
+  // markup so the card "from" price matches the marked-up PDP price. (natural default)
+  return Math.round(m + applyMarkupGbp(diamondFloorGBP(stoneShape), false));
 }
 
 module.exports = { diamondFloorGBP, displayBasePrice };
