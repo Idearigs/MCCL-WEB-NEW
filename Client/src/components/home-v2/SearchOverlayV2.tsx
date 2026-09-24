@@ -314,7 +314,14 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
   };
 
   const go = (to: string) => { onClose(); navigate(to); };
-  const seeAll = () => { pushRecent(query); go("/products"); };
+  // "See all results" routes to the V2 listing of whichever group has the most matches
+  // (never the legacy /products page). Falls back to engagement rings.
+  const seeAll = () => {
+    pushRecent(query);
+    const routeFor: Record<string, string> = { "Engagement rings": "/engagement-rings", "Wedding bands": "/wedding", "Jewellery": "/jewellery", "Watches": "/watches" };
+    const top = groups.slice().sort((a, b) => b.items.length - a.items.length)[0];
+    go((top && routeFor[top.label]) || "/engagement-rings");
+  };
 
   // Metal intent parsed from the (corrected) query — drives both the thumbnail shown and
   // the metal pre-selected on the product page.

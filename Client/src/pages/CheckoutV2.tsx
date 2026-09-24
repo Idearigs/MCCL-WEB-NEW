@@ -32,8 +32,7 @@ const money = (n: number): string => `£${Math.round(n).toLocaleString("en-GB")}
 
 // Delivery + payment options (placeholder pricing — replace before launch)
 const DELIVERY_OPTIONS = [
-  { id: "courier", name: "Insured courier", note: "2–3 working days, fully insured", price: 0 },
-  { id: "named", name: "Named-day delivery", note: "Choose your delivery date", price: 15 },
+  { id: "courier", name: "Insured courier", note: "For bespoke items it will take maximum 6 weeks", price: 0 },
   { id: "collect", name: "Collect in person", note: "From our Beeston showroom", price: 0 },
 ];
 const PAYMENT_OPTIONS = [
