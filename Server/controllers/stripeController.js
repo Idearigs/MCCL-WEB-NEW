@@ -22,6 +22,11 @@ const METAL_COLOUR_KEYS = {
 // underpayment of the centre stone, never to price it exactly.
 const MIN_DIAMOND_GBP_PER_CARAT = 150;
 
+// order product_id / variant_id columns are UUID; a non-UUID cart id (some watch /
+// live-stock refs) makes Postgres throw "invalid input syntax for uuid". Guard every
+// lookup and insert with this so a stray id can never break checkout.
+const isUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 /**
  * Recompute an authoritative minimum price for the cart from the database.
  * - Variants: the variant's own price (exact).
@@ -33,7 +38,6 @@ const MIN_DIAMOND_GBP_PER_CARAT = 150;
  */
 async function computeServerFloor(cartItems, models) {
   const { Product, ProductVariant, ProductPricingConfig } = models;
-  const isUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
   let floor = 0;
   for (const item of (cartItems || [])) {
     const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
@@ -293,8 +297,9 @@ const confirmPayment = asyncHandler(async (req, res) => {
 
         const orderItem = await OrderItem.create({
           order_id: order.id,
-          product_id: item.product_id,
-          product_variant_id: item.variant_id,
+          // UUID columns — only store a real UUID, else null (name/type/attrs still snapshot the item)
+          product_id: isUuid(item.product_id) ? item.product_id : null,
+          product_variant_id: isUuid(item.variant_id) ? item.variant_id : null,
           product_name: item.name || 'Product',
           product_type: item.type || null,
           quantity: item.quantity,
@@ -306,7 +311,7 @@ const confirmPayment = asyncHandler(async (req, res) => {
         // Resolve a product image for the confirmation emails: prefer the cart-supplied
         // image, else fall back to the product's primary image.
         let itemImage = item.image || item.image_url || null;
-        if (!itemImage && ProductImage && item.product_id) {
+        if (!itemImage && ProductImage && isUuid(item.product_id)) {
           try {
             const primaryImg = await ProductImage.findOne({
               where: { product_id: item.product_id },
@@ -328,12 +333,12 @@ const confirmPayment = asyncHandler(async (req, res) => {
         // Update inventory if applicable. Floor at 0 so concurrent orders for the
         // last unit can never drive stock negative (matters for one-off live-stock pieces).
         const qty = Math.max(0, parseInt(item.quantity, 10) || 0);
-        if (item.variant_id) {
+        if (isUuid(item.variant_id)) {
           const variant = await ProductVariant.findByPk(item.variant_id, { transaction: t });
           if (variant) {
             await variant.update({ stock_quantity: Math.max(0, (variant.stock_quantity || 0) - qty) }, { transaction: t });
           }
-        } else if (item.product_id) {
+        } else if (isUuid(item.product_id)) {
           const product = await Product.findByPk(item.product_id, { transaction: t });
           if (product) {
             await product.update({ stock_quantity: Math.max(0, (product.stock_quantity || 0) - qty) }, { transaction: t });
