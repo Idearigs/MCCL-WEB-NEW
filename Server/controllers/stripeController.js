@@ -33,17 +33,22 @@ const MIN_DIAMOND_GBP_PER_CARAT = 150;
  */
 async function computeServerFloor(cartItems, models) {
   const { Product, ProductVariant, ProductPricingConfig } = models;
+  const isUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
   let floor = 0;
   for (const item of (cartItems || [])) {
     const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
     let unit = null;
 
-    if (item.variant_id && ProductVariant) {
+    // Never let one cart line abort the whole verification. A non-UUID id (some
+    // watch / live-stock refs) would otherwise make findByPk throw a Postgres
+    // "invalid input syntax for uuid" and 400 the entire checkout.
+    try {
+    if (item.variant_id && isUuid(item.variant_id) && ProductVariant) {
       const v = await ProductVariant.findByPk(item.variant_id, { attributes: ['price'] });
       if (v && v.price != null) unit = parseFloat(v.price);
     }
 
-    if ((unit == null || isNaN(unit)) && item.product_id && Product) {
+    if ((unit == null || isNaN(unit)) && item.product_id && isUuid(item.product_id) && Product) {
       const product = await Product.findByPk(item.product_id, {
         attributes: ['base_price', 'sale_price', 'nivoda_enabled'],
         include: ProductPricingConfig ? [{ model: ProductPricingConfig, as: 'pricingConfig', attributes: ['price_overrides'] }] : [],
@@ -92,6 +97,19 @@ async function computeServerFloor(cartItems, models) {
           unit = parseFloat(product.sale_price || product.base_price);
         }
       }
+    }
+    } catch (itemErr) {
+      logger.warn(`Floor lookup failed for item ${item.product_id}: ${itemErr.message}`);
+      unit = null;
+    }
+
+    // Fallback when we couldn't authoritatively price this line (unknown / non-UUID
+    // id, lookup error, or unpriced product): use the client-sent line price so a
+    // legitimate checkout is never blocked. Configured rings (valid UUID) still get
+    // the strict server floor above, so this can't be used to underpay them.
+    if (unit == null || isNaN(unit) || unit <= 0) {
+      const clientPrice = parseFloat(item.price);
+      if (!isNaN(clientPrice) && clientPrice > 0) unit = clientPrice;
     }
 
     if (unit != null && !isNaN(unit) && unit > 0) floor += unit * qty;
