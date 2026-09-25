@@ -167,6 +167,11 @@ const sendOrderConfirmationEmail = async (orderData) => {
               </ol>
             </div>
 
+            <div style="background:#fdf8f2; border-left:3px solid #C9A96E; padding:16px 20px; border-radius:4px; margin-bottom:28px;">
+              <div style="font-weight:500; color:#1a1a1a; margin-bottom:4px;">Bespoke &amp; made-to-order pieces</div>
+              <div style="font-size:13px; color:#6b7280; line-height:1.7;">For bespoke items, please allow a maximum of <strong>6 weeks</strong> for your piece to be handcrafted with care before it is dispatched.</div>
+            </div>
+
             <div style="text-align:center; margin-top:32px;">
               <a href="${orderStatusUrl}" style="display:inline-block; background:#C9A96E; color:#ffffff; padding:14px 36px; text-decoration:none; border-radius:4px; font-size:14px; letter-spacing:1px; text-transform:uppercase;">View Order Status</a>
               <div style="margin-top:14px;"><a href="${FRONTEND_URL}" style="color:#9a8a70; font-size:13px; text-decoration:none;">Continue shopping</a></div>
