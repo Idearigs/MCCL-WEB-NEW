@@ -173,7 +173,7 @@ const createPaymentIntent = asyncHandler(async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
       currency,
-      description: description || 'McCulloch Jewelry Purchase',
+      description: description || 'McCulloch Purchase',
       metadata: {
         customerId: customerId || 'guest',
         cartItems: JSON.stringify(cartItems || [])

@@ -105,6 +105,9 @@ const PaymentForm = ({
           size: item.size || null,
           brand: item.brand || null,
           variant_name: item.variant_name || null,
+          // Pass the cart image so the confirmation emails show the item thumbnail —
+          // essential for wedding rings, which have no products-table image to fall back on.
+          image: item.image || item.image_url || null,
         })),
       }),
     });

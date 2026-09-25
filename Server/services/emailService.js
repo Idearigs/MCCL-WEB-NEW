@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const { logger } = require('../config/database');
 
 const FROM_ADDRESS = process.env.EMAIL_FROM || 'noreply@buymediamonds.co.uk';
-const FROM_NAME    = process.env.EMAIL_FROM_NAME || 'McCulloch Jewellery';
+const FROM_NAME    = process.env.EMAIL_FROM_NAME || 'McCulloch';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@buymediamonds.co.uk';
 const FRONTEND_URL  = process.env.FRONTEND_URL  || 'https://buymediamonds.co.uk';
 // Owner/admin address that receives a notification for every new order.
@@ -39,7 +39,7 @@ const emailHeader = `
 
 const emailFooter = `
   <div style="text-align:center; margin-top:40px; padding-top:24px; border-top:1px solid #e5e7eb; color:#9ca3af; font-size:12px; line-height:1.8;">
-    <p style="margin:0 0 4px;">&copy; ${new Date().getFullYear()} McCulloch Jewellery. All rights reserved.</p>
+    <p style="margin:0 0 4px;">&copy; ${new Date().getFullYear()} McCulloch. All rights reserved.</p>
     <p style="margin:0 0 4px;"><a href="${FRONTEND_URL}" style="color:#C9A96E; text-decoration:none;">buymediamonds.co.uk</a></p>
     <p style="margin:0;">Questions? Email us at <a href="mailto:${SUPPORT_EMAIL}" style="color:#C9A96E; text-decoration:none;">${SUPPORT_EMAIL}</a></p>
   </div>`;
@@ -192,7 +192,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
   const result = await transporter.sendMail({
     from:    `"${FROM_NAME}" <${FROM_ADDRESS}>`,
     to:      customerEmail,
-    subject: `Order Confirmed – ${orderNumber} | McCulloch Jewellery`,
+    subject: `Order Confirmed – ${orderNumber} | McCulloch`,
     html,
     replyTo: SUPPORT_EMAIL,
   });
