@@ -3,10 +3,11 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 const asyncHandler = require('../middleware/asyncHandler');
 const { getModels } = require('../models');
-const { logger } = require('../config/database');
+const { logger, postgresDB } = require('../config/database');
 const { Sequelize } = require('sequelize');
 const { sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail } = require('../services/emailService');
 const { generateOrderNumber } = require('../utils/orderUtils');
+const { estimateDiamondPriceGBP } = require('../services/diamondPricingService');
 
 // Metal colour (as stored on a cart item) → the price_overrides keys it can map to.
 // Used only as a fallback when the exact priceKey isn't on the cart item.
@@ -67,7 +68,24 @@ async function computeServerFloor(cartItems, models) {
           let lineFloor = mount;
           const carat = opts.carat != null ? parseFloat(opts.carat) : NaN;
           if (product.nivoda_enabled && !isNaN(carat) && carat > 0) {
-            lineFloor += carat * MIN_DIAMOND_GBP_PER_CARAT;
+            // Authoritatively re-price the centre stone from its specs so a tampered
+            // checkout amount can't underpay it (the old flat 150/ct stub let a £2,900/ct
+            // stone through for £150/ct). Use the conservative live MIN price; fall back
+            // to the gross-underpayment stub only if the Nivoda lookup is unavailable.
+            let diamondFloor = carat * MIN_DIAMOND_GBP_PER_CARAT;
+            try {
+              const est = await estimateDiamondPriceGBP({
+                carat: opts.carat,
+                clarity: opts.clarity,
+                color: opts.colour || opts.color,
+                cut: opts.cut,
+                stoneType: opts.stoneType,
+              });
+              if (est && est.min > 0) diamondFloor = est.min;
+            } catch (diamondErr) {
+              logger.warn(`Diamond floor lookup failed for product ${item.product_id}, using stub: ${diamondErr.message}`);
+            }
+            lineFloor += diamondFloor;
           }
           unit = lineFloor;
         } else {
@@ -212,133 +230,108 @@ const confirmPayment = asyncHandler(async (req, res) => {
       });
     }
 
+    if (!OrderItem) {
+      throw new Error('OrderItem model is undefined');
+    }
+
     // Generate professional order number based on product type
     // Format: JWL-YYYYMMDD-XXXXX (jewelry), WTC-YYYYMMDD-XXXXX (watches), MXD-YYYYMMDD-XXXXX (mixed)
     const orderNumber = generateOrderNumber(cartItems);
 
-    // Create order in database
-    const order = await Order.create({
-      order_number: orderNumber,
-      customer_name: customerName || 'Guest',
-      customer_email: customerEmail,
-      status: 'pending',
-      payment_status: 'paid',
-      payment_method: 'stripe',
-      stripe_payment_id: paymentIntentId,
-      total_amount: paymentIntent.amount / 100,
-      currency: paymentIntent.currency.toUpperCase(),
-      shipping_address: JSON.stringify(shippingAddress),
-      notes: 'Order created from Stripe payment'
-    });
-
-    // Create order items
+    // Create the order, all its items, and the inventory decrements inside ONE
+    // transaction. If anything fails mid-way the whole thing rolls back, so we
+    // never persist a half-order or leave stock decremented for an order that
+    // didn't fully save.
+    const sequelize = postgresDB();
+    let order;
     const createdItems = [];
-    for (const item of cartItems) {
-
-      if (!OrderItem) {
-        throw new Error('OrderItem model is undefined');
-      }
-
-      // Build attributes object with all product customizations
-      const attributes = {};
-      if (item.selectedOptions) {
-        Object.assign(attributes, item.selectedOptions);
-      }
-      // Also store individual fields for backwards compatibility
-      if (item.metal) attributes.metal = item.metal;
-      if (item.size) attributes.size = item.size;
-      if (item.brand) attributes.brand = item.brand;
-      if (item.variant_name) attributes.variant_name = item.variant_name;
-
-      const orderItem = await OrderItem.create({
-        order_id: order.id,
-        product_id: item.product_id,
-        product_variant_id: item.variant_id,
-        product_name: item.name || 'Product',
-        product_type: item.type || null,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.price * item.quantity,
-        attributes: Object.keys(attributes).length > 0 ? attributes : null
-      });
-
-      // Resolve a product image for the confirmation emails: prefer the cart-supplied
-      // image, else fall back to the product's primary image.
-      let itemImage = item.image || item.image_url || null;
-      if (!itemImage && ProductImage && item.product_id) {
-        try {
-          const primaryImg = await ProductImage.findOne({
-            where: { product_id: item.product_id },
-            order: [['is_primary', 'DESC'], ['sort_order', 'ASC']],
-          });
-          if (primaryImg) itemImage = primaryImg.image_url;
-        } catch (imgErr) {
-          logger.warn(`Could not load image for product ${item.product_id}: ${imgErr.message}`);
-        }
-      }
-
-      const emailItem = typeof orderItem.toJSON === 'function' ? orderItem.toJSON() : { ...orderItem };
-      emailItem.image = itemImage;
-      emailItem.sku = item.sku || null;
-      createdItems.push(emailItem);
-      logger.info(`Order item created: ${orderItem.id}`);
-
-      // Update inventory if applicable
-      if (item.variant_id) {
-        const variant = await ProductVariant.findByPk(item.variant_id);
-        if (variant) {
-          await variant.update({
-            stock_quantity: variant.stock_quantity - item.quantity
-          });
-        }
-      } else if (item.product_id) {
-        const product = await Product.findByPk(item.product_id);
-        if (product) {
-          await product.update({
-            stock_quantity: product.stock_quantity - item.quantity
-          });
-        }
-      }
-    }
-
-    // Send order confirmation email
+    const t = await sequelize.transaction();
     try {
-      await sendOrderConfirmationEmail({
-        id: order.id,
-        customerEmail,
-        customerName,
-        orderNumber: order.order_number,
-        totalAmount: order.total_amount,
-        currency: order.currency,
-        items: createdItems,
-        shippingAddress: order.shipping_address,
-        createdAt: order.createdAt
-      });
-      logger.info(`Order confirmation email sent: ${order.order_number}`);
-    } catch (emailError) {
-      logger.error(`Failed to send confirmation email: ${emailError.message}`);
-      // Don't fail the order creation if email fails
+      order = await Order.create({
+        order_number: orderNumber,
+        customer_name: customerName || 'Guest',
+        customer_email: customerEmail,
+        status: 'pending',
+        payment_status: 'paid',
+        payment_method: 'stripe',
+        stripe_payment_id: paymentIntentId,
+        total_amount: paymentIntent.amount / 100,
+        currency: paymentIntent.currency.toUpperCase(),
+        shipping_address: JSON.stringify(shippingAddress),
+        notes: 'Order created from Stripe payment'
+      }, { transaction: t });
+
+      for (const item of cartItems) {
+        // Build attributes object with all product customizations
+        const attributes = {};
+        if (item.selectedOptions) {
+          Object.assign(attributes, item.selectedOptions);
+        }
+        // Also store individual fields for backwards compatibility
+        if (item.metal) attributes.metal = item.metal;
+        if (item.size) attributes.size = item.size;
+        if (item.brand) attributes.brand = item.brand;
+        if (item.variant_name) attributes.variant_name = item.variant_name;
+
+        const orderItem = await OrderItem.create({
+          order_id: order.id,
+          product_id: item.product_id,
+          product_variant_id: item.variant_id,
+          product_name: item.name || 'Product',
+          product_type: item.type || null,
+          quantity: item.quantity,
+          unit_price: item.price,
+          total_price: item.price * item.quantity,
+          attributes: Object.keys(attributes).length > 0 ? attributes : null
+        }, { transaction: t });
+
+        // Resolve a product image for the confirmation emails: prefer the cart-supplied
+        // image, else fall back to the product's primary image.
+        let itemImage = item.image || item.image_url || null;
+        if (!itemImage && ProductImage && item.product_id) {
+          try {
+            const primaryImg = await ProductImage.findOne({
+              where: { product_id: item.product_id },
+              order: [['is_primary', 'DESC'], ['sort_order', 'ASC']],
+              transaction: t,
+            });
+            if (primaryImg) itemImage = primaryImg.image_url;
+          } catch (imgErr) {
+            logger.warn(`Could not load image for product ${item.product_id}: ${imgErr.message}`);
+          }
+        }
+
+        const emailItem = typeof orderItem.toJSON === 'function' ? orderItem.toJSON() : { ...orderItem };
+        emailItem.image = itemImage;
+        emailItem.sku = item.sku || null;
+        createdItems.push(emailItem);
+        logger.info(`Order item created: ${orderItem.id}`);
+
+        // Update inventory if applicable. Floor at 0 so concurrent orders for the
+        // last unit can never drive stock negative (matters for one-off live-stock pieces).
+        const qty = Math.max(0, parseInt(item.quantity, 10) || 0);
+        if (item.variant_id) {
+          const variant = await ProductVariant.findByPk(item.variant_id, { transaction: t });
+          if (variant) {
+            await variant.update({ stock_quantity: Math.max(0, (variant.stock_quantity || 0) - qty) }, { transaction: t });
+          }
+        } else if (item.product_id) {
+          const product = await Product.findByPk(item.product_id, { transaction: t });
+          if (product) {
+            await product.update({ stock_quantity: Math.max(0, (product.stock_quantity || 0) - qty) }, { transaction: t });
+          }
+        }
+      }
+
+      await t.commit();
+    } catch (txErr) {
+      await t.rollback();
+      throw txErr;
     }
 
-    // Notify the shop owner of the new order (independent of the customer email)
-    try {
-      await sendOwnerOrderNotificationEmail({
-        id: order.id,
-        customerEmail,
-        customerName,
-        customerPhone: customerPhone || shippingAddress?.phone,
-        orderNumber: order.order_number,
-        totalAmount: order.total_amount,
-        currency: order.currency,
-        items: createdItems,
-        shippingAddress: order.shipping_address,
-        createdAt: order.createdAt
-      });
-      logger.info(`Owner order notification sent: ${order.order_number}`);
-    } catch (emailError) {
-      logger.error(`Failed to send owner notification: ${emailError.message}`);
-    }
-
+    // The order is committed — respond to the customer immediately. The two
+    // confirmation emails are sent in the background (fire-and-forget) so a slow
+    // or unavailable SMTP server can never delay or fail the checkout response.
     res.json({
       success: true,
       data: {
@@ -349,6 +342,36 @@ const confirmPayment = asyncHandler(async (req, res) => {
         paymentStatus: order.payment_status
       }
     });
+
+    // ── Background emails (not awaited) ──────────────────────────────────────
+    sendOrderConfirmationEmail({
+      id: order.id,
+      customerEmail,
+      customerName,
+      orderNumber: order.order_number,
+      totalAmount: order.total_amount,
+      currency: order.currency,
+      items: createdItems,
+      shippingAddress: order.shipping_address,
+      createdAt: order.createdAt
+    })
+      .then(() => logger.info(`Order confirmation email sent: ${order.order_number}`))
+      .catch(emailError => logger.error(`Failed to send confirmation email: ${emailError.message}`));
+
+    sendOwnerOrderNotificationEmail({
+      id: order.id,
+      customerEmail,
+      customerName,
+      customerPhone: customerPhone || shippingAddress?.phone,
+      orderNumber: order.order_number,
+      totalAmount: order.total_amount,
+      currency: order.currency,
+      items: createdItems,
+      shippingAddress: order.shipping_address,
+      createdAt: order.createdAt
+    })
+      .then(() => logger.info(`Owner order notification sent: ${order.order_number}`))
+      .catch(emailError => logger.error(`Failed to send owner notification: ${emailError.message}`));
   } catch (error) {
     logger.error('Error in confirmPayment:', { message: error.message });
     res.status(500).json({
@@ -561,7 +584,12 @@ const getAllOrders = asyncHandler(async (req, res) => {
   try {
     const { Order, OrderItem } = getModels();
 
-    const orders = await Order.findAll({
+    // Paginate so the admin order list stays fast as orders accumulate.
+    // Backwards compatible: without params it returns the newest 200 orders.
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 200));
+    const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+
+    const { rows: orders, count: total } = await Order.findAndCountAll({
       include: [
         {
           model: OrderItem,
@@ -586,14 +614,18 @@ const getAllOrders = asyncHandler(async (req, res) => {
         'createdAt',
         'updatedAt'
       ],
-      subQuery: false, // Prevent subquery issues with includes
+      limit,
+      offset,
+      distinct: true,   // correct total count when joining items
+      subQuery: false,  // Prevent subquery issues with includes
       raw: false
     });
 
     res.json({
       success: true,
       data: {
-        orders: orders || []
+        orders: orders || [],
+        pagination: { total, limit, offset, returned: (orders || []).length }
       }
     });
   } catch (error) {

@@ -18,7 +18,7 @@ import { WeddingImg } from "../components/home-v2/WeddingImg";
  */
 
 const NAV_H = 96;
-const CAT_ORDER = ["Classic", "Diamond Cut", "Two Colour", "Diamond Set", "Shaped"]; // Cluster moved to Engagement
+const CAT_ORDER = ["Diamond Set", "Classic", "Two Colour", "Diamond Cut", "Shaped"]; // ordered by stock count, most→least; Cluster moved to Engagement
 // Dimensions offered as scoped filters (metal is a base group; weight/carat live on the PDP).
 const SCOPED_DIMS = ["width", "profile", "quality", "origin", "collection", "shape"];
 const DIM_LABEL: Record<string, string> = {

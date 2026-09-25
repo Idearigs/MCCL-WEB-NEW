@@ -81,7 +81,17 @@ app.options('*', cors(corsOptions));
 app.use(compression());
 // JSON/urlencoded bodies are small (carts, forms); file uploads go through multer
 // (multipart) and are unaffected. A tight limit blunts oversized-payload DoS.
-app.use(express.json({ limit: '2mb' }));
+//
+// The Stripe webhook MUST receive the untouched raw body so its signature can be
+// verified (constructEvent needs the exact bytes). Skip JSON parsing for that one
+// path so the route's own express.raw() parser gets the raw Buffer; every other
+// route still gets normal JSON parsing.
+const STRIPE_WEBHOOK_PATH = `/api/${config.API_VERSION}/webhooks/stripe`;
+const jsonParser = express.json({ limit: '2mb' });
+app.use((req, res, next) => {
+  if (req.originalUrl.split('?')[0] === STRIPE_WEBHOOK_PATH) return next();
+  return jsonParser(req, res, next);
+});
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // Initialize Passport

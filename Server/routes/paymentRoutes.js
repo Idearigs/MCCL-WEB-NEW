@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const stripeController = require('../controllers/stripeController');
-const { authMiddleware } = require('../middleware/auth');
+const { adminAuth, requireAdmin } = require('../middleware/adminAuth');
 const { paymentRateLimit } = require('../middleware/security');
 
 /**
@@ -15,17 +15,18 @@ router.post('/create-intent', paymentRateLimit, stripeController.createPaymentIn
 // Confirm payment and create order (rate-limited)
 router.post('/confirm', paymentRateLimit, stripeController.confirmPayment);
 
-// Get order details (auth required — returns customer PII; the confirmation page
-// itself uses the confirm response, not this endpoint)
-router.get('/order/:orderId', authMiddleware, stripeController.getOrder);
+// Get order details (ADMIN only — returns customer PII. The customer confirmation
+// page uses the /confirm response, not this endpoint; the only callers are the
+// admin panel and staff chat tool, both of which send an admin token.)
+router.get('/order/:orderId', adminAuth, requireAdmin, stripeController.getOrder);
 
-// Get all orders (admin only)
-router.get('/orders', authMiddleware, stripeController.getAllOrders);
+// Get all orders (ADMIN only)
+router.get('/orders', adminAuth, requireAdmin, stripeController.getAllOrders);
 
-// Update order status (admin only)
-router.patch('/order/:orderId/status', authMiddleware, stripeController.updateOrderStatus);
+// Update order status (ADMIN only)
+router.patch('/order/:orderId/status', adminAuth, requireAdmin, stripeController.updateOrderStatus);
 
-// Update order details - status, tracking, notes (admin only)
-router.patch('/order/:orderId', authMiddleware, stripeController.updateOrderDetails);
+// Update order details - status, tracking, notes (ADMIN only)
+router.patch('/order/:orderId', adminAuth, requireAdmin, stripeController.updateOrderDetails);
 
 module.exports = router;
