@@ -211,7 +211,10 @@ const WeddingRingDetail = (): JSX.Element => {
       id: design.id, name: design.name, price: money(price), size: `UK ${size}`,
       image: heroImg ? getMediaUrl(heroImg) : '',
       type: 'jewelry',
-      selectedOptions: { metal: curRow.metalName, width: `${curWidth}mm`, weight: wlabel(curWeight), profile: plabel(curProfile), size: `UK ${size}` },
+      // Wedding designs live in the Allied Gold catalogue, not the products table, so
+      // their id isn't a products UUID. Keep the exact design id + collection in the
+      // options so the order still records the precise catalogue reference for fulfilment.
+      selectedOptions: { weddingDesignId: String(design.id), collection: design.collection || design.name, metal: curRow.metalName, width: `${curWidth}mm`, weight: wlabel(curWeight), profile: plabel(curProfile), size: `UK ${size}` },
     } as any);
     setAdded(true); setTimeout(() => setAdded(false), 2200);
   };
