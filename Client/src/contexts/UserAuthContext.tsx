@@ -13,6 +13,7 @@ interface User {
 
 interface UserAuthContextType {
   user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -223,6 +224,7 @@ export const UserAuthProvider: React.FC<UserAuthProviderProps> = ({ children }) 
 
   const value: UserAuthContextType = {
     user,
+    setUser,
     isAuthenticated: !!user,
     isLoading,
     login,
