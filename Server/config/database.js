@@ -96,6 +96,53 @@ const connectPostgreSQL = async () => {
       logger.debug('Promotions table setup completed');
     }
 
+    // Account features (migration 017) — ensure users.ring_size exists.
+    // The /users/profile query selects ring_size; without the column the query
+    // 500s and blocks sign-in (Google + email). Idempotent, safe on every boot.
+    try {
+      await postgresDB.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "ring_size" VARCHAR(20);`);
+    } catch (error) {
+      logger.debug('users.ring_size ensure completed');
+    }
+
+    // Reviews (migration 016) — ensure the table exists so GET /reviews?featured
+    // doesn't 500 on the homepage. Schema mirrors migration 016. Idempotent.
+    try {
+      await postgresDB.query(`
+        CREATE TABLE IF NOT EXISTS "reviews" (
+          "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          "author_name" VARCHAR(120) NOT NULL,
+          "location" VARCHAR(120),
+          "category" VARCHAR(60),
+          "rating" INTEGER NOT NULL DEFAULT 5,
+          "body" TEXT NOT NULL,
+          "email" VARCHAR(255),
+          "source" VARCHAR(20) NOT NULL DEFAULT 'admin',
+          "status" VARCHAR(20) NOT NULL DEFAULT 'published',
+          "is_featured" BOOLEAN DEFAULT false,
+          "sort_order" INTEGER DEFAULT 0,
+          "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_reviews_status" ON "reviews"("status");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_reviews_source" ON "reviews"("source");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_reviews_is_featured" ON "reviews"("is_featured");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_reviews_sort_order" ON "reviews"("sort_order");`);
+      // Seed the three original homepage testimonials once (only if the table is empty).
+      await postgresDB.query(`
+        INSERT INTO "reviews" ("author_name", "category", "rating", "body", "source", "status", "is_featured", "sort_order")
+        SELECT * FROM (VALUES
+          ('Hannah W.', 'Bespoke', 5, 'They redesigned my grandmother''s ring around a stone I already had. It came back better than the original.', 'admin', 'published', true, 0),
+          ('Daniel R.', 'Engagement', 5, 'No pressure, no upselling. We spent an hour looking at stones and left knowing what we were paying for.', 'admin', 'published', true, 1),
+          ('Priya S.', 'Servicing', 5, 'Resized and rhodium-plated in two days while I waited nearby. Hard to find that kind of service now.', 'admin', 'published', true, 2)
+        ) AS seed(author_name, category, rating, body, source, status, is_featured, sort_order)
+        WHERE NOT EXISTS (SELECT 1 FROM "reviews");
+      `);
+    } catch (error) {
+      logger.debug('reviews table ensure completed');
+    }
+
     // Create chats table if it doesn't exist
     try {
       await postgresDB.query(`

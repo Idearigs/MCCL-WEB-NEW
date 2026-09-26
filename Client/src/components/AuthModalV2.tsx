@@ -41,7 +41,6 @@ const AuthModalV2: React.FC<AuthModalV2Props> = ({ isOpen, onClose, initialView 
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [appleNote, setAppleNote] = useState(false);
 
   const reg = mode === "register";
 
@@ -51,7 +50,7 @@ const AuthModalV2: React.FC<AuthModalV2Props> = ({ isOpen, onClose, initialView 
       setMode(initialView === "signup" ? "register" : "signin");
       setStep("email");
       setEmail(""); setPassword(""); setFirstName(""); setLastName("");
-      setShowPw(false); setLoading(false); setLocalError(null); setAppleNote(false);
+      setShowPw(false); setLoading(false); setLocalError(null);
       clearError();
     }
   }, [isOpen, initialView, clearError]);
@@ -153,11 +152,6 @@ const AuthModalV2: React.FC<AuthModalV2Props> = ({ isOpen, onClose, initialView 
                 <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                 Continue with Google
               </a>
-              <button type="button" onClick={() => setAppleNote(true)} className="am-social" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, padding: 14, cursor: "pointer", background: "#FFFFFF", border: `1px solid ${T.ruleSoft}`, fontFamily: FONT_BODY, fontSize: 13, color: T.heading }}>
-                <svg width="15" height="18" viewBox="0 0 384 512" aria-hidden="true"><path fill="#1C1A17" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 62.4 126.7 114.2 125.2 27.1-.6 46.2-19.2 81.5-19.2 34.2 0 51.9 18.6 82.1 18.6 52.2-.8 97-82.5 109.3-119.3-69.9-33-86.8-96.6-86.8-91.3zM255.7 78.6c17.6-21.4 26.4-45.4 25.1-70.6-27.9 1.7-51.7 15.3-70.7 37.4-16.4 19.5-25.1 43.4-23.1 68.5 26.7-2.6 49.8-15 68.7-35.3z"/></svg>
-                Continue with Apple
-              </button>
-              {appleNote && <p style={{ margin: "2px 0 0", fontSize: 12, color: M2 }}>Apple sign-in is coming soon — please use email or Google for now.</p>}
             </div>
           </>
         ) : (
