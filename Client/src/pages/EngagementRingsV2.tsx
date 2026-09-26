@@ -41,6 +41,8 @@ const money = (n: number) => "£" + Math.round(n).toLocaleString("en-GB");
 const EngagementRingsV2 = (): JSX.Element => {
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  // metal id → name, so cards can default their thumbnail to the White Gold colourway
+  const [metalNameById, setMetalNameById] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [opts, setOpts] = useState<Record<GroupKey, string[]>>({ style: [], gem: [], metal: [], collection: [] });
 
@@ -79,6 +81,7 @@ const EngagementRingsV2 = (): JSX.Element => {
           metal: metals.filter(x => !x.name.startsWith("_TEST")).map(x => x.name),
           collection: collections.map(x => x.name),
         });
+        setMetalNameById(Object.fromEntries(metals.map((m: any) => [m.id, m.name])));
       });
   }, []);
 
@@ -275,8 +278,11 @@ const EngagementRingsV2 = (): JSX.Element => {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="erv2-grid">
                 {results.map(({ p }) => {
                   const imgs = p.images || [];
-                  const primaryObj = imgs.find(i => i.is_primary) || imgs[0];
-                  const img = p.image?.url || primaryObj?.url;
+                  // Default the card thumbnail to the White Gold colourway when the
+                  // product has one; otherwise fall back to the primary / first image.
+                  const whiteImg = imgs.find(i => i.url && /white/i.test(metalNameById[(i as any).metal_id] || ""));
+                  const primaryObj = whiteImg || imgs.find(i => i.is_primary) || imgs[0];
+                  const img = primaryObj?.url || p.image?.url;
                   const pMetal = (primaryObj as any)?.metal_id;
                   // Prefer another ANGLE of the same metal colour (not a different colour); fall back to any other image.
                   const second = imgs.find(i => i.url && i.url !== img && (i as any).metal_id === pMetal)?.url
