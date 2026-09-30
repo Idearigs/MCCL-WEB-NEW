@@ -97,7 +97,7 @@ const PixelPageViewTracker = () => {
   return null;
 };
 
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 const PREVIEW_TOKEN = 'mcc2026';
 
 const AppRoutes = () => {

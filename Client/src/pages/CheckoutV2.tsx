@@ -273,7 +273,7 @@ const PaymentForm = ({
 
 // ── Main ────────────────────────────────────────────────────────────────────
 const CheckoutV2 = (): JSX.Element => {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems, clearCart, removeItem } = useCart();
   const { user, isAuthenticated, isLoading } = useUserAuth();
   const navigate = useNavigate();
 
@@ -550,9 +550,10 @@ const CheckoutV2 = (): JSX.Element => {
         {sumOpen && (
           <div style={{ padding: "0 clamp(20px, 4vw, 48px) 18px" }}>
             {cartItems.map((item, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: T.body, padding: "5px 0" }}>
-                <span>{item.name} × {item.quantity}</span>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: T.body, padding: "5px 0" }}>
+                <span style={{ flex: 1, minWidth: 0 }}>{item.name} × {item.quantity}</span>
                 <span>{money(getPriceAsNumber(item.price) * item.quantity)}</span>
+                <button type="button" onClick={() => removeItem(i)} title="Remove item" style={{ background: "transparent", border: 0, padding: "0 2px", cursor: "pointer", fontSize: 16, lineHeight: 1, color: T.muted }}>×</button>
               </div>
             ))}
             <div style={{ borderTop: `1px solid ${T.ruleSoft}`, marginTop: 8, paddingTop: 10 }}>
@@ -645,8 +646,9 @@ const CheckoutV2 = (): JSX.Element => {
 
             {/* IV — Payment */}
             <div style={{ marginTop: 22 }}><StepHeader i={3} /></div>
-            {activeStep === 3 && (
-              <div style={{ marginLeft: 42, marginTop: 16, marginBottom: 8 }}>
+            {/* Kept mounted (hidden when inactive) so the Stripe CardElement retains the
+                entered card details if the customer steps back to fix an earlier field. */}
+            <div style={{ marginLeft: 42, marginTop: 16, marginBottom: 8, display: activeStep === 3 ? "block" : "none" }}>
                 <p style={{ fontSize: 12.5, color: T.muted, marginBottom: 12 }}>All transactions are secure and encrypted.</p>
                 <PaymentBadges align="flex-start" style={{ marginBottom: 16 }} />
                 <div style={{ display: "grid", gap: 10 }}>
@@ -708,7 +710,6 @@ const CheckoutV2 = (): JSX.Element => {
                   </div>
                 )}
               </div>
-            )}
 
             {/* Assurances (mobile — no side column) */}
             <div className="cov2-mobilesum" style={{ marginTop: 34, borderTop: `1px solid ${T.rule}`, paddingTop: 20 }}>
@@ -746,7 +747,10 @@ const CheckoutV2 = (): JSX.Element => {
                   <div key={i} style={{ display: "grid", gridTemplateColumns: "68px 1fr auto", gap: 16, alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${T.ruleSoft}` }}>
                     {href ? <Link to={href} onClick={markReturnToCheckout} title={`View ${item.name}`} style={{ display: "block", textDecoration: "none", color: "inherit" }}>{img}</Link> : img}
                     {href ? <Link to={href} onClick={markReturnToCheckout} title={`View ${item.name}`} style={{ display: "block", minWidth: 0, textDecoration: "none", color: "inherit" }}>{details}</Link> : details}
-                    <div style={{ fontSize: 13.5, color: T.ink, whiteSpace: "nowrap" }}>{money(getPriceAsNumber(item.price) * item.quantity)}</div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                      <span style={{ fontSize: 13.5, color: T.ink, whiteSpace: "nowrap" }}>{money(getPriceAsNumber(item.price) * item.quantity)}</span>
+                      <button type="button" onClick={() => removeItem(i)} title="Remove item" style={{ background: "transparent", border: 0, padding: 0, cursor: "pointer", fontSize: 11, letterSpacing: "0.04em", color: T.muted, textDecoration: "underline" }}>Remove</button>
+                    </div>
                   </div>
                 );
               })}
