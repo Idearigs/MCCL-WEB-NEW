@@ -27,6 +27,12 @@ const MIN_DIAMOND_GBP_PER_CARAT = 150;
 // lookup and insert with this so a stray id can never break checkout.
 const isUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 
+// Bound a promise so a slow/degraded upstream (Nivoda) can't stall checkout.
+const withTimeout = (promise, ms, label) => Promise.race([
+  promise,
+  new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)),
+]);
+
 /**
  * Recompute an authoritative minimum price for the cart from the database.
  * - Variants: the variant's own price (exact).
@@ -83,13 +89,15 @@ async function computeServerFloor(cartItems, models) {
             // to the gross-underpayment stub only if the Nivoda lookup is unavailable.
             let diamondFloor = carat * MIN_DIAMOND_GBP_PER_CARAT;
             try {
-              const est = await estimateDiamondPriceGBP({
+              // Cap at 8s: if Nivoda is slow/down, fall back to the stub floor rather
+              // than stalling checkout (the cascade could otherwise stack 15s timeouts).
+              const est = await withTimeout(estimateDiamondPriceGBP({
                 carat: opts.carat,
                 clarity: opts.clarity,
                 color: opts.colour || opts.color,
                 cut: opts.cut,
                 stoneType: opts.stoneType,
-              });
+              }), 8000, 'diamond floor lookup');
               if (est && est.min > 0) diamondFloor = est.min;
             } catch (diamondErr) {
               logger.warn(`Diamond floor lookup failed for product ${item.product_id}, using stub: ${diamondErr.message}`);

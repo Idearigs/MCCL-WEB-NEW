@@ -344,8 +344,11 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
+  // Log but DO NOT exit. A single stray rejection (e.g. a background Nivoda price
+  // fetch, an email send, or the daily refresh job) must not take down the whole
+  // payment server. HTTP requests are isolated and the critical paths (payments,
+  // orders, webhooks) have their own try/catch, so continuing is safe here.
+  logger.error('Unhandled Rejection (server kept alive):', reason);
 });
 
 // Start server
