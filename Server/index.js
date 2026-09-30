@@ -153,7 +153,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 app.get('/media/videos/:name', (req, res) => {
   const name = String(req.params.name || '');
   if (!/^[A-Za-z0-9_-]+$/.test(name)) return res.status(400).end();
-  const file = path.join(__dirname, 'uploads', 'videos', `${name}.mp4`);
+  // Product films are uploaded under uploads/products/; older ones under uploads/videos/.
+  // Serve from whichever directory holds the file so both stream with byte-range support.
+  const candidates = [
+    path.join(__dirname, 'uploads', 'videos', `${name}.mp4`),
+    path.join(__dirname, 'uploads', 'products', `${name}.mp4`),
+  ];
+  const file = candidates.find(f => { try { return fs.statSync(f).isFile(); } catch { return false; } });
+  if (!file) return res.status(404).end();
   fs.stat(file, (err, stat) => {
     if (err || !stat.isFile()) return res.status(404).end();
     const total = stat.size;

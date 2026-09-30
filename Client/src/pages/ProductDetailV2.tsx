@@ -26,7 +26,10 @@ import DiamondHelpNudge from '../components/DiamondHelpNudge';
  * through, so native playback gets its required 206 everywhere. See Server/index.js.
  */
 function toStreamUrl(url: string): string {
-  return url.replace(/\/uploads\/videos\/(.+?)\.mp4(\?.*)?$/i, '/media/videos/$1');
+  // Videos are uploaded under /uploads/products/ (and some under /uploads/videos/).
+  // Route both through the extensionless, range-capable /media/videos/ path so iOS
+  // gets its required 206 Partial Content (Cloudflare strips ranges from cached .mp4).
+  return url.replace(/\/uploads\/(?:videos|products)\/(.+?)\.mp4(\?.*)?$/i, '/media/videos/$1');
 }
 
 function FilmVideo({ url, poster }: { url: string; poster?: string }) {
@@ -1192,7 +1195,7 @@ const ProductDetail = () => {
                   {gallery.map((m: any, i: number) => (
                     <div key={i} className="pdpv2-tile2" style={{ breakInside: 'avoid', WebkitColumnBreakInside: 'avoid', marginBottom: 8, position: 'relative', overflow: 'hidden', background: '#FFFFFF', border: `1px solid ${T.rule}` }}>
                       {isVid(m)
-                        ? <><video src={getMediaUrl(m.url)} autoPlay muted loop playsInline preload="auto" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                        ? <><video src={toStreamUrl(getMediaUrl(m.url))} autoPlay muted loop playsInline preload="auto" style={{ width: '100%', height: 'auto', display: 'block' }} />
                             <span style={{ position: 'absolute', bottom: 8, left: 8, padding: '2px 7px', background: 'rgba(28,26,23,0.72)', color: '#fff', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', pointerEvents: 'none' }}>Film</span></>
                         : <img src={getMediaUrl(m.url)} alt={productData.name} style={{ width: '100%', height: 'auto', display: 'block' }} loading="lazy" />}
                     </div>
