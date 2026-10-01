@@ -23,7 +23,7 @@ const columns: { title: string; links: { label: string; to: string; external?: b
     title: "Services",
     links: [
       { label: "Bespoke design", to: "/bespoke-design" },
-      { label: "Portfolio", to: "/portfolio" },
+      { label: "Portfolio", to: "/bespoke-design" },
       { label: "Visit us", to: "/visit-us" },
       { label: "Contact", to: "/contact" },
     ],

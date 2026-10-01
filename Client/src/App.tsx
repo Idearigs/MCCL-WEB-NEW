@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import ReturnToCheckout from "./components/home-v2/ReturnToCheckout";
 import { CartProvider } from "./contexts/CartContext";
@@ -58,7 +58,6 @@ const WeddingRingDetail = lazy(() => import("./pages/WeddingRingDetail"));
 const Contact           = lazy(() => import("./pages/ContactV2"));
 const OurStory          = lazy(() => import("./pages/OurStoryV2"));
 const BespokeDesign     = lazy(() => import("./pages/BespokeDesignV2"));
-const Portfolio         = lazy(() => import("./pages/Portfolio"));
 const CustomerService   = lazy(() => import("./pages/CustomerService"));
 const VisitUs           = lazy(() => import("./pages/VisitUs"));
 const TrustGuarantees   = lazy(() => import("./pages/TrustGuarantees"));
@@ -174,7 +173,8 @@ const AppRoutes = () => {
       <Route path="/contact" element={<Contact />} />
       <Route path="/our-story" element={<OurStory />} />
       <Route path="/bespoke-design" element={<BespokeDesign />} />
-      <Route path="/portfolio" element={<Portfolio />} />
+      {/* Old portfolio page removed — redirect to the Bespoke page (which holds the commissioned portfolio) */}
+      <Route path="/portfolio" element={<Navigate to="/bespoke-design" replace />} />
       <Route path="/customer-service" element={<CustomerService />} />
       <Route path="/visit-us" element={<VisitUs />} />
       <Route path="/trust-guarantees" element={<TrustGuarantees />} />

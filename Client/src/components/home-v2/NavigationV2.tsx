@@ -218,18 +218,6 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
             links: braceletTypes.map(t => ({ label: t.name, to: `/bracelets?type=${enc(t.name)}` })),
             shopAll: { label: "Shop all bracelets", to: "/bracelets" },
           },
-          {
-            title: "Gifts & occasions",
-            links: [
-              { label: "Birthday Gifts", to: "/birthday-gifts" },
-              { label: "Anniversary Gifts", to: "/anniversary-gifts" },
-              { label: "Mother's Day", to: "/mothers-day-gifts" },
-              { label: "Valentine's Day", to: "/valentine-gifts" },
-              { label: "Graduation Gifts", to: "/graduation-gifts" },
-              { label: "Gift Sets", to: "/gift-sets" },
-            ],
-            shopAll: { label: "Explore jewellery", to: "/jewellery" },
-          },
         ],
         feature: { title: "Fine jewellery", to: "/jewellery", img: "/images/Necklaces.jpg" },
       },
