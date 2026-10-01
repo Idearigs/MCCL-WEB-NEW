@@ -327,8 +327,8 @@ const CollectionV2 = (): JSX.Element => {
                   const on = saved.includes(w.id);
                   return (
                     <div key={w.id}>
-                      <div className="cv-cardimg" style={{ position: "relative", aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(14px, 2.4vw, 26px)" }}>
-                        <Link to={`/watches/${w.slug}`} style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(14px, 2.4vw, 26px)" }}>
+                      <div className="cv-cardimg" style={{ position: "relative", aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(4px, 0.8vw, 12px)" }}>
+                        <Link to={`/watches/${w.slug}`} style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(4px, 0.8vw, 12px)" }}>
                           {w.image && <img src={getMediaUrl(w.image)} alt={w.name} loading="lazy" decoding="async" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transition: "transform 0.5s ease" }} />}
                         </Link>
                         {w.tag && <span style={{ position: "absolute", top: 10, left: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>{w.tag}</span>}
