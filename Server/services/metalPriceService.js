@@ -1,7 +1,26 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const dns = require('dns');
+const https = require('https');
 const cache = require('./cacheService');
+
+// The container's default DNS resolver can intermittently fail to resolve the
+// metal-price feeds (e.g. ENOTFOUND api.gold-api.com) even though they're up and
+// other hosts resolve. Resolve these requests through Cloudflare/Google DNS
+// directly, falling back to the system resolver if that ever fails.
+const metalResolver = new dns.Resolver();
+try { metalResolver.setServers(['1.1.1.1', '8.8.8.8']); } catch { /* keep system servers */ }
+const metalDnsLookup = (hostname, options, callback) => {
+  const cb = typeof options === 'function' ? options : callback;
+  const opts = (typeof options === 'object' && options) ? options : {};
+  metalResolver.resolve4(hostname, (err, addrs) => {
+    if (err || !addrs || !addrs.length) return dns.lookup(hostname, opts, cb); // system fallback
+    if (opts.all) return cb(null, addrs.map(a => ({ address: a, family: 4 })));
+    cb(null, addrs[0], 4);
+  });
+};
+const metalHttpsAgent = new https.Agent({ lookup: metalDnsLookup });
 
 const TROY_OZ_TO_GRAMS = 31.1035;
 const CACHE_KEY = 'metal:prices:gbp';
@@ -35,7 +54,7 @@ function parseCsvClose(csv) {
 
 // USD/oz spot from gold-api.com (primary, no key). JSON: { price: <usd/oz> }.
 async function fromGoldApi(symbol) {
-  const r = await axios.get(`https://api.gold-api.com/price/${symbol}`, { timeout: 6000 });
+  const r = await axios.get(`https://api.gold-api.com/price/${symbol}`, { timeout: 6000, httpsAgent: metalHttpsAgent });
   const p = parseFloat(r.data?.price);
   if (isNaN(p) || p <= 0) throw new Error(`gold-api ${symbol} invalid price: ${r.data?.price}`);
   return p;
@@ -43,7 +62,7 @@ async function fromGoldApi(symbol) {
 
 // USD/oz spot from stooq.com CSV (secondary fallback).
 async function fromStooq(sym) {
-  const r = await axios.get(`https://stooq.com/q/l/?s=${sym}&f=sd2t2ohlcv&h&e=csv`, { timeout: 6000 });
+  const r = await axios.get(`https://stooq.com/q/l/?s=${sym}&f=sd2t2ohlcv&h&e=csv`, { timeout: 6000, httpsAgent: metalHttpsAgent });
   return parseCsvClose(r.data);
 }
 
@@ -67,7 +86,7 @@ async function fetchLiveMetalPrices(lastGood) {
     resolveMetalUsd('XPT', 'xptusd', 'platinum', lastGood?.platinum_usd_per_oz),
     (async () => {
       try {
-        const fx = await axios.get('https://api.frankfurter.app/latest?from=USD&to=GBP', { timeout: 6000 });
+        const fx = await axios.get('https://api.frankfurter.app/latest?from=USD&to=GBP', { timeout: 6000, httpsAgent: metalHttpsAgent });
         const g = fx.data?.rates?.GBP;
         if (!g || isNaN(g) || g <= 0) throw new Error('missing GBP rate');
         return g;
