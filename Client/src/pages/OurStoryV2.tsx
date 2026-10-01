@@ -232,8 +232,8 @@ const OurStoryV2 = (): JSX.Element => {
               ))}
             </div>
           </div>
-          <div className="os-workimg os-rise os-d2" style={{ aspectRatio: "4 / 5", background: T.tint, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: T.muted, fontSize: 15 }}>
-            At the bench
+          <div className="os-workimg os-rise os-d2" style={{ aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
+            <img src="/images/at-the-bench.jpg" alt="A McCulloch jeweller setting a diamond into a gold ring at the workbench" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           </div>
         </div>
       </section>
