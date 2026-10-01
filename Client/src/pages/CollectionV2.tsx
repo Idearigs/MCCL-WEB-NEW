@@ -226,6 +226,8 @@ const CollectionV2 = (): JSX.Element => {
     <div style={{ background: T.paper, minHeight: "100vh", fontFamily: FONT_BODY, color: T.ink }}>
       <style>{`
         .cv a { color: inherit; text-decoration: none; }
+        .cv-collnav { scrollbar-width: none; -ms-overflow-style: none; }
+        .cv-collnav::-webkit-scrollbar { display: none; }
         .cv-card:hover .cv-cardimg img { transform: scale(1.04); }
         .cv-view-a:hover { background: ${T.gold} !important; }
         .cv-src-a:hover { background: ${T.gold} !important; color: #fff !important; }
@@ -242,7 +244,7 @@ const CollectionV2 = (): JSX.Element => {
         {/* Sibling collections tab bar (shippable nav in place of the review-only tab bar) */}
         {siblings.length > 1 && (
           <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "0 clamp(24px, 3vw, 52px)", background: T.tint, borderBottom: `1px solid ${T.rule}` }}>
-            <div style={{ display: "flex", overflowX: "auto", flex: 1 }}>
+            <div className="cv-collnav" style={{ display: "flex", overflowX: "auto", flex: 1 }}>
               {siblings.map((s) => {
                 const on = s.slug === meta.slug;
                 return (
@@ -278,8 +280,9 @@ const CollectionV2 = (): JSX.Element => {
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}` }}>
                 {facts.map((f, i) => {
                   const lastCol = isMobile ? i % 2 === 1 : i === 3;
+                  const firstInRow = isMobile ? i % 2 === 0 : i === 0;
                   return (
-                    <div key={f.label} style={{ padding: "20px clamp(14px, 1.8vw, 28px) 20px 0", borderRight: lastCol ? "none" : `1px solid ${T.rule}`, borderTop: isMobile && i >= 2 ? `1px solid ${T.rule}` : "none" }}>
+                    <div key={f.label} style={{ padding: `20px clamp(14px, 1.8vw, 28px) 20px ${firstInRow ? "0px" : "clamp(18px, 2vw, 32px)"}`, borderRight: lastCol ? "none" : `1px solid ${T.rule}`, borderTop: isMobile && i >= 2 ? `1px solid ${T.rule}` : "none" }}>
                       <div style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: M2, marginBottom: 9 }}>{f.label}</div>
                       <div style={{ fontSize: 14.5, color: T.ink }}>{f.value}</div>
                     </div>
