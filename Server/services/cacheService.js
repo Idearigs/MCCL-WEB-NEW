@@ -27,38 +27,48 @@ const connect = async () => {
   return client;
 };
 
+// In-memory L1 fallback so caching still works when Redis is unavailable
+// (single-container deploy with no Redis). Without this, every call is a cache
+// miss and slow upstreams (metal-price feeds ~12s, Nivoda) run on every request.
+// Entries carry an expiry; expired ones are dropped on read. Bounded to avoid growth.
+const mem = new Map(); // key -> { value, expiresAt }
+const memGet = (key) => {
+  const e = mem.get(key);
+  if (!e) return undefined;
+  if (e.expiresAt && Date.now() > e.expiresAt) { mem.delete(key); return undefined; }
+  return e.value;
+};
+const memSet = (key, value, ttlSeconds) => {
+  mem.set(key, { value, expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1000 : 0 });
+  if (mem.size > 5000) { const now = Date.now(); for (const [k, v] of mem) if (v.expiresAt && now > v.expiresAt) mem.delete(k); }
+};
+
 const get = async (key) => {
   try {
     const c = await connect();
-    if (!c) return null;
-    const val = await c.get(key);
-    return val ? JSON.parse(val) : null;
-  } catch { return null; }
+    if (c) { const val = await c.get(key); return val ? JSON.parse(val) : null; }
+  } catch { /* fall through to in-memory */ }
+  const m = memGet(key);
+  return m === undefined ? null : m;
 };
 
 const set = async (key, value, ttlSeconds) => {
   try {
     const c = await connect();
-    if (!c) return;
-    await c.set(key, JSON.stringify(value), { EX: ttlSeconds });
-  } catch { /* non-fatal */ }
+    if (c) { await c.set(key, JSON.stringify(value), { EX: ttlSeconds }); return; }
+  } catch { /* fall through to in-memory */ }
+  memSet(key, value, ttlSeconds);
 };
 
 const del = async (key) => {
-  try {
-    const c = await connect();
-    if (!c) return;
-    await c.del(key);
-  } catch { /* non-fatal */ }
+  mem.delete(key);
+  try { const c = await connect(); if (c) await c.del(key); } catch { /* non-fatal */ }
 };
 
 const delPattern = async (pattern) => {
-  try {
-    const c = await connect();
-    if (!c) return;
-    const keys = await c.keys(pattern);
-    if (keys.length) await c.del(keys);
-  } catch { /* non-fatal */ }
+  const prefix = pattern.replace(/\*.*$/, '');
+  for (const k of [...mem.keys()]) if (k.startsWith(prefix)) mem.delete(k);
+  try { const c = await connect(); if (c) { const keys = await c.keys(pattern); if (keys.length) await c.del(keys); } } catch { /* non-fatal */ }
 };
 
 module.exports = { get, set, del, delPattern };

@@ -35,7 +35,7 @@ function parseCsvClose(csv) {
 
 // USD/oz spot from gold-api.com (primary, no key). JSON: { price: <usd/oz> }.
 async function fromGoldApi(symbol) {
-  const r = await axios.get(`https://api.gold-api.com/price/${symbol}`, { timeout: 12000 });
+  const r = await axios.get(`https://api.gold-api.com/price/${symbol}`, { timeout: 6000 });
   const p = parseFloat(r.data?.price);
   if (isNaN(p) || p <= 0) throw new Error(`gold-api ${symbol} invalid price: ${r.data?.price}`);
   return p;
@@ -43,7 +43,7 @@ async function fromGoldApi(symbol) {
 
 // USD/oz spot from stooq.com CSV (secondary fallback).
 async function fromStooq(sym) {
-  const r = await axios.get(`https://stooq.com/q/l/?s=${sym}&f=sd2t2ohlcv&h&e=csv`, { timeout: 12000 });
+  const r = await axios.get(`https://stooq.com/q/l/?s=${sym}&f=sd2t2ohlcv&h&e=csv`, { timeout: 6000 });
   return parseCsvClose(r.data);
 }
 
@@ -67,7 +67,7 @@ async function fetchLiveMetalPrices(lastGood) {
     resolveMetalUsd('XPT', 'xptusd', 'platinum', lastGood?.platinum_usd_per_oz),
     (async () => {
       try {
-        const fx = await axios.get('https://api.frankfurter.app/latest?from=USD&to=GBP', { timeout: 12000 });
+        const fx = await axios.get('https://api.frankfurter.app/latest?from=USD&to=GBP', { timeout: 6000 });
         const g = fx.data?.rates?.GBP;
         if (!g || isNaN(g) || g <= 0) throw new Error('missing GBP rate');
         return g;
