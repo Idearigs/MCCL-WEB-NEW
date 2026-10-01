@@ -86,7 +86,7 @@ const FooterV2 = (): JSX.Element => {
           <div>
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: 23, letterSpacing: "0.16em", color: "#FFFFFF" }}>McCulloch</div>
             <div style={{ fontSize: 8.5, letterSpacing: "0.44em", textTransform: "uppercase", color: T.onDarkMuted, margin: "5px 0 26px 3px" }}>Fine jewellery</div>
-            <p style={{ margin: "0 0 20px", maxWidth: "32ch", fontSize: 13.5, lineHeight: 1.7 }}>£25 off your first order, plus new pieces before they reach the site.</p>
+            <p style={{ margin: "0 0 20px", maxWidth: "32ch", fontSize: 13.5, lineHeight: 1.7 }}>New pieces and private viewings, before they reach the site.</p>
             <form onSubmit={onSubmit} style={{ display: "flex", maxWidth: 320, borderBottom: `1px solid ${T.ruleDarkStrong}` }}>
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address"
                 style={{ flex: 1, background: "transparent", border: 0, outline: "none", color: "#EDE7DC", fontFamily: FONT_BODY, fontSize: 13.5, padding: "11px 0" }} />
