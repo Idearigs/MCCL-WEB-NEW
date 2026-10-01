@@ -202,12 +202,16 @@ app.get('/health', async (req, res) => {
     dbStatus = 'error';
   }
 
+  let cacheStatus = 'unavailable';
+  try { cacheStatus = await require('./services/cacheService').ping(); } catch { cacheStatus = 'unavailable'; }
+
   res.json({
     success: true,
     message: 'Server is running',
     environment: config.NODE_ENV,
     version: config.API_VERSION,
     database: dbStatus,
+    cache: cacheStatus === 'connected' ? 'redis' : 'in-memory',
     timestamp: new Date().toISOString()
   });
 });

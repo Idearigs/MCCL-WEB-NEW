@@ -71,4 +71,15 @@ const delPattern = async (pattern) => {
   try { const c = await connect(); if (c) { const keys = await c.keys(pattern); if (keys.length) await c.del(keys); } } catch { /* non-fatal */ }
 };
 
-module.exports = { get, set, del, delPattern };
+// Health probe: is the Redis backend reachable? Returns 'connected' when Redis
+// answers PING, 'unavailable' when we're running on the in-memory fallback.
+const ping = async () => {
+  try {
+    const c = await connect();
+    if (!c) return 'unavailable';
+    const r = await c.ping();
+    return r === 'PONG' ? 'connected' : 'unavailable';
+  } catch { return 'unavailable'; }
+};
+
+module.exports = { get, set, del, delPattern, ping };
