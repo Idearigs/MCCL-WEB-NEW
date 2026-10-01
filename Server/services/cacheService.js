@@ -9,18 +9,19 @@ const connect = async () => {
   if (connected) return client;
   // Circuit breaker: if Redis failed recently, skip for 60s
   if (Date.now() < unavailableUntil) return null;
+  const hostForLog = (() => { try { return new URL(process.env.REDIS_URL || '').host; } catch { return '(unset)'; } })();
   try {
     client = createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379',
       socket: { connectTimeout: 3000, reconnectStrategy: false }
     });
-    client.on('error', (err) => logger.warn('Redis error:', err.message));
+    client.on('error', (err) => logger.warn(`Redis error [host=${hostForLog}]: ${err?.code || ''} ${err?.message || String(err)}`));
     await client.connect();
     connected = true;
     unavailableUntil = 0;
-    logger.info('Redis connected');
+    logger.info(`Redis connected [host=${hostForLog}]`);
   } catch (err) {
-    logger.warn('Redis unavailable — caching disabled for 60s:', err.message);
+    logger.warn(`Redis unavailable — caching disabled for 60s [host=${hostForLog}]: ${err?.code || ''} ${err?.message || String(err)}`);
     client = null;
     unavailableUntil = Date.now() + 60000;
   }
