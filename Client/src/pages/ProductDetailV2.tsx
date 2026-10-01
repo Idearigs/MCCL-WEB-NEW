@@ -182,7 +182,7 @@ const ProductDetail = () => {
   const { countryCode: userCountry, countryName: userCountryName } = useCountry();
 
   // Nivoda Stone Selection States
-  const [selectedStoneType, setSelectedStoneType] = useState<'natural' | 'lab-grown'>('natural');
+  const [selectedStoneType, setSelectedStoneType] = useState<'natural' | 'lab-grown'>('lab-grown');
   const [selectedCarat, setSelectedCarat] = useState('');
   const [selectedClarity, setSelectedClarity] = useState('');
   const [selectedColour, setSelectedColour] = useState('');
@@ -597,7 +597,10 @@ const ProductDetail = () => {
     const defaults = config?.defaultSpecs;
 
     if (productData.nivoda_enabled && config) {
-      if (config.stoneType) setSelectedStoneType(config.stoneType);
+      // Business default: engagement rings default to Lab-Grown. Honor the
+      // per-product config only when it explicitly specifies lab-grown; otherwise
+      // (all current products are configured "natural") default to lab-grown.
+      setSelectedStoneType(config.stoneType === 'natural' ? 'lab-grown' : (config.stoneType || 'lab-grown'));
 
       // Prefer admin-configured defaultSpecs, fall back to first/middle option
       const carat = defaults?.carat || (config.caratRange
@@ -1103,7 +1106,7 @@ const ProductDetail = () => {
   const InfoI = ({ k, label }: { k: string; label: string }) => (
     <button onClick={() => toggleSection(k)} aria-label={label} title={label} style={infoBtn}>i</button>
   );
-  const useRecommendation = () => { handleStoneTypeSelect('natural'); handleCaratSelect('1.00'); handleColourSelect('G'); handleClaritySelect('VS2'); };
+  const useRecommendation = () => { handleStoneTypeSelect('lab-grown'); handleCaratSelect('1.00'); handleColourSelect('G'); handleClaritySelect('VS2'); };
   // Round-brilliant diamond illustration; inclusion dots increase as clarity drops.
   const CLARITY_INCL: Record<string, number> = { FL: 0, IF: 0, VVS1: 1, VVS2: 2, VS1: 3, VS2: 4, SI1: 7, SI2: 9, I1: 12, I2: 15 };
   // Relative clarity price multipliers (VS2 = 1.00 baseline), tuned to real Nivoda
