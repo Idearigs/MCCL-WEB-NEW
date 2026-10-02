@@ -944,6 +944,54 @@ const updateProductWithMedia = async (req, res) => {
   }
 };
 
+// Delete a single product image (DB row). Does not remove the physical file.
+const deleteProductImage = async (req, res) => {
+  try {
+    const { ProductImage } = getModelInstance();
+    const { id, imageId } = req.params;
+    const img = await ProductImage.findOne({ where: { id: imageId, product_id: id } });
+    if (!img) return res.status(404).json({ success: false, message: 'Image not found for this product' });
+    await img.destroy();
+    return res.json({ success: true, message: 'Image deleted', data: { id: imageId } });
+  } catch (error) {
+    console.error('Error deleting product image:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete image', error: error.message });
+  }
+};
+
+// Delete a single product video (DB row). Does not remove the physical file.
+const deleteProductVideo = async (req, res) => {
+  try {
+    const { ProductVideo } = getModelInstance();
+    const { id, videoId } = req.params;
+    const vid = await ProductVideo.findOne({ where: { id: videoId, product_id: id } });
+    if (!vid) return res.status(404).json({ success: false, message: 'Video not found for this product' });
+    await vid.destroy();
+    return res.json({ success: true, message: 'Video deleted', data: { id: videoId } });
+  } catch (error) {
+    console.error('Error deleting product video:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete video', error: error.message });
+  }
+};
+
+// Patch a single product image's metadata (metal_id, sort_order, is_primary, alt_text).
+const patchProductImage = async (req, res) => {
+  try {
+    const { ProductImage } = getModelInstance();
+    const { id, imageId } = req.params;
+    const img = await ProductImage.findOne({ where: { id: imageId, product_id: id } });
+    if (!img) return res.status(404).json({ success: false, message: 'Image not found for this product' });
+    const allowed = ['metal_id', 'sort_order', 'is_primary', 'alt_text', 'is_metal_preview'];
+    const patch = {};
+    for (const k of allowed) if (k in req.body) patch[k] = req.body[k];
+    await img.update(patch);
+    return res.json({ success: true, message: 'Image updated', data: { id: imageId, ...patch } });
+  } catch (error) {
+    console.error('Error patching product image:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update image', error: error.message });
+  }
+};
+
 // Delete product
 const deleteProduct = async (req, res) => {
   try {
@@ -1491,6 +1539,9 @@ module.exports = {
   createProductWithMedia,
   updateProduct,
   updateProductWithMedia,
+  deleteProductImage,
+  deleteProductVideo,
+  patchProductImage,
   deleteProduct,
   toggleProductStatus,
   toggleFeaturedStatus,

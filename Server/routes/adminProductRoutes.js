@@ -29,6 +29,11 @@ router.put('/:id', adminProductController.updateProduct);
 // Update product with file uploads (supports both general and metal-specific media)
 router.put('/:id/with-media', uploadMultipleFields(50), adminProductController.updateProductWithMedia);
 
+// Delete / edit individual media rows (no physical-file removal)
+router.delete('/:id/images/:imageId', adminProductController.deleteProductImage);
+router.delete('/:id/videos/:videoId', adminProductController.deleteProductVideo);
+router.patch('/:id/images/:imageId', adminProductController.patchProductImage);
+
 // Delete product
 router.delete('/:id', adminProductController.deleteProduct);
 
