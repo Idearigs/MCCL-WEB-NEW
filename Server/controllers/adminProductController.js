@@ -924,7 +924,7 @@ const updateProductWithMedia = async (req, res) => {
         { model: ProductVariant, as: 'variants' },
         { model: RingTypes, as: 'ringTypes' },
         { model: StoneShapes, as: 'stoneShapes' },
-        { model: StoneTypes, as: 'stoneType', required: false },
+        { model: StoneTypes, as: 'gemstones', required: false },
         { model: ProductMetals, as: 'metals' }
       ]
     });
