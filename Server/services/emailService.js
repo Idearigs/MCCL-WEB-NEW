@@ -81,7 +81,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
 
   const itemsHTML = items.map(item => {
     const attrs = item.attributes ? Object.entries(item.attributes)
-      .filter(([k]) => !['variant_name'].includes(k))
+      .filter(([k, v]) => !['variant_name', 'nivodaDiamond', 'priceKey'].includes(k) && typeof v !== 'object')
       .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`)
       .join(' · ') : '';
     const img = absMedia(item.image);
@@ -237,10 +237,36 @@ const sendOwnerOrderNotificationEmail = async (orderData) => {
   ].filter(Boolean).join('<br>');
 
   const itemsHTML = items.map(item => {
-    const attrs = item.attributes ? Object.entries(item.attributes)
-      .filter(([k]) => !['variant_name'].includes(k))
+    const a = item.attributes || {};
+    // Keep the generic attribute line clean — diamond specs get their own highlighted
+    // "source from Nivoda" block below, so drop them (and internal keys) from here.
+    const DIAMOND_KEYS = ['variant_name', 'nivodaDiamond', 'priceKey', 'stoneType', 'carat', 'clarity', 'colour', 'color', 'cut'];
+    const attrs = Object.entries(a)
+      .filter(([k, v]) => !DIAMOND_KEYS.includes(k) && typeof v !== 'object')
       .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`)
-      .join(' · ') : '';
+      .join(' · ');
+
+    // Centre-diamond "to source" block (engagement rings with a Nivoda stone).
+    const nd = a.nivodaDiamond || null;
+    const shape = (nd && nd.shape) || a.shape || '';
+    const carat = (nd && nd.carat) || a.carat || '';
+    const color = (nd && nd.color) || a.colour || a.color || '';
+    const clarity = (nd && nd.clarity) || a.clarity || '';
+    const cut = (nd && nd.cut) || a.cut || '';
+    const stoneType = a.stoneType || (nd ? '' : '');
+    const hasDiamond = !!(nd || a.carat || a.clarity);
+    const cert = nd && nd.certNumber ? `${nd.lab || ''} ${nd.certNumber}`.trim() : '';
+    const nivodaRef = nd && nd.nivodaId ? nd.nivodaId : '';
+    const searchUrl = 'https://platform.nivoda.com/diamonds' + (nd && nd.certNumber ? `?search=${encodeURIComponent(nd.certNumber)}` : '');
+    const diamondBlock = hasDiamond ? `
+          <div style="margin-top:10px; padding:12px 14px; background:#fbf6ea; border:1px solid #e8d5b7; border-radius:6px;">
+            <div style="font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:#9a8a70; margin-bottom:6px;">Centre diamond — source from Nivoda</div>
+            <div style="font-size:13px; color:#1a1a1a; line-height:1.6;">${[stoneType, carat ? `${carat}ct` : '', shape, color ? `Colour ${color}` : '', clarity ? `Clarity ${clarity}` : '', cut ? `Cut ${cut}` : ''].filter(Boolean).join(' · ')}</div>
+            ${cert ? `<div style="font-size:12px; color:#6b5d44; margin-top:4px;">Certificate: ${cert}</div>` : ''}
+            ${nivodaRef ? `<div style="font-size:12px; color:#6b5d44; margin-top:2px;">Nivoda ref: ${nivodaRef}</div>` : ''}
+            <a href="${searchUrl}" style="display:inline-block; margin-top:8px; font-size:12px; color:#C9A96E; text-decoration:none;">Find on Nivoda &rarr;</a>
+          </div>` : '';
+
     const img = absMedia(item.image);
     const thumb = img
       ? `<img src="${img}" alt="${item.product_name}" width="60" height="60" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #f0e8da; display:block;" />`
@@ -252,6 +278,7 @@ const sendOwnerOrderNotificationEmail = async (orderData) => {
           <div style="font-weight:500; color:#1a1a1a;">${item.product_name}</div>
           ${item.sku ? `<div style="font-size:12px; color:#9a8a70; margin-top:3px;">SKU: ${item.sku}</div>` : ''}
           ${attrs ? `<div style="font-size:12px; color:#9a8a70; margin-top:3px;">${attrs}</div>` : ''}
+          ${diamondBlock}
         </td>
         <td style="padding:14px 8px; border-bottom:1px solid #f0e8da; text-align:center; color:#4b5563; vertical-align:top;">×${item.quantity}</td>
         <td style="padding:14px 0; border-bottom:1px solid #f0e8da; text-align:right; font-weight:500; color:#1a1a1a; vertical-align:top;">

@@ -197,6 +197,9 @@ const ProductDetail = () => {
   const [nivodaPriceLoading, setNivodaPriceLoading] = useState(false);
   const [nivodaPriceError, setNivodaPriceError] = useState<string | null>(null);
   const [priceEstimated, setPriceEstimated] = useState(false); // indicative made-to-order price
+  const [diamondAvailable, setDiamondAvailable] = useState(true); // false => exact diamond not in live Nivoda stock
+  const [diamondSuggestions, setDiamondSuggestions] = useState<any[]>([]); // similar available stones
+  const [chosenDiamond, setChosenDiamond] = useState<any>(null); // representative in-stock stone (for sourcing)
 
   const [expandedStoneOptions, setExpandedStoneOptions] = useState<{ [key: string]: boolean }>({
     stoneType: true,
@@ -482,11 +485,17 @@ const ProductDetail = () => {
         // show a price so the customer is never left at a dead end.
         setNivodaPrice(data.data.prices);
         setPriceEstimated(!!data.data.estimated);
+        setDiamondAvailable(data.data.available !== false);
+        setDiamondSuggestions(Array.isArray(data.data.suggestions) ? data.data.suggestions : []);
+        setChosenDiamond(data.data.chosen || null);
         setNivodaPriceError(null);
       } else {
         // Truly nothing to price from — reassure rather than alarm.
         setNivodaPrice(null);
         setPriceEstimated(false);
+        setDiamondAvailable(true);
+        setDiamondSuggestions([]);
+        setChosenDiamond(null);
         setNivodaPriceError('We hand-source this combination — contact us for a tailored quote.');
       }
     } catch (error) {
@@ -740,6 +749,15 @@ const ProductDetail = () => {
         selectedOptions.clarity = selectedClarity;
         selectedOptions.colour = selectedColour;
         selectedOptions.cut = selectedCut;
+        const shapeName = productData.stone_shapes?.[0]?.name;
+        if (shapeName) selectedOptions.shape = shapeName;
+        // The specific in-stock Nivoda stone the price is based on — so the owner can
+        // source it from Nivoda after purchase (null when made-to-order / not in stock).
+        if (chosenDiamond) selectedOptions.nivodaDiamond = {
+          nivodaId: chosenDiamond.nivodaId, certNumber: chosenDiamond.certNumber, lab: chosenDiamond.lab,
+          shape: chosenDiamond.shape, carat: chosenDiamond.carat, color: chosenDiamond.color,
+          clarity: chosenDiamond.clarity, cut: chosenDiamond.cut,
+        };
       }
 
       // Persist the exact pricing key so the server can authoritatively re-verify the
@@ -1107,6 +1125,13 @@ const ProductDetail = () => {
     <button onClick={() => toggleSection(k)} aria-label={label} title={label} style={infoBtn}>i</button>
   );
   const useRecommendation = () => { handleStoneTypeSelect('lab-grown'); handleCaratSelect('1.00'); handleColourSelect('G'); handleClaritySelect('VS2'); };
+  // Switch the customer's spec to a similar AVAILABLE stone (from the suggestions list).
+  const applySuggestion = (s: any) => {
+    if (s?.carat != null) handleCaratSelect(Number(s.carat).toFixed(2));
+    if (s?.color) handleColourSelect(s.color);
+    if (s?.clarity) handleClaritySelect(s.clarity);
+    if (s?.cut) setSelectedCut(s.cut);
+  };
   // Round-brilliant diamond illustration; inclusion dots increase as clarity drops.
   const CLARITY_INCL: Record<string, number> = { FL: 0, IF: 0, VVS1: 1, VVS2: 2, VS1: 3, VS2: 4, SI1: 7, SI2: 9, I1: 12, I2: 15 };
   // Relative clarity price multipliers (VS2 = 1.00 baseline), tuned to real Nivoda
@@ -1226,7 +1251,24 @@ const ProductDetail = () => {
             <div style={{ padding: '4px 0 22px', marginBottom: 28, borderBottom: `1px solid ${T.rule}` }}>
               <div className="pdpv2-price" style={{ fontFamily: "'Lora', Georgia, serif", fontWeight: 400, fontSize: 26, lineHeight: 1.2, letterSpacing: '0.005em', fontVariantNumeric: 'tabular-nums', color: T.ink, padding: '2px 0' }}>{money(totalPrice)}<span style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: 11, color: T.muted, marginLeft: 8 }}>incl. VAT</span></div>
               <div style={{ fontSize: 12, color: T.muted, marginTop: 8 }}>{configSummary}{nivodaPriceLoading ? '  ·  updating…' : ''}</div>
-              {priceEstimated && !nivodaPriceLoading && (
+              {!diamondAvailable && !nivodaPriceLoading && (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ padding: '10px 12px', background: '#FBF3E6', border: '1px solid #E6D3AE', borderRadius: 6, fontSize: 12.5, color: '#7A5E2E', lineHeight: 1.5 }}>
+                    This exact diamond isn’t in our live inventory right now — the price shown is indicative and we’ll hand-source it to your spec, confirmed before payment.{diamondSuggestions.length > 0 ? ' Or choose a similar stone available now:' : ''}
+                  </div>
+                  {diamondSuggestions.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                      {diamondSuggestions.map((s: any, i: number) => (
+                        <button key={i} type="button" onClick={() => applySuggestion(s)} title="Select this available diamond" style={{ textAlign: 'left', cursor: 'pointer', background: '#FFFFFF', border: `1px solid ${T.rule}`, borderRadius: 6, padding: '8px 11px', lineHeight: 1.4 }}>
+                          <div style={{ fontSize: 12, fontWeight: 500, color: T.ink }}>{s.carat}ct · {s.color} · {s.clarity}{s.cut ? ` · ${s.cut}` : ''}</div>
+                          <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{[s.shape, s.lab].filter(Boolean).join(' · ')}{(s.shape || s.lab) ? ' · ' : ''}{money(s.priceGBP)}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {priceEstimated && diamondAvailable && !nivodaPriceLoading && (
                 <div style={{ fontSize: 11.5, color: T.gold, marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.gold, flex: 'none' }} />
                   Made to order — indicative price, hand-sourced and confirmed before payment

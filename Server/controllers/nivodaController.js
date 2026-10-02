@@ -113,6 +113,9 @@ async function getDiamondPriceBySuggestions(req, res) {
           count: (result.items || []).length,
           estimated: result.estimated,   // true => indicative made-to-order price, not a specific in-stock stone
           priceBasis: result.priceBasis, // 'exact' | 'broadened' | 'estimated'
+          available: result.available,   // false => exact diamond not in live inventory
+          chosen: result.chosen || null, // representative in-stock stone (for sourcing after purchase)
+          suggestions: result.suggestions || [], // similar AVAILABLE stones when the exact spec isn't
         },
         message: result.estimated ? 'Indicative made-to-order price' : 'Diamond price suggestions retrieved',
       });

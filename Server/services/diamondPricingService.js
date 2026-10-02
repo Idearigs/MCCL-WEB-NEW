@@ -15,7 +15,7 @@
  */
 
 const nivodaService = require('./nivodaService');
-const { summarisePrices } = require('./pricingService');
+const { summarisePrices, centsToGBP } = require('./pricingService');
 const metalPriceService = require('./metalPriceService');
 const { diamondFloorGBP } = require('./engagementFloor');
 const { applyMarkupGbp } = require('./diamondMarkup');
@@ -103,13 +103,57 @@ async function estimateDiamondPriceGBP(specs = {}) {
     result = { min: Math.round(est * 0.9), avg: Math.round(est), max: Math.round(est * 1.15), items: [] };
   }
 
-  if (!result) return { min: 0, avg: 0, max: 0, count: 0, estimated: false, priceBasis: 'none' };
+  if (!result) return { min: 0, avg: 0, max: 0, count: 0, estimated: false, priceBasis: 'none', available: false, chosen: null, suggestions: [] };
+
+  // Shape a raw Nivoda item into a compact diamond record (specs + marked-up GBP price)
+  // for the PDP suggestions and for the owner's "diamond to source" email.
+  const fmt = (d) => {
+    const c = d.diamond?.certificate || {};
+    return {
+      nivodaId: d.id || d.diamond?.id || null,
+      certNumber: c.certNumber || null,
+      lab: c.lab || null,
+      shape: c.shape || null,
+      carat: c.carats ?? null,
+      color: c.color || null,
+      clarity: c.clarity || null,
+      cut: c.cut || null,
+      priceGBP: applyMarkupGbp(centsToGBP(d.price, usdToGbp), labgrown),
+      video: d.diamond?.video || null,
+      image: d.diamond?.image || null,
+    };
+  };
+
+  // When the exact spec isn't available (estimated), gather similar AVAILABLE stones.
+  // Prefer any the cascade already matched; otherwise do one relaxed search (same
+  // shape/type, carat ±~30%, any clarity/colour/cut), closest-carat first, capped at 6.
+  let suggestions = [];
+  if (estimated) {
+    let pool = (result.items && result.items.length) ? result.items : [];
+    if (!pool.length) {
+      try {
+        const relaxed = await nivodaService.searchDiamonds({
+          minCarat: parseFloat((ct * 0.7).toFixed(2)), maxCarat: parseFloat((ct * 1.35).toFixed(2)),
+          minPrice: 0, maxPrice: 500000, labgrown, shape: shapeNivoda, limit: 12,
+        });
+        pool = relaxed.items || [];
+      } catch { /* no suggestions if the relaxed search fails */ }
+    }
+    suggestions = pool
+      .slice()
+      .sort((a, b) => Math.abs((a.diamond?.certificate?.carats || 0) - ct) - Math.abs((b.diamond?.certificate?.carats || 0) - ct))
+      .slice(0, 6)
+      .map(fmt);
+  }
 
   return {
     min: result.min, avg: result.avg, max: result.max,
     count: (result.items || []).length,
     items: result.items || [],
     estimated, priceBasis: note,
+    available: !estimated,                                   // exact/broadened => true
+    chosen: (result.items && result.items[0]) ? fmt(result.items[0]) : null, // representative stone to source
+    suggestions,
   };
 }
 
