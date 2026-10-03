@@ -400,18 +400,28 @@ const ProductDetail = () => {
   // re-syncs here — so we can never show e.g. a white ring while "Yellow Gold" is chosen.
   // We only shoot three colours (white/yellow/rose); silver & platinum share the white render.
   useEffect(() => {
-    const metals = productData?.available_metals;
-    if (!metals || metals.length === 0 || !selectedMetalType) return;
+    if (!selectedMetalType) return;
     const imgs = productData?.images || [];
-    const hasImg = (m: any) => imgs.some((img: any) => img.metal_id === m.id);
+    if (!imgs.length) return;
+    const metals = productData?.available_metals || [];
+    const hasImgById = (id?: string) => !!id && imgs.some((img: any) => img.metal_id === id);
     const base = getMetalBase(selectedMetalType);
     const colour = (base === 'platinum' || base === 'silver' || base.includes('white')) ? 'white'
       : base.includes('yellow') ? 'yellow' : base.includes('rose') ? 'rose' : '';
-    const match =
-      (colour && metals.find((m: any) => (m.name || '').toLowerCase().includes(colour) && hasImg(m))) ||
-      metals.find((m: any) => hasImg(m)) ||
-      metals[0];
-    if (match && match.id !== selectedMetal) setSelectedMetal(match.id);
+    // Global metal ids (white/yellow/rose) so the gallery follows the chosen colour even
+    // when available_metals is empty/incomplete — the images themselves carry metal_id.
+    const COLOUR_METAL_ID: Record<string, string> = {
+      white: '99297e85-1558-40e3-9e32-be59384da430',
+      yellow: '39b04f2f-1d7f-442a-b1f6-dc355c7b5976',
+      rose: '15d201d9-089b-43d8-9306-85f61971ae44',
+    };
+    const matchId =
+      (colour ? metals.find((m: any) => (m.name || '').toLowerCase().includes(colour) && hasImgById(m.id))?.id : undefined) ||
+      (colour && hasImgById(COLOUR_METAL_ID[colour]) ? COLOUR_METAL_ID[colour] : undefined) ||
+      metals.find((m: any) => hasImgById(m.id))?.id ||
+      imgs.find((i: any) => i.metal_id)?.metal_id ||
+      metals[0]?.id;
+    if (matchId && matchId !== selectedMetal) setSelectedMetal(matchId);
   }, [selectedMetalType, productData]);
 
   // Arriving from search with a metal intent (e.g. …?metal=yellow&karat=14ct): pre-select

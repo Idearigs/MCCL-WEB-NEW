@@ -246,7 +246,7 @@ const BespokeDesignV2 = (): JSX.Element => {
                     aria-expanded={open}
                     style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "20px 0", background: "transparent", border: 0, cursor: "pointer", textAlign: "left" }}
                   >
-                    <span style={{ fontFamily: FONT_DISPLAY, fontSize: 20, color: T.ink }}>{f.q}</span>
+                    <span style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 19, fontWeight: 500, letterSpacing: "0.005em", color: T.ink }}>{f.q}</span>
                     <span className="bsp-faq-icon" style={{ fontSize: 22, color: T.gold, lineHeight: 1, flexShrink: 0 }}>+</span>
                   </button>
                   <div style={{ maxHeight: open ? 240 : 0, overflow: "hidden", transition: "max-height 0.34s cubic-bezier(0.22,1,0.36,1)" }}>
