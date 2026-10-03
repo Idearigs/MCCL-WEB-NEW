@@ -51,9 +51,10 @@ function diamondFloorGBP(stoneShape) {
 function displayBasePrice(mountPrice, nivodaEnabled, stoneShape) {
   const m = parseFloat(mountPrice) || 0;
   if (!nivodaEnabled) return m; // non-Nivoda prices already include a diamond estimate
-  // The "from" diamond floor is a BASE (cost) 0.5ct price; apply the owner's diamond
-  // markup so the card "from" price matches the marked-up PDP price. (natural default)
-  return Math.round(m + applyMarkupGbp(diamondFloorGBP(stoneShape), false));
+  // SHAPE_DIAMOND_FLOOR is already the RETAIL 0.5ct "from" diamond value (measured from
+  // Nivoda's markup_price). Add it to the mount directly — do NOT mark it up again, or the
+  // card doubles (e.g. a £980 floor became £3,136 and cards read ~£3,500).
+  return Math.round(m + diamondFloorGBP(stoneShape));
 }
 
 module.exports = { diamondFloorGBP, displayBasePrice };

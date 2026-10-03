@@ -147,14 +147,11 @@ class NivodaService {
       }
 
       const result = response.data.data.as.diamonds_by_query;
-      // Apply the account's Nivoda markup (Feeds Hub → Markups): the API returns
-      // `price` (base/cost) and `markup_price` (retail with the owner's tiered markup).
-      // Normalise `price` to the marked-up value so all downstream pricing shows retail.
-      if (result?.items) {
-        for (const it of result.items) {
-          if (it.markup_price != null && it.markup_price > 0) it.price = it.markup_price;
-        }
-      }
+      // IMPORTANT: leave `price` as the raw Nivoda COST (base). The owner's markup
+      // (diamondMarkup.js — the only markup we apply) is added exactly once downstream
+      // (nivodaController for display, diamondPricingService for pricing). We deliberately
+      // do NOT fold in Nivoda's own `markup_price` here — doing so double-marked every
+      // stone (e.g. a 0.8ct lab stone read £6,964 instead of ~£1,740).
       await cache.set(cacheKey, result, 2 * 60 * 60); // 2 hours
       return result;
     } catch (error) {

@@ -71,6 +71,20 @@ async function searchDiamonds(req, res) {
       );
     }
 
+    // Apply the owner's markup (the ONLY markup) to each stone's raw cost for display.
+    // searchDiamonds now returns `price` as the Nivoda cost; mark it up once here so the
+    // admin/testing views show retail. (Customer pricing goes through diamondPricingService.)
+    try {
+      const mp = await metalPriceService.fetchMetalPrices();
+      const fx = parseFloat(mp.usd_to_gbp) || 0.79;
+      for (const it of filteredItems) {
+        if (it.price == null) continue;
+        const retailGbp = applyMarkupGbp((it.price / 100) * fx, filters.labgrown);
+        it.price = Math.round((retailGbp / fx) * 100); // retail, same cents-USD unit
+        it.markup_price = it.price;
+      }
+    } catch (e) { /* if FX fails, leave cost prices rather than block the search */ }
+
     return res.json({
       success: true,
       data: {
