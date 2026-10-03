@@ -137,7 +137,7 @@ async function recalculateAllWithReport() {
   const { Product, ProductRingSpecs, ProductSideStones, ProductPricingConfig } = getModels();
 
   const products = await Product.findAll({
-    attributes: ['id', 'name', 'sku', 'slug', 'nivoda_enabled'],
+    attributes: ['id', 'name', 'sku', 'slug', 'nivoda_enabled', 'base_price'],
     include: [
       { model: ProductRingSpecs,     as: 'ringSpecs',    required: true  },
       { model: ProductSideStones,    as: 'sideStones',   required: false },
@@ -226,30 +226,39 @@ async function recalculateAllWithReport() {
       }
     }
 
-    if (!hasChanges) {
+    // Always re-sync base_price from the current formula, even when the mount
+    // overrides are unchanged — the base_price formula (displayBasePrice) can change
+    // on its own (e.g. a markup fix), and the card must follow.
+    const bestKey = PREFERRED_METALS.find(k => newOverrides[k] > 0);
+    const newBase = bestKey ? displayBasePrice(newOverrides[bestKey], nivodaEnabled, specs.stone_shape) : null;
+    const oldBase = product.base_price != null ? parseFloat(product.base_price) : null;
+    const baseChanged = newBase != null && (oldBase === null || Math.abs(newBase - oldBase) > 0.01);
+
+    if (!hasChanges && !baseChanged) {
       entry.status = 'unchanged';
       report.push(entry);
       unchanged++;
       continue;
     }
 
-    const configData = {
-      calculated_prices:  result.prices,
-      price_overrides:    newOverrides,
-      last_calculated_at: new Date(),
-      updated_at:         new Date(),
-    };
-    if (product.pricingConfig) {
-      await product.pricingConfig.update(configData);
-    } else {
-      await ProductPricingConfig.create({ ...configData, product_id: product.id });
+    if (hasChanges) {
+      const configData = {
+        calculated_prices:  result.prices,
+        price_overrides:    newOverrides,
+        last_calculated_at: new Date(),
+        updated_at:         new Date(),
+      };
+      if (product.pricingConfig) {
+        await product.pricingConfig.update(configData);
+      } else {
+        await ProductPricingConfig.create({ ...configData, product_id: product.id });
+      }
     }
 
-    const bestKey = PREFERRED_METALS.find(k => newOverrides[k] > 0);
-    if (bestKey) {
-      const base = displayBasePrice(newOverrides[bestKey], nivodaEnabled, specs.stone_shape);
+    if (baseChanged) {
+      entry.changes.base_price = { old: oldBase, new: newBase };
       await Product.update(
-        { base_price: base, currency: 'GBP', updated_at: new Date() },
+        { base_price: newBase, currency: 'GBP', updated_at: new Date() },
         { where: { id: product.id } }
       );
     }
