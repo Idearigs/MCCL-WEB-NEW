@@ -627,14 +627,16 @@ const ProductDetail = () => {
         : '');
       if (carat) setSelectedCarat(carat);
 
-      // Default to G VS2 — the base quality standard used for all product pricing.
-      // Customers see the lowest realistic price first and can upgrade clarity/colour.
-      // If G/VS2 isn't in the configured options, fall back to the middle of the list.
+      // Recommended spec by stone type: lab-grown → E / VVS1, natural → G / VS2.
+      // The default view is lab-grown, so it opens on the recommended E / VVS1.
+      const isLab = (config.stoneType === 'natural' ? 'lab-grown' : (config.stoneType || 'lab-grown')) === 'lab-grown';
+      const recClarity = isLab ? 'VVS1' : 'VS2';
+      const recColour = isLab ? 'E' : 'G';
       const mid = (arr: string[] | undefined) => arr?.[Math.floor(((arr?.length || 1) - 1) / 2)] ?? '';
-      const clarity = defaults?.clarity || (config.clarityOptions?.includes('VS2') ? 'VS2' : mid(config.clarityOptions));
+      const clarity = (config.clarityOptions?.includes(recClarity) ? recClarity : (defaults?.clarity || mid(config.clarityOptions)));
       if (clarity) setSelectedClarity(clarity);
 
-      const colour = defaults?.colour || (config.colourOptions?.includes('G') ? 'G' : mid(config.colourOptions));
+      const colour = (config.colourOptions?.includes(recColour) ? recColour : (defaults?.colour || mid(config.colourOptions)));
       if (colour) setSelectedColour(colour);
 
       const cut = defaults?.cut || (config.cutOptions?.[0] ?? '');
@@ -1134,7 +1136,10 @@ const ProductDetail = () => {
   const InfoI = ({ k, label }: { k: string; label: string }) => (
     <button onClick={() => toggleSection(k)} aria-label={label} title={label} style={infoBtn}>i</button>
   );
-  const useRecommendation = () => { handleStoneTypeSelect('lab-grown'); handleCaratSelect('1.00'); handleColourSelect('G'); handleClaritySelect('VS2'); };
+  // Recommended centre-diamond spec by stone type: lab-grown → E / VVS1, natural → G / VS2.
+  const recColour = selectedStoneType === 'natural' ? 'G' : 'E';
+  const recClarity = selectedStoneType === 'natural' ? 'VS2' : 'VVS1';
+  const useRecommendation = () => { handleStoneTypeSelect('lab-grown'); handleCaratSelect('1.00'); handleColourSelect('E'); handleClaritySelect('VVS1'); };
   // Switch the customer's spec to a similar AVAILABLE stone (from the suggestions list).
   const applySuggestion = (s: any) => {
     if (s?.carat != null) handleCaratSelect(Number(s.carat).toFixed(2));
@@ -1348,7 +1353,7 @@ const ProductDetail = () => {
                 <StepHead n="2" title="Choose your diamond" />
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: T.tint, border: `1px solid ${T.rule}`, padding: '11px 14px', marginBottom: 4, marginTop: 6 }}>
-                  <div style={{ fontSize: 12.5, color: T.body }}>Recommended: <strong style={{ color: T.ink, fontWeight: 500 }}>1ct · G · VS2</strong></div>
+                  <div style={{ fontSize: 12.5, color: T.body }}>Recommended: <strong style={{ color: T.ink, fontWeight: 500 }}>1ct · {recColour} · {recClarity}</strong></div>
                   <button onClick={useRecommendation} style={{ border: `1px solid ${T.ink}`, background: 'transparent', color: T.ink, padding: '8px 13px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Use recommendation</button>
                 </div>
 
@@ -1386,7 +1391,7 @@ const ProductDetail = () => {
                   const colours = avail.length ? avail : COLOUR_IMG;
                   return (
                     <div style={optRow}>
-                      <div style={optHeadRow}><span style={optName}>Colour</span><span style={optRecTag}>G recommended</span><InfoI k="help-colour" label="What is colour?" /><span style={optCurVal}>{selectedColour}</span></div>
+                      <div style={optHeadRow}><span style={optName}>Colour</span><span style={optRecTag}>{recColour} recommended</span><InfoI k="help-colour" label="What is colour?" /><span style={optCurVal}>{selectedColour}</span></div>
                       {expandedSections['help-colour'] && <div style={helpLine}>How icy-white the diamond is. D is the most colourless (and priciest); G still looks bright white for far less.</div>}
                       <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }} className="pdpv2-nobar">
                         {colours.map((col) => {
@@ -1423,7 +1428,7 @@ const ProductDetail = () => {
                   const selPrice = baseVS2 * (CLARITY_MULT[selectedClarity] ?? 1);
                   return (
                     <div style={optRow}>
-                      <div style={optHeadRow}><span style={optName}>Clarity</span><span style={optRecTag}>VS2 recommended</span><InfoI k="help-clarity" label="What is clarity?" /><span style={optCurVal}>{selectedClarity}</span></div>
+                      <div style={optHeadRow}><span style={optName}>Clarity</span><span style={optRecTag}>{recClarity} recommended</span><InfoI k="help-clarity" label="What is clarity?" /><span style={optCurVal}>{selectedClarity}</span></div>
                       {expandedSections['help-clarity'] && <div style={helpLine}>How clean the diamond looks inside. From VS2 up, no marks are visible to the naked eye.</div>}
                       <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }} className="pdpv2-nobar">
                         {stoneOptions.clarity.map((o: any) => {
