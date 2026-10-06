@@ -119,9 +119,9 @@ const OurStoryV2 = (): JSX.Element => {
       {/* 2 — Heritage shopfront */}
       <div style={{ background: T.tint, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}` }}>
         <div style={{ maxWidth: 1240, margin: "0 auto", padding: `clamp(44px, 6vw, 88px) ${pageX}` }}>
-          <div className="os-house" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 0.82fr)", gap: "clamp(32px, 5vw, 80px)", alignItems: "center" }}>
-            <figure className="os-rise" style={{ margin: 0 }}>
-              <img src="/images/desilva-shopfront.jpg" alt="The original J. A. de Silva Jewellers shopfront — watches, clocks and jewellery, engagement and wedding rings" style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 34px 80px -34px rgba(28,26,23,0.55)" }} />
+          <div className="os-house" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(32px, 5vw, 72px)", alignItems: "center" }}>
+            <figure className="os-rise" style={{ margin: 0, width: "100%" }}>
+              <img src="/images/desilva-shopfront.jpg" alt="The original J. A. de Silva Jewellers shopfront: watches, clocks and jewellery, engagement and wedding rings" style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 34px 80px -34px rgba(28,26,23,0.55)" }} />
             </figure>
             <div className="os-rise os-d2">
               <div style={{ ...eyebrow, marginBottom: 16 }}>The first shop</div>
@@ -129,7 +129,7 @@ const OurStoryV2 = (): JSX.Element => {
                 J. A. de Silva Jewellers.
               </h2>
               <p style={p}>
-                Watches, clocks and jewellery; engagement and wedding rings; repairs, valuations and engraving — all under one roof. The original de Silva shopfront, where a tradition of handcrafted fine jewellery began, and one we still carry on by hand in Nottingham today.
+                Watches, clocks and jewellery; engagement and wedding rings; repairs, valuations and engraving. The original de Silva shopfront, where a tradition of handcrafted fine jewellery began, and one we still carry on by hand in Nottingham today.
               </p>
             </div>
           </div>
@@ -166,7 +166,7 @@ const OurStoryV2 = (): JSX.Element => {
         <img className="os-ken" src="/images/grand-hotel.jpg" alt="The Grand Hotel, Nuwara Eliya, Sri Lanka, where J. A. de Silva opened his first jewellers in 1895" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: `16px ${pageX} 0` }}>
-        <div className="os-rise" style={{ fontSize: 12.5, color: T.muted, letterSpacing: "0.02em" }}>The Grand Hotel, Nuwara Eliya — where J. A. de Silva opened in 1895, and remains to this day.</div>
+        <div className="os-rise" style={{ fontSize: 12.5, color: T.muted, letterSpacing: "0.02em" }}>The Grand Hotel, Nuwara Eliya, where J. A. de Silva opened in 1895 and remains to this day.</div>
       </div>
 
       {/* 4 — The line */}
@@ -228,7 +228,7 @@ const OurStoryV2 = (): JSX.Element => {
             </div>
             <div style={{ height: 1, background: T.rule, margin: "22px 0" }} />
             <p style={{ fontSize: 15, color: T.body, lineHeight: 1.8, fontStyle: "italic", margin: 0 }}>
-              “I have bought a number of pieces from De Silva — and at a very fair price.”
+              “I have bought a number of pieces from De Silva, and at a very fair price.”
             </p>
             <p style={{ fontSize: 13.5, color: T.muted, lineHeight: 1.7, fontStyle: "italic", margin: "12px 0 0" }}>
               “Ich habe einige Sachen preiswert bei De Silva gekauft.”
