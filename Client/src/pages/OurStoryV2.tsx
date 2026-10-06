@@ -162,11 +162,15 @@ const OurStoryV2 = (): JSX.Element => {
       </section>
 
       {/* 3b — The Grand Hotel, Nuwara Eliya */}
-      <div className="os-fullimg os-kenwrap" style={{ height: "clamp(360px, 52vh, 560px)", background: T.tint, overflow: "hidden" }}>
+      <div className="os-fullimg os-kenwrap" style={{ position: "relative", height: "clamp(360px, 52vh, 560px)", background: T.tint, overflow: "hidden" }}>
         <img className="os-ken" src="/images/grand-hotel.jpg" alt="The Grand Hotel, Nuwara Eliya, Sri Lanka, where J. A. de Silva opened his first jewellers in 1895" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      </div>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: `16px ${pageX} 0` }}>
-        <div className="os-rise" style={{ fontSize: 12.5, color: T.muted, letterSpacing: "0.02em" }}>The Grand Hotel, Nuwara Eliya, where J. A. de Silva opened in 1895 and remains to this day.</div>
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: `clamp(80px, 12vw, 160px) ${pageX} clamp(28px, 3vw, 40px)`, background: "linear-gradient(to top, rgba(14,12,10,0.94) 0%, rgba(14,12,10,0.78) 26%, rgba(14,12,10,0.3) 55%, rgba(14,12,10,0) 100%)" }}>
+          <div style={{ maxWidth: 1240, margin: "0 auto" }}>
+            <div style={{ fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(244,239,230,0.85)", marginBottom: 12, textShadow: "0 1px 8px rgba(0,0,0,0.6)" }}>Where it began</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(24px, 2.6vw, 38px)", lineHeight: 1.16, color: "#FBF7EF", maxWidth: "26ch", textShadow: "0 2px 16px rgba(0,0,0,0.75)" }}>The Grand Hotel, Nuwara Eliya.</div>
+            <div style={{ fontSize: 14, color: "rgba(249,245,238,0.95)", lineHeight: 1.6, marginTop: 12, maxWidth: "48ch", textShadow: "0 1px 10px rgba(0,0,0,0.75)" }}>Where J. A. de Silva opened his first jewellers in 1895, and where it remains to this day.</div>
+          </div>
+        </div>
       </div>
 
       {/* 4 — The line */}

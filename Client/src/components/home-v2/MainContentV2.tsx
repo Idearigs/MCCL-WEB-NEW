@@ -362,14 +362,14 @@ const MainContentV2 = (): JSX.Element => {
             <img src="/images/desilva-shopfront.jpg" alt="The original J. A. de Silva Jewellers shopfront" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
           </div>
           <div className="v2-reveal v2-reveal-d1">
-            <div style={{ ...eyebrow, marginBottom: 22 }}>Since 1952</div>
+            <div style={{ ...eyebrow, marginBottom: 22 }}>Since 1895</div>
             <h2 style={{ ...h2Style, lineHeight: 1.14, fontSize: "clamp(30px, 3.4vw, 50px)", maxWidth: "18ch", marginBottom: 26 }}>Generations of jewellers, one bench, the same care.</h2>
             <p style={{ margin: "0 0 22px", maxWidth: "46ch", fontSize: 16, lineHeight: 1.75, color: T.body }}>We cut, set, size and repair everything ourselves, which is why we can tell you exactly who made your ring and how long it took.</p>
             <Link to="/our-story" className="v2-textlink">Read our story</Link>
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(20px, 2.5vw, 48px)", marginTop: "clamp(48px, 5vw, 80px)", borderTop: `1px solid ${T.rule}`, paddingTop: 32 }} className="v2-statrow v2-reveal">
-          {[["1952", "Established"], ["Made", "In our workshop"], ["6wk", "Bespoke lead time"], ["1yr", "Warranty"]].map(([n, l]) => (
+          {[["1895", "Established"], ["Made", "In our workshop"], ["6wk", "Bespoke lead time"], ["1yr", "Warranty"]].map(([n, l]) => (
             <div key={l}>
               <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(34px, 3vw, 46px)", lineHeight: 1 }}>{n}</div>
               <div style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.muted, marginTop: 10 }}>{l}</div>

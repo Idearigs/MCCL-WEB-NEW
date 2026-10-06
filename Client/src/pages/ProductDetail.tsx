@@ -2391,7 +2391,7 @@ const ProductDetail = () => {
                   Experience McCulloch Excellence
                 </h2>
                 <p className="text-sm font-futura-pt text-gray-600 italic">
-                  Where craftsmanship meets distinction since 1952
+                  Where craftsmanship meets distinction since 1895
                 </p>
               </div>
               
