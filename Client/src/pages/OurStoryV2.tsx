@@ -118,10 +118,21 @@ const OurStoryV2 = (): JSX.Element => {
 
       {/* 2 — Heritage shopfront */}
       <div style={{ background: T.tint, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}` }}>
-        <div className="os-rise" style={{ maxWidth: 1240, margin: "0 auto", padding: `clamp(36px, 5vw, 72px) ${pageX}`, display: "flex", justifyContent: "center" }}>
-          <figure style={{ margin: 0, maxWidth: 560, width: "100%" }}>
-            <img src="/images/desilva-shopfront.jpg" alt="The original J. A. de Silva Jewellers shopfront — watches, clocks and jewellery, engagement and wedding rings" style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 34px 80px -34px rgba(28,26,23,0.55)" }} />
-          </figure>
+        <div style={{ maxWidth: 1240, margin: "0 auto", padding: `clamp(44px, 6vw, 88px) ${pageX}` }}>
+          <div className="os-house" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 0.82fr)", gap: "clamp(32px, 5vw, 80px)", alignItems: "center" }}>
+            <figure className="os-rise" style={{ margin: 0 }}>
+              <img src="/images/desilva-shopfront.jpg" alt="The original J. A. de Silva Jewellers shopfront — watches, clocks and jewellery, engagement and wedding rings" style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 34px 80px -34px rgba(28,26,23,0.55)" }} />
+            </figure>
+            <div className="os-rise os-d2">
+              <div style={{ ...eyebrow, marginBottom: 16 }}>The first shop</div>
+              <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(26px, 2.8vw, 42px)", lineHeight: 1.1, color: T.ink, fontWeight: 400, margin: "0 0 20px" }}>
+                J. A. de Silva Jewellers.
+              </h2>
+              <p style={p}>
+                Watches, clocks and jewellery; engagement and wedding rings; repairs, valuations and engraving — all under one roof. The original de Silva shopfront, where a tradition of handcrafted fine jewellery began, and one we still carry on by hand in Nottingham today.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
