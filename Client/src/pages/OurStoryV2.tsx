@@ -89,7 +89,7 @@ const OurStoryV2 = (): JSX.Element => {
           .os-title, .os-house, .os-work, .os-visit, .os-linetop, .os-archive { grid-template-columns: 1fr !important; }
           .os-archive { row-gap: 28px; }
           .os-title { row-gap: 18px; }
-          .os-workimg { order: -1; }
+          .os-workimg, .os-archive-img { order: -1; }
           .os-fullimg { aspect-ratio: 4 / 3 !important; height: auto !important; }
           .os-gen { grid-template-columns: 1fr !important; row-gap: 4px; padding: 20px 0 !important; }
           .os-gen-year { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
@@ -129,6 +129,10 @@ const OurStoryV2 = (): JSX.Element => {
             <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(28px, 3vw, 46px)", lineHeight: 1.08, color: T.ink, fontWeight: 400, margin: 0 }}>
               From Nuwara Eliya to Nottingham.
             </h2>
+            <figure style={{ margin: "30px 0 0", border: `1px solid ${T.rule}`, background: T.tint, padding: "clamp(14px, 2vw, 22px)" }}>
+              <img src="/images/desilva-founder.jpg" alt="Mr. J. A. de Silva, founder of J. A. de Silva Jewellers, 1895" loading="lazy" style={{ width: "100%", height: "auto", display: "block" }} />
+              <figcaption style={{ fontSize: 12.5, color: T.muted, marginTop: 14, letterSpacing: "0.02em" }}>Mr. J. A. de Silva &nbsp;·&nbsp; Founder, 1895</figcaption>
+            </figure>
           </div>
           <div className="os-rise os-d2">
             <p style={p}>
@@ -143,6 +147,14 @@ const OurStoryV2 = (): JSX.Element => {
           </div>
         </div>
       </section>
+
+      {/* 3b — The Grand Hotel, Nuwara Eliya */}
+      <div className="os-fullimg os-kenwrap" style={{ height: "clamp(360px, 52vh, 560px)", background: T.tint, overflow: "hidden" }}>
+        <img className="os-ken" src="/images/grand-hotel.jpg" alt="The Grand Hotel, Nuwara Eliya, Sri Lanka, where J. A. de Silva opened his first jewellers in 1895" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      </div>
+      <div style={{ maxWidth: 1240, margin: "0 auto", padding: `16px ${pageX} 0` }}>
+        <div className="os-rise" style={{ fontSize: 12.5, color: T.muted, letterSpacing: "0.02em" }}>The Grand Hotel, Nuwara Eliya — where J. A. de Silva opened in 1895, and remains to this day.</div>
+      </div>
 
       {/* 4 — The line */}
       <section style={{ background: T.ink, color: T.onDarkSoft }}>
@@ -189,10 +201,34 @@ const OurStoryV2 = (): JSX.Element => {
           </p>
         </div>
 
+        {/* Wilhelm — German Crown Prince, 1911 */}
         <div className="os-archive" style={{ display: "grid", gridTemplateColumns: "1fr 0.9fr", gap: "clamp(32px, 5vw, 72px)", alignItems: "center", marginTop: "clamp(40px, 5vw, 64px)" }}>
           <div className="os-rise os-kenwrap" style={{ background: T.tint, overflow: "hidden", padding: "clamp(20px, 3vw, 40px)", border: `1px solid ${T.rule}` }}>
-            <img src="/images/willingdon-1921.jpg" alt="Framed portrait of H.E. Lord Willingdon, Governor of Madras, and Lady Willingdon, beside a 1921 note endorsing J. A. de Silva & Co." style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 24px 60px -24px rgba(28,26,23,0.45)" }} />
+            <img src="/images/wilhelm-1911.jpg" alt="Wilhelm, the German Crown Prince, photographed at Queen's College, Nuwara Eliya, beside his 1911 note referring to pieces bought from De Silva" style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 24px 60px -24px rgba(28,26,23,0.45)" }} />
           </div>
+          <div className="os-rise os-d2">
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(22px, 2.2vw, 30px)", lineHeight: 1.18, color: T.ink }}>
+              Wilhelm, German Crown Prince
+            </div>
+            <div style={{ fontSize: 13.5, color: T.muted, marginTop: 6, letterSpacing: "0.02em" }}>
+              Great-great-grandson of Queen Victoria
+            </div>
+            <div style={{ height: 1, background: T.rule, margin: "22px 0" }} />
+            <p style={{ fontSize: 15, color: T.body, lineHeight: 1.8, fontStyle: "italic", margin: 0 }}>
+              “I have bought a number of pieces from De Silva — and at a very fair price.”
+            </p>
+            <p style={{ fontSize: 13.5, color: T.muted, lineHeight: 1.7, fontStyle: "italic", margin: "12px 0 0" }}>
+              “Ich habe einige Sachen preiswert bei De Silva gekauft.”
+            </p>
+            <div style={{ fontSize: 12.5, color: T.muted, marginTop: 16, lineHeight: 1.6 }}>
+              Wilhelm, Crown Prince of Germany<br />
+              Queen’s College, Nuwara Eliya · 21 November 1911
+            </div>
+          </div>
+        </div>
+
+        {/* Lord & Lady Willingdon, 1921 */}
+        <div className="os-archive" style={{ display: "grid", gridTemplateColumns: "0.9fr 1fr", gap: "clamp(32px, 5vw, 72px)", alignItems: "center", marginTop: "clamp(40px, 5vw, 64px)" }}>
           <div className="os-rise os-d2">
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(22px, 2.2vw, 30px)", lineHeight: 1.18, color: T.ink }}>
               H.E. Lord Willingdon
@@ -202,12 +238,15 @@ const OurStoryV2 = (): JSX.Element => {
             </div>
             <div style={{ height: 1, background: T.rule, margin: "22px 0" }} />
             <p style={{ fontSize: 15, color: T.body, lineHeight: 1.8, fontStyle: "italic", margin: 0 }}>
-              “I have bought some tortoiseshell combs etc. from J. A. de Silva &amp; Co. for Their Excellencies and have found them most satisfactory &amp; their prices quite moderate.”
+              “I have bought a number of pieces from J. A. de Silva &amp; Co. for Their Excellencies and have found them most satisfactory &amp; their prices quite moderate.”
             </p>
             <div style={{ fontSize: 12.5, color: T.muted, marginTop: 16, lineHeight: 1.6 }}>
               Capt. D. Bonall, A.D.C. to H.E. the Governor of Madras<br />
               The Queen’s Cottage, Nuwara Eliya · 19 August 1921
             </div>
+          </div>
+          <div className="os-rise os-kenwrap os-archive-img" style={{ background: T.tint, overflow: "hidden", padding: "clamp(20px, 3vw, 40px)", border: `1px solid ${T.rule}` }}>
+            <img src="/images/willingdon-1921.jpg" alt="Framed portrait of H.E. Lord Willingdon, Governor of Madras, and Lady Willingdon, beside a 1921 note endorsing J. A. de Silva & Co." style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 24px 60px -24px rgba(28,26,23,0.45)" }} />
           </div>
         </div>
       </section>
