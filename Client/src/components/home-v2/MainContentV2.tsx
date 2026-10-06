@@ -359,7 +359,7 @@ const MainContentV2 = (): JSX.Element => {
       <section id="heritage" style={{ padding: `${SP} ${pageX} clamp(56px, 5vw, 88px)` }}>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.05fr)", gap: "clamp(40px, 5vw, 88px)", alignItems: "center" }} className="v2-split">
           <div className="v2-reveal" style={{ position: "relative", aspectRatio: "4 / 3", background: T.tint, overflow: "hidden" }}>
-            <img src="/images/desilva-family-upscaled.jpg" alt="The McCulloch family" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src="/images/desilva-shopfront.jpg" alt="The original J. A. de Silva Jewellers shopfront" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
           </div>
           <div className="v2-reveal v2-reveal-d1">
             <div style={{ ...eyebrow, marginBottom: 22 }}>Since 1952</div>

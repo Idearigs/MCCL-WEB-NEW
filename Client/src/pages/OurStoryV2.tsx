@@ -116,25 +116,27 @@ const OurStoryV2 = (): JSX.Element => {
         <div className="os-draw" style={{ height: 1, background: T.rule }} />
       </section>
 
-      {/* 2 — Full-bleed heritage image */}
-      <div className="os-fullimg os-kenwrap" style={{ height: "clamp(400px, 58vh, 620px)", background: T.tint, overflow: "hidden" }}>
-        <img className="os-ken" src="/images/desilva-family-upscaled.jpg" alt="The de Silva family at Andrew McCulloch Jewellers, Beeston" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      {/* 2 — Heritage shopfront */}
+      <div style={{ background: T.tint, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}` }}>
+        <div className="os-rise" style={{ maxWidth: 1240, margin: "0 auto", padding: `clamp(36px, 5vw, 72px) ${pageX}`, display: "flex", justifyContent: "center" }}>
+          <figure style={{ margin: 0, maxWidth: 560, width: "100%" }}>
+            <img src="/images/desilva-shopfront.jpg" alt="The original J. A. de Silva Jewellers shopfront — watches, clocks and jewellery, engagement and wedding rings" style={{ width: "100%", height: "auto", display: "block", boxShadow: "0 34px 80px -34px rgba(28,26,23,0.55)" }} />
+          </figure>
+        </div>
       </div>
 
       {/* 3 — The house */}
       <section style={{ maxWidth: 1240, margin: "0 auto", padding: `clamp(56px, 7vw, 104px) ${pageX}` }}>
-        <div className="os-house" style={{ display: "grid", gridTemplateColumns: "0.85fr 1.15fr", gap: "clamp(32px, 5vw, 80px)", alignItems: "start" }}>
-          <div className="os-rise">
+        <div className="os-house" style={{ display: "grid", gridTemplateColumns: "minmax(0, 400px) 1fr", gap: "clamp(32px, 5vw, 72px)", alignItems: "center" }}>
+          <figure className="os-rise os-workimg" style={{ margin: 0, border: `1px solid ${T.rule}`, background: T.tint, padding: "clamp(14px, 2vw, 20px)" }}>
+            <img src="/images/desilva-founder.jpg" alt="Mr. J. A. de Silva, founder of J. A. de Silva Jewellers, 1895" loading="lazy" style={{ width: "100%", height: "auto", display: "block" }} />
+            <figcaption style={{ fontSize: 12.5, color: T.muted, marginTop: 14, letterSpacing: "0.02em" }}>Mr. J. A. de Silva &nbsp;·&nbsp; Founder, 1895</figcaption>
+          </figure>
+          <div className="os-rise os-d2">
             <div style={{ ...eyebrow, marginBottom: 16 }}>The house</div>
-            <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(28px, 3vw, 46px)", lineHeight: 1.08, color: T.ink, fontWeight: 400, margin: 0 }}>
+            <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(28px, 3vw, 46px)", lineHeight: 1.08, color: T.ink, fontWeight: 400, margin: "0 0 22px" }}>
               From Nuwara Eliya to Nottingham.
             </h2>
-            <figure style={{ margin: "30px 0 0", border: `1px solid ${T.rule}`, background: T.tint, padding: "clamp(14px, 2vw, 22px)" }}>
-              <img src="/images/desilva-founder.jpg" alt="Mr. J. A. de Silva, founder of J. A. de Silva Jewellers, 1895" loading="lazy" style={{ width: "100%", height: "auto", display: "block" }} />
-              <figcaption style={{ fontSize: 12.5, color: T.muted, marginTop: 14, letterSpacing: "0.02em" }}>Mr. J. A. de Silva &nbsp;·&nbsp; Founder, 1895</figcaption>
-            </figure>
-          </div>
-          <div className="os-rise os-d2">
             <p style={p}>
               In 1895, J. A. de Silva opened his first jewellers inside the Grand Hotel in Nuwara Eliya, Sri Lanka, where it remains to this day. Our resident jeweller, Hasita de Silva, is a fifth-generation jeweller and the great-grandson of J. A. de Silva.
             </p>
