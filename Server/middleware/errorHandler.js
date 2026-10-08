@@ -5,7 +5,8 @@ const errorHandler = (err, req, res, next) => {
   const origin = req.headers.origin;
   const allowed = [
     'http://localhost:3000', 'http://localhost:8080', 'http://127.0.0.1:8080',
-    'https://buymediamonds.co.uk', 'https://www.buymediamonds.co.uk', 'https://api.buymediamonds.co.uk'
+    'https://buymediamonds.co.uk', 'https://www.buymediamonds.co.uk', 'https://api.buymediamonds.co.uk',
+    'https://mccullochjewellers.co.uk', 'https://www.mccullochjewellers.co.uk', 'https://api.mccullochjewellers.co.uk'
   ];
   if (!origin || allowed.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');

@@ -12,10 +12,10 @@ export default defineConfig(({ mode }) => ({
     // (server-to-server, so no browser Origin header — the API's CORS layer 500s on
     // unknown localhost origins otherwise). Only active for `vite`/`vite dev`.
     proxy: {
-      '/api': { target: 'https://api.buymediamonds.co.uk', changeOrigin: true, secure: true },
-      '/uploads': { target: 'https://api.buymediamonds.co.uk', changeOrigin: true, secure: true },
+      '/api': { target: 'https://api.mccullochjewellers.co.uk', changeOrigin: true, secure: true },
+      '/uploads': { target: 'https://api.mccullochjewellers.co.uk', changeOrigin: true, secure: true },
       // Extensionless streaming path the PDP rewrites video URLs to (byte-range friendly).
-      '/media': { target: 'https://api.buymediamonds.co.uk', changeOrigin: true, secure: true },
+      '/media': { target: 'https://api.mccullochjewellers.co.uk', changeOrigin: true, secure: true },
     },
   },
   plugins: [

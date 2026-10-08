@@ -20,8 +20,8 @@ const io = socketIo(server, {
     origin: [
       'http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082',
       'http://127.0.0.1:8080', 'http://127.0.0.1:8081', 'http://127.0.0.1:8082',
-      'https://buymediamonds.co.uk', 'https://www.buymediamonds.co.uk',
-      'https://api.buymediamonds.co.uk'
+      'https://buymediamonds.co.uk', 'https://www.buymediamonds.co.uk', 'https://api.buymediamonds.co.uk',
+      'https://mccullochjewellers.co.uk', 'https://www.mccullochjewellers.co.uk', 'https://api.mccullochjewellers.co.uk'
     ],
     methods: ['GET', 'POST'],
     credentials: true
@@ -54,9 +54,12 @@ const corsOptions = {
       'http://localhost:3000', // React Dev Server
       'http://localhost:8080', // Frontend URL
       'http://127.0.0.1:8080', // Alternative frontend URL
-      'https://buymediamonds.co.uk', // Production Frontend
-      'https://www.buymediamonds.co.uk', // Production Frontend (www)
-      'https://api.buymediamonds.co.uk', // Production API
+      'https://buymediamonds.co.uk', // Production Frontend (old domain, kept for 301 transition)
+      'https://www.buymediamonds.co.uk', // Production Frontend (www, old)
+      'https://api.buymediamonds.co.uk', // Production API (old)
+      'https://mccullochjewellers.co.uk', // Production Frontend (new primary domain)
+      'https://www.mccullochjewellers.co.uk', // Production Frontend (www, new)
+      'https://api.mccullochjewellers.co.uk', // Production API (new)
       ...(config.cors?.allowedOrigins || []) // Any additional origins from config
     ];
 

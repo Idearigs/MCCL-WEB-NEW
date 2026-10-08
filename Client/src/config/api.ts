@@ -4,7 +4,7 @@
 // Get API URL from environment variable or use default based on mode
 const isDevelopment = import.meta.env.MODE === 'development';
 export const API_BASE_URL = import.meta.env.VITE_API_URL ||
-  (isDevelopment ? 'http://localhost:5000/api/v1' : 'https://api.buymediamonds.co.uk/api/v1');
+  (isDevelopment ? 'http://localhost:5000/api/v1' : 'https://api.mccullochjewellers.co.uk/api/v1');
 
 // Helper function to build full API URLs (includes /api/v1 prefix)
 export const api = (path: string): string => {
