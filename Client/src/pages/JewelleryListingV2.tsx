@@ -21,7 +21,7 @@ import { useFavorites } from "../contexts/FavoritesContext";
 const NAV_H = 96;
 
 type Key = "availability" | "style" | "metal" | "stone" | "detail";
-const AVAIL_LIVE = "Live stock — ready to ship";
+const AVAIL_LIVE = "Ready to ship";
 const AVAIL_ORDER = "Made to order";
 interface CatDef {
   slug: string; label: string; standfirst: string;
@@ -282,7 +282,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
         </div>
 
         <div key={category} className="jl-body" style={{ animation: "jlIn 0.4s cubic-bezier(0.22,1,0.36,1) both" }}>
-          <div style={{ display: "flex", gap: 10, padding: "18px clamp(24px, 3vw, 52px)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
+          <div style={{ display: "flex", gap: 10, padding: "clamp(26px,3vw,40px) clamp(24px, 3vw, 52px) 18px", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
             <Link to="/">Home</Link><span>/</span><Link to="/jewellery">Jewellery</Link><span>/</span><span style={{ color: T.ink }}>{cat.label}</span>
           </div>
 

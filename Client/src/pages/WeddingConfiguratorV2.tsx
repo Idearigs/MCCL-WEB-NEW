@@ -213,7 +213,7 @@ const WeddingConfiguratorV2 = (): JSX.Element => {
       <NavigationV2 solid />
 
       <div className="wc" style={{ paddingTop: NAV_H }}>
-        <div style={{ display: "flex", gap: 10, padding: "18px clamp(24px,3vw,52px)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
+        <div style={{ display: "flex", gap: 10, padding: "clamp(26px,3vw,40px) clamp(24px,3vw,52px) 18px", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
           <Link to="/">Home</Link><span>/</span><Link to="/wedding-rings">Wedding rings</Link><span>/</span><span style={{ color: T.ink }}>{loading ? "…" : title}</span>
         </div>
 

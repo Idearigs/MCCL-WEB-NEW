@@ -20,7 +20,7 @@ const Shell = ({ title, kicker, children }: { title: string; kicker: string; chi
   <div style={{ background: T.paper, color: T.ink, fontFamily: FONT_BODY, minHeight: "100vh" }}>
     <NavigationV2 solid />
     <div style={{ paddingTop: NAV_H }}>
-      <div style={{ display: "flex", gap: 10, padding: "18px clamp(24px, 3vw, 52px)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
+      <div style={{ display: "flex", gap: 10, padding: "clamp(26px,3vw,40px) clamp(24px, 3vw, 52px) 18px", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
         <Link to="/">Home</Link><span>/</span><span style={{ color: T.ink }}>{title}</span>
       </div>
       <section style={{ maxWidth: 820, margin: "0 auto", padding: `clamp(16px,2vw,32px) ${pageX} clamp(28px,3vw,44px)` }}>

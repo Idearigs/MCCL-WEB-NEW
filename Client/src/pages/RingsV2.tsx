@@ -39,7 +39,7 @@ const GROUP_DEFS: { key: GroupKey; title: string }[] = [
   { key: "metal", title: "Metals" },
   { key: "collection", title: "Collection" },
 ];
-const LIVE = "Live stock — ready to ship";
+const LIVE = "Ready to ship";
 const ORDER = "Made to order";
 
 const money = (n: number) => "£" + Math.round(n).toLocaleString("en-GB");
@@ -137,7 +137,11 @@ const RingsV2 = (): JSX.Element => {
     if (sort === "low") list = [...list].sort((a, b) => a.price - b.price);
     else if (sort === "high") list = [...list].sort((a, b) => b.price - a.price);
     else if (sort === "new") list = [...list].reverse();
-    else list = [...list].sort((a, b) => Number(b.hasImage) - Number(a.hasImage));
+    // Featured: group ready-to-ship (live stock) first, then made-to-order —
+    // keeps the two photography themes from interleaving. Image-quality order within each.
+    else list = [...list].sort((a, b) =>
+      (a.availability === LIVE ? 0 : 1) - (b.availability === LIVE ? 0 : 1)
+      || Number(b.hasImage) - Number(a.hasImage));
     return list;
   }, [rows, sel, maxPrice, sort]);
 
@@ -221,7 +225,7 @@ const RingsV2 = (): JSX.Element => {
       <NavigationV2 solid />
 
       <div className="rv2" style={{ paddingTop: NAV_H }}>
-        <div style={{ display: "flex", gap: 10, padding: "18px clamp(24px, 3vw, 52px)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
+        <div style={{ display: "flex", gap: 10, padding: "clamp(26px,3vw,40px) clamp(24px, 3vw, 52px) 18px", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
           <Link to="/">Home</Link><span>/</span><span style={{ color: T.ink }}>Rings</span>
         </div>
 

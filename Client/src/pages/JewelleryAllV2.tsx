@@ -50,7 +50,7 @@ const infer = (name: string, options: string[], aliases: Record<string, string[]
 
 type Key = "cat" | "availability" | "metal" | "stone" | "style";
 type SelKey = "availability" | "metal" | "stone" | "style";
-const LIVE = "Live stock — ready to ship";
+const LIVE = "Ready to ship";
 const ORDER = "Made to order";
 interface Product { id: string; name: string; slug: string; price: string; base_price: number; sale_price?: number; is_featured?: boolean; in_stock?: boolean; is_live_stock?: boolean; category: { slug: string }; image?: { url: string } | null; images?: { url: string; is_primary?: boolean }[]; }
 interface Row { p: Product; cat: CatName; availability: string[]; metal: string[]; stone: string[]; style: string[]; price: number; hasImage: boolean; inStock: boolean; }
@@ -227,7 +227,7 @@ const JewelleryAllV2 = (): JSX.Element => {
       <NavigationV2 solid />
 
       <div className="jl" style={{ paddingTop: NAV_H }}>
-        <div style={{ display: "flex", gap: 10, padding: "18px clamp(24px, 3vw, 52px)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
+        <div style={{ display: "flex", gap: 10, padding: "clamp(26px,3vw,40px) clamp(24px, 3vw, 52px) 18px", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
           <Link to="/">Home</Link><span>/</span><span style={{ color: T.ink }}>Jewellery</span>
         </div>
 
