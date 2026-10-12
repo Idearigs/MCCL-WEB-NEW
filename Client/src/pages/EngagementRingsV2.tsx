@@ -266,7 +266,7 @@ const EngagementRingsV2 = (): JSX.Element => {
             </div>
 
             {loading ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }}>
                 {Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ aspectRatio: "4 / 5", background: T.tint }} />)}
               </div>
             ) : results.length === 0 ? (
@@ -275,7 +275,7 @@ const EngagementRingsV2 = (): JSX.Element => {
                 <button onClick={clearAll} style={{ padding: "13px 26px", cursor: "pointer", background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Clear all filters</button>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="erv2-grid">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="erv2-grid">
                 {results.map(({ p }) => {
                   const imgs = p.images || [];
                   // Default the card thumbnail to the White Gold colourway when the
@@ -315,7 +315,7 @@ const EngagementRingsV2 = (): JSX.Element => {
             <div style={{ ...eyebrow, marginBottom: 26 }}>Bespoke</div>
             <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(32px,3.8vw,58px)", lineHeight: 1.08, margin: "0 auto 24px", maxWidth: "16ch", color: T.ink }}>Nothing here quite right?</h2>
             <p style={{ maxWidth: "50ch", margin: "0 auto 48px", fontSize: 15.5, lineHeight: 1.75, color: T.body }}>Bring us a sketch, a photograph, or an inherited stone. We draw, you choose, and the piece is made on the bench in our workshop.</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderTop: `1px solid ${T.ruleStrong}`, borderBottom: `1px solid ${T.ruleStrong}`, marginBottom: 48 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", borderTop: `1px solid ${T.ruleStrong}`, borderBottom: `1px solid ${T.ruleStrong}`, marginBottom: 48 }}>
               {[["I", "Consultation", "In the showroom or by video, free of charge"], ["II", "Design & stone", "Drawings, CAD, and your choice of stone"], ["III", "Making", "Cut, set, finished and hallmarked on site"]].map(([n, t, d], i) => (
                 <div key={n} style={{ padding: "28px 20px", borderLeft: i ? `1px solid ${T.ruleStrong}` : undefined }}>
                   <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, color: T.gold, marginBottom: 12 }}>{n}</div>
@@ -378,7 +378,7 @@ const EngagementRingsV2 = (): JSX.Element => {
         @media (max-width: 900px){
           .erv2-main{ grid-template-columns: 1fr !important; }
           .erv2-aside{ display: none !important; }
-          .erv2-grid{ grid-template-columns: repeat(2,1fr) !important; gap: 12px !important; }
+          .erv2-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
           .erv2-triggerbar{ display: grid !important; }
           .erv2-sortdesktop{ display: none !important; }
           .erv2-range::-webkit-slider-thumb{ width:22px !important; height:22px !important; }

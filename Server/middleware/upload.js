@@ -186,11 +186,13 @@ const uploadMultipleFields = (maxCount = 50) => {
   };
 };
 
-// Helper function to generate file URL
+// Helper function to generate file URL.
+// Prefer a configured media base so the stored URL does not depend on the
+// request host (which baked the old domain into the DB during the migration).
+// Falls back to the request host when MEDIA_BASE_URL is unset.
 const generateFileUrl = (req, filename) => {
-  const protocol = req.protocol;
-  const host = req.get('host');
-  return `${protocol}://${host}/uploads/${filename}`;
+  const base = (process.env.MEDIA_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
+  return `${base}/uploads/${filename}`;
 };
 
 // Helper function to delete file

@@ -283,7 +283,7 @@ const JewelleryAllV2 = (): JSX.Element => {
             </div>
 
             {loading ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }}>
                 {Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ aspectRatio: "4 / 5", background: T.tint }} />)}
               </div>
             ) : total === 0 ? (
@@ -306,7 +306,7 @@ const JewelleryAllV2 = (): JSX.Element => {
                       <Link to={`/${SLUG[sec.cat]}`} className="cv2-textlink" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink, borderBottom: `1px solid ${T.ruleStrong}`, paddingBottom: 3, whiteSpace: "nowrap" }}>All {sec.cat}</Link>
                     </div>
                   )}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)" }} className="jl-grid">
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)" }} className="jl-grid">
                     {sec.items.map(card)}
                   </div>
                 </div>
@@ -319,7 +319,7 @@ const JewelleryAllV2 = (): JSX.Element => {
         <section style={{ background: T.ink, color: T.onDarkSoft, padding: "clamp(56px,6vw,96px) clamp(24px,3vw,52px)" }}>
           <div style={{ maxWidth: 1180, margin: "0 auto" }}>
             <div style={{ ...eyebrow, marginBottom: 20 }}>Before you ask</div>
-            <div className="jl-advice" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0, borderTop: `1px solid ${T.ruleDark}` }}>
+            <div className="jl-advice" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 0, borderTop: `1px solid ${T.ruleDark}` }}>
               {([
                 ["Earrings", "Earrings are the piece people get wrong.", "Weight matters more than size — a heavy drop on a fine post drags over an evening. Platinum for sensitive ears; hoops above 25mm made hollow.", "/earrings"],
                 ["Necklaces", "Measure the one you wear most.", "Lay a necklace you own flat and measure end to end including the clasp. Where a piece sits on you is personal — an inch changes the whole look.", "/necklaces"],
@@ -381,7 +381,7 @@ const JewelleryAllV2 = (): JSX.Element => {
         @media (max-width: 900px){
           .jl-main{ grid-template-columns: 1fr !important; }
           .jl-aside{ display: none !important; }
-          .jl-grid{ grid-template-columns: repeat(2,1fr) !important; gap: 12px !important; }
+          .jl-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
           .jl-triggerbar{ display: grid !important; }
           .jl-sortdesktop{ display: none !important; }
           .jl-advice{ grid-template-columns: 1fr !important; }

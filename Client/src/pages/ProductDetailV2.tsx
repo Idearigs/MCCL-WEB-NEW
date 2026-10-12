@@ -1074,7 +1074,8 @@ const ProductDetail = () => {
   const money = (n: number) => '£' + Math.round(n || 0).toLocaleString('en-GB');
   // Ring-only UI (size selector, ring-size spec) is shown only for ring categories.
   // Earrings / necklaces / bracelets reuse this template without the ring size step.
-  const isRingCat = /ring/i.test(productData.category?.name || '');
+  // NB: /ring/i matches "Earrings" too, so earrings were wrongly getting the ring-size step — exclude them.
+  const isRingCat = /ring/i.test(productData.category?.name || '') && !/earring/i.test(productData.category?.name || '');
   const priceOverrides = productData?.ring_price_overrides;
   const purchasableMetals = priceOverrides ? metalTypeOptions.filter(o => priceOverrides[o.overrideKey]) : [];
   const metalDot = (v: string) => v.includes('yellow') ? '#E6C15A' : v.includes('rose') ? '#DCA79A' : v.includes('white') ? '#E5E4E2' : v === 'platinum' ? '#E5E4E2' : v === 'silver' ? '#C7C7C7' : '#D8D2C6';
@@ -1535,7 +1536,7 @@ const ProductDetail = () => {
             </div>
 
             <div style={{ marginTop: 22 }}>
-              {[['about', 'About this piece', productData.description ? String(productData.description) : 'Made to order in our own workshop, cut and set by hand.'], ['delivery', 'Delivery information', 'Free insured UK delivery. Made to order — please allow around 3–4 weeks. 30-day returns.'], ['insurance', 'Complimentary insurance', 'Every piece includes complimentary insurance for the first year and a 1-year warranty.']].map(([key, title, body]) => (
+              {[['about', 'About this piece', productData.description ? String(productData.description) : (productData.is_live_stock ? 'A ready-to-ship piece from our own workshop.' : 'Made to order in our own workshop, cut and set by hand.')], ['delivery', 'Delivery information', productData.is_live_stock ? 'Free insured UK delivery. In stock and ready to ship — usually dispatched within 2–3 working days. 30-day returns.' : 'Free insured UK delivery. Made to order — please allow around 3–4 weeks. Made-to-order pieces are not eligible for the 30-day return once work has begun.'], ['insurance', 'Complimentary insurance', 'Every piece includes complimentary insurance for the first year and a 1-year warranty.']].map(([key, title, body]) => (
                 <div key={key} style={{ borderTop: `1px solid ${T.rule}` }}>
                   <button onClick={() => toggleSection(key)} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '16px 0', background: 'transparent', border: 0, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.ink }}>
                     <span>{title}</span><span>{expandedSections[key] ? '−' : '+'}</span>

@@ -82,15 +82,18 @@ const SeasonalOfferV2 = (): JSX.Element | null => {
     code: SEASON.code,
   };
 
-  // Show once per visitor, 1.2s after the promotion has been fetched
+  // Show once per visitor, 1.2s after the promotion has been fetched.
+  // Only show when there is an ACTIVE promotion from the admin — the hardcoded
+  // seasonal fallback (expired "10% off until 30 September") must not appear.
   useEffect(() => {
     if (!loaded) return;
+    if (!promo) return;
     let seen = false;
     try { seen = localStorage.getItem(seenKey) === "1"; } catch { /* ignore */ }
     if (seen) return;
     const t = setTimeout(() => setOpenState(true), 1200);
     return () => clearTimeout(t);
-  }, [loaded, seenKey]);
+  }, [loaded, seenKey, promo]);
 
   useEffect(() => {
     document.body.style.overflow = openState ? "hidden" : "";

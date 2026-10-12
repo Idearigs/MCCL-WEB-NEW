@@ -276,7 +276,7 @@ const RingsV2 = (): JSX.Element => {
             </div>
 
             {loading ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }}>
                 {Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ aspectRatio: "4 / 5", background: T.tint }} />)}
               </div>
             ) : results.length === 0 ? (
@@ -285,7 +285,7 @@ const RingsV2 = (): JSX.Element => {
                 <button onClick={clearAll} style={{ padding: "13px 26px", cursor: "pointer", background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Clear all filters</button>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="rv2-grid">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="rv2-grid">
                 {results.map(({ p }) => {
                   const imgs = p.images || [];
                   const primaryObj = imgs.find(i => i.is_primary) || imgs[0];
@@ -374,7 +374,7 @@ const RingsV2 = (): JSX.Element => {
         @media (max-width: 900px){
           .rv2-main{ grid-template-columns: 1fr !important; }
           .rv2-aside{ display: none !important; }
-          .rv2-grid{ grid-template-columns: repeat(2,1fr) !important; gap: 12px !important; }
+          .rv2-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
           .rv2-triggerbar{ display: grid !important; }
           .rv2-sortdesktop{ display: none !important; }
           .rv2-range::-webkit-slider-thumb{ width:22px !important; height:22px !important; }
