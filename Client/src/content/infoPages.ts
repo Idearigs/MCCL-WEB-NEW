@@ -1355,6 +1355,73 @@ export const INFO_PAGES: Record<string, InfoPage> = {
         "bullets": []
       }
     ]
+  },
+  "visit-us": {
+    "slug": "visit-us",
+    "title": "Visit us",
+    "sections": [
+      {
+        "heading": "Our showroom",
+        "paras": [
+          "You are welcome to visit us in person. Our showroom is on The Square in Beeston, Nottingham, where our resident jeweller can talk you through a commission, a repair, a valuation or any piece in the collection.",
+          "McCulloch Jewellers, 7 The Square, Beeston, Nottingham NG9 2JG."
+        ],
+        "bullets": ["Telephone: 0115 925 7552", "Email: has@mccullochjewellers.co.uk"]
+      },
+      {
+        "heading": "Opening hours",
+        "paras": [],
+        "bullets": ["Monday to Saturday: 9:00 – 5:30", "Sunday: closed"]
+      },
+      {
+        "heading": "Appointments",
+        "paras": [
+          "Appointments are free and take about an hour. Walk-ins are welcome whenever we are open. To book a time, call us or use the contact form and we will arrange a slot that suits you."
+        ],
+        "bullets": []
+      }
+    ]
+  },
+  "guarantees": {
+    "slug": "guarantees",
+    "title": "Our guarantees",
+    "sections": [
+      {
+        "heading": "Made and mended by hand",
+        "paras": [
+          "Every piece is cut, set, sized and finished by hand in our own workshop. Because we make and mend what we sell, we can tell you exactly who worked on your piece and stand behind it."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Warranty",
+        "paras": [
+          "Our jewellery is covered by a one-year warranty against manufacturing faults. This does not cover accidental damage, wear and tear, or loss. Please see our Warranty page for full details."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Returns",
+        "paras": [
+          "Ready-to-ship pieces may be returned within 30 days in their original, unworn condition for a refund to your original payment method once inspected. Made-to-order and bespoke pieces are made to your specification and are not eligible for the 30-day return once work has begun. Please see our Returns page for full details."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Complimentary insurance & aftercare",
+        "paras": [
+          "Every piece includes complimentary insurance for the first year. We also offer aftercare and servicing — cleaning, re-tipping, resizing and restoration — for the pieces we make and sell."
+        ],
+        "bullets": []
+      },
+      {
+        "heading": "Hallmarking & authenticity",
+        "paras": [
+          "Precious-metal pieces are hallmarked in line with UK law, so you can be confident in the metal and its fineness. See our Hallmark guide and Certificate of authenticity pages for more."
+        ],
+        "bullets": []
+      }
+    ]
   }
 };
 

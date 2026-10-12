@@ -23,30 +23,8 @@
     <meta name="twitter:image" content="https://mccullochjewellers.co.uk/mcculloch-logo.png" />
     <meta name="facebook-domain-verification" content="jcr1ftc42zbaioeg9ehhx7udirke9e" />
     
-    <!-- Meta Pixel Code -->
-    <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '1045549528353285');
-    fbq('track', 'PageView');
-    </script>
-    <!-- End Meta Pixel Code -->
-
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "w7bjnhz4zz");
-    </script>
-    <!-- End Microsoft Clarity -->
+    <!-- Non-essential trackers (Meta Pixel, Microsoft Clarity, Google Tag Manager)
+         are loaded only after cookie consent — see src/components/CookieConsentV2.tsx -->
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/mcculloch-logo.png">
@@ -69,26 +47,9 @@
     <!-- API server early connection -->
     <link rel="preconnect" href="https://api.mccullochjewellers.co.uk">
     <link rel="dns-prefetch" href="https://api.mccullochjewellers.co.uk">
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-PP0B5P4');</script>
-    <!-- End Google Tag Manager -->
   </head>
 
   <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PP0B5P4"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-    <!-- Meta Pixel Code -->
-    <noscript>
-    <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=1045549528353285&ev=PageView&noscript=1"/>
-    </noscript>
-    <!-- End Meta Pixel Code -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

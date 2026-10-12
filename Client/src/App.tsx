@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
+import CookieConsentV2 from "./components/CookieConsentV2";
 import ReturnToCheckout from "./components/home-v2/ReturnToCheckout";
 import { CartProvider } from "./contexts/CartContext";
 import { UserAuthProvider } from "./contexts/UserAuthContext";
@@ -17,11 +18,8 @@ import NotFound from "./pages/NotFound";
 import MaintenancePage from "./pages/MaintenancePage";
 
 // ── Lazily loaded pages (split into separate chunks) ──────────────────────
-const Collections       = lazy(() => import("./pages/Collections"));
 const Jewellery         = lazy(() => import("./pages/JewelleryAllV2"));
-const Diamonds          = lazy(() => import("./pages/Diamonds"));
 const Watches           = lazy(() => import("./pages/WatchesV2"));
-const Heritage          = lazy(() => import("./pages/Heritage"));
 const Products          = lazy(() => import("./pages/Products"));
 const Cart              = lazy(() => import("./pages/CartV2"));
 const Checkout          = lazy(() => import("./pages/CheckoutV2"));
@@ -58,8 +56,6 @@ const Contact           = lazy(() => import("./pages/ContactV2"));
 const OurStory          = lazy(() => import("./pages/OurStoryV2"));
 const BespokeDesign     = lazy(() => import("./pages/BespokeDesignV2"));
 const CustomerService   = lazy(() => import("./pages/CustomerService"));
-const VisitUs           = lazy(() => import("./pages/VisitUs"));
-const TrustGuarantees   = lazy(() => import("./pages/TrustGuarantees"));
 const InfoPage          = lazy(() => import("./pages/InfoPageV2"));
 const Favorites         = lazy(() => import("./pages/Favorites"));
 const Account           = lazy(() => import("./pages/AccountV2"));
@@ -123,7 +119,6 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
 
       {/* Shop */}
-      <Route path="/collections" element={<Collections />} />
       <Route path="/products" element={<Products />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
@@ -131,7 +126,6 @@ const AppRoutes = () => {
 
       {/* Jewellery */}
       <Route path="/jewellery" element={<Jewellery />} />
-      <Route path="/diamonds" element={<Diamonds />} />
       <Route path="/rings" element={<Rings />} />
       <Route path="/engagement-rings" element={<EngagementRings />} />
       <Route path="/wedding-rings" element={<WeddingRings />} />
@@ -167,15 +161,14 @@ const AppRoutes = () => {
       <Route path="/product/:productId" element={<ProductDetail />} />
 
       {/* Info */}
-      <Route path="/heritage" element={<Heritage />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/our-story" element={<OurStory />} />
       <Route path="/bespoke-design" element={<BespokeDesign />} />
       {/* Old portfolio page removed — redirect to the Bespoke page (which holds the commissioned portfolio) */}
       <Route path="/portfolio" element={<Navigate to="/bespoke-design" replace />} />
       <Route path="/customer-service" element={<CustomerService />} />
-      <Route path="/visit-us" element={<VisitUs />} />
-      <Route path="/trust-guarantees" element={<TrustGuarantees />} />
+      <Route path="/visit-us" element={<InfoPage slug="visit-us" />} />
+      <Route path="/trust-guarantees" element={<InfoPage slug="guarantees" />} />
 
       {/* Informational, legal & guide pages — content from Website Essentials (InfoPageV2) */}
       <Route path="/privacy" element={<InfoPage slug="privacy" />} />
@@ -228,6 +221,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <ScrollToTop />
+              <CookieConsentV2 />
               <PixelPageViewTracker />
               <ReturnToCheckout />
               <Suspense fallback={<PageLoader />}>

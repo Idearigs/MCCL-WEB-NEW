@@ -22,7 +22,7 @@ const RECENT_KEY = "mcculloch_recent_searches";
 
 const GUIDES = [
   { title: "How to measure a ring size at home", kind: "Guide", to: "/customer-service", kw: "size sizing measure fit" },
-  { title: "Clarity, colour and cut, in plain English", kind: "Guide", to: "/diamonds", kw: "clarity colour cut grading diamond stone" },
+  { title: "Clarity, colour and cut, in plain English", kind: "Guide", to: "/diamond-guide", kw: "clarity colour cut grading diamond stone" },
   { title: "Choosing between platinum and white gold", kind: "Guide", to: "/customer-service", kw: "platinum white gold metal" },
   { title: "What a halo setting actually does", kind: "Journal", to: "/engagement-rings", kw: "halo setting hidden" },
   { title: "Why we hold no stock", kind: "Journal", to: "/our-story", kw: "made to order stock bespoke" },
