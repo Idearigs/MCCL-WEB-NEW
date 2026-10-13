@@ -77,10 +77,13 @@ app.options('*', cors(corsOptions));
 
 // General rate limit — applied AFTER CORS so a 429 still carries CORS headers
 // (otherwise a rate-limited request surfaces in the browser as a CORS error).
-// Skip admin routes (bulk ops) and /uploads (static images are not API calls).
+// Skip admin (bulk ops), /uploads (static images) and /media (video streaming:
+// a single autoplay video fires many HTTP range requests, so counting them here
+// rate-limited video playback — worst on mobile, which chunks aggressively).
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/v1/admin')) return next();
   if (req.path.startsWith('/uploads')) return next();
+  if (req.path.startsWith('/media')) return next();
   return generalRateLimit(req, res, next);
 });
 

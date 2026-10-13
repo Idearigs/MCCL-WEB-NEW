@@ -1260,7 +1260,8 @@ const ProductDetail = () => {
 
           {/* Buy column */}
           <div>
-            <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(34px,3.6vw,54px)', lineHeight: 1.02, margin: '0 0 16px' }}>{productData.name}</h1>
+            <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(34px,3.6vw,54px)', lineHeight: 1.02, margin: '0 0 10px' }}>{productData.name}</h1>
+            {productData.sku && <div style={{ fontSize: 11.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.muted, margin: '0 0 16px' }}>Product code&nbsp;·&nbsp;{productData.sku}</div>}
 
             {/* Simple header: name (above), small live price, then the current spec.
                 The prominent live total + Add to bag live in the fixed bottom bar. */}
