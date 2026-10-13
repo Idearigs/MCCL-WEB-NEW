@@ -6,13 +6,14 @@
  * Run inside the backend container (has pg + PG_* env vars + DB network access):
  *   docker exec -it mcculloch-backend node scripts/set-livestock-prices.js
  *
- * Idempotent: only updates the listed SKUs. Aquamarine (1507261) is intentionally
- * omitted — it has no price in the sheet and is awaiting the owner.
+ * Idempotent: only updates the listed SKUs. Aquamarine (1507261) price was
+ * supplied by the owner (£1,500) since it was blank in the sheet.
  */
 const { Client } = require('pg');
 
 // sku (products.sku) -> price in GBP, from the Live Stock Rings sheet
 const PRICES = {
+  '1507261': 1500,   // Aquamarine Trilogy Ring in 18ct Rose Gold (price supplied by owner)
   '2707266': 2650,   // Green Tourmaline Modern/Contemporary Ring in 18ct Yellow Gold
   '1909254': 2650,   // Mois Solitaire Ring in Platinum
   '021369223': 2150, // Ruby Halo Ring in 18ct White Gold
