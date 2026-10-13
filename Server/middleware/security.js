@@ -10,8 +10,11 @@ const createRateLimit = (options = {}) => {
   }
 
   return rateLimit({
-    windowMs: options.windowMs || config.security.rateLimitWindowMs,
-    max: options.max || config.security.rateLimitMaxRequests,
+    // NB: config keys are rateLimitWindow / rateLimitMax (not ...Ms/...MaxRequests).
+    // The old names were undefined, so this silently fell back to the library's
+    // tiny default (~5/min) and rate-limited normal browsing. Use the real keys.
+    windowMs: options.windowMs || config.security.rateLimitWindow || 15 * 60 * 1000,
+    max: options.max || config.security.rateLimitMax || 600,
     message: {
       success: false,
       message: 'Too many requests, please try again later'
@@ -33,7 +36,8 @@ const authRateLimit = createRateLimit({
   max: 5 // 5 attempts per window
 });
 
-const generalRateLimit = createRateLimit();
+// Generous window for a catalog site: listing pages fire several API calls each.
+const generalRateLimit = createRateLimit({ windowMs: 15 * 60 * 1000, max: 2000 });
 
 const apiRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

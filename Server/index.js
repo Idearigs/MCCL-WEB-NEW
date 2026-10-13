@@ -37,11 +37,6 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmetConfig);
 app.use(securityLogger);
-// Skip general rate limit for authenticated admin routes — admins need bulk-operation headroom
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/v1/admin')) return next();
-  return generalRateLimit(req, res, next);
-});
 
 // CORS configuration
 const corsOptions = {
@@ -79,6 +74,15 @@ app.use(cors(corsOptions));
 
 // Handle preflight requests
 app.options('*', cors(corsOptions));
+
+// General rate limit — applied AFTER CORS so a 429 still carries CORS headers
+// (otherwise a rate-limited request surfaces in the browser as a CORS error).
+// Skip admin routes (bulk ops) and /uploads (static images are not API calls).
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/v1/admin')) return next();
+  if (req.path.startsWith('/uploads')) return next();
+  return generalRateLimit(req, res, next);
+});
 
 // Compression and parsing middleware
 app.use(compression());
