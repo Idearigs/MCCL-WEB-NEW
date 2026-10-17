@@ -344,7 +344,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       {
         model: ProductVideo,
         as: 'videos',
-        attributes: ['id', 'video_url', 'title', 'description', 'sort_order', 'metal_id'],
+        attributes: ['id', 'video_url', 'video_type', 'title', 'description', 'sort_order', 'metal_id'],
         separate: true,
         order: [['sort_order', 'ASC']]
       },
@@ -499,6 +499,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
       alt: video.title || product.name,
       is_primary: false,
       type: 'video',
+      video_type: video.video_type || 'live', // 'live' | 'cad_render'
       sort_order: video.sort_order + 1000, // Offset to place videos after images
       metal_id: video.metal_id || null,
       diamond_size_id: videoUrlToSize[video.video_url] || null

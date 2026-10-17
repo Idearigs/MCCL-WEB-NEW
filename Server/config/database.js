@@ -105,6 +105,15 @@ const connectPostgreSQL = async () => {
       logger.debug('users.ring_size ensure completed');
     }
 
+    // Video type — every video is live footage or a CAD render. Default 'live'
+    // so existing rows (all currently untagged) are treated as live; the render
+    // videos are promoted to 'cad_render' from the tagging tool. Idempotent.
+    try {
+      await postgresDB.query(`ALTER TABLE "product_videos" ADD COLUMN IF NOT EXISTS "video_type" VARCHAR(20) NOT NULL DEFAULT 'live';`);
+    } catch (error) {
+      logger.debug('product_videos.video_type ensure completed');
+    }
+
     // Reviews (migration 016) — ensure the table exists so GET /reviews?featured
     // doesn't 500 on the homepage. Schema mirrors migration 016. Idempotent.
     try {

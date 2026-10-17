@@ -237,7 +237,7 @@ const getProductById = async (req, res) => {
         {
           model: ProductVideo,
           as: 'videos',
-          attributes: ['id', 'video_url', 'title', 'description', 'sort_order', 'metal_id'],
+          attributes: ['id', 'video_url', 'video_type', 'title', 'description', 'sort_order', 'metal_id'],
           order: [['sort_order', 'ASC']]
         },
         {
@@ -755,7 +755,7 @@ const updateProduct = async (req, res) => {
         {
           model: ProductVideo,
           as: 'videos',
-          attributes: ['id', 'video_url', 'title', 'description', 'sort_order', 'metal_id'],
+          attributes: ['id', 'video_url', 'video_type', 'title', 'description', 'sort_order', 'metal_id'],
           order: [['sort_order', 'ASC']]
         },
         { model: ProductVariant, as: 'variants' },
@@ -971,6 +971,27 @@ const deleteProductVideo = async (req, res) => {
   } catch (error) {
     console.error('Error deleting product video:', error);
     return res.status(500).json({ success: false, message: 'Failed to delete video', error: error.message });
+  }
+};
+
+// Patch a single product video's metadata (video_type, title, sort_order, metal_id).
+const patchProductVideo = async (req, res) => {
+  try {
+    const { ProductVideo } = getModelInstance();
+    const { id, videoId } = req.params;
+    const vid = await ProductVideo.findOne({ where: { id: videoId, product_id: id } });
+    if (!vid) return res.status(404).json({ success: false, message: 'Video not found for this product' });
+    if ('video_type' in req.body && !['live', 'cad_render'].includes(req.body.video_type)) {
+      return res.status(400).json({ success: false, message: "video_type must be 'live' or 'cad_render'" });
+    }
+    const allowed = ['video_type', 'title', 'description', 'sort_order', 'metal_id'];
+    const patch = {};
+    for (const k of allowed) if (k in req.body) patch[k] = req.body[k];
+    await vid.update(patch);
+    return res.json({ success: true, message: 'Video updated', data: { id: videoId, ...patch } });
+  } catch (error) {
+    console.error('Error patching product video:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update video', error: error.message });
   }
 };
 
@@ -1541,6 +1562,7 @@ module.exports = {
   updateProductWithMedia,
   deleteProductImage,
   deleteProductVideo,
+  patchProductVideo,
   patchProductImage,
   deleteProduct,
   toggleProductStatus,

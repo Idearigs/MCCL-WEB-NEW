@@ -33,6 +33,7 @@ router.put('/:id/with-media', uploadMultipleFields(50), adminProductController.u
 router.delete('/:id/images/:imageId', adminProductController.deleteProductImage);
 router.delete('/:id/videos/:videoId', adminProductController.deleteProductVideo);
 router.patch('/:id/images/:imageId', adminProductController.patchProductImage);
+router.patch('/:id/videos/:videoId', adminProductController.patchProductVideo);
 
 // Delete product
 router.delete('/:id', adminProductController.deleteProduct);

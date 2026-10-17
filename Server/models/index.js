@@ -406,6 +406,12 @@ const initializeModels = (sequelize) => {
       type: DataTypes.STRING(500),
       allowNull: false
     },
+    video_type: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'live',
+      comment: "Either 'live' (product live footage) or 'cad_render' (CAD render film)"
+    },
     title: {
       type: DataTypes.STRING(255)
     },
