@@ -529,6 +529,8 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     is_featured: product.is_featured,
     in_stock: product.in_stock,
     stock_quantity: product.stock_quantity,
+    // Ready-to-ship flag — the PDP picks delivery/returns/workshop copy from it
+    is_live_stock: product.is_live_stock || false,
     // Made on Request Fields
     is_made_on_request: product.is_made_on_request || false,
     made_on_request_lead_time: product.made_on_request_lead_time,
