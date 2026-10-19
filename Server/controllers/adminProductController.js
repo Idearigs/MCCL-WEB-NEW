@@ -592,13 +592,16 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    // Extract relationship IDs from request body
+    // Extract relationship IDs from request body. No defaults: a list that isn't sent
+    // stays undefined and is left alone below (an empty list still clears it). With
+    // `= []` defaults, any update that omitted them wiped the product's metals,
+    // mount prices, ring types, stone shapes and diamond sizes.
     const {
-      ring_type_ids = [],
-      stone_shape_ids = [],
+      ring_type_ids,
+      stone_shape_ids,
       stone_type_id,
-      metal_ids = [],
-      diamond_size_ids = [],
+      metal_ids,
+      diamond_size_ids,
       nivoda_options_config,
       metal_mount_prices,        // { [metalId]: price } — per-metal mount prices
       ...productData

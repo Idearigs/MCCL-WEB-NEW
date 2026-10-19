@@ -40,7 +40,7 @@ const PAYMENT_OPTIONS = [
   { id: "transfer", name: "Bank transfer", note: "We’ll email account details" },
 ];
 
-const ASSURANCES = ["Complimentary insured delivery", "30-day returns", "Lifetime aftercare & servicing"];
+const ASSURANCES = ["Complimentary insured delivery", "30-day returns on ready-to-ship", "Lifetime aftercare & servicing"];
 
 // ── Payment Form (Stripe) — logic unchanged, presentation restyled ──────────
 const PaymentForm = ({

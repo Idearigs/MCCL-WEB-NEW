@@ -48,7 +48,7 @@ const leadTime = (item: CartItem): string =>
 
 const ASSURANCES = [
   "Complimentary insured delivery",
-  "30-day returns",
+  "30-day returns on ready-to-ship",
   "Lifetime aftercare & servicing",
   "Secure encrypted checkout",
 ];

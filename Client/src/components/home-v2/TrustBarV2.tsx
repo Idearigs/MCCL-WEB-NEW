@@ -16,7 +16,7 @@ import { T, FONT_BODY } from "./tokens";
 
 const TRUST = [
   "Free insured UK delivery",
-  "30-day returns",
+  "30-day returns on ready-to-ship",
   "1-year warranty",
   "Hand-finished in the UK",
 ];

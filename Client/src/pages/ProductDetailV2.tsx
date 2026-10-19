@@ -1574,7 +1574,9 @@ const ProductDetail = () => {
           <div style={{ maxWidth: 1240, margin: '0 auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'end', paddingBottom: 36, borderBottom: `1px solid ${T.ruleDark}` }} className="pdpv2-promise-top">
               <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(30px,3.4vw,52px)', lineHeight: 1.08, margin: 0, maxWidth: '15ch', color: '#fff' }}>Where craftsmanship meets distinction.</h2>
-              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>Every piece is cut, set and finished by hand in our own workshop — the same bench, the same care, for generations.</p>
+              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>{productData.is_live_stock
+                ? 'Ready to ship from our showroom in Beeston, with a 1-year warranty. Sizing, repairs and servicing are all done in our own workshop.'
+                : 'Every made-to-order piece is cut, set and finished by hand in our own workshop — the same bench, the same care, for generations.'}</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }} className="pdpv2-promise-grid">
               {[['I', 'White glove delivery', 'Insured, tracked and hand-delivered to your door.'], ['II', 'Signature presentation', 'Every piece arrives in our signature box, ready to give.'], ['III', 'Ethical excellence', 'Responsibly sourced stones and metals, hallmarked in the UK.'], ['IV', 'Sizing expertise', 'Complimentary resizing to get the fit exactly right.']].map(([n, t, d], i) => (
