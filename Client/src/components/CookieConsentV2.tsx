@@ -11,11 +11,29 @@ import { Link } from "react-router-dom";
  */
 
 const STORAGE_KEY = "cookie_consent_v1"; // "accepted" | "declined"
+const COOKIE_NAME = "cookie_consent";
 const META_PIXEL_ID = "1045549528353285";
 const CLARITY_ID = "w7bjnhz4zz";
 const GTM_ID = "GTM-PP0B5P4";
 
 let trackersLoaded = false;
+
+// The choice is kept in a cookie on the parent domain as well as localStorage:
+// localStorage is per-origin, so www. and the bare domain would otherwise each
+// ask again. (Remembering the choice is itself strictly necessary.)
+const readChoice = (): string | null => {
+  const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=(accepted|declined)`));
+  if (m) return m[1];
+  try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
+};
+
+const saveChoice = (choice: "accepted" | "declined") => {
+  try { localStorage.setItem(STORAGE_KEY, choice); } catch { /* ignore */ }
+  const host = window.location.hostname.replace(/^www\./, "");
+  const domain = host.includes(".") && !/^[\d.]+$/.test(host) ? `; domain=.${host}` : "";
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${COOKIE_NAME}=${choice}; max-age=${60 * 60 * 24 * 180}; path=/; SameSite=Lax${domain}${secure}`;
+};
 
 const loadTrackers = () => {
   if (trackersLoaded || typeof window === "undefined") return;
@@ -70,15 +88,15 @@ const CookieConsentV2 = (): JSX.Element | null => {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    let choice: string | null = null;
-    try { choice = localStorage.getItem(STORAGE_KEY); } catch { /* ignore */ }
-    if (choice === "accepted") { loadTrackers(); return; }
-    if (choice === "declined") return;
+    const choice = readChoice();
+    // Re-save so a choice made before the shared cookie existed carries across www./bare domain.
+    if (choice === "accepted") { saveChoice(choice); loadTrackers(); return; }
+    if (choice === "declined") { saveChoice(choice); return; }
     setShow(true);
   }, []);
 
   const decide = (accepted: boolean) => {
-    try { localStorage.setItem(STORAGE_KEY, accepted ? "accepted" : "declined"); } catch { /* ignore */ }
+    saveChoice(accepted ? "accepted" : "declined");
     if (accepted) loadTrackers();
     setShow(false);
   };

@@ -155,8 +155,10 @@ const MainContentV2 = (): JSX.Element => {
     // pass, so they must be (re)observed or they stay stuck at opacity 0.
   }, [products, watches]);
 
+  // overflowX "clip", not "hidden": hidden makes this wrapper its own vertical scroll box (a second
+  // scrollbar that traps the wheel/trackpad gesture before the page scrolls).
   return (
-    <div ref={rootRef} style={{ fontFamily: FONT_BODY, color: T.ink, background: T.paper, overflowX: "hidden" }}>
+    <div ref={rootRef} style={{ fontFamily: FONT_BODY, color: T.ink, background: T.paper, overflowX: "clip" }}>
       <style>{`
         .v2-panel { transition: flex 0.55s cubic-bezier(0.22,1,0.36,1); }
         .v2-panel:hover { flex: 1.9 !important; }

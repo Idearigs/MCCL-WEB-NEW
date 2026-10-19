@@ -488,7 +488,7 @@ const CheckoutV2 = (): JSX.Element => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: T.paper, fontFamily: FONT_BODY, color: T.body, overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: T.paper, fontFamily: FONT_BODY, color: T.body, overflowX: "clip" }}>
       <style>{`
         @keyframes cov2spin { to { transform: rotate(360deg) } }
         .cov2-spin { animation: cov2spin 0.7s linear infinite; }
