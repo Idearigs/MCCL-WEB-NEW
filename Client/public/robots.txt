@@ -1,13 +1,14 @@
-# robots.txt for McCulloch Jewelry
+# robots.txt for McCulloch Jewellers
 User-agent: *
 Allow: /
 
-# Block admin or sensitive areas (when backend is added)
-# Disallow: /admin/
-# Disallow: /api/
+# Account, basket and admin areas
+Disallow: /admin
+Disallow: /checkout
+Disallow: /cart
+Disallow: /account
+Disallow: /orders
+Disallow: /auth/
 
-# Sitemap location
+# Generated live from the catalogue (see Client/seo/server.mjs)
 Sitemap: https://mccullochjewellers.co.uk/sitemap.xml
-
-# Crawl-delay to be respectful
-Crawl-delay: 1
