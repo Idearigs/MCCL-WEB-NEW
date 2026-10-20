@@ -729,15 +729,19 @@ const ProductDetail = () => {
 
     // Simulate adding to cart process
     setTimeout(() => {
-      // Get the metal name from selected metal ID
-      const selectedMetalName = productData?.available_metals?.find(
-        (metal: any) => metal.id === selectedMetal
-      )?.name || 'Platinum';
+      // The metal the customer actually chose and is paying for (the priced metal option),
+      // else the product's own metal. Never a guessed default: this is what the order
+      // tells the workshop to make.
+      const selectedMetalName = metalTypeOptions.find(m => m.value === selectedMetalType)?.label
+        || productData?.available_metals?.find((metal: any) => metal.id === selectedMetal)?.name
+        || null;
 
-      // Get the size label from selected size code
-      const selectedSizeLabel = ringSizes.find(
-        (size) => size.value === selectedSize
-      )?.label || selectedSize;
+      // Ring size only applies to rings (/ring/i also matches "Earrings").
+      const categoryName = productData?.category?.name || '';
+      const isRingProduct = /ring/i.test(categoryName) && !/earring/i.test(categoryName);
+      const selectedSizeLabel = isRingProduct
+        ? (ringSizes.find((size) => size.value === selectedSize)?.label || selectedSize || null)
+        : null;
 
       // Get diamond size name if selected
       const selectedDiamondSizeName = productData?.available_diamond_sizes?.find(
