@@ -44,6 +44,7 @@ const DEFAULT_IMAGE = `${SITE}/logo.png`;
 // ── Template ────────────────────────────────────────────────────────────────
 // Strip the static head tags we replace per page, leaving a marker to inject at.
 const HEAD_MARK = '<!--seo-head-->';
+const ROOT_EMPTY = '<div id="root"></div>';
 function loadTemplate() {
   let html = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
   html = html
@@ -347,7 +348,7 @@ async function resolve(pathname) {
   return notFound();
 }
 
-function renderHead(h) {
+function renderHead(h, body = '') {
   const url = h.canonical ? `${SITE}${h.canonical === '/' ? '' : h.canonical}` : null;
   const tags = [
     `<title>${esc(h.title)}</title>`,
@@ -368,7 +369,8 @@ function renderHead(h) {
     `<meta name="twitter:image" content="${esc(h.image)}" />`,
     ...(h.ld || []).map(jsonLd),
   ].filter(Boolean);
-  return TEMPLATE.replace(HEAD_MARK, tags.join('\n    ') + '\n    ');
+  const html = TEMPLATE.replace(HEAD_MARK, tags.join('\n    ') + '\n    ');
+  return body ? html.replace(ROOT_EMPTY, `<div id="root">${shell(body)}</div>`) : html;
 }
 
 // ── Sitemap ─────────────────────────────────────────────────────────────────
@@ -416,6 +418,209 @@ async function buildSitemapNow() {
   if (ok || !sitemap.xml) sitemap = { xml, exp: Date.now() + (ok ? 60 * 60_000 : 5 * 60_000) };
   return sitemap.xml;
 }
+
+// ── Page content for crawlers ───────────────────────────────────────────────
+// Real HTML (headings, text, prices, images, links) inside #root, so crawlers that
+// don't run JavaScript (Bing, AI search, link previews) can read every page and
+// follow its links. React's createRoot replaces it on first render, so people see
+// the normal site; the inline style only shapes the moment before the app loads.
+const NAV = [['Engagement', '/engagement-rings'], ['Wedding', '/wedding-rings'], ['Jewellery', '/jewellery'], ['Watches', '/watches'],
+  ['Bespoke', '/bespoke-design'], ['Our story', '/our-story'], ['Journal', '/blog/']];
+const FOOT = [
+  ['Shop', [['Engagement rings', '/engagement-rings'], ['Wedding bands', '/wedding-rings'], ['Fine jewellery', '/jewellery'], ['Earrings', '/earrings'], ['Necklaces', '/necklaces'], ['Bracelets', '/bracelets'], ['Watches', '/watches'], ['All rings', '/rings']]],
+  ['Services', [['Bespoke design', '/bespoke-design'], ['Portfolio', '/portfolio'], ['Repairs & aftercare', '/repairs'], ['Book an appointment', '/book-appointment'], ['Visit us', '/visit-us'], ['Contact', '/contact']]],
+  ['Help', [['Delivery', '/delivery'], ['Returns & refunds', '/returns'], ['Warranty', '/warranty'], ['FAQs', '/faqs'], ['Customer service', '/customer-service']]],
+  ['Guides', [['Ring size guide', '/ring-size-guide'], ['Diamond guide', '/diamond-guide'], ['Gemstone guide', '/gemstone-guide'], ['Birthstone guide', '/birthstone-guide'], ['Hallmark guide', '/hallmark-guide'], ['Jewellery care', '/jewellery-care']]],
+  ['Company', [['Our story', '/our-story'], ['Sustainability', '/sustainability'], ['Certificates', '/certificate-of-authenticity'], ['Guarantees', '/trust-guarantees'], ['Journal', '/blog/']]],
+];
+const SSR_CSS = `.ssr{font-family:'Instrument Sans',system-ui,sans-serif;color:#4A4741;background:#F8F6F0;line-height:1.6}
+.ssr a{color:#332F2A;text-decoration:none}.ssr a:hover{color:#A8813C}
+.ssr-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 32px;padding:20px clamp(20px,3vw,52px);border-bottom:1px solid #E3DDD0}
+.ssr-logo{font-family:'Italiana',serif;font-size:25px;letter-spacing:.16em;color:#332F2A}
+.ssr-nav{display:flex;flex-wrap:wrap;gap:8px 28px;font-size:12.5px}
+.ssr-main{max-width:1240px;margin:0 auto;padding:40px clamp(20px,3vw,52px) 80px}
+.ssr h1,.ssr h2,.ssr h3{font-family:'Italiana',serif;font-weight:400;color:#332F2A;line-height:1.15}
+.ssr h1{font-size:clamp(32px,4vw,52px);margin:0 0 16px}.ssr h2{font-size:28px;margin:40px 0 12px}.ssr h3{font-size:20px;margin:24px 0 8px}
+.ssr p{max-width:72ch}.ssr-crumbs{font-size:12px;color:#6E6A60;margin-bottom:18px}.ssr-crumbs a{color:#6E6A60}
+.ssr-price{font-size:20px;color:#332F2A;margin:8px 0 20px}.ssr-note{font-size:13px;color:#6E6A60}
+.ssr-grid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:28px 20px}
+.ssr-grid img{width:100%;aspect-ratio:1;object-fit:cover;background:#EFEADF;display:block}.ssr-grid span{display:block;font-size:13.5px;margin-top:8px}
+.ssr-gallery{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 24px}.ssr-gallery img{width:min(320px,100%);aspect-ratio:1;object-fit:cover;background:#EFEADF}
+.ssr-links{columns:3 220px;padding-left:18px}
+.ssr-foot{background:#1C1A17;color:#B0A798;padding:48px clamp(20px,3vw,52px);font-size:13.5px}
+.ssr-foot a{color:#B0A798}.ssr-foot nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:24px}
+.ssr-foot h2{font-family:'Instrument Sans',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#fff;margin:0 0 12px}
+.ssr-foot ul{list-style:none;padding:0;margin:0}.ssr-foot li{margin:0 0 8px}.ssr-foot p{font-size:12px;margin-top:32px}`;
+
+const money = (v) => { const n = num(v); return n ? `£${n.toLocaleString('en-GB', { maximumFractionDigits: n % 1 ? 2 : 0, minimumFractionDigits: n % 1 ? 2 : 0 })}` : ''; };
+// Copy → paragraphs (keeps the client's line breaks; strips any stray tags).
+const paras = (text) => String(text ?? '').replace(/<[^>]*>/g, ' ').split(/\n+/).map((l) => l.trim()).filter(Boolean).map((l) => `<p>${esc(l)}</p>`).join('');
+const linkList = (items) => `<ul class="ssr-links">${items.map(([t, h]) => `<li><a href="${esc(h)}">${esc(t)}</a></li>`).join('')}</ul>`;
+const cardList = (items) => `<ul class="ssr-grid">${items.map((c) => `<li><a href="${esc(c.href)}">${c.img ? `<img src="${esc(c.img)}" alt="${esc(c.name)}" loading="lazy" width="400" height="400">` : ''}<span>${esc(c.name)}</span>${c.price ? `<span>${esc(c.price)}</span>` : ''}</a></li>`).join('')}</ul>`;
+const crumbBar = (items) => `<nav class="ssr-crumbs" aria-label="Breadcrumb">${items.map(([t, h], i) => (i < items.length - 1 ? `<a href="${esc(h)}">${esc(t)}</a> / ` : esc(t))).join('')}</nav>`;
+const storeBlock = `<h2>Visit us</h2><p>McCulloch Jewellers, 7 The Square, Beeston, Nottingham NG9 2JG. Telephone <a href="tel:+441159257552">0115 925 7552</a>.</p><p><a href="/book-appointment">Book an appointment</a> · <a href="/contact">Contact us</a></p>`;
+
+function shell(main) {
+  const nav = NAV.map(([t, h]) => `<a href="${h}">${esc(t)}</a>`).join('');
+  const foot = FOOT.map(([title, links]) => `<div><h2>${esc(title)}</h2><ul>${links.map(([t, h]) => `<li><a href="${h}">${esc(t)}</a></li>`).join('')}</ul></div>`).join('');
+  return `<div class="ssr"><style>${SSR_CSS}</style>`
+    + `<header class="ssr-top"><a class="ssr-logo" href="/">McCulloch</a><nav class="ssr-nav" aria-label="Main">${nav}</nav></header>`
+    + `<main class="ssr-main">${main}</main>`
+    + `<footer class="ssr-foot"><nav aria-label="Footer">${foot}</nav><p>© ${new Date().getFullYear()} Andrew McCulloch Jewellers — 7 The Square, Beeston, Nottingham NG9 2JG · 0115 925 7552. Beeston Jewellers Ltd, registered in England &amp; Wales No. 10915704.</p></footer></div>`;
+}
+
+const productCard = (p) => ({
+  href: productPath(p),
+  name: p.name,
+  price: p.price && /£/.test(p.price) ? p.price : money(p.sale_price || p.base_price),
+  img: abs(p.image?.url || p.images?.[0]?.url || p.primary_image),
+});
+async function categoryProducts(cats) {
+  const lists = await Promise.all(cats.map((c) => api(`/products?category=${c}&limit=1000`, 60 * 60_000)));
+  const seen = new Set();
+  return lists.flatMap((r) => r?.data?.products || r?.products || []).filter((p) => p.slug && !seen.has(p.slug) && seen.add(p.slug));
+}
+async function allWatches() {
+  const r = await api('/watches?limit=2000', 60 * 60_000);
+  return r?.data?.watches || [];
+}
+const watchCard = (w) => ({ href: `/watches/${w.slug}`, name: titleCase(w.name), price: money(w.sale_price || w.base_price), img: abs(w.image?.url || w.image?.image_url || w.image) });
+
+const LISTING = {
+  '/engagement-rings': ['engagement-rings'], '/rings': ['rings', 'engagement-rings'], '/earrings': ['earrings'],
+  '/necklaces': ['necklaces'], '/bracelets': ['bracelets'], '/jewellery': ['earrings', 'necklaces', 'bracelets'],
+};
+const BRAND_PAGES = { '/roamer': 'roamer', '/briston': 'briston', '/festina': 'festina' };
+
+// Main content for a resolved page (head = resolve() result). Returns '' when there's nothing useful to add.
+async function bodyFor(pathname, head) {
+  const p = pathname.length > 1 ? pathname.replace(/\/+$/, '') : '/';
+  const key = head.canonical || p;
+  const h1 = (t) => `<h1>${esc(t)}</h1>`;
+  const title = String(head.title || '').replace(/\s*\|\s*McCulloch Jewellers$/, '');
+
+  if (key === '/') {
+    const [eng, rings] = await Promise.all([categoryProducts(['engagement-rings']), categoryProducts(['rings'])]);
+    const ready = rings.filter((r) => r.is_live_stock).slice(0, 8);
+    return `${h1('McCulloch Jewellers — engagement rings, fine jewellery and watches in Beeston, Nottingham')}<p>${esc(DEFAULT_DESC)}</p>`
+      + `<h2>Shop</h2>${linkList([['Engagement rings', '/engagement-rings'], ['Wedding rings', '/wedding-rings'], ['All rings', '/rings'], ['Earrings', '/earrings'], ['Necklaces & pendants', '/necklaces'], ['Bracelets', '/bracelets'], ['Fine jewellery', '/jewellery'], ['Watches', '/watches'], ['Bespoke design', '/bespoke-design']])}`
+      + (eng.length ? `<h2>Engagement rings</h2>${cardList(eng.slice(0, 8).map(productCard))}<p><a href="/engagement-rings">See all engagement rings</a></p>` : '')
+      + (ready.length ? `<h2>Ready to ship</h2>${cardList(ready.map(productCard))}<p><a href="/rings?availability=live">See all ready-to-ship rings</a></p>` : '')
+      + storeBlock;
+  }
+
+  if (LISTING[key]) {
+    const list = await categoryProducts(LISTING[key]);
+    return `${crumbBar([['Home', '/'], [title.split(' — ')[0], key]])}${h1(title.split(' — ')[0])}<p>${esc(head.desc)}</p>`
+      + (list.length ? `<p class="ssr-note">${list.length} pieces.</p>${cardList(list.map(productCard))}` : '') + storeBlock;
+  }
+
+  if (key === '/watches' || BRAND_PAGES[key]) {
+    const watches = await allWatches();
+    const brand = BRAND_PAGES[key];
+    const shown = brand ? watches.filter((w) => (w.brand?.slug || w.brand?.name || '').toLowerCase().includes(brand)) : watches;
+    const colls = await api('/watches/collections/all', 60 * 60_000);
+    const cl = (Array.isArray(colls?.data) ? colls.data : colls?.data?.collections || [])
+      .filter((c) => c.slug && !LEGACY_COLLECTIONS.has(c.slug) && (!brand || (c.brand?.name || c.brand?.slug || '').toLowerCase().includes(brand)));
+    return `${crumbBar([['Home', '/'], ['Watches', '/watches'], ...(brand ? [[title, key]] : [])])}${h1(brand ? title : 'Watches')}<p>${esc(head.desc)}</p>`
+      + (brand ? '' : `<h2>Brands</h2>${linkList([['Roamer watches', '/roamer'], ['Briston watches', '/briston'], ['Festina watches', '/festina']])}`)
+      + (cl.length ? `<h2>Collections</h2>${linkList(cl.map((c) => [c.brand?.name && !c.name.toLowerCase().includes(c.brand.name.toLowerCase()) ? `${c.brand.name} ${c.name}` : c.name, `/collections/${c.slug}`]))}` : '')
+      + (shown.length ? `<h2>${brand ? 'Watches' : 'Latest watches'}</h2>${cardList(shown.slice(0, brand ? 200 : 60).map(watchCard))}` : '');
+  }
+
+  if (key === '/wedding-rings') {
+    const r = await api('/wedding/designs', 60 * 60_000);
+    const designs = r?.designs || [];
+    const byCat = new Map();
+    for (const d of designs) { const c = d.category || 'Wedding rings'; if (!byCat.has(c)) byCat.set(c, []); byCat.get(c).push(d); }
+    return `${crumbBar([['Home', '/'], ['Wedding Rings', key]])}${h1('Wedding Rings')}<p>${esc(head.desc)}</p><p class="ssr-note">${designs.length} designs, each made to your size in your choice of metal.</p>`
+      + [...byCat].map(([c, ds]) => `<h2>${esc(c)}</h2>${cardList(ds.slice(0, 40).map((d) => ({ href: `/wedding-rings/${encodeURIComponent(d.id)}`, name: d.name, price: d.priceFrom ? `From ${money(d.priceFrom)}` : '', img: abs(d.hero && (d.hero.Y || d.hero.W || Object.values(d.hero)[0])) })))}`).join('')
+      + storeBlock;
+  }
+
+  if (key === '/faqs' && INFO.faqs.length) {
+    return `${crumbBar([['Home', '/'], ['FAQs', key]])}${h1('Frequently asked questions')}`
+      + INFO.faqs.map((g) => `<h2>${esc(g.category)}</h2>${g.items.map((f) => `<h3>${esc(plain(f.q))}</h3><p>${esc(plain(f.a))}</p>`).join('')}`).join('') + storeBlock;
+  }
+
+  if (INFO_ROUTES[key]) {
+    const info = INFO.pages[INFO_ROUTES[key]];
+    if (!info) return '';
+    return `${crumbBar([['Home', '/'], [info.title, key]])}${h1(info.title)}`
+      + (info.sections || []).map((s) => `${s.heading && s.heading !== info.title ? `<h2>${esc(s.heading)}</h2>` : ''}${(s.paras || []).map((t) => `<p>${esc(plain(t))}</p>`).join('')}${(s.bullets || []).length ? `<ul>${s.bullets.map((b) => `<li>${esc(plain(b))}</li>`).join('')}</ul>` : ''}`).join('')
+      + storeBlock;
+  }
+
+  if (STATIC[key]) {
+    return `${crumbBar([['Home', '/'], [title.split(' — ')[0], key]])}${h1(title.split(' — ')[0])}<p>${esc(head.desc)}</p>${storeBlock}`;
+  }
+
+  const seg = key.split('/').filter(Boolean);
+  if (seg.length !== 2) return '';
+  const [prefix, rawId] = seg;
+  const id = encodeURIComponent(decodeURIComponent(rawId));
+
+  if (PRODUCT_PREFIX.has(prefix)) {
+    const r = await api(`/products/${id}`);
+    const prod = r?.data?.product || r?.data;
+    if (!prod?.name) return '';
+    const name = title;
+    const catSlug = key.split('/')[1];
+    const imgs = (prod.images || []).filter((m) => m.type !== 'video' && m.url).sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0)).slice(0, 4);
+    const overrides = prod.ring_price_overrides || {};
+    const LABELS = { gold_9kt: '9ct white gold', gold_9kt_yellow: '9ct yellow gold', gold_9kt_rose: '9ct rose gold', gold_14kt: '14ct white gold', gold_14kt_yellow: '14ct yellow gold', gold_14kt_rose: '14ct rose gold', gold_18kt: '18ct white gold', gold_18kt_yellow: '18ct yellow gold', gold_18kt_rose: '18ct rose gold', platinum: 'Platinum', silver: 'Silver' };
+    const metals = Object.entries(LABELS).filter(([k]) => num(overrides[k])).map(([k, l]) => `<li>${esc(l)} — ${money(overrides[k])}</li>`);
+    const price = num(prod.sale_price) || num(prod.base_price);
+    const related = (await categoryProducts([catSlug === 'jewellery' ? 'earrings' : catSlug])).filter((x) => x.slug !== prod.slug).slice(0, 8);
+    return `${crumbBar([['Home', '/'], [CATEGORY_LABEL[catSlug] || 'Jewellery', `/${catSlug}`], [name, key]])}${h1(name)}`
+      + (price ? `<p class="ssr-price">${prod.nivoda_enabled ? 'From ' : ''}${money(price)}</p>` : '')
+      + (imgs.length ? `<div class="ssr-gallery">${imgs.map((m, i) => `<img src="${esc(abs(m.url))}" alt="${esc(m.alt_text || `${name}${i ? ` — view ${i + 1}` : ''}`)}" width="640" height="640"${i ? ' loading="lazy"' : ''}>`).join('')}</div>` : '')
+      + `<p class="ssr-note">${prod.is_live_stock ? 'Ready to ship from our Beeston showroom.' : 'Made to order in our own workshop.'} Free insured UK delivery · 1-year warranty.</p>`
+      + (metals.length ? `<h2>Metal options</h2><ul>${metals.join('')}</ul>` : '')
+      + (prod.description ? `<h2>About this piece</h2>${paras(prod.description)}` : '')
+      + (related.length ? `<h2>More ${esc((CATEGORY_LABEL[catSlug] || 'jewellery').toLowerCase())}</h2>${cardList(related.map(productCard))}` : '')
+      + storeBlock;
+  }
+
+  if (prefix === 'watches') {
+    const r = await api(`/watches/${id}`);
+    const w = r?.data?.watch || r?.data;
+    if (!w?.name) return '';
+    const name = titleCase(w.name);
+    const imgs = (w.images || []).map((m) => abs(m.image_url || m.url)).filter(Boolean).slice(0, 4);
+    const spec = w.specifications && typeof w.specifications === 'object' ? (Array.isArray(w.specifications) ? w.specifications[0] : w.specifications) : null;
+    const specRows = spec ? Object.entries(spec).filter(([k, v]) => v && typeof v !== 'object' && !/(^id$|_id$|_at$|createdAt|updatedAt)/.test(k)).slice(0, 20) : [];
+    const brandPath = w.brand?.name && STATIC[`/${w.brand.name.toLowerCase()}`] ? `/${w.brand.name.toLowerCase()}` : null;
+    return `${crumbBar([['Home', '/'], ['Watches', '/watches'], ...(brandPath ? [[w.brand.name, brandPath]] : []), [name, key]])}${h1(name)}`
+      + (num(w.sale_price || w.base_price) ? `<p class="ssr-price">${money(w.sale_price || w.base_price)}</p>` : '')
+      + (imgs.length ? `<div class="ssr-gallery">${imgs.map((u, i) => `<img src="${esc(u)}" alt="${esc(`${name}${i ? ` — view ${i + 1}` : ''}`)}" width="640" height="640"${i ? ' loading="lazy"' : ''}>`).join('')}</div>` : '')
+      + (w.model_number ? `<p class="ssr-note">Model ${esc(w.model_number)}${w.brand?.name ? ` · ${esc(w.brand.name)}` : ''}${w.collection?.name ? ` · <a href="/collections/${esc(w.collection.slug || '')}">${esc(w.collection.name)}</a>` : ''}</p>` : '')
+      + (w.description ? `<h2>About this watch</h2>${paras(w.description)}` : '')
+      + (specRows.length ? `<h2>Specifications</h2><ul>${specRows.map(([k, v]) => `<li>${esc(titleCase(k.replace(/_/g, ' ')))}: ${esc(v)}</li>`).join('')}</ul>` : '');
+  }
+
+  if (prefix === 'collections') {
+    if (LEGACY_COLLECTIONS.has(rawId)) return '';
+    const r = await api(`/watches?collection=${id}&limit=200`, 60 * 60_000);
+    const list = r?.data?.watches || [];
+    return `${crumbBar([['Home', '/'], ['Watches', '/watches'], [title.replace(/ Watches$/, ''), key]])}${h1(title)}<p>${esc(head.desc)}</p>${list.length ? cardList(list.map(watchCard)) : ''}`;
+  }
+
+  if (prefix === 'wedding-rings' || prefix === 'wedding') {
+    const r = await api(`/wedding/designs/${id}`);
+    const d = r?.design;
+    if (!d?.name) return '';
+    const hero = d.hero && (d.hero.Y || d.hero.W || d.hero.R || Object.values(d.hero)[0]);
+    return `${crumbBar([['Home', '/'], ['Wedding Rings', '/wedding-rings'], [title, key]])}${h1(title)}`
+      + (num(d.priceFrom) ? `<p class="ssr-price">From ${money(d.priceFrom)}${num(d.priceTo) && num(d.priceTo) !== num(d.priceFrom) ? ` to ${money(d.priceTo)}` : ''}</p>` : '')
+      + (hero ? `<div class="ssr-gallery"><img src="${esc(abs(hero))}" alt="${esc(title)}" width="640" height="640"></div>` : '')
+      + `<p class="ssr-note">Made to order in your size and choice of metal.${d.category ? ` ${esc(d.category)} wedding ring.` : ''}</p>`
+      + paras(d.descriptionExample || d.shortDescription || d.description) + storeBlock;
+  }
+  return '';
+}
+
+const NOT_FOUND_BODY = `<h1>Page not found</h1><p>Sorry, we couldn't find that page. It may have moved.</p><h2>Explore</h2>${linkList([['Home', '/'], ...NAV, ['Contact', '/contact']])}`;
 
 // ── Legacy URLs (old WordPress and Shopify sites) ───────────────────────────
 // Only consulted for paths the new site doesn't serve, so a live page can never be
@@ -539,11 +744,15 @@ const server = http.createServer(async (req, res) => {
     const head = alias === null ? { status: 404 } : await resolve(url.pathname);
     if (head.status === 404) {
       const to = await legacyTarget(url.pathname);
-      if (to === GONE) return send(410, 'text/html; charset=utf-8', renderHead({ status: 410, title: 'Page removed', desc: DEFAULT_DESC, image: DEFAULT_IMAGE, robots: 'noindex', ld: [] }));
+      if (to === GONE) return send(410, 'text/html; charset=utf-8', renderHead({ status: 410, title: 'Page removed', desc: DEFAULT_DESC, image: DEFAULT_IMAGE, robots: 'noindex', ld: [] }, NOT_FOUND_BODY));
       if (to && to !== url.pathname) return redirect(to);
-      if (alias === null) return send(404, 'text/html; charset=utf-8', renderHead({ status: 404, title: 'Page not found', desc: DEFAULT_DESC, image: DEFAULT_IMAGE, robots: 'noindex', ld: [] }));
+      if (alias === null) return send(404, 'text/html; charset=utf-8', renderHead({ status: 404, title: 'Page not found', desc: DEFAULT_DESC, image: DEFAULT_IMAGE, robots: 'noindex', ld: [] }, NOT_FOUND_BODY));
     }
-    send(head.status, 'text/html; charset=utf-8', renderHead(head));
+    // Page content for crawlers; any failure just leaves the plain app shell.
+    let body = '';
+    if (head.status === 404) body = NOT_FOUND_BODY;
+    else if (head.status === 200 && !/noindex/.test(head.robots || '')) body = await bodyFor(url.pathname, head).catch((e) => { console.error('[seo] body', url.pathname, e.message); return ''; });
+    send(head.status, 'text/html; charset=utf-8', renderHead(head, body));
   } catch (e) {
     console.error('[seo]', req.url, e);
     send(200, 'text/html; charset=utf-8', TEMPLATE.replace(HEAD_MARK, `<title>${BRAND}</title>`));
