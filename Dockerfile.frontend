@@ -58,6 +58,28 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    # Blog: WordPress (Coolify service "mcclblog") on the shared coolify network.
+    # ^~ keeps the image/video/font regex locations below from catching blog media.
+    # The upstream is resolved per request via Docker DNS, so the shop still starts
+    # if the blog container is down. WordPress re-adds /blog via WORDPRESS_CONFIG_EXTRA.
+    location = /blog {
+        absolute_redirect off;
+        return 301 /blog/;
+    }
+    location ^~ /blog/ {
+        resolver 127.0.0.11 valid=30s ipv6=off;
+        set $blog_upstream wordpress-p2b1ggayztc1otntrgexhwwr;
+        rewrite ^/blog/(.*)$ /$1 break;
+        proxy_pass http://$blog_upstream:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 60s;
+        client_max_body_size 64m;
+    }
+
     # Cache static assets
     location /assets/ {
         expires 1y;
