@@ -4,6 +4,7 @@ import API_BASE_URL, { getMediaUrl } from "../../config/api";
 import { T, FONT_DISPLAY, FONT_BODY, SP } from "./tokens";
 import ReviewForm from "./ReviewForm";
 import PromoBarV2 from "./PromoBarV2";
+import JournalV2 from "./JournalV2";
 
 /**
  * MainContentV2 — the homepage v2 body (everything between nav and footer).
@@ -422,30 +423,8 @@ const MainContentV2 = (): JSX.Element => {
         </div>
       </section>
 
-      {/* 8. JOURNAL — hidden for now (uncomment to restore) */}
-      {false && (
-      <section id="journal" style={{ padding: `0 ${pageX} ${SP}` }}>
-        <div className="v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
-          <h2 style={{ ...h2Style, fontSize: "clamp(24px, 2.4vw, 34px)" }}>The journal</h2>
-          <Link to="/our-story" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>All articles</Link>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(20px, 2.4vw, 40px)", marginTop: 36 }} className="v2-journalgrid">
-          {[
-            ["/images/diamond-cuts-banner.png", "Buying guide", "Why cut matters more than carat"],
-            ["/images/remodel-jewellery.jpg", "Workshop", "Remodelling an inherited ring"],
-            ["/images/vintage-jewellery.jpg", "Materials", "Platinum or white gold, honestly"],
-          ].map(([img, cat, title]) => (
-            <Link key={title} to="/our-story" className="v2-prodcard" style={{ display: "block" }}>
-              <div style={{ position: "relative", aspectRatio: "3 / 2", overflow: "hidden", background: T.tint }}>
-                <img src={img} alt={title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
-              </div>
-              <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6E6B64", margin: "18px 0 10px" }}>{cat}</div>
-              <div style={{ fontSize: 17, lineHeight: 1.35 }}>{title}</div>
-            </Link>
-          ))}
-        </div>
-      </section>
-      )}
+      {/* 8. JOURNAL — latest posts from the WordPress blog; hidden until there are any */}
+      <JournalV2 pageX={pageX} h2Style={h2Style} />
 
       {/* 9. SHOWROOM / APPOINTMENT */}
       <section id="appointment" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", borderTop: `1px solid ${T.rule}`, background: T.tint }} className="v2-split">

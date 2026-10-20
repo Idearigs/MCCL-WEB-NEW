@@ -49,6 +49,8 @@ const NAV_ITEMS = [
   { key: "watches", label: "Watches", to: "/watches", hasMenu: true },
   { key: "bespoke", label: "Bespoke", to: "/bespoke-design", hasMenu: false },
   { key: "story", label: "Our story", to: "/our-story", hasMenu: false },
+  // WordPress, not a shop route, so its links do a full page load (reloadDocument).
+  { key: "journal", label: "Journal", to: "/blog/", hasMenu: false },
 ];
 
 const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.Element => {
@@ -285,7 +287,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
 
             <nav style={{ display: "flex", justifyContent: "center", gap: "clamp(14px, 2vw, 32px)", fontSize: 12.5, letterSpacing: "0.02em", color: navColor, transition: "color 0.35s ease" }}>
               {NAV_ITEMS.map(item => (
-                <Link key={item.key} to={item.to} className="v2nav-item" onMouseEnter={() => setMenu(item.hasMenu ? item.key : null)}>
+                <Link key={item.key} to={item.to} reloadDocument={item.to.startsWith("/blog")} className="v2nav-item" onMouseEnter={() => setMenu(item.hasMenu ? item.key : null)}>
                   {item.label}
                 </Link>
               ))}
@@ -382,7 +384,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
                         )}
                       </>
                     ) : (
-                      <Link to={item.to} onClick={() => setMobileOpen(false)} style={{ display: "block", padding: "16px 0", fontSize: 15, letterSpacing: "0.02em", color: T.heading }}>{item.label}</Link>
+                      <Link to={item.to} reloadDocument={item.to.startsWith("/blog")} onClick={() => setMobileOpen(false)} style={{ display: "block", padding: "16px 0", fontSize: 15, letterSpacing: "0.02em", color: T.heading }}>{item.label}</Link>
                     )}
                   </div>
                 );

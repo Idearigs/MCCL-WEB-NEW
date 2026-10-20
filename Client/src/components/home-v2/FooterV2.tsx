@@ -52,6 +52,7 @@ const columns: { title: string; links: { label: string; to: string; external?: b
     title: "Company",
     links: [
       { label: "Our story", to: "/our-story" },
+      { label: "Journal", to: "/blog/" },
       { label: "Sustainability", to: "/sustainability" },
       { label: "Hallmarking", to: "/hallmark-guide" },
       { label: "Certificates", to: "/certificate-of-authenticity" },
@@ -107,7 +108,7 @@ const FooterV2 = (): JSX.Element => {
                   {col.links.map(l => (
                     l.external
                       ? <a key={l.label} href={l.to} target="_blank" rel="noreferrer">{l.label}</a>
-                      : <Link key={l.label} to={l.to}>{l.label}</Link>
+                      : <Link key={l.label} to={l.to} reloadDocument={l.to.startsWith("/blog")}>{l.label}</Link>
                   ))}
                 </div>
               </div>
