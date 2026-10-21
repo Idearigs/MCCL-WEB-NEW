@@ -56,7 +56,8 @@ const columns: { title: string; links: { label: string; to: string; external?: b
       { label: "Sustainability", to: "/sustainability" },
       { label: "Hallmarking", to: "/hallmark-guide" },
       { label: "Certificates", to: "/certificate-of-authenticity" },
-      { label: "Instagram", to: "https://instagram.com", external: true },
+      { label: "Instagram", to: "https://www.instagram.com/andrewmccullochjewellers/", external: true },
+      { label: "Facebook", to: "https://www.facebook.com/andrewmccullochjewellers/", external: true },
     ],
   },
 ];

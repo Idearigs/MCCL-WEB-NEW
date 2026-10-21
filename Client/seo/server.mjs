@@ -204,6 +204,7 @@ const STORE = {
   image: `${SITE}/logo.png`,
   telephone: '+44 115 925 7552',
   email: 'has@mccullochjewellers.co.uk',
+  sameAs: ['https://www.instagram.com/andrewmccullochjewellers/', 'https://www.facebook.com/andrewmccullochjewellers/'],
   openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], opens: '09:00', closes: '17:30' }],
   address: { '@type': 'PostalAddress', streetAddress: '7 The Square', addressLocality: 'Beeston', addressRegion: 'Nottingham', postalCode: 'NG9 2JG', addressCountry: 'GB' },
 };
@@ -416,6 +417,25 @@ let sitemap = { xml: null, exp: 0 };
 // URLs be checked without an API call per request.
 let liveProducts = { map: null, at: 0 };
 
+// IndexNow (Bing, Yandex, Seznam…): tell search engines straight away when new pages appear.
+// The key file is Client/public/<key>.txt. The first sitemap build after a start is the
+// baseline; later hourly builds submit only URLs that weren't there before.
+const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'aaf0b1442eba788997983c2786f78c65';
+const INDEXNOW_ON = process.env.INDEXNOW !== 'off' && /mccullochjewellers\.co\.uk$/.test(new URL(SITE).host);
+let knownUrls = null;
+async function indexNow(paths) {
+  if (!INDEXNOW_ON || !paths.length) return;
+  try {
+    const r = await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ host: new URL(SITE).host, key: INDEXNOW_KEY, keyLocation: `${SITE}/${INDEXNOW_KEY}.txt`, urlList: paths.slice(0, 10000).map((p) => SITE + (p === '/' ? '/' : p)) }),
+      signal: AbortSignal.timeout(10000),
+    });
+    console.log(`[seo] IndexNow: ${paths.length} new URL(s) → ${r.status}`);
+  } catch (e) { console.error('[seo] IndexNow failed:', e.message); }
+}
+
 // One build at a time: concurrent callers share it (and the product list it fills).
 let sitemapBuilding = null;
 const buildSitemap = () => (sitemapBuilding ??= buildSitemapNow().finally(() => { sitemapBuilding = null; }));
@@ -453,6 +473,11 @@ async function buildSitemapNow() {
     + '\n</urlset>\n';
   // A partial build (API hiccup) is only kept briefly, and never replaces a complete one.
   if (ok || !sitemap.xml) sitemap = { xml, exp: Date.now() + (ok ? 60 * 60_000 : 5 * 60_000) };
+  if (ok) {
+    const now = new Set(urls.keys());
+    if (knownUrls) indexNow([...now].filter((p) => !knownUrls.has(p)));
+    knownUrls = now;
+  }
   return sitemap.xml;
 }
 
@@ -468,7 +493,7 @@ const FOOT = [
   ['Services', [['Bespoke design', '/bespoke-design'], ['Portfolio', '/portfolio'], ['Repairs & aftercare', '/repairs'], ['Book an appointment', '/book-appointment'], ['Visit us', '/visit-us'], ['Contact', '/contact']]],
   ['Help', [['Delivery', '/delivery'], ['Returns & refunds', '/returns'], ['Warranty', '/warranty'], ['FAQs', '/faqs'], ['Customer service', '/customer-service']]],
   ['Guides', [['Ring size guide', '/ring-size-guide'], ['Diamond guide', '/diamond-guide'], ['Gemstone guide', '/gemstone-guide'], ['Birthstone guide', '/birthstone-guide'], ['Hallmark guide', '/hallmark-guide'], ['Jewellery care', '/jewellery-care']]],
-  ['Company', [['Our story', '/our-story'], ['Sustainability', '/sustainability'], ['Certificates', '/certificate-of-authenticity'], ['Guarantees', '/trust-guarantees'], ['Journal', '/blog/']]],
+  ['Company', [['Our story', '/our-story'], ['Sustainability', '/sustainability'], ['Certificates', '/certificate-of-authenticity'], ['Guarantees', '/trust-guarantees'], ['Journal', '/blog/'], ['Instagram', 'https://www.instagram.com/andrewmccullochjewellers/'], ['Facebook', 'https://www.facebook.com/andrewmccullochjewellers/']]],
 ];
 const SSR_CSS = `.ssr{font-family:'Instrument Sans',system-ui,sans-serif;color:#4A4741;background:#F8F6F0;line-height:1.6}
 .ssr a{color:#332F2A;text-decoration:none}.ssr a:hover{color:#A8813C}
