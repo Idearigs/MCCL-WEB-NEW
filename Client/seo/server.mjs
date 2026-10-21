@@ -497,7 +497,9 @@ const cardList = (items) => `<ul class="ssr-grid">${items.map((c) => `<li><a hre
 const crumbBar = (items) => `<nav class="ssr-crumbs" aria-label="Breadcrumb">${items.map(([t, h], i) => (i < items.length - 1 ? `<a href="${esc(h)}">${esc(t)}</a> / ` : esc(t))).join('')}</nav>`;
 const copyBlock = (key) => {
   const c = CATEGORY_COPY[key];
-  return c ? `<h2>${esc(c.heading)}</h2>${c.paras.map((t) => `<p>${esc(t)}</p>`).join('')}${linkList(c.links)}` : '';
+  // "**text**" in the copy → <strong>, same as CategoryCopyV2. All paragraphs (the shop collapses some behind "Read more").
+  const bold = (t) => esc(t).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  return c ? `<h2>${esc(c.heading)}</h2>${c.paras.map((t) => `<p>${bold(t)}</p>`).join('')}${linkList(c.links)}` : '';
 };
 const storeBlock = `<h2>Visit us</h2><p>McCulloch Jewellers, 7 The Square, Beeston, Nottingham NG9 2JG. Telephone <a href="tel:+441159257552">0115 925 7552</a>.</p><p><a href="/book-appointment">Book an appointment</a> · <a href="/contact">Contact us</a></p>`;
 
