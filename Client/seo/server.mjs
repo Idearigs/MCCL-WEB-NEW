@@ -76,6 +76,20 @@ function loadInfo() {
 }
 const INFO = loadInfo();
 
+// Category-page copy shared with the shop (src/content/categoryCopy.ts → CategoryCopyV2).
+const CATEGORY_TS = process.env.CATEGORY_COPY_TS || path.join(HERE, 'categoryCopy.ts');
+function loadCategoryCopy() {
+  try {
+    const src = fs.readFileSync(CATEGORY_TS, 'utf8');
+    const start = src.indexOf('= {', src.indexOf('export const CATEGORY_COPY')) + 2;
+    return JSON.parse(src.slice(start, src.indexOf('\n};', start) + 2));
+  } catch (e) {
+    console.error('[seo] categoryCopy not loaded:', e.message);
+    return {};
+  }
+}
+const CATEGORY_COPY = loadCategoryCopy();
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const xmlEsc = esc;
@@ -119,7 +133,7 @@ async function api(p, ttlMs = 10 * 60_000) {
 const STATIC = {
   '/': { title: `${BRAND} | Engagement Rings, Fine Jewellery & Watches — Beeston, Nottingham`, desc: DEFAULT_DESC },
   '/rings': { title: 'Rings — Engagement, Wedding & Ready-to-Ship', desc: 'Engagement rings, wedding bands and ready-to-ship diamond and gemstone rings, set by hand in our Beeston workshop.' },
-  '/engagement-rings': { title: 'Engagement Rings — Natural & Lab-Grown Diamonds', desc: 'Solitaire, halo, trilogy and vintage-inspired engagement rings. Choose your metal and diamond — every ring set by hand in our Beeston, Nottingham workshop.' },
+  '/engagement-rings': { title: 'Engagement Rings — Natural & Lab-Grown Diamonds', desc: 'Solitaire, halo, vintage-inspired and contemporary engagement rings. Choose your metal and diamond — every ring set by hand in our Beeston, Nottingham workshop.' },
   '/wedding-rings': { title: 'Wedding Rings — Gold, Platinum & Diamond Bands', desc: 'Wedding rings in 9ct and 18ct gold, platinum and palladium — court, flat and diamond-set bands for men and women, in every width and weight.' },
   '/earrings': { title: 'Earrings — Diamond Studs, Drops & Hoops', desc: 'Diamond and gemstone earrings — studs, drops, hoops and halo designs in gold and platinum.' },
   '/necklaces': { title: 'Necklaces & Pendants — Diamond and Gemstone', desc: 'Diamond and gemstone necklaces and pendants in gold and platinum.' },
@@ -159,6 +173,27 @@ const productPath = (p, fallbackPrefix = 'jewellery') => {
   return `/${PRODUCT_PREFIX.has(c) ? c : fallbackPrefix}/${p.slug}`;
 };
 
+// "Rosalind" → "Rosalind — Cushion-Cut Vintage-Inspired Engagement Ring", from the ring's own
+// description (centre-stone shape, then the most distinctive setting style it mentions).
+const SHAPE_LABEL = { round: 'Round', oval: 'Oval', pear: 'Pear', emerald: 'Emerald-Cut', cushion: 'Cushion-Cut', princess: 'Princess-Cut', marquise: 'Marquise', radiant: 'Radiant-Cut', asscher: 'Asscher-Cut', heart: 'Heart-Shaped' };
+const STYLE_RULES = [
+  [/hidden[- ]halo/i, 'Hidden Halo'], [/\bhalo\b/i, 'Halo'], [/trilogy|three[- ]stone/i, 'Trilogy'], [/toi et moi/i, 'Toi et Moi'],
+  [/bypass/i, 'Bypass'], [/\btwist/i, 'Twist'], [/celtic/i, 'Celtic'], [/split[- ]shank/i, 'Split-Shank'], [/east[- ]west/i, 'East-West'],
+  [/\bcluster\b/i, 'Cluster'], [/bezel/i, 'Bezel-Set'], [/vintage|milgrain|engrav|art deco/i, 'Vintage-Inspired'], [/pav[ée]/i, 'Pavé'], [/solitaire/i, 'Solitaire'],
+];
+function engagementLabel(prod) {
+  // Shape: the product's stone-shape field first (Baguette there is the side stones), else the description.
+  const fieldShape = (prod.stone_shapes || []).map((x) => String(x?.name || '').toLowerCase()).find((n) => SHAPE_LABEL[n]);
+  const text = plain(prod.description || '');
+  const m = text.match(/\b(round|oval|pear|emerald|cushion|princess|marquise|radiant|asscher|heart)(?:[- ]shaped)?(?:[- ]cut)?(?: brilliant(?:[- ]cut)?)? (?:lab[- ]grown |natural )?(?:centre stone|centre diamond|diamond|stone)\b/i);
+  const shape = SHAPE_LABEL[fieldShape || (m && m[1].toLowerCase())];
+  // Style: only from sentences that describe this ring, not template lines ("often", "such as", "may").
+  const intro = `${prod.short_description || ''}. ${text.slice(0, 600)}`.split(/(?<=[.!?])\s+/).filter((x) => !/\b(often|such as|may|can be)\b/i.test(x)).join(' ');
+  const style = STYLE_RULES.find(([re]) => re.test(intro))?.[1];
+  const words = style ? [shape, style].filter(Boolean).join(' ') : (shape ? `${shape} Diamond` : '');
+  return `${prod.name} — ${words ? `${words} ` : ''}Engagement Ring`;
+}
+
 const STORE = {
   '@context': 'https://schema.org',
   '@type': 'JewelryStore',
@@ -168,6 +203,8 @@ const STORE = {
   logo: `${SITE}/logo.png`,
   image: `${SITE}/logo.png`,
   telephone: '+44 115 925 7552',
+  email: 'has@mccullochjewellers.co.uk',
+  openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], opens: '09:00', closes: '17:30' }],
   address: { '@type': 'PostalAddress', streetAddress: '7 The Square', addressLocality: 'Beeston', addressRegion: 'Nottingham', postalCode: 'NG9 2JG', addressCountry: 'GB' },
 };
 const crumbs = (items) => ({
@@ -227,7 +264,7 @@ async function resolve(pathname) {
     const canonical = productPath(prod, prefix);
     const catSlug = canonical.split('/')[1];
     // Engagement designs are named ("Rosalind"); say what they are.
-    const label = catSlug === 'engagement-rings' && !/ring/i.test(prod.name) ? `${prod.name} Engagement Ring` : prod.name;
+    const label = catSlug === 'engagement-rings' && !/ring/i.test(prod.name) ? engagementLabel(prod) : prod.name;
     const imgs = (prod.images || []).filter((m) => m.type !== 'video' && m.url).sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0)).map((m) => abs(m.url));
     const price = num(prod.sale_price) || num(prod.base_price);
     const inStock = prod.is_live_stock || (prod.in_stock && Number(prod.stock_quantity) > 0);
@@ -458,6 +495,10 @@ const paras = (text) => String(text ?? '').replace(/<[^>]*>/g, ' ').split(/\n+/)
 const linkList = (items) => `<ul class="ssr-links">${items.map(([t, h]) => `<li><a href="${esc(h)}">${esc(t)}</a></li>`).join('')}</ul>`;
 const cardList = (items) => `<ul class="ssr-grid">${items.map((c) => `<li><a href="${esc(c.href)}">${c.img ? `<img src="${esc(c.img)}" alt="${esc(c.name)}" loading="lazy" width="400" height="400">` : ''}<span>${esc(c.name)}</span>${c.price ? `<span>${esc(c.price)}</span>` : ''}</a></li>`).join('')}</ul>`;
 const crumbBar = (items) => `<nav class="ssr-crumbs" aria-label="Breadcrumb">${items.map(([t, h], i) => (i < items.length - 1 ? `<a href="${esc(h)}">${esc(t)}</a> / ` : esc(t))).join('')}</nav>`;
+const copyBlock = (key) => {
+  const c = CATEGORY_COPY[key];
+  return c ? `<h2>${esc(c.heading)}</h2>${c.paras.map((t) => `<p>${esc(t)}</p>`).join('')}${linkList(c.links)}` : '';
+};
 const storeBlock = `<h2>Visit us</h2><p>McCulloch Jewellers, 7 The Square, Beeston, Nottingham NG9 2JG. Telephone <a href="tel:+441159257552">0115 925 7552</a>.</p><p><a href="/book-appointment">Book an appointment</a> · <a href="/contact">Contact us</a></p>`;
 
 function shell(main) {
@@ -512,7 +553,7 @@ async function bodyFor(pathname, head) {
   if (LISTING[key]) {
     const list = await categoryProducts(LISTING[key]);
     return `${crumbBar([['Home', '/'], [title.split(' — ')[0], key]])}${h1(title.split(' — ')[0])}<p>${esc(head.desc)}</p>`
-      + (list.length ? `<p class="ssr-note">${list.length} pieces.</p>${cardList(list.map(productCard))}` : '') + storeBlock;
+      + (list.length ? `<p class="ssr-note">${list.length} pieces.</p>${cardList(list.map(productCard))}` : '') + copyBlock(key) + storeBlock;
   }
 
   if (key === '/watches' || BRAND_PAGES[key]) {
@@ -525,7 +566,8 @@ async function bodyFor(pathname, head) {
     return `${crumbBar([['Home', '/'], ['Watches', '/watches'], ...(brand ? [[title, key]] : [])])}${h1(brand ? title : 'Watches')}<p>${esc(head.desc)}</p>`
       + (brand ? '' : `<h2>Brands</h2>${linkList([['Roamer watches', '/roamer'], ['Briston watches', '/briston'], ['Festina watches', '/festina']])}`)
       + (cl.length ? `<h2>Collections</h2>${linkList(cl.map((c) => [c.brand?.name && !c.name.toLowerCase().includes(c.brand.name.toLowerCase()) ? `${c.brand.name} ${c.name}` : c.name, `/collections/${c.slug}`]))}` : '')
-      + (shown.length ? `<h2>${brand ? 'Watches' : 'Latest watches'}</h2>${cardList(shown.slice(0, brand ? 200 : 60).map(watchCard))}` : '');
+      + (shown.length ? `<h2>${brand ? 'Watches' : 'Latest watches'}</h2>${cardList(shown.slice(0, brand ? 200 : 60).map(watchCard))}` : '')
+      + copyBlock(key);
   }
 
   if (key === '/wedding-rings') {
@@ -535,7 +577,7 @@ async function bodyFor(pathname, head) {
     for (const d of designs) { const c = d.category || 'Wedding rings'; if (!byCat.has(c)) byCat.set(c, []); byCat.get(c).push(d); }
     return `${crumbBar([['Home', '/'], ['Wedding Rings', key]])}${h1('Wedding Rings')}<p>${esc(head.desc)}</p><p class="ssr-note">${designs.length} designs, each made to your size in your choice of metal.</p>`
       + [...byCat].map(([c, ds]) => `<h2>${esc(c)}</h2>${cardList(ds.slice(0, 40).map((d) => ({ href: `/wedding-rings/${encodeURIComponent(d.id)}`, name: d.name, price: d.priceFrom ? `From ${money(d.priceFrom)}` : '', img: abs(d.hero && (d.hero.Y || d.hero.W || Object.values(d.hero)[0])) })))}`).join('')
-      + storeBlock;
+      + copyBlock(key) + storeBlock;
   }
 
   if (key === '/faqs' && INFO.faqs.length) {

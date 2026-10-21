@@ -36,6 +36,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # entrypoint hook below; restarted if it ever exits.
 COPY Client/seo/server.mjs /opt/seo/server.mjs
 COPY Client/src/content/infoPages.ts /opt/seo/infoPages.ts
+COPY Client/src/content/categoryCopy.ts /opt/seo/categoryCopy.ts
 RUN printf '#!/bin/sh\n(while :; do node /opt/seo/server.mjs; echo "[seo] exited, restarting"; sleep 2; done) &\n' \
       > /docker-entrypoint.d/40-seo-renderer.sh \
     && chmod +x /docker-entrypoint.d/40-seo-renderer.sh

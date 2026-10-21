@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
+import CategoryCopyV2 from "../components/home-v2/CategoryCopyV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 import API_BASE_URL, { getMediaUrl } from "../config/api";
 
@@ -366,6 +367,7 @@ const RingsV2 = (): JSX.Element => {
         </div>
       )}
 
+      <CategoryCopyV2 />
       <FooterV2 />
 
       <style>{`

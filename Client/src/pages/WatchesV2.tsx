@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
+import CategoryCopyV2 from "../components/home-v2/CategoryCopyV2";
 import { useIsMobile } from "../hooks/use-mobile";
 import API_BASE_URL, { getMediaUrl } from "../config/api";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
@@ -408,6 +409,7 @@ const WatchesV2 = (): JSX.Element => {
           </div>
         )}
 
+        <CategoryCopyV2 />
         <FooterV2 />
       </div>
     </div>
