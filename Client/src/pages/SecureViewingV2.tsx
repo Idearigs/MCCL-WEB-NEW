@@ -11,7 +11,7 @@ import { api } from "../config/api";
 
 const ID_TYPES = ["Passport", "Driving licence", "National ID card", "Residence permit", "Other photo ID"];
 const STORAGE_KEY = "secure_viewing_code";
-const STORAGE_TTL = 12 * 60 * 60 * 1000;
+const STORAGE_TTL = 40 * 24 * 60 * 60 * 1000; // long enough to outlast a booking a month away
 
 type Status = "pending" | "approved" | "declined" | "expired";
 
@@ -21,6 +21,15 @@ const input: React.CSSProperties = {
   width: "100%", padding: "13px 0", background: "transparent", border: 0, borderBottom: `1px solid ${T.ruleStrong}`,
   outline: "none", color: T.ink, fontFamily: FONT_BODY, fontSize: 16, borderRadius: 0,
 };
+
+// Bookable window: today (UK time) to the same date next month, clamped to month end.
+const londonToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
+const oneMonthAfter = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m, Math.min(d, lastDay))).toISOString().slice(0, 10);
+};
+const prettyDate = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 const loadSaved = (): string | null => {
   try {
@@ -50,13 +59,17 @@ const PhotoPicker = ({ label, file, onChange }: { label: string; file: File | nu
 };
 
 const SecureViewingV2 = (): JSX.Element => {
-  const [form, setForm] = useState({ full_name: "", email: "", phone: "", id_type: "", id_number: "", consent: false });
+  const [form, setForm] = useState({ full_name: "", email: "", phone: "", id_type: "", id_number: "", appointment_date: "", consent: false });
   const [front, setFront] = useState<File | null>(null);
   const [back, setBack] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [code, setCode] = useState<string | null>(loadSaved);
   const [status, setStatus] = useState<Status>("pending");
+  const [appointment, setAppointment] = useState<string | null>(null);
+  const minDate = londonToday();
+  const maxDate = oneMonthAfter(minDate);
+  const dateUnavailable = !!form.appointment_date && (form.appointment_date < minDate || form.appointment_date > maxDate);
   const pollRef = useRef<number>();
 
   const set = (k: string, v: string | boolean) => setForm(f => ({ ...f, [k]: v }));
@@ -77,7 +90,7 @@ const SecureViewingV2 = (): JSX.Element => {
         const res = await fetch(api(`secure-viewing/status/${encodeURIComponent(code)}`));
         if (res.status === 404) { localStorage.removeItem(STORAGE_KEY); setCode(null); return; }
         const json = await res.json();
-        if (json.success) setStatus(json.data.status);
+        if (json.success) { setStatus(json.data.status); setAppointment(json.data.appointment_date); }
       } catch { /* keep polling */ }
     };
     check();
@@ -90,6 +103,8 @@ const SecureViewingV2 = (): JSX.Element => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!form.appointment_date) { setError("Please choose an appointment date."); return; }
+    if (dateUnavailable) { setError(`That date is not available. Please choose a date up to ${prettyDate(maxDate)}.`); return; }
     if (!front || !back) { setError("Please add a photo of the front and the back of your ID."); return; }
     if (!form.consent) { setError("Please confirm you agree to the ID check."); return; }
     const body = new FormData();
@@ -115,15 +130,15 @@ const SecureViewingV2 = (): JSX.Element => {
   const startAgain = () => {
     localStorage.removeItem(STORAGE_KEY);
     setCode(null);
-    setForm({ full_name: "", email: "", phone: "", id_type: "", id_number: "", consent: false });
+    setForm({ full_name: "", email: "", phone: "", id_type: "", id_number: "", appointment_date: "", consent: false });
     setFront(null); setBack(null);
   };
 
   const STATUS_COPY: Record<Status, { eyebrow: string; title: string; body: string; tone: string }> = {
-    pending: { eyebrow: "Thank you", title: "We're checking your details.", body: "This usually takes a few minutes. Please stay nearby – this page will update as soon as you're confirmed, and we'll email you too.", tone: T.tint },
-    approved: { eyebrow: "Confirmed", title: "You're all set.", body: "Thank you for your patience. Please show this screen or your email to a member of our team.", tone: "#E6F0E3" },
+    pending: { eyebrow: "Thank you", title: "We're checking your details.", body: "This page will update as soon as you're confirmed, and we'll email you too.", tone: T.tint },
+    approved: { eyebrow: "Confirmed", title: "You're all set.", body: "Please show this screen or your email to a member of our team when you arrive.", tone: "#E6F0E3" },
     declined: { eyebrow: "Viewing request", title: "We couldn't confirm your details.", body: "Please speak to a member of our team, who will be happy to help.", tone: "#F4E4E0" },
-    expired: { eyebrow: "Viewing request", title: "This confirmation has expired.", body: "Confirmations are valid for one visit. Please submit your details again.", tone: T.tint },
+    expired: { eyebrow: "Viewing request", title: "This confirmation has expired.", body: "Confirmations are valid until the end of your appointment day. Please submit your details again.", tone: T.tint },
   };
 
   return (
@@ -150,12 +165,18 @@ const SecureViewingV2 = (): JSX.Element => {
             <p style={{ margin: "0 auto 26px", maxWidth: "42ch", fontSize: 15, lineHeight: 1.7, color: T.body }}>{STATUS_COPY[status].body}</p>
             <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: T.muted, marginBottom: 8 }}>Your reference code</div>
             <div style={{ fontFamily: "'Courier New', monospace", fontSize: "clamp(30px,8vw,42px)", letterSpacing: "0.18em", fontWeight: 600 }}>{code}</div>
+            {appointment && (
+              <div style={{ marginTop: 22 }}>
+                <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: T.muted, marginBottom: 6 }}>Your appointment</div>
+                <div style={{ fontSize: 16 }}>{prettyDate(appointment)}</div>
+              </div>
+            )}
             {status === "pending" && (
               <div style={{ marginTop: 26, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.muted, animation: "sv-pulse 1.8s ease-in-out infinite" }}>Waiting for confirmation…</div>
             )}
-            {(status === "declined" || status === "expired") && (
-              <button onClick={startAgain} style={{ marginTop: 26, padding: "12px 24px", cursor: "pointer", background: "transparent", border: `1px solid ${T.ruleStrong}`, fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Start again</button>
-            )}
+            <div>
+              <button onClick={startAgain} style={{ marginTop: 26, padding: "12px 24px", cursor: "pointer", background: "transparent", border: `1px solid ${T.ruleStrong}`, fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>New request</button>
+            </div>
           </section>
         ) : (
           <>
@@ -194,6 +215,14 @@ const SecureViewingV2 = (): JSX.Element => {
                 </div>
               </div>
 
+              <div style={{ marginBottom: 22 }}>
+                <label style={fieldLabel} htmlFor="sv-date">Appointment date</label>
+                <input id="sv-date" className="sv-input" style={input} type="date" min={minDate} max={maxDate} value={form.appointment_date} onChange={e => set("appointment_date", e.target.value)} required />
+                {dateUnavailable
+                  ? <div role="alert" style={{ marginTop: 8, fontSize: 13.5, color: "#7A2E22" }}>This date is not available. Please choose a date up to {prettyDate(maxDate)}.</div>
+                  : <div style={{ marginTop: 8, fontSize: 12.5, color: T.muted }}>Available up to {prettyDate(maxDate)}.</div>}
+              </div>
+
               <div style={{ ...fieldLabel, marginTop: 8, marginBottom: 10 }}>Photos of your ID</div>
               <div className="sv-two" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 26 }}>
                 <PhotoPicker label="Front" file={front} onChange={setFront} />
@@ -202,7 +231,7 @@ const SecureViewingV2 = (): JSX.Element => {
 
               <label style={{ display: "flex", gap: 12, alignItems: "flex-start", fontSize: 13.5, lineHeight: 1.6, color: T.body, marginBottom: 26, cursor: "pointer" }}>
                 <input type="checkbox" checked={form.consent} onChange={e => set("consent", e.target.checked)} style={{ marginTop: 4, accentColor: T.ink, width: 16, height: 16, flexShrink: 0 }} />
-                <span>I agree to McCulloch checking my ID before viewing. My details and ID photos are used only for this check and are deleted automatically after 30 days.</span>
+                <span>I agree to McCulloch checking my ID before viewing. My details and ID photos are used only for this check and are deleted automatically 30 days after my appointment.</span>
               </label>
 
               {error && <div role="alert" style={{ background: "#F4E4E0", color: "#7A2E22", padding: "12px 16px", fontSize: 14, marginBottom: 18 }}>{error}</div>}

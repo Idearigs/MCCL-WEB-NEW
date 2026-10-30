@@ -11,7 +11,7 @@ import { api } from "../config/api";
 
 type Req = {
   id: string; code: string; full_name: string; email: string; phone: string | null;
-  id_type: string; id_number: string | null; status: "pending" | "approved" | "declined";
+  id_type: string; id_number: string | null; appointment_date: string | null; status: "pending" | "approved" | "declined";
   decision_note: string | null; decided_at: string | null; approval_expires_at: string | null;
   purged_at: string | null; created_at: string; has_front: boolean; has_back: boolean;
 };
@@ -35,6 +35,8 @@ const ago = (s: string) => {
   const m = Math.round((Date.now() - new Date(s).getTime()) / 60000);
   return m < 1 ? "just now" : m < 60 ? `${m} min ago` : when(s);
 };
+
+const dateOnly = (iso: string | null) => iso ? new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "—";
 
 const btn = (bg: string, fg: string, border = bg): React.CSSProperties => ({
   padding: "14px 22px", background: bg, color: fg, border: `1px solid ${border}`, cursor: "pointer",
@@ -195,6 +197,7 @@ const SecureViewingAdmin = (): JSX.Element => {
                 <span style={{ fontSize: 12, color: T.muted, whiteSpace: "nowrap" }}>{ago(r.created_at)}</span>
               </div>
               <div style={{ fontSize: 12.5, color: T.muted, marginTop: 4, fontFamily: "'Courier New', monospace", letterSpacing: "0.08em" }}>{r.code} · {r.id_type}</div>
+              <div style={{ fontSize: 13, color: T.body, marginTop: 4 }}>Appointment: {dateOnly(r.appointment_date)}</div>
             </button>
           ))}
         </aside>
@@ -212,6 +215,7 @@ const SecureViewingAdmin = (): JSX.Element => {
 
               <dl style={{ display: "grid", gridTemplateColumns: "130px 1fr", rowGap: 10, margin: "0 0 26px", fontSize: 15 }}>
                 {[
+                  ["Appointment", dateOnly(selected.appointment_date)],
                   ["ID type", selected.id_type], ["ID number", selected.id_number || "Deleted (retention)"],
                   ["Email", selected.email], ["Phone", selected.phone || "—"], ["Submitted", when(selected.created_at)],
                   ...(selected.decided_at ? [["Decided", when(selected.decided_at)]] : []),
