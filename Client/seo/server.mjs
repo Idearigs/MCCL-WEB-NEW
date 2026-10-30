@@ -162,7 +162,7 @@ const INFO_ROUTES = {
   '/birthstone-guide': 'birthstone-guide', '/hallmark-guide': 'hallmark-guide', '/jewellery-care': 'jewellery-care',
 };
 // Real pages that shouldn't appear in search (account, basket, legacy duplicates).
-const NOINDEX = /^\/(cart|checkout|thank-you|account|orders|favorites|verify-email|auth|admin|products|product|diamonds)(\/|$)/;
+const NOINDEX = /^\/(cart|checkout|thank-you|account|orders|favorites|verify-email|auth|admin|secure-viewing|products|product|diamonds)(\/|$)/;
 // Collections that have their own hand-built page rather than /collections/:slug.
 const LEGACY_COLLECTIONS = new Set(['festina-classic-collection', 'briston-heritage-collection', 'roamer-swiss-tradition']);
 
