@@ -116,6 +116,10 @@ if (config.NODE_ENV !== 'test') {
   }));
 }
 
+// Private uploads (secure-viewing ID photos) are only ever streamed through the
+// PIN-protected API — never via the public static handler below.
+app.use('/uploads/_private', (req, res) => res.status(404).end());
+
 // Static file serving for uploads with video streaming support
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   // Enable Accept-Ranges for video streaming

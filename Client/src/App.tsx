@@ -66,6 +66,8 @@ const AuthCallback      = lazy(() => import("./pages/AuthCallback"));
 
 // Admin (largest chunk — always lazy)
 const AdminApp          = lazy(() => import("./admin/AdminApp"));
+const SecureViewing     = lazy(() => import("./pages/SecureViewingV2"));
+const SecureViewingAdmin = lazy(() => import("./pages/SecureViewingAdmin"));
 
 // Test/tool pages — served only within /admin/* (protected by admin auth)
 
@@ -108,6 +110,8 @@ const AppRoutes = () => {
     return (
       <Routes>
         <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="/secure-viewing" element={<SecureViewing />} />
+        <Route path="/secure-viewing/admin" element={<SecureViewingAdmin />} />
         <Route path="*" element={<MaintenancePage />} />
       </Routes>
     );
@@ -162,6 +166,9 @@ const AppRoutes = () => {
 
       {/* Info */}
       <Route path="/contact" element={<Contact />} />
+      {/* In-shop ID check before a piece leaves the cabinet (QR at the counter) + PIN owner panel */}
+      <Route path="/secure-viewing" element={<SecureViewing />} />
+      <Route path="/secure-viewing/admin" element={<SecureViewingAdmin />} />
       <Route path="/our-story" element={<OurStory />} />
       <Route path="/bespoke-design" element={<BespokeDesign />} />
       {/* Old portfolio page removed — redirect to the Bespoke page (which holds the commissioned portfolio) */}
