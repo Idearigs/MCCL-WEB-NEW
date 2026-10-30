@@ -589,6 +589,13 @@ const viewingEmailShell = (title, eyebrow, heading, bodyHtml) => `<!DOCTYPE html
 </body>
 </html>`;
 
+const formatViewingDate = (iso) => iso
+  ? new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+  : '';
+const appointmentLine = (iso) => iso
+  ? `<p style="margin:0 0 16px; color:#1a1a1a; text-align:center;"><span style="color:#9a8a70; font-size:12px; letter-spacing:1px; text-transform:uppercase;">Your appointment</span><br>${esc(formatViewingDate(iso))}</p>`
+  : '';
+
 const codeBlock = (code) => `
   <div style="text-align:center; margin:28px 0; padding:22px 0; border-top:1px solid #efe7d8; border-bottom:1px solid #efe7d8;">
     <div style="font-size:11px; letter-spacing:2px; color:#9a8a70; text-transform:uppercase; margin-bottom:8px;">Your reference code</div>
@@ -603,18 +610,19 @@ const sendViewingMail = async ({ to, subject, html }) => {
 };
 
 /** Customer: request received, here is your code. */
-const sendViewingRequestReceivedEmail = async ({ email, fullName, code }) => sendViewingMail({
+const sendViewingRequestReceivedEmail = async ({ email, fullName, code, appointmentDate }) => sendViewingMail({
   to: email,
   subject: `Your McCulloch viewing reference – ${code}`,
   html: viewingEmailShell('Viewing request received', 'Viewing request', `Thank you, ${esc(fullName)}.`, `
-    <p style="margin:0 0 16px; color:#4b5563;">We have received your details. A member of our team will check them shortly – this usually takes a few minutes while you are in the showroom.</p>
+    <p style="margin:0 0 16px; color:#4b5563;">We have received your details. A member of our team will check them shortly.</p>
     ${codeBlock(code)}
+    ${appointmentLine(appointmentDate)}
     <p style="margin:0 0 16px; color:#4b5563;">Please keep this code to hand. We will email you again as soon as your request has been confirmed.</p>
     <p style="margin:0; color:#6b7280; font-size:13.5px;">We ask every guest for identification before a piece is brought out of the cabinet. It protects our collection and keeps the showroom secure for everyone. Your details are kept private and deleted automatically.</p>`),
 });
 
 /** Owner: a new request is waiting. Deliberately no ID number or photos in the email. */
-const sendViewingRequestOwnerEmail = async ({ fullName, email, phone, idType, code, createdAt }) => {
+const sendViewingRequestOwnerEmail = async ({ fullName, email, phone, idType, code, appointmentDate, createdAt }) => {
   const when = new Date(createdAt || Date.now()).toLocaleString('en-GB', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   const row = (k, v) => `<tr><td style="padding:8px 0; color:#9a8a70; font-size:12px; letter-spacing:1px; text-transform:uppercase; width:120px;">${k}</td><td style="padding:8px 0; color:#1a1a1a; font-size:14.5px;">${esc(v) || '—'}</td></tr>`;
   return sendViewingMail({
@@ -623,7 +631,7 @@ const sendViewingRequestOwnerEmail = async ({ fullName, email, phone, idType, co
     html: viewingEmailShell('New viewing request', 'Action needed', 'New viewing request', `
       ${codeBlock(code)}
       <table width="100%" cellpadding="0" cellspacing="0">
-        ${row('Name', fullName)}${row('Email', email)}${row('Phone', phone)}${row('ID type', idType)}${row('Received', when)}
+        ${row('Name', fullName)}${row('Appointment', formatViewingDate(appointmentDate))}${row('Email', email)}${row('Phone', phone)}${row('ID type', idType)}${row('Received', when)}
       </table>
       <div style="text-align:center; margin:32px 0 6px;">
         <a href="${FRONTEND_URL}/secure-viewing/admin" style="display:inline-block; background:#C9A96E; color:#ffffff; padding:14px 40px; text-decoration:none; border-radius:4px; font-size:13px; letter-spacing:1.5px; text-transform:uppercase;">Review and approve</a>
@@ -633,14 +641,15 @@ const sendViewingRequestOwnerEmail = async ({ fullName, email, phone, idType, co
 };
 
 /** Customer: approved – they may now view the piece. */
-const sendViewingApprovedEmail = async ({ email, fullName, code }) => sendViewingMail({
+const sendViewingApprovedEmail = async ({ email, fullName, code, appointmentDate }) => sendViewingMail({
   to: email,
   subject: `You're confirmed for your viewing – ${code}`,
   html: viewingEmailShell('Viewing confirmed', 'Confirmed', `You're all set, ${esc(fullName)}.`, `
     <p style="margin:0 0 16px; color:#4b5563;">Thank you for your patience. Your identity has been confirmed and you are now welcome to view pieces from our cabinets.</p>
     ${codeBlock(code)}
-    <p style="margin:0 0 16px; color:#4b5563;">Please show this email or your reference code to a member of our team.</p>
-    <p style="margin:0; color:#6b7280; font-size:13.5px;">This confirmation is valid for today's visit.</p>`),
+    ${appointmentLine(appointmentDate)}
+    <p style="margin:0 0 16px; color:#4b5563;">Please show this email or your reference code to a member of our team when you arrive.</p>
+    <p style="margin:0; color:#6b7280; font-size:13.5px;">This confirmation is valid until the end of your appointment day.</p>`),
 });
 
 /** Customer: not approved – polite, no detail. */

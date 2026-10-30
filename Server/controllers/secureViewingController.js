@@ -27,7 +27,7 @@ try {
 }
 
 const RETENTION_DAYS = parseInt(process.env.SECURE_VIEWING_RETENTION_DAYS || '30', 10);
-const APPROVAL_HOURS = 12;
+const APPROVAL_HOURS = 12; // only for older requests with no appointment date
 const ID_TYPES = ['Passport', 'Driving licence', 'National ID card', 'Residence permit', 'Other photo ID'];
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O, 1/I/L
 
@@ -55,6 +55,18 @@ const uploadIdPhotos = (req, res, next) => upload(req, res, (err) => {
 
 const removeFiles = (...names) => names.filter(Boolean).forEach(n => fs.unlink(path.join(PRIVATE_DIR, path.basename(n)), () => {}));
 
+// Bookable window: today (UK time) to the same date next month, clamped to month end.
+const londonToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+const oneMonthAfter = (iso) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m, Math.min(d, lastDay))).toISOString().slice(0, 10);
+};
+const isRealDate = (iso) => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === iso;
+};
+
 const newCode = () => 'MC-' + Array.from(crypto.randomBytes(6), b => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
 
 // ── Public: submit a request ─────────────────────────────────────────────────
@@ -69,12 +81,16 @@ const submitRequest = async (req, res) => {
     const phone = String(req.body.phone || '').trim();
     const idType = String(req.body.id_type || '').trim();
     const idNumber = String(req.body.id_number || '').trim();
+    const appointmentDate = String(req.body.appointment_date || '').trim();
 
     if (fullName.length < 2 || fullName.length > 150) return fail(400, 'Please enter your full name.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 255) return fail(400, 'Please enter a valid email address.');
     if (!ID_TYPES.includes(idType)) return fail(400, 'Please choose the type of ID.');
     if (idNumber.length < 4 || idNumber.length > 80) return fail(400, 'Please enter your ID number.');
     if (phone.length > 40) return fail(400, 'Please check your phone number.');
+    const today = londonToday();
+    if (!isRealDate(appointmentDate)) return fail(400, 'Please choose an appointment date.');
+    if (appointmentDate < today || appointmentDate > oneMonthAfter(today)) return fail(400, 'That date is not available. Please choose a date within the next month.');
     if (!front || !back) return fail(400, 'Please add a photo of the front and the back of your ID.');
     if (String(req.body.consent) !== 'true') return fail(400, 'Please confirm you agree to the ID check.');
 
@@ -82,11 +98,11 @@ const submitRequest = async (req, res) => {
     for (let attempt = 0; attempt < 5 && !row; attempt++) {
       try {
         [row] = await db().query(`
-          INSERT INTO viewing_requests (code, full_name, email, phone, id_type, id_number, id_front_path, id_back_path, ip_address, user_agent)
-          VALUES (:code, :fullName, :email, :phone, :idType, :idNumber, :front, :back, :ip, :ua)
+          INSERT INTO viewing_requests (code, full_name, email, phone, id_type, id_number, appointment_date, id_front_path, id_back_path, ip_address, user_agent)
+          VALUES (:code, :fullName, :email, :phone, :idType, :idNumber, :appointmentDate, :front, :back, :ip, :ua)
           RETURNING id, code, created_at`, {
           replacements: {
-            code: newCode(), fullName, email, phone: phone || null, idType, idNumber,
+            code: newCode(), fullName, email, phone: phone || null, idType, idNumber, appointmentDate,
             front: front.filename, back: back.filename,
             ip: String(req.ip || '').slice(0, 64), ua: String(req.get('user-agent') || '').slice(0, 300),
           },
@@ -99,8 +115,8 @@ const submitRequest = async (req, res) => {
     if (!row) return fail(500, 'Something went wrong. Please try again.');
 
     // Emails must never block or fail the submission.
-    sendViewingRequestReceivedEmail({ email, fullName, code: row.code }).catch(e => logger.error('Viewing email (customer) failed:', e.message));
-    sendViewingRequestOwnerEmail({ fullName, email, phone, idType, code: row.code, createdAt: row.created_at }).catch(e => logger.error('Viewing email (owner) failed:', e.message));
+    sendViewingRequestReceivedEmail({ email, fullName, code: row.code, appointmentDate }).catch(e => logger.error('Viewing email (customer) failed:', e.message));
+    sendViewingRequestOwnerEmail({ fullName, email, phone, idType, code: row.code, appointmentDate, createdAt: row.created_at }).catch(e => logger.error('Viewing email (owner) failed:', e.message));
 
     return res.status(201).json({ success: true, data: { code: row.code } });
   } catch (error) {
@@ -113,11 +129,11 @@ const submitRequest = async (req, res) => {
 const getStatus = async (req, res) => {
   try {
     const [row] = await db().query(
-      `SELECT status, approval_expires_at FROM viewing_requests WHERE code = :code`,
+      `SELECT status, approval_expires_at, to_char(appointment_date, 'YYYY-MM-DD') AS appointment_date FROM viewing_requests WHERE code = :code`,
       { replacements: { code: String(req.params.code || '').toUpperCase() }, type: QueryTypes.SELECT });
     if (!row) return res.status(404).json({ success: false, message: 'Not found' });
     const expired = row.status === 'approved' && row.approval_expires_at && new Date(row.approval_expires_at) < new Date();
-    return res.json({ success: true, data: { status: expired ? 'expired' : row.status } });
+    return res.json({ success: true, data: { status: expired ? 'expired' : row.status, appointment_date: row.appointment_date } });
   } catch (error) {
     logger.error('Secure viewing status error:', error);
     return res.status(500).json({ success: false, message: 'Server error' });
@@ -150,6 +166,7 @@ const requirePanelToken = (req, res, next) => {
 };
 
 const PANEL_FIELDS = `id, code, full_name, email, phone, id_type, id_number, status, decision_note,
+  to_char(appointment_date, 'YYYY-MM-DD') AS appointment_date,
   decided_at, approval_expires_at, purged_at, created_at,
   (id_front_path IS NOT NULL) AS has_front, (id_back_path IS NOT NULL) AS has_back`;
 
@@ -193,15 +210,16 @@ const decide = (decision) => async (req, res) => {
     const [row] = await db().query(`
       UPDATE viewing_requests
       SET status = :decision, decision_note = :note, decided_at = NOW(), updated_at = NOW(),
-          approval_expires_at = CASE WHEN :decision = 'approved' THEN NOW() + INTERVAL '${APPROVAL_HOURS} hours' ELSE NULL END
+          approval_expires_at = CASE WHEN :decision = 'approved'
+            THEN COALESCE(appointment_date + INTERVAL '1 day', NOW() + INTERVAL '${APPROVAL_HOURS} hours') ELSE NULL END
       WHERE id = :id
-      RETURNING code, full_name, email, status`, {
+      RETURNING code, full_name, email, status, to_char(appointment_date, 'YYYY-MM-DD') AS appointment_date`, {
       replacements: { id: req.params.id, decision, note }, type: QueryTypes.SELECT,
     });
     if (!row) return res.status(404).json({ success: false, message: 'Request not found' });
 
     const send = decision === 'approved' ? sendViewingApprovedEmail : sendViewingDeclinedEmail;
-    send({ email: row.email, fullName: row.full_name, code: row.code }).catch(e => logger.error('Viewing decision email failed:', e.message));
+    send({ email: row.email, fullName: row.full_name, code: row.code, appointmentDate: row.appointment_date }).catch(e => logger.error('Viewing decision email failed:', e.message));
 
     return res.json({ success: true, data: { status: row.status } });
   } catch (error) {
@@ -210,14 +228,15 @@ const decide = (decision) => async (req, res) => {
   }
 };
 
-// ── Retention: delete ID photos and numbers after RETENTION_DAYS ─────────────
+// ── Retention: delete ID photos and numbers RETENTION_DAYS after the appointment ──
 const purgeOld = async () => {
   try {
     if (!postgresDB()) return;
     const rows = await db().query(`
       UPDATE viewing_requests
       SET id_number = NULL, id_front_path = NULL, id_back_path = NULL, purged_at = NOW(), updated_at = NOW()
-      WHERE purged_at IS NULL AND created_at < NOW() - (:days || ' days')::interval
+      WHERE purged_at IS NULL
+        AND GREATEST(created_at, COALESCE(appointment_date::timestamp, created_at)) < NOW() - (:days || ' days')::interval
       RETURNING id`,
     { replacements: { days: String(RETENTION_DAYS) }, type: QueryTypes.SELECT });
     if (rows.length) logger.info(`Secure viewing: purged ID data from ${rows.length} request(s)`);
