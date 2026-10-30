@@ -152,6 +152,38 @@ const connectPostgreSQL = async () => {
       logger.debug('reviews table ensure completed');
     }
 
+    // Secure viewing (in-shop ID check before a piece leaves the cabinet). Idempotent.
+    // ID photos live on disk under uploads/_private (never served statically);
+    // id_number and the photos are purged after SECURE_VIEWING_RETENTION_DAYS.
+    try {
+      await postgresDB.query(`
+        CREATE TABLE IF NOT EXISTS "viewing_requests" (
+          "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          "code" VARCHAR(16) NOT NULL UNIQUE,
+          "full_name" VARCHAR(150) NOT NULL,
+          "email" VARCHAR(255) NOT NULL,
+          "phone" VARCHAR(40),
+          "id_type" VARCHAR(40) NOT NULL,
+          "id_number" VARCHAR(80),
+          "id_front_path" VARCHAR(255),
+          "id_back_path" VARCHAR(255),
+          "status" VARCHAR(20) NOT NULL DEFAULT 'pending',
+          "decision_note" VARCHAR(500),
+          "decided_at" TIMESTAMP,
+          "approval_expires_at" TIMESTAMP,
+          "ip_address" VARCHAR(64),
+          "user_agent" VARCHAR(300),
+          "purged_at" TIMESTAMP,
+          "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_viewing_requests_status" ON "viewing_requests"("status");`);
+      await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_viewing_requests_created_at" ON "viewing_requests"("created_at");`);
+    } catch (error) {
+      logger.debug('viewing_requests table ensure completed');
+    }
+
     // Create chats table if it doesn't exist
     try {
       await postgresDB.query(`

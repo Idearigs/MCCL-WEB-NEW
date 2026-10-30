@@ -559,4 +559,101 @@ const sendWelcomeEmail = async (customerEmail, firstName) => {
   return result;
 };
 
-module.exports = { sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail, sendWelcomeEmail };
+// ─── Secure viewing (in-shop ID check) ────────────────────────────────────────
+// Owner address for viewing requests; falls back to the order-notification address.
+const SECURE_VIEWING_OWNER_EMAIL = process.env.SECURE_VIEWING_OWNER_EMAIL || OWNER_ORDER_EMAIL;
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Shared shell for the short secure-viewing emails (same look as the welcome email).
+const viewingEmailShell = (title, eyebrow, heading, bodyHtml) => `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title}</title></head>
+<body style="margin:0; padding:0; background:#f9f6f1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f6f1; padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+        <tr><td style="padding:0 40px 40px;">
+          ${emailHeader}
+          <div style="margin-top:34px; color:#374151; font-size:15px; line-height:1.75;">
+            <div style="font-size:11px; letter-spacing:3px; color:#C9A96E; text-transform:uppercase; margin-bottom:14px;">${eyebrow}</div>
+            <h1 style="font-family:Cambria,'Times New Roman',serif; font-weight:400; font-size:28px; line-height:1.2; color:#1a1a1a; margin:0 0 18px;">${heading}</h1>
+            ${bodyHtml}
+          </div>
+          ${emailFooter}
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+const codeBlock = (code) => `
+  <div style="text-align:center; margin:28px 0; padding:22px 0; border-top:1px solid #efe7d8; border-bottom:1px solid #efe7d8;">
+    <div style="font-size:11px; letter-spacing:2px; color:#9a8a70; text-transform:uppercase; margin-bottom:8px;">Your reference code</div>
+    <div style="font-family:'Courier New',monospace; font-size:30px; letter-spacing:6px; color:#1a1a1a; font-weight:600;">${esc(code)}</div>
+  </div>`;
+
+const sendViewingMail = async ({ to, subject, html }) => {
+  const transporter = createTransporter();
+  const result = await transporter.sendMail({ from: `"${FROM_NAME}" <${FROM_ADDRESS}>`, to, subject, html, replyTo: SUPPORT_EMAIL });
+  logger.info(`Secure viewing email "${subject}" sent to ${to}`);
+  return result;
+};
+
+/** Customer: request received, here is your code. */
+const sendViewingRequestReceivedEmail = async ({ email, fullName, code }) => sendViewingMail({
+  to: email,
+  subject: `Your McCulloch viewing reference – ${code}`,
+  html: viewingEmailShell('Viewing request received', 'Viewing request', `Thank you, ${esc(fullName)}.`, `
+    <p style="margin:0 0 16px; color:#4b5563;">We have received your details. A member of our team will check them shortly – this usually takes a few minutes while you are in the showroom.</p>
+    ${codeBlock(code)}
+    <p style="margin:0 0 16px; color:#4b5563;">Please keep this code to hand. We will email you again as soon as your request has been confirmed.</p>
+    <p style="margin:0; color:#6b7280; font-size:13.5px;">We ask every guest for identification before a piece is brought out of the cabinet. It protects our collection and keeps the showroom secure for everyone. Your details are kept private and deleted automatically.</p>`),
+});
+
+/** Owner: a new request is waiting. Deliberately no ID number or photos in the email. */
+const sendViewingRequestOwnerEmail = async ({ fullName, email, phone, idType, code, createdAt }) => {
+  const when = new Date(createdAt || Date.now()).toLocaleString('en-GB', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  const row = (k, v) => `<tr><td style="padding:8px 0; color:#9a8a70; font-size:12px; letter-spacing:1px; text-transform:uppercase; width:120px;">${k}</td><td style="padding:8px 0; color:#1a1a1a; font-size:14.5px;">${esc(v) || '—'}</td></tr>`;
+  return sendViewingMail({
+    to: SECURE_VIEWING_OWNER_EMAIL,
+    subject: `New viewing request ${code} – ${fullName}`,
+    html: viewingEmailShell('New viewing request', 'Action needed', 'New viewing request', `
+      ${codeBlock(code)}
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${row('Name', fullName)}${row('Email', email)}${row('Phone', phone)}${row('ID type', idType)}${row('Received', when)}
+      </table>
+      <div style="text-align:center; margin:32px 0 6px;">
+        <a href="${FRONTEND_URL}/secure-viewing/admin" style="display:inline-block; background:#C9A96E; color:#ffffff; padding:14px 40px; text-decoration:none; border-radius:4px; font-size:13px; letter-spacing:1.5px; text-transform:uppercase;">Review and approve</a>
+      </div>
+      <p style="margin:18px 0 0; color:#6b7280; font-size:13px; text-align:center;">The ID number and photos are only shown in the PIN-protected panel.</p>`),
+  });
+};
+
+/** Customer: approved – they may now view the piece. */
+const sendViewingApprovedEmail = async ({ email, fullName, code }) => sendViewingMail({
+  to: email,
+  subject: `You're confirmed for your viewing – ${code}`,
+  html: viewingEmailShell('Viewing confirmed', 'Confirmed', `You're all set, ${esc(fullName)}.`, `
+    <p style="margin:0 0 16px; color:#4b5563;">Thank you for your patience. Your identity has been confirmed and you are now welcome to view pieces from our cabinets.</p>
+    ${codeBlock(code)}
+    <p style="margin:0 0 16px; color:#4b5563;">Please show this email or your reference code to a member of our team.</p>
+    <p style="margin:0; color:#6b7280; font-size:13.5px;">This confirmation is valid for today's visit.</p>`),
+});
+
+/** Customer: not approved – polite, no detail. */
+const sendViewingDeclinedEmail = async ({ email, fullName, code }) => sendViewingMail({
+  to: email,
+  subject: `Your McCulloch viewing request – ${code}`,
+  html: viewingEmailShell('Viewing request', 'Viewing request', `Thank you, ${esc(fullName)}.`, `
+    <p style="margin:0 0 16px; color:#4b5563;">Unfortunately we were unable to confirm your details on this occasion.</p>
+    ${codeBlock(code)}
+    <p style="margin:0; color:#4b5563;">Please speak to a member of our team in the showroom, who will be happy to help.</p>`),
+});
+
+module.exports = {
+  sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail, sendWelcomeEmail,
+  sendViewingRequestReceivedEmail, sendViewingRequestOwnerEmail, sendViewingApprovedEmail, sendViewingDeclinedEmail,
+};
