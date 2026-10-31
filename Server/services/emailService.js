@@ -618,7 +618,7 @@ const sendViewingRequestReceivedEmail = async ({ email, fullName, code, appointm
     ${codeBlock(code)}
     ${appointmentLine(appointmentDate)}
     <p style="margin:0 0 16px; color:#4b5563;">Please keep this code to hand. We will email you again as soon as your request has been confirmed.</p>
-    <p style="margin:0; color:#6b7280; font-size:13.5px;">We ask every guest for identification before a piece is brought out of the cabinet. It protects our collection and keeps the showroom secure for everyone. Your details are kept private, and your ID number and photos are deleted automatically after your visit.</p>`),
+    <p style="margin:0; color:#6b7280; font-size:13.5px;">We ask every guest for identification before a piece is brought out of the cabinet. It protects our collection and keeps the showroom secure for everyone. Your details are kept private, and your ID number and photos are deleted automatically 12 months after your visit.</p>`),
 });
 
 /** Owner: a new request is waiting. Deliberately no ID number or photos in the email. */
