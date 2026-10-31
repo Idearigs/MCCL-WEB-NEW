@@ -70,6 +70,8 @@ const SecureViewingAdmin = (): JSX.Element => {
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState("");
   const [tab, setTab] = useState<Req["status"]>("pending");
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
   const [requests, setRequests] = useState<Req[]>([]);
   const [counts, setCounts] = useState<Counts>({ pending: 0, approved: 0, declined: 0 });
   const [selected, setSelected] = useState<Req | null>(null);
@@ -91,7 +93,8 @@ const SecureViewingAdmin = (): JSX.Element => {
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch(api(`secure-viewing/admin/requests?status=${tab}`), { headers: { Authorization: `Bearer ${token}` } });
+      const params = query ? `q=${encodeURIComponent(query)}` : `status=${tab}`;
+      const res = await fetch(api(`secure-viewing/admin/requests?${params}`), { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) { logout(); return; }
       const json = await res.json();
       if (!json.success) return;
@@ -99,7 +102,13 @@ const SecureViewingAdmin = (): JSX.Element => {
       setCounts(json.data.counts);
       setSelected(s => s ? json.data.requests.find((r: Req) => r.id === s.id) || s : s);
     } catch { /* keep the current list; next refresh will retry */ }
-  }, [token, tab, logout]);
+  }, [token, tab, query, logout]);
+
+  // Search as the owner types; under 3 characters goes back to the normal tabs.
+  useEffect(() => {
+    const t = window.setTimeout(() => { setQuery(search.trim().length >= 3 ? search.trim() : ""); setSelected(null); }, 300);
+    return () => window.clearTimeout(t);
+  }, [search]);
 
   useEffect(() => { load(); const t = window.setInterval(load, 10000); return () => window.clearInterval(t); }, [load]);
   useEffect(() => { document.title = counts.pending ? `(${counts.pending}) Viewing requests | McCulloch` : "Viewing requests | McCulloch"; }, [counts.pending]);
@@ -171,7 +180,16 @@ const SecureViewingAdmin = (): JSX.Element => {
         <button onClick={logout} style={btn("transparent", T.paper, T.ruleDarkStrong)}>Lock</button>
       </header>
 
-      <nav style={{ display: "flex", borderBottom: `1px solid ${T.rule}`, padding: "0 clamp(16px,3vw,36px)" }}>
+      <div style={{ padding: "14px clamp(16px,3vw,36px)", borderBottom: `1px solid ${T.rule}`, background: T.tint }}>
+        <input
+          value={search} onChange={e => setSearch(e.target.value)} type="search" inputMode="search"
+          placeholder="Returning customer? Search phone, name, email or code"
+          aria-label="Search all requests"
+          style={{ width: "100%", maxWidth: 520, padding: "12px 14px", background: "#fff", border: `1px solid ${T.ruleStrong}`, outline: "none", fontFamily: FONT_BODY, fontSize: 16, color: T.ink, borderRadius: 0 }}
+        />
+      </div>
+
+      <nav style={{ display: query ? "none" : "flex", borderBottom: `1px solid ${T.rule}`, padding: "0 clamp(16px,3vw,36px)" }}>
         {TABS.map(t => (
           <button key={t.key} onClick={() => { setTab(t.key); setSelected(null); }}
             style={{ padding: "16px 18px", background: "transparent", border: 0, borderBottom: `2px solid ${tab === t.key ? T.gold : "transparent"}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: tab === t.key ? T.ink : T.muted }}>
@@ -186,7 +204,7 @@ const SecureViewingAdmin = (): JSX.Element => {
         <aside className={selected ? "sva-list-hidden" : ""} style={{ borderRight: `1px solid ${T.rule}` }}>
           {requests.length === 0 && (
             <div style={{ padding: 32, textAlign: "center", color: T.muted, fontSize: 14 }}>
-              {tab === "pending" ? "No requests waiting. New ones appear here automatically." : "Nothing here yet."}
+              {query ? "No match. This customer has not been verified yet, so please ask them to complete the form." : tab === "pending" ? "No requests waiting. New ones appear here automatically." : "Nothing here yet."}
             </div>
           )}
           {requests.map(r => (
@@ -198,6 +216,11 @@ const SecureViewingAdmin = (): JSX.Element => {
               </div>
               <div style={{ fontSize: 12.5, color: T.muted, marginTop: 4, fontFamily: "'Courier New', monospace", letterSpacing: "0.08em" }}>{r.code} · {r.id_type}</div>
               <div style={{ fontSize: 13, color: T.body, marginTop: 4 }}>Appointment: {dateOnly(r.appointment_date)}</div>
+              {query && (
+                <div style={{ fontSize: 13, color: T.body, marginTop: 4 }}>
+                  {r.phone || "No phone"} · <span style={{ color: r.status === "approved" ? "#2F5D3A" : r.status === "declined" ? "#7A2E22" : T.gold, fontWeight: 600 }}>{r.status === "approved" ? `Verified ${dateOnly(r.decided_at?.slice(0, 10) ?? null)}` : r.status === "declined" ? "Declined" : "Pending"}</span>
+                </div>
+              )}
             </button>
           ))}
         </aside>
@@ -217,9 +240,11 @@ const SecureViewingAdmin = (): JSX.Element => {
                 {[
                   ["Appointment", dateOnly(selected.appointment_date)],
                   ["ID type", selected.id_type], ["ID number", selected.id_number || "Deleted (retention)"],
-                  ["Email", selected.email], ["Phone", selected.phone || "—"], ["Submitted", when(selected.created_at)],
+                  ["Phone", selected.phone || "—"], ["Email", selected.email], ["Submitted", when(selected.created_at)],
                   ...(selected.decided_at ? [["Decided", when(selected.decided_at)]] : []),
                   ...(selected.status === "approved" ? [["Valid until", when(selected.approval_expires_at)]] : []),
+                  ...(selected.status === "approved" && selected.approval_expires_at && new Date(selected.approval_expires_at) < new Date()
+                    ? [["Return visit", "Verified before, approval has ended. Check their ID in person."]] : []),
                   ...(selected.decision_note ? [["Note", selected.decision_note]] : []),
                 ].map(([k, v]) => (
                   <React.Fragment key={k}>
