@@ -26,7 +26,7 @@ try {
   logger.error('Secure viewing: could not create private ID folder:', error.message);
 }
 
-const RETENTION_DAYS = parseInt(process.env.SECURE_VIEWING_RETENTION_DAYS || '30', 10);
+const RETENTION_DAYS = parseInt(process.env.SECURE_VIEWING_RETENTION_DAYS || '365', 10);
 const APPROVAL_HOURS = 12; // only for older requests with no appointment date
 const ID_TYPES = ['Passport', 'Driving licence', 'National ID card', 'Residence permit', 'Other photo ID'];
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no 0/O, 1/I/L

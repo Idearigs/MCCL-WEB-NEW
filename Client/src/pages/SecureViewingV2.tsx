@@ -233,7 +233,7 @@ const SecureViewingV2 = (): JSX.Element => {
 
               <label style={{ display: "flex", gap: 12, alignItems: "flex-start", fontSize: 13.5, lineHeight: 1.6, color: T.body, marginBottom: 26, cursor: "pointer" }}>
                 <input type="checkbox" checked={form.consent} onChange={e => set("consent", e.target.checked)} style={{ marginTop: 4, accentColor: T.ink, width: 16, height: 16, flexShrink: 0 }} />
-                <span>I agree to McCulloch checking my ID before viewing. My ID number and photos are deleted automatically 30 days after my appointment. McCulloch keeps my name, contact details and the result of this check on record for future visits.</span>
+                <span>I agree to McCulloch checking my ID before viewing. My ID number and photos are deleted automatically 12 months after my appointment. McCulloch keeps my name, contact details and the result of this check on record for future visits.</span>
               </label>
 
               {error && <div role="alert" style={{ background: "#F4E4E0", color: "#7A2E22", padding: "12px 16px", fontSize: 14, marginBottom: 18 }}>{error}</div>}

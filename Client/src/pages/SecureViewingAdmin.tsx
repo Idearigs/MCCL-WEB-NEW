@@ -244,7 +244,9 @@ const SecureViewingAdmin = (): JSX.Element => {
                   ...(selected.decided_at ? [["Decided", when(selected.decided_at)]] : []),
                   ...(selected.status === "approved" ? [["Valid until", when(selected.approval_expires_at)]] : []),
                   ...(selected.status === "approved" && selected.approval_expires_at && new Date(selected.approval_expires_at) < new Date()
-                    ? [["Return visit", "Verified before, approval has ended. Check their ID in person."]] : []),
+                    ? [["Return visit", selected.has_front || selected.has_back
+                      ? "Verified before, approval has ended. Compare them with the ID photos below."
+                      : "Verified before, approval has ended and the ID photos have been deleted. Check their ID in person."]] : []),
                   ...(selected.decision_note ? [["Note", selected.decision_note]] : []),
                 ].map(([k, v]) => (
                   <React.Fragment key={k}>
