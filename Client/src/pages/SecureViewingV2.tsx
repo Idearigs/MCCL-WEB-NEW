@@ -104,6 +104,7 @@ const SecureViewingV2 = (): JSX.Element => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (form.phone.replace(/\D/g, "").length < 7) { setError("Please enter your phone number."); return; }
     if (!form.appointment_date) { setError("Please choose an appointment date."); return; }
     if (dateUnavailable) { setError(`That date is not available. Appointments start from ${prettyDate(minDate)}.`); return; }
     if (!front || !back) { setError("Please add a photo of the front and the back of your ID."); return; }
@@ -198,8 +199,8 @@ const SecureViewingV2 = (): JSX.Element => {
                   <input id="sv-email" className="sv-input" style={input} type="email" inputMode="email" value={form.email} onChange={e => set("email", e.target.value)} autoComplete="email" required />
                 </div>
                 <div style={{ marginBottom: 22 }}>
-                  <label style={fieldLabel} htmlFor="sv-phone">Phone (optional)</label>
-                  <input id="sv-phone" className="sv-input" style={input} type="tel" inputMode="tel" value={form.phone} onChange={e => set("phone", e.target.value)} autoComplete="tel" />
+                  <label style={fieldLabel} htmlFor="sv-phone">Phone</label>
+                  <input id="sv-phone" className="sv-input" style={input} type="tel" inputMode="tel" value={form.phone} onChange={e => set("phone", e.target.value)} autoComplete="tel" required />
                 </div>
               </div>
               <div className="sv-two" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 24px" }}>
@@ -232,7 +233,7 @@ const SecureViewingV2 = (): JSX.Element => {
 
               <label style={{ display: "flex", gap: 12, alignItems: "flex-start", fontSize: 13.5, lineHeight: 1.6, color: T.body, marginBottom: 26, cursor: "pointer" }}>
                 <input type="checkbox" checked={form.consent} onChange={e => set("consent", e.target.checked)} style={{ marginTop: 4, accentColor: T.ink, width: 16, height: 16, flexShrink: 0 }} />
-                <span>I agree to McCulloch checking my ID before viewing. My details and ID photos are used only for this check and are deleted automatically 30 days after my appointment.</span>
+                <span>I agree to McCulloch checking my ID before viewing. My ID number and photos are deleted automatically 30 days after my appointment. McCulloch keeps my name, contact details and the result of this check on record for future visits.</span>
               </label>
 
               {error && <div role="alert" style={{ background: "#F4E4E0", color: "#7A2E22", padding: "12px 16px", fontSize: 14, marginBottom: 18 }}>{error}</div>}

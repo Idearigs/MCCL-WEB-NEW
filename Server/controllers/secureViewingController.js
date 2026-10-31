@@ -88,7 +88,7 @@ const submitRequest = async (req, res) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 255) return fail(400, 'Please enter a valid email address.');
     if (!ID_TYPES.includes(idType)) return fail(400, 'Please choose the type of ID.');
     if (idNumber.length < 4 || idNumber.length > 80) return fail(400, 'Please enter your ID number.');
-    if (phone.length > 40) return fail(400, 'Please check your phone number.');
+    if (phone.length > 40 || phone.replace(/\D/g, '').length < 7) return fail(400, 'Please enter your phone number.');
     const today = londonToday();
     if (!isRealDate(appointmentDate)) return fail(400, 'Please choose an appointment date.');
     if (appointmentDate < addMonths(today, 1) || appointmentDate > addMonths(today, 12)) return fail(400, 'That date is not available. Appointments start one month from today.');
@@ -103,7 +103,7 @@ const submitRequest = async (req, res) => {
           VALUES (:code, :fullName, :email, :phone, :idType, :idNumber, :appointmentDate, :front, :back, :ip, :ua)
           RETURNING id, code, created_at`, {
           replacements: {
-            code: newCode(), fullName, email, phone: phone || null, idType, idNumber, appointmentDate,
+            code: newCode(), fullName, email, phone, idType, idNumber, appointmentDate,
             front: front.filename, back: back.filename,
             ip: String(req.ip || '').slice(0, 64), ua: String(req.get('user-agent') || '').slice(0, 300),
           },
@@ -174,11 +174,24 @@ const PANEL_FIELDS = `id, code, full_name, email, phone, id_type, id_number, sta
 const listRequests = async (req, res) => {
   try {
     const status = ['pending', 'approved', 'declined'].includes(req.query.status) ? req.query.status : null;
+    const q = String(req.query.q || '').trim().slice(0, 100);
+
+    // Search finds a guest across every status, so a past approval can be found on a return visit.
+    // Phone numbers match however they were typed: 07700 900123, +44 7700 900123, 7700900123.
+    let where = status ? 'WHERE status = :status' : '';
+    const replacements = { status };
+    if (q.length >= 3) {
+      const digits = q.replace(/\D/g, '').replace(/^(00)?44/, '').replace(/^0+/, '');
+      replacements.like = `%${q.replace(/[\\%_]/g, '\\$&')}%`;
+      replacements.digits = `%${digits}%`;
+      where = `WHERE full_name ILIKE :like OR email ILIKE :like OR code ILIKE :like
+        ${q.replace(/\D/g, '').length >= 4 ? `OR regexp_replace(phone, '\\D', '', 'g') LIKE :digits` : ''}`;
+    }
     const rows = await db().query(`
       SELECT ${PANEL_FIELDS} FROM viewing_requests
-      ${status ? 'WHERE status = :status' : ''}
+      ${where}
       ORDER BY (status = 'pending') DESC, created_at DESC
-      LIMIT 200`, { replacements: { status }, type: QueryTypes.SELECT });
+      LIMIT 200`, { replacements, type: QueryTypes.SELECT });
     const [counts] = await db().query(`
       SELECT COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
              COUNT(*) FILTER (WHERE status = 'approved')::int AS approved,
