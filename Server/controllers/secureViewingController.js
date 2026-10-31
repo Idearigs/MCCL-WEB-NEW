@@ -55,12 +55,13 @@ const uploadIdPhotos = (req, res, next) => upload(req, res, (err) => {
 
 const removeFiles = (...names) => names.filter(Boolean).forEach(n => fs.unlink(path.join(PRIVATE_DIR, path.basename(n)), () => {}));
 
-// Bookable window: today (UK time) to the same date next month, clamped to month end.
+// Bookable from one month after today (UK time), clamped to month end, e.g. 31 Oct -> 30 Nov.
+// The one-year limit only stops typing errors keeping ID data for years.
 const londonToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
-const oneMonthAfter = (iso) => {
+const addMonths = (iso, n) => {
   const [y, m, d] = iso.split('-').map(Number);
-  const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  return new Date(Date.UTC(y, m, Math.min(d, lastDay))).toISOString().slice(0, 10);
+  const lastDay = new Date(Date.UTC(y, m + n, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m - 1 + n, Math.min(d, lastDay))).toISOString().slice(0, 10);
 };
 const isRealDate = (iso) => {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -90,7 +91,7 @@ const submitRequest = async (req, res) => {
     if (phone.length > 40) return fail(400, 'Please check your phone number.');
     const today = londonToday();
     if (!isRealDate(appointmentDate)) return fail(400, 'Please choose an appointment date.');
-    if (appointmentDate < today || appointmentDate > oneMonthAfter(today)) return fail(400, 'That date is not available. Please choose a date within the next month.');
+    if (appointmentDate < addMonths(today, 1) || appointmentDate > addMonths(today, 12)) return fail(400, 'That date is not available. Appointments start one month from today.');
     if (!front || !back) return fail(400, 'Please add a photo of the front and the back of your ID.');
     if (String(req.body.consent) !== 'true') return fail(400, 'Please confirm you agree to the ID check.');
 

@@ -11,7 +11,7 @@ import { api } from "../config/api";
 
 const ID_TYPES = ["Passport", "Driving licence", "National ID card", "Residence permit", "Other photo ID"];
 const STORAGE_KEY = "secure_viewing_code";
-const STORAGE_TTL = 40 * 24 * 60 * 60 * 1000; // long enough to outlast a booking a month away
+const STORAGE_TTL = 400 * 24 * 60 * 60 * 1000; // long enough to outlast the furthest booking
 
 type Status = "pending" | "approved" | "declined" | "expired";
 
@@ -22,12 +22,13 @@ const input: React.CSSProperties = {
   outline: "none", color: T.ink, fontFamily: FONT_BODY, fontSize: 16, borderRadius: 0,
 };
 
-// Bookable window: today (UK time) to the same date next month, clamped to month end.
+// Bookable from one month after today (UK time), clamped to month end, e.g. 31 Oct -> 30 Nov.
+// The one-year limit only stops typing errors keeping ID data for years.
 const londonToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
-const oneMonthAfter = (iso: string) => {
+const addMonths = (iso: string, n: number) => {
   const [y, m, d] = iso.split("-").map(Number);
-  const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  return new Date(Date.UTC(y, m, Math.min(d, lastDay))).toISOString().slice(0, 10);
+  const lastDay = new Date(Date.UTC(y, m + n, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m - 1 + n, Math.min(d, lastDay))).toISOString().slice(0, 10);
 };
 const prettyDate = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
@@ -67,8 +68,8 @@ const SecureViewingV2 = (): JSX.Element => {
   const [code, setCode] = useState<string | null>(loadSaved);
   const [status, setStatus] = useState<Status>("pending");
   const [appointment, setAppointment] = useState<string | null>(null);
-  const minDate = londonToday();
-  const maxDate = oneMonthAfter(minDate);
+  const minDate = addMonths(londonToday(), 1);
+  const maxDate = addMonths(londonToday(), 12);
   const dateUnavailable = !!form.appointment_date && (form.appointment_date < minDate || form.appointment_date > maxDate);
   const pollRef = useRef<number>();
 
@@ -104,7 +105,7 @@ const SecureViewingV2 = (): JSX.Element => {
     e.preventDefault();
     setError("");
     if (!form.appointment_date) { setError("Please choose an appointment date."); return; }
-    if (dateUnavailable) { setError(`That date is not available. Please choose a date up to ${prettyDate(maxDate)}.`); return; }
+    if (dateUnavailable) { setError(`That date is not available. Appointments start from ${prettyDate(minDate)}.`); return; }
     if (!front || !back) { setError("Please add a photo of the front and the back of your ID."); return; }
     if (!form.consent) { setError("Please confirm you agree to the ID check."); return; }
     const body = new FormData();
@@ -219,8 +220,8 @@ const SecureViewingV2 = (): JSX.Element => {
                 <label style={fieldLabel} htmlFor="sv-date">Appointment date</label>
                 <input id="sv-date" className="sv-input" style={input} type="date" min={minDate} max={maxDate} value={form.appointment_date} onChange={e => set("appointment_date", e.target.value)} required />
                 {dateUnavailable
-                  ? <div role="alert" style={{ marginTop: 8, fontSize: 13.5, color: "#7A2E22" }}>This date is not available. Please choose a date up to {prettyDate(maxDate)}.</div>
-                  : <div style={{ marginTop: 8, fontSize: 12.5, color: T.muted }}>Available up to {prettyDate(maxDate)}.</div>}
+                  ? <div role="alert" style={{ marginTop: 8, fontSize: 13.5, color: "#7A2E22" }}>This date is not available. Appointments start from {prettyDate(minDate)}.</div>
+                  : <div style={{ marginTop: 8, fontSize: 12.5, color: T.muted }}>Appointments available from {prettyDate(minDate)}.</div>}
               </div>
 
               <div style={{ ...fieldLabel, marginTop: 8, marginBottom: 10 }}>Photos of your ID</div>
