@@ -168,7 +168,7 @@ const requirePanelToken = (req, res, next) => {
 
 const PANEL_FIELDS = `id, code, full_name, email, phone, id_type, id_number, status, decision_note,
   to_char(appointment_date, 'YYYY-MM-DD') AS appointment_date,
-  decided_at, approval_expires_at, purged_at, created_at,
+  decided_at, approval_expires_at, reapproved_at, purged_at, created_at,
   (id_front_path IS NOT NULL) AS has_front, (id_back_path IS NOT NULL) AS has_back`;
 
 const listRequests = async (req, res) => {
@@ -242,6 +242,30 @@ const decide = (decision) => async (req, res) => {
   }
 };
 
+// A returning guest whose approval has ended: approve for today without a new form.
+// Today becomes the appointment date, so the 12 months restart from this visit.
+const approveToday = async (req, res) => {
+  try {
+    const today = londonToday();
+    const [row] = await db().query(`
+      UPDATE viewing_requests
+      SET appointment_date = CAST(:today AS date), reapproved_at = NOW(), updated_at = NOW(),
+          approval_expires_at = CAST(:today AS date) + INTERVAL '1 day'
+      WHERE id = :id AND status = 'approved' AND approval_expires_at < NOW()
+      RETURNING code, full_name, email`, {
+      replacements: { id: req.params.id, today }, type: QueryTypes.SELECT,
+    });
+    if (!row) return res.status(409).json({ success: false, message: 'This request cannot be approved for today.' });
+
+    sendViewingApprovedEmail({ email: row.email, fullName: row.full_name, code: row.code, appointmentDate: today })
+      .catch(e => logger.error('Viewing re-approval email failed:', e.message));
+    return res.json({ success: true, data: { status: 'approved' } });
+  } catch (error) {
+    logger.error('Secure viewing re-approval error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 // ── Retention: delete ID photos and numbers RETENTION_DAYS after the appointment ──
 const purgeOld = async () => {
   try {
@@ -275,5 +299,5 @@ setInterval(purgeOld, 6 * 60 * 60 * 1000).unref();
 
 module.exports = {
   ID_TYPES, uploadIdPhotos, submitRequest, getStatus, login, requirePanelToken,
-  listRequests, getPhoto, approve: decide('approved'), decline: decide('declined'), purgeOld,
+  listRequests, getPhoto, approve: decide('approved'), decline: decide('declined'), approveToday, purgeOld,
 };

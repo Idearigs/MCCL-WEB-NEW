@@ -179,6 +179,7 @@ const connectPostgreSQL = async () => {
         );
       `);
       await postgresDB.query(`ALTER TABLE "viewing_requests" ADD COLUMN IF NOT EXISTS "appointment_date" DATE;`);
+      await postgresDB.query(`ALTER TABLE "viewing_requests" ADD COLUMN IF NOT EXISTS "reapproved_at" TIMESTAMP;`);
       await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_viewing_requests_status" ON "viewing_requests"("status");`);
       await postgresDB.query(`CREATE INDEX IF NOT EXISTS "idx_viewing_requests_created_at" ON "viewing_requests"("created_at");`);
     } catch (error) {

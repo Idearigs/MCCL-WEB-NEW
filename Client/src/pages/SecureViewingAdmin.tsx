@@ -12,7 +12,7 @@ import { api } from "../config/api";
 type Req = {
   id: string; code: string; full_name: string; email: string; phone: string | null;
   id_type: string; id_number: string | null; appointment_date: string | null; status: "pending" | "approved" | "declined";
-  decision_note: string | null; decided_at: string | null; approval_expires_at: string | null;
+  decision_note: string | null; decided_at: string | null; approval_expires_at: string | null; reapproved_at: string | null;
   purged_at: string | null; created_at: string; has_front: boolean; has_back: boolean;
 };
 type Counts = { pending: number; approved: number; declined: number };
@@ -128,7 +128,9 @@ const SecureViewingAdmin = (): JSX.Element => {
     }
   };
 
-  const decide = async (decision: "approve" | "decline") => {
+  const approvalEnded = (r: Req) => r.status === "approved" && !!r.approval_expires_at && new Date(r.approval_expires_at) < new Date();
+
+  const decide = async (decision: "approve" | "decline" | "approve-today") => {
     if (!selected || !token) return;
     setBusy(true);
     try {
@@ -243,7 +245,8 @@ const SecureViewingAdmin = (): JSX.Element => {
                   ["Phone", selected.phone || "—"], ["Email", selected.email], ["Submitted", when(selected.created_at)],
                   ...(selected.decided_at ? [["Decided", when(selected.decided_at)]] : []),
                   ...(selected.status === "approved" ? [["Valid until", when(selected.approval_expires_at)]] : []),
-                  ...(selected.status === "approved" && selected.approval_expires_at && new Date(selected.approval_expires_at) < new Date()
+                  ...(selected.reapproved_at ? [["Re-approved", when(selected.reapproved_at)]] : []),
+                  ...(approvalEnded(selected)
                     ? [["Return visit", selected.has_front || selected.has_back
                       ? "Verified before, approval has ended. Compare them with the ID photos below."
                       : "Verified before, approval has ended and the ID photos have been deleted. Check their ID in person."]] : []),
@@ -263,6 +266,10 @@ const SecureViewingAdmin = (): JSX.Element => {
                 </div>
               ) : (
                 <div style={{ padding: 16, background: T.tint, fontSize: 14, color: T.muted, marginBottom: 30 }}>ID photos were deleted automatically after the retention period.</div>
+              )}
+
+              {approvalEnded(selected) && (
+                <button disabled={busy} onClick={() => decide("approve-today")} style={{ ...btn("#2F5D3A", "#fff"), width: "100%", maxWidth: 360, padding: "18px 22px", fontSize: 13 }}>{busy ? "Saving…" : "Approve for today"}</button>
               )}
 
               {selected.status === "pending" && (

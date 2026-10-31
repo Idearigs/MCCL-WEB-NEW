@@ -19,5 +19,6 @@ router.get('/admin/requests', ctrl.requirePanelToken, ctrl.listRequests);
 router.get('/admin/requests/:id/photo/:side', ctrl.requirePanelToken, ctrl.getPhoto);
 router.post('/admin/requests/:id/approve', ctrl.requirePanelToken, ctrl.approve);
 router.post('/admin/requests/:id/decline', ctrl.requirePanelToken, ctrl.decline);
+router.post('/admin/requests/:id/approve-today', ctrl.requirePanelToken, ctrl.approveToday);
 
 module.exports = router;
