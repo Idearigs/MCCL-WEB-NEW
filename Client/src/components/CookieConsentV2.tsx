@@ -14,7 +14,8 @@ const STORAGE_KEY = "cookie_consent_v1"; // "accepted" | "declined"
 const COOKIE_NAME = "cookie_consent";
 const META_PIXEL_ID = "1045549528353285";
 const CLARITY_ID = "w7bjnhz4zz";
-const GTM_ID = "GTM-PP0B5P4";
+// Both containers share one dataLayer; each fires its "All Pages" triggers on the gtm.js event.
+const GTM_IDS = ["GTM-PP0B5P4", "GTM-MWVKCF6G"];
 
 let trackersLoaded = false;
 
@@ -40,16 +41,16 @@ const loadTrackers = () => {
   trackersLoaded = true;
 
   // Google Tag Manager
-  (function (w: any, d: Document, s: string, l: string, i: string) {
-    w[l] = w[l] || [];
-    w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
-    const f = d.getElementsByTagName(s)[0];
-    const j = d.createElement(s) as HTMLScriptElement;
-    const dl = l !== "dataLayer" ? "&l=" + l : "";
+  const w = window as any;
+  w.dataLayer = w.dataLayer || [];
+  w.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+  for (const id of GTM_IDS) {
+    const f = document.getElementsByTagName("script")[0];
+    const j = document.createElement("script");
     j.async = true;
-    j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+    j.src = "https://www.googletagmanager.com/gtm.js?id=" + id;
     f.parentNode?.insertBefore(j, f);
-  })(window, document, "script", "dataLayer", GTM_ID);
+  }
 
   // Meta Pixel
   (function (f: any, b: Document, e: string, v: string) {
