@@ -86,7 +86,7 @@ const JewelleryAllV2 = (): JSX.Element => {
         rows.push({
           p, cat: c, availability: [p.is_live_stock ? LIVE : ORDER], metal: infer(name, METALS, METAL_ALIASES), stone: stone.length ? stone : ["None"],
           style: infer(name, STYLES_BY_CAT[c]), price: p.sale_price || p.base_price || 0,
-          hasImage: !!(p.image?.url || p.images?.[0]?.url), inStock: p.in_stock !== false,
+          hasImage: !!(p.image?.url || p.images?.[0]?.url), inStock: !!p.is_live_stock, // ready to ship = live stock; everything else is made to order
         });
       }));
       setProducts(rows);
@@ -131,7 +131,7 @@ const JewelleryAllV2 = (): JSX.Element => {
   const sortOptions = [{ value: "featured", label: "Featured" }, { value: "low", label: "Price, low to high" }, { value: "high", label: "Price, high to low" }, { value: "new", label: "Newest" }];
   const sortLabel = sortOptions.find(o => o.value === sort)?.label || "Featured";
   const priceLabel = maxPrice >= 4400 ? "Any" : "Up to " + money(maxPrice);
-  const leadTime = (inStock: boolean) => inStock ? "Ships in 48 hours" : "Made to order, ~3 weeks";
+  const leadTime = (inStock: boolean) => inStock ? "Ships in 48 hours" : "Made to order, up to 6 weeks";
 
   const railGroups: { key: Key; title: string; options: string[]; radio?: boolean }[] = [
     { key: "cat", title: "Category", options: [...CATS], radio: true },

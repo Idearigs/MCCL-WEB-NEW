@@ -1556,8 +1556,54 @@ const bulkCategoryStatus = async (req, res) => {
   }
 };
 
+// Replace a product's priced options (e.g. bespoke bracelet metal × stone).
+// Body: { variants: [{ sku, variant_name, metal_type, gemstone_type, price }] }.
+// Matched by sku; options no longer listed are deactivated, never deleted, so past
+// orders that reference them stay intact. base_price becomes the lowest option price.
+const replaceProductVariants = async (req, res) => {
+  try {
+    const { Product, ProductVariant } = getModelInstance();
+    const product = await Product.findByPk(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    const list = Array.isArray(req.body?.variants) ? req.body.variants : null;
+    if (!list || !list.length) return res.status(400).json({ success: false, message: 'variants must be a non-empty array' });
+    for (const v of list) {
+      const price = Number(v.price);
+      if (!v.sku || !v.variant_name || !v.metal_type || !(price > 0)) {
+        return res.status(400).json({ success: false, message: `Invalid variant: ${JSON.stringify(v)}` });
+      }
+    }
+
+    const keep = new Set();
+    for (const v of list) {
+      const data = {
+        product_id: product.id, sku: String(v.sku), variant_name: String(v.variant_name),
+        metal_type: String(v.metal_type), gemstone_type: v.gemstone_type ? String(v.gemstone_type) : null,
+        price: Number(v.price), price_adjustment: 0, is_active: true,
+      };
+      const existing = await ProductVariant.findOne({ where: { sku: data.sku } });
+      if (existing && existing.product_id !== product.id) {
+        return res.status(409).json({ success: false, message: `SKU ${data.sku} belongs to another product` });
+      }
+      const row = existing ? await existing.update(data) : await ProductVariant.create(data);
+      keep.add(row.id);
+    }
+    const all = await ProductVariant.findAll({ where: { product_id: product.id } });
+    for (const v of all) if (!keep.has(v.id) && v.is_active) await v.update({ is_active: false });
+
+    await product.update({ base_price: Math.min(...list.map(v => Number(v.price))) });
+    const variants = await ProductVariant.findAll({ where: { product_id: product.id, is_active: true }, order: [['price', 'ASC']] });
+    return res.json({ success: true, data: { base_price: product.base_price, variants } });
+  } catch (error) {
+    console.error('Error replacing product variants:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update variants', error: error.message });
+  }
+};
+
 module.exports = {
   getProducts,
+  replaceProductVariants,
   getProductById,
   createProduct,
   createProductWithMedia,

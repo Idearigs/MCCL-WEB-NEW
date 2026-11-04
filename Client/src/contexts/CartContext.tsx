@@ -16,6 +16,10 @@ export interface CartItem {
   brand?: string;
   type?: string;
   variant_name?: string;
+  // Priced option (e.g. bespoke bracelet metal × stone); the server charges its stored price
+  variant_id?: string;
+  // Ready-to-ship live-stock piece (affects the lead time shown in the bag)
+  liveStock?: boolean;
   // Product options/customizations
   selectedOptions?: {
     metal?: string;

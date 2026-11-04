@@ -35,6 +35,9 @@ router.delete('/:id/videos/:videoId', adminProductController.deleteProductVideo)
 router.patch('/:id/images/:imageId', adminProductController.patchProductImage);
 router.patch('/:id/videos/:videoId', adminProductController.patchProductVideo);
 
+// Replace priced options (metal × stone variants)
+router.put('/:id/variants', adminProductController.replaceProductVariants);
+
 // Delete product
 router.delete('/:id', adminProductController.deleteProduct);
 

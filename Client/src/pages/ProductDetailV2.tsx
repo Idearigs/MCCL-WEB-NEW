@@ -172,6 +172,9 @@ const ProductDetail = () => {
   const isEngagementRing = location.pathname.includes('engagement-ring');
   const [selectedMetal, setSelectedMetal] = useState('platinum');
   const [selectedMetalType, setSelectedMetalType] = useState('');
+  const [variantKarat, setVariantKarat] = useState('');
+  const [variantStone, setVariantStone] = useState('');
+  const [variantColour, setVariantColour] = useState('Yellow gold');
   const [selectedDiamondSize, setSelectedDiamondSize] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState('L');
   const [isLoading, setIsLoading] = useState(false);
@@ -532,8 +535,21 @@ const ProductDetail = () => {
     return v ? parseFloat(v) : null;
   })();
 
+  // Priced options (bespoke pieces): one variant per metal karat × stone, each with its
+  // own price. The cart carries the variant id so the server charges that exact price.
+  const priceVariants: any[] = (productData?.variants || []).filter((v: any) => v.price != null && parseFloat(v.price) > 0);
+  const variantKarats: string[] = Array.from(new Set(priceVariants.map((v: any) => v.metal_type).filter(Boolean)));
+  const variantStones: string[] = Array.from(new Set(priceVariants.map((v: any) => v.gemstone_type).filter(Boolean)));
+  const selectedVariant = priceVariants.find((v: any) => v.metal_type === variantKarat && (v.gemstone_type || '') === (variantStones.length ? variantStone : '')) || null;
+  const variantPrice = (karat: string, stone: string) => {
+    const v = priceVariants.find((x: any) => x.metal_type === karat && (x.gemstone_type || '') === stone);
+    return v ? parseFloat(v.price) : null;
+  };
+  const variantMetalLabel = selectedVariant ? `${variantKarat} ${variantColour}`.trim() : '';
+
   // Calculate total price = mount price + diamond price
   const calculateTotalPrice = () => {
+    if (selectedVariant) return parseFloat(selectedVariant.price);
     const base = liveMountPrice ?? mountPrice;
     if (productData?.nivoda_enabled && nivodaPrice) {
       return base + nivodaPrice.avg;
@@ -564,6 +580,14 @@ const ProductDetail = () => {
         if (data.success) {
           setProductData(data.data.product);
           setRecommendedProducts(data.data.recommended_products || []);
+
+          // Priced options: start on the cheapest combination.
+          const priced = (data.data.product.variants || []).filter((v: any) => v.price != null && parseFloat(v.price) > 0);
+          if (priced.length) {
+            const cheapest = priced.reduce((a: any, b: any) => (parseFloat(b.price) < parseFloat(a.price) ? b : a));
+            setVariantKarat(cheapest.metal_type || '');
+            setVariantStone(cheapest.gemstone_type || '');
+          }
 
           // Choose the default metal TYPE first (price/selector) — prefer 18ct white gold,
           // then fall back through the other karats/colours that actually have a price.
@@ -732,7 +756,8 @@ const ProductDetail = () => {
       // The metal the customer actually chose and is paying for (the priced metal option),
       // else the product's own metal. Never a guessed default: this is what the order
       // tells the workshop to make.
-      const selectedMetalName = metalTypeOptions.find(m => m.value === selectedMetalType)?.label
+      const selectedMetalName = variantMetalLabel
+        || metalTypeOptions.find(m => m.value === selectedMetalType)?.label
         || productData?.available_metals?.find((metal: any) => metal.id === selectedMetal)?.name
         || null;
 
@@ -756,6 +781,10 @@ const ProductDetail = () => {
 
       if (selectedDiamondSizeName) {
         selectedOptions.diamondSize = selectedDiamondSizeName;
+      }
+      if (selectedVariant) {
+        selectedOptions.variantId = selectedVariant.id;
+        if (selectedVariant.gemstone_type) selectedOptions.stone = selectedVariant.gemstone_type;
       }
 
       // Include Nivoda stone options if enabled
@@ -797,8 +826,11 @@ const ProductDetail = () => {
         image: imageUrl ? getMediaUrl(imageUrl) : '',
         type: 'jewelry',
         productUrl: location.pathname,
+        liveStock: !!productData.is_live_stock,
         selectedOptions: selectedOptions
       };
+      // The server charges this variant's stored price, so the amount can't be tampered with.
+      if (selectedVariant) newItem.variant_id = selectedVariant.id;
 
       // Include Nivoda price breakdown for reference
       if (productData?.nivoda_enabled) {
@@ -1114,10 +1146,10 @@ const ProductDetail = () => {
   const eyebrow: React.CSSProperties = { fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: T.gold };
   const stepLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.muted, marginBottom: 14 };
   const subLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.muted, margin: '4px 0 8px' };
-  const metalName = productData?.available_metals?.find((m: any) => m.id === selectedMetal)?.name || (metalTypeOptions.find(m => m.value === selectedMetalType)?.label) || '';
+  const metalName = variantMetalLabel || productData?.available_metals?.find((m: any) => m.id === selectedMetal)?.name || (metalTypeOptions.find(m => m.value === selectedMetalType)?.label) || '';
   const sizeLabel = ringSizes.find(s => s.value === selectedSize)?.label || selectedSize;
   const diamondName = productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.display_name || productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.name || '';
-  const configSummary = [metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName, isRingCat && selectedSize && ('Size ' + selectedSize), productData?.nivoda_enabled && selectedCarat && (selectedCarat + 'ct ' + selectedColour + ' ' + selectedClarity)].filter(Boolean).join('  ·  ');
+  const configSummary = [metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName, isRingCat && selectedSize && ('Size ' + selectedSize), productData?.nivoda_enabled && selectedCarat && (selectedCarat + 'ct ' + selectedColour + ' ' + selectedClarity), selectedVariant?.gemstone_type].filter(Boolean).join('  ·  ');
 
   // Guided-step helpers (redesigned buy flow)
   const subHelp: React.CSSProperties = { fontSize: 12.5, color: T.muted, margin: '-2px 0 16px 38px', lineHeight: 1.5 };
@@ -1297,7 +1329,45 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {(purchasableMetals.length > 0 || (productData.available_metals || []).length > 0) && (
+            {priceVariants.length > 0 && (
+              <div style={{ marginBottom: 30 }}>
+                <StepHead n="1" title="Choose your metal" />
+                <div style={subHelp}>Pick the gold and its colour. The price updates as you choose.</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 12px 38px' }}>
+                  {variantKarats.map(k => {
+                    const p = variantPrice(k, variantStones.length ? variantStone : '');
+                    return (
+                      <button key={k} type="button" onClick={() => setVariantKarat(k)} style={metalBtn(variantKarat === k)}>
+                        {k}{p != null && <span style={{ color: variantKarat === k ? T.paper : T.muted, fontSize: 12 }}>{money(p)}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 0 38px' }}>
+                  {['Yellow gold', 'White gold', 'Rose gold'].map(c => (
+                    <button key={c} type="button" onClick={() => setVariantColour(c)} style={chip(variantColour === c)}>{c}</button>
+                  ))}
+                </div>
+                {variantStones.length > 0 && (
+                  <div style={{ marginTop: 26 }}>
+                    <StepHead n="2" title="Choose your stone" />
+                    <div style={subHelp}>The gemstones set in the bracelet.</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 0 38px' }}>
+                      {variantStones.map(s => {
+                        const p = variantPrice(variantKarat, s);
+                        return (
+                          <button key={s} type="button" disabled={p == null} onClick={() => setVariantStone(s)} style={{ ...metalBtn(variantStone === s), opacity: p == null ? 0.4 : 1 }}>
+                            {s}{p != null && <span style={{ color: variantStone === s ? T.paper : T.muted, fontSize: 12 }}>{money(p)}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {priceVariants.length === 0 && (purchasableMetals.length > 0 || (productData.available_metals || []).length > 0) && (
               <div style={{ marginBottom: 30 }}>
                 <StepHead n="1" title="Choose your metal" />
                 <div style={subHelp}>The band. Pick a metal{purchasableMetals.some(o => getMetalKarat(o.value)) ? ', then a colour and carat.' : '.'}</div>
@@ -1541,7 +1611,7 @@ const ProductDetail = () => {
             </div>
 
             <div style={{ marginTop: 22 }}>
-              {[['about', 'About this piece', productData.description ? String(productData.description) : (productData.is_live_stock ? 'A ready-to-ship piece from our own workshop.' : 'Made to order in our own workshop, cut and set by hand.')], ['delivery', 'Delivery information', productData.is_live_stock ? 'Free insured UK delivery. In stock and ready to ship — usually dispatched within 2–3 working days. 30-day returns.' : 'Free insured UK delivery. Made to order — please allow around 3–4 weeks. Made-to-order pieces are not eligible for the 30-day return once work has begun.'], ['insurance', 'Complimentary insurance', 'Every piece includes complimentary insurance for the first year and a 1-year warranty.']].map(([key, title, body]) => (
+              {[['about', 'About this piece', productData.description ? String(productData.description) : (productData.is_live_stock ? 'A ready-to-ship piece from our own workshop.' : 'Made to order in our own workshop, cut and set by hand.')], ['delivery', 'Delivery information', productData.is_live_stock ? 'Free insured UK delivery. In stock and ready to ship — usually dispatched within 2–3 working days. 30-day returns.' : 'Free insured UK delivery. Made to order — please allow up to 6 weeks. Made-to-order pieces are not eligible for the 30-day return once work has begun.'], ['insurance', 'Complimentary insurance', 'Every piece includes complimentary insurance for the first year and a 1-year warranty.']].map(([key, title, body]) => (
                 <div key={key} style={{ borderTop: `1px solid ${T.rule}` }}>
                   <button onClick={() => toggleSection(key)} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '16px 0', background: 'transparent', border: 0, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.ink }}>
                     <span>{title}</span><span>{expandedSections[key] ? '−' : '+'}</span>
