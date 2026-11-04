@@ -73,6 +73,18 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
     return () => window.removeEventListener("resize", measure);
   }, [searchOpen]);
 
+  // Publish the real header height (it varies with the promo strip and breakpoint)
+  // so pages can sit directly under it.
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const publish = () => document.documentElement.style.setProperty("--v2nav-h", `${Math.round(el.getBoundingClientRect().height)}px`);
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Lock body scroll while the drawer is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";

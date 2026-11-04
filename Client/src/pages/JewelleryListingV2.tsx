@@ -287,7 +287,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
 
       <NavigationV2 solid />
 
-      <div className="jl" style={{ paddingTop: NAV_H }}>
+      <div className="jl" style={{ paddingTop: "var(--v2nav-h, 96px)" }}>
         {/* Category tab bar */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 clamp(24px, 3vw, 52px)", background: T.tint, borderBottom: `1px solid ${T.rule}`, overflowX: "auto" }}>
           {ORDER.map(k => {
