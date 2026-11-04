@@ -1338,7 +1338,7 @@ const ProductDetail = () => {
                     const p = variantPrice(k, variantStones.length ? variantStone : '');
                     return (
                       <button key={k} type="button" onClick={() => setVariantKarat(k)} style={metalBtn(variantKarat === k)}>
-                        {k}{p != null && <span style={{ color: variantKarat === k ? T.paper : T.muted, fontSize: 12 }}>{money(p)}</span>}
+                        {k}{p != null && <span style={{ color: T.muted, fontSize: 12 }}>{money(p)}</span>}
                       </button>
                     );
                   })}
@@ -1357,7 +1357,7 @@ const ProductDetail = () => {
                         const p = variantPrice(variantKarat, s);
                         return (
                           <button key={s} type="button" disabled={p == null} onClick={() => setVariantStone(s)} style={{ ...metalBtn(variantStone === s), opacity: p == null ? 0.4 : 1 }}>
-                            {s}{p != null && <span style={{ color: variantStone === s ? T.paper : T.muted, fontSize: 12 }}>{money(p)}</span>}
+                            {s}{p != null && <span style={{ color: T.muted, fontSize: 12 }}>{money(p)}</span>}
                           </button>
                         );
                       })}
