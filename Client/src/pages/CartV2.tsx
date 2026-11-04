@@ -44,7 +44,7 @@ const specPairs = (item: CartItem): [string, string][] => {
 };
 
 const leadTime = (item: CartItem): string =>
-  item.type === "watch" ? "In stock, ships in 48 hours" : "Made to order, 4–6 weeks";
+  item.type === "watch" || item.liveStock ? "In stock, ships in 48 hours" : "Made to order, up to 6 weeks";
 
 const ASSURANCES = [
   "Complimentary insured delivery",

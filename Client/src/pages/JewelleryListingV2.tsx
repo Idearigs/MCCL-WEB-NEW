@@ -171,7 +171,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
       detail: infer(name, cat.detailOptions),
       price: p.sale_price || p.base_price || 0,
       hasImage: !!(p.image?.url || p.images?.[0]?.url),
-      inStock: p.in_stock !== false,
+      inStock: !!p.is_live_stock, // ready to ship = live stock; everything else is made to order
     };
   }), [products, cat]);
 
@@ -199,7 +199,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
   const sortOptions = [{ value: "featured", label: "Featured" }, { value: "low", label: "Price, low to high" }, { value: "high", label: "Price, high to low" }, { value: "new", label: "Newest" }];
   const sortLabel = sortOptions.find(o => o.value === sort)?.label || "Featured";
   const priceLabel = maxPrice >= 4400 ? "Any" : "Up to " + money(maxPrice);
-  const leadTime = (inStock: boolean) => inStock ? "Ships in 48 hours" : "Made to order, ~3 weeks";
+  const leadTime = (inStock: boolean) => inStock ? "Ships in 48 hours" : "Made to order, up to 6 weeks";
 
   const filterGroupsJsx = (
     <>
@@ -342,8 +342,8 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
                   </div>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="jl-grid">
-                  {results.map(({ p, inStock }) => {
+                (() => {
+                  const card = ({ p, inStock }: typeof results[number]) => {
                     const imgs = p.images || [];
                     const primaryObj = imgs.find(i => i.is_primary) || imgs[0];
                     const img = p.image?.url || primaryObj?.url;
@@ -366,14 +366,34 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
                         </div>
                         <Link to={`/${cat.slug}/${p.slug}`} style={{ display: "block" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginTop: 16, fontSize: 14.5 }}>
-                            <span>{p.name}</span><span style={{ color: "#56534D" }}>{p.price}</span>
+                            <span>{p.name}</span><span style={{ color: "#56534D" }}>{((p as any).variants || []).filter((v: any) => Number(v.price) > 0).length > 1 ? "From " : ""}{p.price}</span>
                           </div>
                           <div style={{ fontSize: 11.5, color: inStock ? "#4A7A52" : T.muted, marginTop: 6 }}>{leadTime(inStock)}</div>
                         </Link>
                       </div>
                     );
-                  })}
-                </div>
+                  };
+                  const grid = (list: typeof results) => (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="jl-grid">
+                      {list.map(card)}
+                    </div>
+                  );
+                  // Bracelets: ready-to-ship stock and made-to-order bespoke pieces are shown apart.
+                  if (cat.slug !== "bracelets") return grid(results);
+                  const ready = results.filter(r => r.inStock), bespoke = results.filter(r => !r.inStock);
+                  const head = (title: string, note: string) => (
+                    <div style={{ marginTop: 40, paddingBottom: 14, borderBottom: `1px solid ${T.rule}` }}>
+                      <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(26px,2.6vw,38px)", lineHeight: 1.1, margin: "0 0 8px" }}>{title}</h2>
+                      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: T.muted }}>{note}</p>
+                    </div>
+                  );
+                  return (
+                    <>
+                      {ready.length > 0 && <>{head("Ready to ship", "In our showroom now. Ships in 48 hours.")}{grid(ready)}</>}
+                      {bespoke.length > 0 && <div id="bespoke">{head("Bespoke bracelets", "Made to order in our own workshop, in your choice of gold and stones. Please allow up to 6 weeks.")}{grid(bespoke)}</div>}
+                    </>
+                  );
+                })()
               )}
             </div>
           </main>

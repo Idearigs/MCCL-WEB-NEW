@@ -51,7 +51,7 @@ const configSummary = (it: OrderItemData): string => {
   if (it.product_type === "watch") return [a.brand, a.variant_name].filter(Boolean).join(" · ");
   return [a.metal, a.size && `Size ${a.size}`].filter(Boolean).join(" · ");
 };
-const leadTime = (it: OrderItemData): string => (it.product_type === "watch" ? "In stock, ships in 48 hours" : "Made to order, 4–6 weeks");
+const leadTime = (it: OrderItemData): string => (it.product_type === "watch" ? "In stock, ships in 48 hours" : "Made to order, up to 6 weeks");
 
 const ThankYouV2 = (): JSX.Element => {
   const navigate = useNavigate();
