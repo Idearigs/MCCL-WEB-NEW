@@ -26,6 +26,7 @@ const AVAIL_LIVE = "Ready to ship";
 const AVAIL_ORDER = "Made to order";
 interface CatDef {
   slug: string; label: string; standfirst: string;
+  only?: RegExp; // keep only products whose name matches (pendants share the necklaces category)
   styles: string[]; detailTitle: string; detailOptions: string[];
   band: { headline: string; body: string; guide: { k: string; title: string; meta: string; note: string }[] };
 }
@@ -66,6 +67,23 @@ const CATS: Record<string, CatDef> = {
       ],
     },
   },
+  // Pendants are stored under the necklaces category; this page shows just the pendants.
+  pendants: {
+    slug: "necklaces", label: "Pendants", only: /pendant/i,
+    standfirst: "Diamond and gemstone pendants made on our own bench, hung on a chain cut to the length you actually wear.",
+    styles: ["Solitaire", "Halo", "Cluster", "Drop", "Heart", "Cross"],
+    detailTitle: "Length", detailOptions: ['16"', '18"', '20"', '24"'],
+    band: {
+      headline: "Choose the chain as carefully as the pendant.",
+      body: "A pendant sits where its chain lets it. Measure a necklace you already wear, lay it flat end to end including the clasp, and we will cut the chain to that length so the stone falls where you want it.",
+      guide: [
+        { k: '16"', title: '16" · Choker', meta: "From £390", note: "Sits at the base of the neck. Best on a higher neckline." },
+        { k: '18"', title: '18" · Princess', meta: "From £420", note: "The most-worn length. Rests just below the collarbone." },
+        { k: '20"', title: '20" · Matinee', meta: "From £460", note: "Sits on the sternum. Layers well over a shirt." },
+        { k: '24"', title: '24" · Opera', meta: "From £520", note: "Longer line for a lower neckline, or doubled." },
+      ],
+    },
+  },
   bracelets: {
     slug: "bracelets", label: "Bracelets",
     standfirst: "Tennis lines, bangles and chains sized to your wrist, so the clasp stays where it should and the piece stays on.",
@@ -83,7 +101,7 @@ const CATS: Record<string, CatDef> = {
     },
   },
 };
-const ORDER = ["earrings", "necklaces", "bracelets"];
+const ORDER = ["earrings", "pendants", "necklaces", "bracelets"];
 
 const money = (n: number) => "£" + Math.round(n).toLocaleString("en-GB");
 
@@ -151,10 +169,10 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
     setLoading(true);
     fetch(`${API_BASE_URL}/products?category=${cat.slug}&sort=sort_order&order=asc&limit=1000`)
       .then(r => r.json())
-      .then(d => { if (d.success) setProducts(d.data.products || []); })
+      .then(d => { if (d.success) setProducts((d.data.products || []).filter((p: Product) => !cat.only || cat.only.test(p.name || ""))); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [cat.slug]);
+  }, [cat]);
 
   useEffect(() => {
     const style = searchParams.get("style"); if (style) setSel(s => ({ ...s, style: [style] }));
@@ -273,7 +291,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
         {/* Category tab bar */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 clamp(24px, 3vw, 52px)", background: T.tint, borderBottom: `1px solid ${T.rule}`, overflowX: "auto" }}>
           {ORDER.map(k => {
-            const on = k === cat.slug;
+            const on = k === category;
             return (
               <Link key={k} to={`/${k}`} style={{ padding: "15px clamp(14px, 2vw, 26px)", borderBottom: `2px solid ${on ? T.ink : "transparent"}`, fontSize: 12.5, letterSpacing: "0.1em", textTransform: "uppercase", color: on ? T.ink : T.muted, whiteSpace: "nowrap" }}>
                 {CATS[k].label}

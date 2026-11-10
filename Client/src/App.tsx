@@ -135,6 +135,7 @@ const AppRoutes = () => {
       <Route path="/wedding-rings" element={<WeddingRings />} />
       <Route path="/wedding" element={<WeddingRings />} />
       <Route path="/earrings" element={<JewelleryListing category="earrings" />} />
+      <Route path="/pendants" element={<JewelleryListing category="pendants" />} />
       <Route path="/necklaces" element={<JewelleryListing category="necklaces" />} />
       <Route path="/bracelets" element={<JewelleryListing category="bracelets" />} />
 

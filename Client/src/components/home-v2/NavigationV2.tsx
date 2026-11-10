@@ -46,6 +46,9 @@ const NAV_ITEMS = [
   { key: "engagement", label: "Engagement", to: "/engagement-rings", hasMenu: true },
   { key: "wedding", label: "Wedding", to: "/wedding", hasMenu: true },
   { key: "jewellery", label: "Jewellery", to: "/jewellery", hasMenu: true },
+  { key: "pendants", label: "Pendants", to: "/pendants", hasMenu: false },
+  { key: "bracelets", label: "Bracelets", to: "/bracelets", hasMenu: false },
+  { key: "necklaces", label: "Necklaces", to: "/necklaces", hasMenu: false },
   { key: "watches", label: "Watches", to: "/watches", hasMenu: true },
   { key: "bespoke", label: "Bespoke", to: "/bespoke-design", hasMenu: false },
   { key: "story", label: "Our story", to: "/our-story", hasMenu: false },
@@ -277,13 +280,14 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
           style={{ position: "relative", zIndex: 50, background: headerBg, backdropFilter: blur, WebkitBackdropFilter: blur, borderBottom: `1px solid ${headerBorder}`, transition: "background 0.35s ease, border-color 0.35s ease" }}
         >
           {/* Desktop row */}
-          <div className="hidden lg:grid" style={{ gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "clamp(20px, 3vw, 48px)", padding: "16px clamp(24px, 3vw, 52px)" }}>
+          {/* Full link row from 1280px; below that the menu drawer (ten links need the width). */}
+          <div className="hidden xl:grid" style={{ gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "clamp(16px, 2vw, 48px)", padding: "16px clamp(24px, 3vw, 52px)" }}>
             <Link to="/" onMouseEnter={() => setMenu(null)} style={{ display: "block", lineHeight: 1 }}>
               <div style={{ fontFamily: FONT_DISPLAY, fontSize: 25, letterSpacing: "0.16em", color: navColor, transition: "color 0.35s ease" }}>McCulloch</div>
               <div style={{ fontSize: 8.5, letterSpacing: "0.44em", textTransform: "uppercase", color: utilColor, marginTop: 5, paddingLeft: 3, transition: "color 0.35s ease" }}>Fine jewellery</div>
             </Link>
 
-            <nav style={{ display: "flex", justifyContent: "center", gap: "clamp(14px, 2vw, 32px)", fontSize: 12.5, letterSpacing: "0.02em", color: navColor, transition: "color 0.35s ease" }}>
+            <nav style={{ display: "flex", justifyContent: "center", gap: "clamp(12px, 1.3vw, 30px)", whiteSpace: "nowrap", fontSize: 12.5, letterSpacing: "0.02em", color: navColor, transition: "color 0.35s ease" }}>
               {NAV_ITEMS.map(item => (
                 <Link key={item.key} to={item.to} className="v2nav-item" onMouseEnter={() => setMenu(item.hasMenu ? item.key : null)}>
                   {item.label}
@@ -291,7 +295,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
               ))}
             </nav>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "clamp(12px, 1.4vw, 20px)", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor, transition: "color 0.35s ease" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "clamp(12px, 1.4vw, 20px)", whiteSpace: "nowrap", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor, transition: "color 0.35s ease" }}>
               <button className="v2nav-util" onMouseEnter={() => setMenu(null)} onClick={() => setSearchOpen(true)}>Search</button>
               <button className="v2nav-util" onClick={openWishlist} style={{ display: "flex", alignItems: "baseline", gap: 5 }}>Saved{favoritesCount > 0 ? <span style={{ color: T.gold }}>{favoritesCount}</span> : null}</button>
               {isAuthenticated
@@ -302,7 +306,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
           </div>
 
           {/* Mobile row */}
-          <div className="flex lg:hidden" style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
+          <div className="flex xl:hidden" style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
             <button className="v2nav-util" onClick={() => setMobileOpen(true)} aria-label="Menu"><Menu style={{ width: 22, height: 22, color: navColor }} /></button>
             <Link to="/" style={{ textAlign: "center" }}>
               <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, letterSpacing: "0.15em", color: navColor }}>McCulloch</div>
