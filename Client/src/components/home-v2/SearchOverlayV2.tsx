@@ -14,8 +14,8 @@ import { T, FONT_DISPLAY, FONT_BODY } from "./tokens";
  * two-word queries). The catalogue is the site's real /products feed.
  */
 
-const M2 = "#8A8377";
-const A9 = "#A9A196";
+const M2 = T.textMuted; // was #8A8377 (3.5:1): secondary text uses the palette muted
+const A9 = T.textMuted; // was #A9A196 (2.4:1)
 const GROUP_ORDER = ["Engagement rings", "Wedding bands", "Jewellery", "Watches"];
 const POPULAR = ["Solitaire", "Hidden halo", "Platinum", "Emerald cut", "Eternity", "Pear cut"];
 const RECENT_KEY = "mcculloch_recent_searches";
@@ -415,7 +415,7 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
         <div style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: M2, marginBottom: 16 }}>Most asked for</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {POPULAR.map((p) => (
-            <button key={p} type="button" onClick={() => setQuery(p.toLowerCase())} className="sov-chip" style={{ padding: "9px 14px", cursor: "pointer", background: "transparent", border: `1px solid ${T.ruleSoft}`, fontFamily: FONT_BODY, fontSize: 12.5, color: T.body }}>{p}</button>
+            <button key={p} type="button" onClick={() => setQuery(p.toLowerCase())} className="sov-chip" style={{ padding: "9px 14px", cursor: "pointer", background: "transparent", border: `1px solid ${T.line}`, fontFamily: FONT_BODY, fontSize: 12.5, color: T.text }}>{p}</button>
           ))}
         </div>
       </div>
@@ -520,17 +520,17 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
       <p style={{ margin: "0 auto 26px", maxWidth: "44ch", fontSize: 14, lineHeight: 1.7, color: T.muted }}>We hold no stock, so everything is made to order — if you can describe it, we can probably make it.</p>
       <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10 }}>
         <button type="button" onClick={() => go("/bespoke-design")} style={{ padding: "14px 26px", background: T.ink, color: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase" }}>Commission it</button>
-        <button type="button" onClick={() => go("/contact")} style={{ padding: "14px 26px", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase", color: T.ink }}>Ask the workshop</button>
+        <button type="button" onClick={() => go("/contact")} style={{ padding: "14px 26px", background: "transparent", border: `1px solid ${T.ink}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase", color: T.ink }}>Ask the workshop</button>
       </div>
     </div>
   );
 
   const styleTag = (
     <style>{`
-      .sov-recent:hover { color: ${T.gold} !important; }
+      .sov-recent:hover { text-decoration: underline; text-decoration-color: ${T.gold}; text-underline-offset: 5px; }
       .sov-chip:hover { border-color: ${T.ink} !important; color: ${T.ink} !important; }
-      .sov-seeall { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; padding-bottom: 4px; border-bottom: 1px solid ${T.ruleStrong}; color: ${T.ink}; background: transparent; border-top: 0; border-left: 0; border-right: 0; cursor: pointer; font-family: ${FONT_BODY}; transition: color 0.25s ease, border-color 0.25s ease; }
-      .sov-seeall:hover { color: ${T.gold}; border-color: ${T.gold}; }
+      .sov-seeall { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; padding-bottom: 4px; border-bottom: 1px solid ${T.line}; color: ${T.text}; background: transparent; border-top: 0; border-left: 0; border-right: 0; cursor: pointer; font-family: ${FONT_BODY}; transition: color 0.25s ease, border-color 0.25s ease; }
+      .sov-seeall:hover { border-color: ${T.gold}; }
       .sov-body::-webkit-scrollbar { display: none; }
       .sov-group { animation: sovRowIn 0.3s cubic-bezier(0.22,1,0.36,1) both; }
       @keyframes sovRowIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

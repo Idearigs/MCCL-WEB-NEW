@@ -2,6 +2,15 @@
 // Sourced from design_handoff_mcculloch_homepage/README.md → Design Tokens.
 
 export const T = {
+  // ── Brand palette, one job each (colour-usage brief, Nov 2026) ──────────────
+  cream: '#F8F6F0',     // page background everywhere
+  sand: '#EFEADF',      // behind product images; at most one quiet full-width band per page
+  line: '#E3DDD0',      // every border and divider
+  // ink (below): footer background and the one primary button on a screen
+  text: '#332F2A',      // headings and body text
+  textMuted: '#6E6A60', // secondary text, on cream only (never on sand)
+  // gold (below): non-text accents (hairlines, icons, stars, hover underlines); text only on ink
+  // ── Older names, still used by inner pages ────────────────────────────────
   // Ground
   paper: '#F8F6F0',
   tint: '#EFEADF',
@@ -18,7 +27,6 @@ export const T = {
   onDarkStep: '#E5DFD4',
   // Accent
   gold: '#A8813C',
-  goldText: '#7A5C22', // gold for small text on cream/tint: 4.5:1+ (the brand gold is ~3.3:1)
   // Lines
   rule: '#E3DDD0',
   ruleSoft: '#DCD3C4',

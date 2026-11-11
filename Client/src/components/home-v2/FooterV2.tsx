@@ -83,10 +83,10 @@ const FooterV2 = (): JSX.Element => {
   return (
     // Bottom padding leaves room for the floating chat button, which otherwise covered the
     // legal line on phones and the Cookies / Terms / Guarantees links on desktop.
-    <footer style={{ background: T.ink, color: T.onDarkSoft, padding: `clamp(56px, 5vw, 88px) clamp(24px, 3vw, 52px) 104px`, fontFamily: FONT_BODY }}>
+    <footer className="v2-on-dark" style={{ background: T.ink, color: T.onDarkSoft, padding: `clamp(56px, 5vw, 88px) clamp(24px, 3vw, 52px) 104px`, fontFamily: FONT_BODY }}>
       <style>{`
         .v2ft a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
-        .v2ft a:hover { color: ${T.gold}; }
+        .v2ft a:hover { text-decoration: underline; text-decoration-color: ${T.gold}; text-decoration-thickness: 1px; text-underline-offset: 5px; }
         .v2-foottoggle { display: none; }
         @media (max-width: 767px) {
           .v2-footgrid { grid-template-columns: 1fr !important; gap: 0 !important; padding-bottom: 20px !important; }

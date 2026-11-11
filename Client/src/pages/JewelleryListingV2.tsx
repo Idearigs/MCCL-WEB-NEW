@@ -328,7 +328,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
               <p key={i} style={{ margin: i ? "14px 0 0" : 0, maxWidth: "52ch", fontSize: 15, lineHeight: 1.75, color: T.body }}>{para}</p>
             ))}
             {cat.cta?.kind === "link" && (
-              <Link to={cat.cta.to} style={{ display: "inline-block", marginTop: 18, fontSize: 14, fontWeight: 500, color: T.gold, borderBottom: `1px solid ${T.gold}`, paddingBottom: 2 }}>{cat.cta.label}</Link>
+              <Link to={cat.cta.to} style={{ display: "inline-block", marginTop: 18, fontSize: 14, fontWeight: 500, color: T.heading, borderBottom: `1px solid ${T.gold}`, paddingBottom: 2 }}>{cat.cta.label}</Link>
             )}
             {cat.cta?.kind === "button" && (
               <Link to={cat.cta.to} style={{ display: "inline-block", marginTop: 22, padding: "15px 28px", background: T.ink, color: T.paper, fontSize: 11.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>{cat.cta.label}</Link>

@@ -17,7 +17,7 @@ import { T, FONT_DISPLAY, FONT_BODY } from "./home-v2/tokens";
  * backend, so it shows a short "coming soon" note rather than a dead redirect.
  */
 
-const M2 = "#8A8377";
+const M2 = T.textMuted; // was #8A8377
 const WARN = "#C4A46A"; // the palette's only "warn" tone — no red
 const emailValid = (e: string) => /.+@.+\..+/.test(e.trim());
 
@@ -143,12 +143,12 @@ const AuthModalV2: React.FC<AuthModalV2Props> = ({ isOpen, onClose, initialView 
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 14, margin: "26px 0" }}>
               <span style={{ height: 1, background: T.rule }} />
-              <span style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "#A9A196" }}>or</span>
+              <span style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: T.textMuted }}>or</span>
               <span style={{ height: 1, background: T.rule }} />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <a href={`${API_BASE_URL}/auth/google`} className="am-social" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, padding: 14, textDecoration: "none", background: "#FFFFFF", border: `1px solid ${T.ruleSoft}`, fontFamily: FONT_BODY, fontSize: 13, color: T.heading }}>
+              <a href={`${API_BASE_URL}/auth/google`} className="am-social" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, padding: 14, textDecoration: "none", background: "#FFFFFF", border: `1px solid ${T.ink}`, fontFamily: FONT_BODY, fontSize: 13, color: T.text }}>
                 <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                 Continue with Google
               </a>
@@ -206,7 +206,7 @@ const AuthModalV2: React.FC<AuthModalV2Props> = ({ isOpen, onClose, initialView 
             </button>
           </div>
         )}
-        <div style={{ display: "flex", gap: 20, marginTop: 18, fontSize: 11, letterSpacing: "0.06em", color: "#A9A196" }}>
+        <div style={{ display: "flex", gap: 20, marginTop: 18, fontSize: 11, letterSpacing: "0.06em", color: T.textMuted }}>
           <a href="/customer-service" style={{ color: "inherit", textDecoration: "none" }}>Privacy policy</a>
           <a href="/customer-service" style={{ color: "inherit", textDecoration: "none" }}>Terms of service</a>
         </div>

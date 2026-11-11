@@ -302,7 +302,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
                   <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
                     <img src={active.feature.img} alt={active.feature.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                   </div>
-                  <div style={{ fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase", color: T.gold, margin: "14px 0 7px" }}>Featured</div>
+                  <div className="v2-eyebrow" style={{ fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", margin: "14px 0 7px" }}>Featured</div>
                   <div style={{ fontSize: 14.5, lineHeight: 1.4, color: T.ink }}>{active.feature.title}</div>
                 </Link>
               </div>
@@ -314,16 +314,16 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
       <style>{`
         .v2nav a { color: inherit; text-decoration: none; }
         .v2nav-item { position: relative; padding: 6px 0; border-bottom: 1px solid transparent; white-space: nowrap; transition: border-color 0.25s ease, color 0.25s ease; }
-        .v2nav-item:hover { border-bottom-color: ${T.ink}; }
+        .v2nav-item:hover { border-bottom-color: ${T.gold}; }
         .v2nav-util { transition: color 0.25s ease; cursor: pointer; background: none; border: 0; font: inherit; padding: 10px 0; }
         .v2nav-tap { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 !important; }
         .v2-skip { position: fixed; left: 12px; top: -60px; z-index: 100; padding: 12px 18px; background: ${T.ink}; color: ${T.paper}; font-family: ${FONT_BODY}; font-size: 13px; text-decoration: none; transition: top 0.2s ease; }
         .v2-skip:focus { top: 12px; }
-        .v2nav-util:hover { color: ${T.gold}; }
+        .v2nav-util:hover { text-decoration: underline; text-decoration-color: ${T.gold}; text-decoration-thickness: 1px; text-underline-offset: 6px; }
         .v2nav-sublink { display: block; padding: 5px 6px 5px 8px; margin-left: -8px; font-size: 13px; color: ${T.body}; border-radius: 3px; transition: background 0.2s ease, color 0.2s ease; }
-        .v2nav-sublink:hover { background: ${T.tint}; color: ${T.ink}; }
-        .v2nav-shopall { display: inline-block; margin-top: 14px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid ${T.ruleStrong}; padding-bottom: 4px; transition: color 0.2s ease; }
-        .v2nav-shopall:hover { color: ${T.gold}; }
+        .v2nav-sublink:hover { text-decoration: underline; text-decoration-color: ${T.gold}; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+        .v2nav-shopall { display: inline-block; margin-top: 14px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid ${T.line}; padding-bottom: 4px; transition: color 0.2s ease; }
+        .v2nav-shopall:hover { border-bottom-color: ${T.gold}; }
         .v2nav-coltitle { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.ink}; padding-bottom: 14px; border-bottom: 1px solid ${T.rule}; margin-bottom: 14px; }
         @keyframes v2drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         @keyframes v2itemIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
@@ -375,7 +375,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
 
             <div onFocus={() => setMenu(null)} style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "clamp(12px, 1.4vw, 20px)", whiteSpace: "nowrap", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor, transition: "color 0.35s ease" }}>
               <button className="v2nav-util" onMouseEnter={() => setMenu(null)} onClick={() => setSearchOpen(true)}>Search</button>
-              <button className="v2nav-util" onClick={openWishlist} style={{ display: "flex", alignItems: "baseline", gap: 5 }}>Saved{favoritesCount > 0 ? <span style={{ color: T.gold }}>{favoritesCount}</span> : null}</button>
+              <button className="v2nav-util" onClick={openWishlist} style={{ display: "flex", alignItems: "baseline", gap: 5 }}>Saved{favoritesCount > 0 ? <span>({favoritesCount})</span> : null}</button>
               {isAuthenticated
                 ? <Link to="/account" className="v2nav-util" title={`Signed in as ${user?.email || accountFirstName}`} style={{ display: "flex", alignItems: "center", gap: 6 }}><UserIcon size={15} strokeWidth={1.6} /><span style={{ textTransform: "none", letterSpacing: "0.02em" }}>{accountFirstName}</span></Link>
                 : <button className="v2nav-util" onClick={() => setAuthOpen(true)}>Account</button>}
@@ -410,7 +410,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
             <nav style={{ display: "flex", flexDirection: "column" }}>
               {/* Live Stock — mobile only (ready-to-ship pieces) */}
               <Link to="/rings?availability=live" onClick={() => setMobileOpen(false)}
-                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: `1px solid ${T.rule}`, fontSize: 15, letterSpacing: "0.02em", color: T.ink, animation: "v2itemIn 0.4s cubic-bezier(0.22,1,0.36,1) both", animationDelay: "0.03s" }}>
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: `1px solid ${T.rule}`, fontSize: 15, letterSpacing: "0.02em", color: T.text, animation: "v2itemIn 0.4s cubic-bezier(0.22,1,0.36,1) both", animationDelay: "0.03s" }}>
                 <span>Ready to Ship</span>
               </Link>
               {NAV_ITEMS.map((item, idx) => {
@@ -449,11 +449,11 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
             <div style={{ marginTop: 24, animation: "v2itemIn 0.4s cubic-bezier(0.22,1,0.36,1) both", animationDelay: "0.28s" }}>
               <Link to="/contact" onClick={() => setMobileOpen(false)} style={{ display: "block", textAlign: "center", padding: "15px 0", background: T.ink, color: T.paper, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Book an appointment</Link>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
-                <button onClick={() => { setMobileOpen(false); setSearchOpen(true); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Search</button>
-                <button onClick={() => { setMobileOpen(false); openWishlist(); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Saved{favoritesCount > 0 ? ` (${favoritesCount})` : ""}</button>
+                <button onClick={() => { setMobileOpen(false); setSearchOpen(true); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ink}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Search</button>
+                <button onClick={() => { setMobileOpen(false); openWishlist(); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ink}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Saved{favoritesCount > 0 ? ` (${favoritesCount})` : ""}</button>
                 {isAuthenticated
-                  ? <Link to="/account" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "13px 0", border: `1px solid ${T.ruleStrong}`, fontSize: 11, letterSpacing: "0.04em", color: T.ink, gridColumn: "span 2" }}><UserIcon size={15} strokeWidth={1.6} />{accountFirstName}</Link>
-                  : <button onClick={() => { setMobileOpen(false); setAuthOpen(true); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink, gridColumn: "span 2" }}>Account</button>}
+                  ? <Link to="/account" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "13px 0", border: `1px solid ${T.ink}`, fontSize: 11, letterSpacing: "0.04em", color: T.ink, gridColumn: "span 2" }}><UserIcon size={15} strokeWidth={1.6} />{accountFirstName}</Link>
+                  : <button onClick={() => { setMobileOpen(false); setAuthOpen(true); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ink}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink, gridColumn: "span 2" }}>Account</button>}
               </div>
             </div>
           </div>

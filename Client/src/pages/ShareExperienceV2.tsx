@@ -21,7 +21,7 @@ const ShareExperienceV2 = (): JSX.Element => (
       </div>
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "clamp(28px, 4vw, 64px)", alignItems: "start", padding: `clamp(24px, 4vw, 56px) ${pageX} clamp(56px, 6vw, 96px)` }}>
         <div style={{ alignSelf: "center" }}>
-          <div style={{ fontSize: 12, letterSpacing: "0.22em", textTransform: "uppercase", color: T.goldText }}>Share your experience</div>
+          <div className="v2-eyebrow" style={{ fontSize: 12, letterSpacing: "0.22em", textTransform: "uppercase" }}>Share your experience</div>
           <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(34px, 4vw, 58px)", lineHeight: 1.05, margin: "16px 0 0" }}>Been to the bench?</h1>
           <p style={{ fontSize: 16, color: T.body, lineHeight: 1.7, marginTop: 18, maxWidth: "44ch" }}>
             If we’ve made, remodelled or looked after something for you, we’d love to hear about it. Your words help the next person decide.

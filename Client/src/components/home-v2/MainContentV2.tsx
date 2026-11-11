@@ -89,7 +89,7 @@ const VideoCover = ({ base, poster, title, formats = ["webm", "mp4"], lazy = fal
         {formats.map(f => <source key={f} src={`${base}.${f}`} type={`video/${f}`} />)}
       </video>
       <button type="button" onClick={toggle} className="v2-vidbtn" aria-label={playing ? `Pause the film: ${title}` : `Play the film: ${title}`}
-        style={{ position: "absolute", zIndex: 3, width: 44, height: 44, borderRadius: "50%", border: "1px solid rgba(248,246,240,0.45)", background: "rgba(20,18,15,0.42)", color: "#FFFFFF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "auto", ...buttonStyle }}>
+        style={{ position: "absolute", zIndex: 3, width: 44, height: 44, borderRadius: "50%", border: "1px solid rgba(248,246,240,0.45)", background: "rgba(28,26,23,0.42)", color: "#FFFFFF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "auto", ...buttonStyle }}>
         {playing
           ? <svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><rect x="1" y="1" width="3" height="12" fill="currentColor" /><rect x="8" y="1" width="3" height="12" fill="currentColor" /></svg>
           : <svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><path d="M2 1 L11 7 L2 13 Z" fill="currentColor" /></svg>}
@@ -104,9 +104,9 @@ const swatchFor = (name: string) => SWATCH[name.toLowerCase()] || "#D8D2C6";
 const roundPrice = (n?: number) => (n ? "£" + Math.round(n).toLocaleString("en-GB") : "");
 
 // Small labels: 12px minimum, darker gold on light grounds for contrast; brand gold on dark ones.
-const eyebrow: React.CSSProperties = { fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", color: T.goldText };
-const eyebrowDark: React.CSSProperties = { ...eyebrow, color: T.gold };
-const h2Style: React.CSSProperties = { fontFamily: FONT_DISPLAY, fontWeight: 400, lineHeight: 1.06, margin: 0, color: T.ink };
+// Small labels: text colour with a short gold hairline (class "v2-eyebrow"); gold is never small text on light grounds.
+const eyebrow: React.CSSProperties = { fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", color: T.text };
+const h2Style: React.CSSProperties = { fontFamily: FONT_DISPLAY, fontWeight: 400, lineHeight: 1.06, margin: 0, color: T.text };
 const pageX = "clamp(24px, 3vw, 52px)";
 
 // Only published reviews are shown; with none, the quotes are left out (no stand-in quotes).
@@ -208,27 +208,30 @@ const MainContentV2 = (): JSX.Element => {
   // overflowX "clip", not "hidden": hidden makes this wrapper its own vertical scroll box (a second
   // scrollbar that traps the wheel/trackpad gesture before the page scrolls).
   return (
-    <div ref={rootRef} style={{ fontFamily: FONT_BODY, color: T.ink, background: T.paper, overflowX: "clip" }}>
+    <div ref={rootRef} style={{ fontFamily: FONT_BODY, color: T.text, background: T.cream, overflowX: "clip" }}>
       <style>{`
         .v2-panel { transition: flex 0.55s cubic-bezier(0.22,1,0.36,1); }
         .v2-panel:hover { flex: 1.9 !important; }
         .v2-panel img { transition: transform 0.7s cubic-bezier(0.22,1,0.36,1); }
         .v2-panel:hover img { transform: scale(1.05); }
-        .v2-btn-ivory { transition: background 0.3s ease, color 0.3s ease; }
-        .v2-btn-ivory:hover { background: ${T.gold} !important; color: #fff !important; }
-        .v2-btn-outline-l { transition: background 0.3s ease, border-color 0.3s ease; }
-        .v2-btn-outline-l:hover { border-color: ${T.paper} !important; background: rgba(248,246,240,0.14); }
-        .v2-btn-outline-d { transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
-        .v2-btn-outline-d:hover { background: ${T.paper} !important; color: ${T.ink} !important; border-color: ${T.paper} !important; }
+        /* One solid (ink) button per screen; everything else is an outline or a text link. */
         .v2-btn-ink { transition: background 0.3s ease; }
-        .v2-btn-ink:hover { background: ${T.gold}; }
-        .v2-textlink { display: inline-block; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid ${T.ruleStrong}; padding: 14px 0 5px; transition: color 0.2s ease; }
+        .v2-btn-ink:hover { background: ${T.text} !important; }
+        .v2-btn-outline { transition: background 0.3s ease, color 0.3s ease; }
+        .v2-btn-outline:hover { background: ${T.ink} !important; color: ${T.cream} !important; }
+        /* Outline on the hero film: cream line and text (an ink outline would vanish on the video). */
+        .v2-btn-outline-l { transition: background 0.3s ease, border-color 0.3s ease; }
+        .v2-btn-outline-l:hover { border-color: ${T.cream} !important; background: rgba(248,246,240,0.14); }
+        .v2-textlink { display: inline-block; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid ${T.line}; padding: 14px 0 5px; transition: border-color 0.2s ease; }
         .v2-vidbtn { opacity: 0.85; transition: opacity 0.2s ease, background 0.2s ease; }
-        .v2-vidbtn:hover, .v2-vidbtn:focus-visible { opacity: 1; background: rgba(20,18,15,0.7) !important; }
+        .v2-vidbtn:hover, .v2-vidbtn:focus-visible { opacity: 1; background: rgba(28,26,23,0.72) !important; }
+        .v2-vidbtn:focus-visible { outline-color: ${T.cream}; }
         .v2-save { transition: color 0.2s ease, background 0.2s ease; }
-        .v2-save:hover { color: ${T.ink} !important; }
+        .v2-save:hover { color: ${T.text} !important; }
+        /* Product renders are white-background files: blend them into the sand card. */
+        .v2-blend { mix-blend-mode: multiply; }
         .v2-swatch { transition: box-shadow 0.2s ease; }
-        .v2-textlink:hover { color: ${T.gold}; }
+        .v2-textlink:hover { border-bottom-color: ${T.gold}; }
         .v2-prodcard img { transition: transform 0.5s ease; }
         .v2-prodcard:hover img { transform: scale(1.04); }
         .v2-igcell img { transition: transform 0.6s ease; }
@@ -284,12 +287,12 @@ const MainContentV2 = (): JSX.Element => {
       `}</style>
 
       {/* 1. HERO */}
-      <section id="top" style={{ position: "relative", height: "100vh", minHeight: 640, background: T.inkDeep, overflow: "hidden" }}>
+      <section id="top" className="v2-on-dark" style={{ position: "relative", height: "100vh", minHeight: 640, background: T.ink, overflow: "hidden" }}>
         <VideoCover base="/videos/hero" poster="/videos/hero-poster.jpg" title="McCulloch brand film" formats={["mp4", "webm"]}
           buttonStyle={{ top: "calc(var(--v2nav-h, 112px) + 16px)", right: pageX }} />
         {/* Steady dark shading behind the text (lower part) and the header (top), so white text keeps
             its contrast even when a bright frame passes behind it. */}
-        <div className="v2-hero-overlay" style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: `132px ${pageX} 104px`, background: "linear-gradient(to top, rgba(18,16,13,0.88) 0%, rgba(18,16,13,0.66) 28%, rgba(18,16,13,0.2) 56%, rgba(18,16,13,0.08) 70%, rgba(18,16,13,0.52) 100%)" }}>
+        <div className="v2-hero-overlay" style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: `132px ${pageX} 104px`, background: "linear-gradient(to top, rgba(28,26,23,0.9) 0%, rgba(28,26,23,0.7) 28%, rgba(28,26,23,0.24) 56%, rgba(28,26,23,0.1) 70%, rgba(28,26,23,0.56) 100%)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "end", gap: 48, width: "100%" }} className="v2-hero-grid">
             <div>
               <div className="v2-hero-eyebrow" style={{ fontSize: 12, letterSpacing: "0.22em", textTransform: "uppercase", color: "#F1EBDF", textShadow: "0 1px 10px rgba(0,0,0,0.55)", marginBottom: 20 }}>The Celestial Collection — 2026</div>
@@ -302,7 +305,7 @@ const MainContentV2 = (): JSX.Element => {
             <div style={{ maxWidth: 340, paddingBottom: 6, marginLeft: "auto", marginRight: "clamp(40px, 7vw, 130px)" }}>
               <p className="v2-hero-copy" style={{ margin: "0 0 22px", fontSize: 16, lineHeight: 1.6, color: "#E6DFD3", textShadow: "0 1px 10px rgba(0,0,0,0.5)" }}>Every ring is set by hand in our own workshop. Choose a stone with us, or start from a blank sheet.</p>
               <div className="v2-hero-cta" style={{ display: "flex", gap: 10, pointerEvents: "auto" }}>
-                <Link to="/rings?availability=live" className="v2-btn-ivory" style={{ padding: "15px 24px", background: T.paper, color: T.ink, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>Shop new in</Link>
+                <Link to="/rings?availability=live" className="v2-btn-ink" style={{ padding: "15px 24px", background: T.ink, color: T.cream, border: `1px solid ${T.ink}`, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>Shop new in</Link>
                 <Link to="/contact" className="v2-btn-outline-l" style={{ padding: "15px 24px", border: "1px solid rgba(248,246,240,0.6)", color: "#FFFFFF", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>Book a fitting</Link>
               </div>
             </div>
@@ -323,7 +326,7 @@ const MainContentV2 = (): JSX.Element => {
             <img src={c.img.replace(/\.jpeg$/, "-960.jpg")} srcSet={`${c.img.replace(/\.jpeg$/, "-480.jpg")} 480w, ${c.img.replace(/\.jpeg$/, "-960.jpg")} 960w, ${c.img} 2048w`}
               sizes="(max-width: 767px) 70vw, 30vw" width={960} height={960} alt={c.label} loading={i ? "lazy" : undefined}
               style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-            <div style={{ position: "absolute", inset: "auto 0 0 0", pointerEvents: "none", padding: 22, background: "linear-gradient(to top, rgba(20,18,15,0.72), rgba(20,18,15,0))" }}>
+            <div style={{ position: "absolute", inset: "auto 0 0 0", pointerEvents: "none", padding: 22, background: "linear-gradient(to top, rgba(28,26,23,0.72), rgba(28,26,23,0))" }}>
               <div style={{ color: "#FFFFFF", fontSize: 16, letterSpacing: "0.04em" }}>{c.label}</div>
               <div style={{ color: "#E6DED0", fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 6 }}>{c.meta}</div>
             </div>
@@ -333,9 +336,9 @@ const MainContentV2 = (): JSX.Element => {
 
       {/* 3. NEW ARRIVALS */}
       <section id="arrivals" style={{ padding: `${SP} ${pageX} 0` }}>
-        <div className="v2-reveal v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
+        <div className="v2-reveal v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.line}` }}>
           <div>
-            <div style={{ ...eyebrow, marginBottom: 14 }}>New in</div>
+            <div className="v2-eyebrow" style={{ ...eyebrow, marginBottom: 14 }}>New in</div>
             <h2 style={{ ...h2Style, fontSize: "clamp(28px, 3vw, 44px)" }}>Just off the bench</h2>
           </div>
           <Link to="/engagement-rings" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>View all</Link>
@@ -353,15 +356,15 @@ const MainContentV2 = (): JSX.Element => {
                     <Link to={href} style={{ display: "block" }}>
                       <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
                         {img?.url
-                          ? <img src={getMediaUrl(img.url)} alt={`${p.name}${chosen ? ` in ${chosen.name.toLowerCase()}` : ""}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                          ? <img src={getMediaUrl(img.url)} alt={`${p.name}${chosen ? ` in ${chosen.name.toLowerCase()}` : ""}`} className="v2-blend" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                           : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: T.muted }}>{p.name}</div>}
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 16, fontSize: 15 }}><span>{p.name}</span><span style={{ color: "#56534D" }}>{p.price}</span></div>
-                      <div style={{ marginTop: 4, fontSize: 13, color: T.muted }}>{p.line}</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 16, fontSize: 15, color: T.text }}><span>{p.name}</span><span style={{ color: T.textMuted }}>{p.price}</span></div>
+                      <div style={{ marginTop: 4, fontSize: 13, color: T.textMuted }}>{p.line}</div>
                     </Link>
                     <button type="button" className="v2-save" aria-pressed={saved} aria-label={saved ? `Remove ${p.name} from saved` : `Save ${p.name}`}
                       onClick={() => toggleFavorite(p.id, p.name, img?.url ? getMediaUrl(img.url) : "", href)}
-                      style={{ position: "absolute", top: 8, right: 8, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, borderRadius: "50%", fontSize: 18, lineHeight: 1, color: saved ? T.gold : "#6E6A60" }}>{saved ? "♥" : "♡"}</button>
+                      style={{ position: "absolute", top: 8, right: 8, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, borderRadius: "50%", fontSize: 18, lineHeight: 1, color: saved ? T.gold : T.textMuted }}>{saved ? "♥" : "♡"}</button>
                     {p.metals.length > 1 && (
                       <div role="group" aria-label={`${p.name}: show in`} style={{ display: "flex", gap: 0, marginTop: 6, marginLeft: -12 }}>
                         {p.metals.map((m: any) => {
@@ -370,7 +373,7 @@ const MainContentV2 = (): JSX.Element => {
                             <button key={m.id} type="button" className="v2-swatch" title={m.name} aria-label={`Show in ${m.name.toLowerCase()}`} aria-pressed={on}
                               onClick={() => setCardMetal(c => ({ ...c, [p.id]: on ? "" : m.id }))}
                               style={{ width: 40, height: 40, padding: 0, border: 0, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <span style={{ width: 16, height: 16, borderRadius: "50%", background: swatchFor(m.name), boxShadow: on ? `0 0 0 2px ${T.paper}, 0 0 0 3px ${T.ink}` : `inset 0 0 0 1px rgba(0,0,0,0.12)` }} />
+                              <span style={{ width: 16, height: 16, borderRadius: "50%", background: swatchFor(m.name), boxShadow: on ? `0 0 0 2px ${T.cream}, 0 0 0 3px ${T.text}` : `inset 0 0 0 1px rgba(0,0,0,0.12)` }} />
                             </button>
                           );
                         })}
@@ -387,44 +390,45 @@ const MainContentV2 = (): JSX.Element => {
       </section>
 
       {/* 4. BESPOKE */}
-      <section id="bespoke" style={{ marginTop: SP, background: T.ink, color: T.onDarkSoft }}>
+      {/* The page's one full-width sand band */}
+      <section id="bespoke" style={{ marginTop: SP, background: T.sand, color: T.text }}>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", alignItems: "stretch" }} className="v2-split">
-          <div style={{ position: "relative", minHeight: "clamp(460px, 68vh, 760px)", overflow: "hidden", background: T.inkDeep }}>
+          <div className="v2-on-dark" style={{ position: "relative", minHeight: "clamp(460px, 68vh, 760px)", overflow: "hidden", background: T.ink }}>
             <VideoCover base="/videos/workshop" poster="/videos/workshop-poster.jpg" title="In the workshop" lazy buttonStyle={{ top: 16, right: 16 }} />
-            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, pointerEvents: "none", padding: `24px ${pageX}`, background: "linear-gradient(to top, rgba(20,18,15,0.72), rgba(20,18,15,0))" }}>
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, pointerEvents: "none", padding: `24px ${pageX}`, background: "linear-gradient(to top, rgba(28,26,23,0.72), rgba(28,26,23,0))" }}>
               <div style={{ fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", color: "#FFFFFF" }}>In the workshop — Beeston, Nottingham</div>
             </div>
           </div>
           <div className="v2-reveal" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(56px, 6vw, 104px) clamp(32px, 4.5vw, 88px)" }}>
-            <div style={{ ...eyebrowDark, marginBottom: 22 }}>03 — Bespoke</div>
-            <h2 style={{ ...h2Style, color: "#FFFFFF", fontSize: "clamp(34px, 3.8vw, 58px)", marginBottom: 24 }}>Designed with you.<br />Crafted by us.</h2>
-            <p style={{ maxWidth: "44ch", margin: "0 0 44px", fontSize: 16, lineHeight: 1.7, color: T.onDarkBody }}>A truly personal journey, from your first idea to the finished piece. Work directly with our jewellers to create something uniquely yours, combining your vision with generations of craftsmanship.</p>
+            <div className="v2-eyebrow" style={{ ...eyebrow, marginBottom: 22 }}>03 — Bespoke</div>
+            <h2 style={{ ...h2Style, fontSize: "clamp(34px, 3.8vw, 58px)", marginBottom: 24 }}>Designed with you.<br />Crafted by us.</h2>
+            <p style={{ maxWidth: "44ch", margin: "0 0 44px", fontSize: 16, lineHeight: 1.7, color: T.text }}>A truly personal journey, from your first idea to the finished piece. Work directly with our jewellers to create something uniquely yours, combining your vision with generations of craftsmanship.</p>
             <div>
               {[
                 ["01", "Personal consultation", "Share your ideas, inspirations and preferences with our jeweller."],
                 ["02", "Design & gemstone selection", "Explore your design and choose the perfect stones and precious metals."],
                 ["03", "Crafted especially for you", "Your piece is expertly made, set and finished with meticulous attention to detail."],
               ].map(([n, label, note], i, a) => (
-                <div key={n} style={{ display: "grid", gridTemplateColumns: "26px 1fr", gap: 14, alignItems: "baseline", padding: "20px 0", borderTop: `1px solid ${T.ruleDark}`, borderBottom: i === a.length - 1 ? `1px solid ${T.ruleDark}` : undefined }}>
-                  <span style={{ fontSize: 12, letterSpacing: "0.14em", color: T.onDarkMuted }}>{n}</span>
+                <div key={n} style={{ display: "grid", gridTemplateColumns: "26px 1fr", gap: 14, alignItems: "baseline", padding: "20px 0", borderTop: `1px solid ${T.line}`, borderBottom: i === a.length - 1 ? `1px solid ${T.line}` : undefined }}>
+                  <span style={{ fontSize: 12, letterSpacing: "0.14em", color: T.text }}>{n}</span>
                   <span>
-                    <span style={{ display: "block", fontSize: 15, color: T.onDarkStep }}>{label}</span>
-                    <span style={{ display: "block", marginTop: 6, fontSize: 14.5, lineHeight: 1.6, color: T.onDarkBody }}>{note}</span>
+                    <span style={{ display: "block", fontSize: 15, color: T.text }}>{label}</span>
+                    <span style={{ display: "block", marginTop: 6, fontSize: 14.5, lineHeight: 1.6, color: T.text }}>{note}</span>
                   </span>
                 </div>
               ))}
             </div>
-            <p style={{ margin: "22px 0 0", fontSize: 14, fontStyle: "italic", color: T.onDarkBody }}>Most bespoke creations take approximately six weeks, depending on the design.</p>
-            <Link to="/bespoke-design" className="v2-btn-outline-d" style={{ alignSelf: "flex-start", marginTop: 44, padding: "15px 28px", border: `1px solid ${T.ruleDarkStrong}`, color: "#FFFFFF", fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase" }}>Start a commission</Link>
+            <p style={{ margin: "22px 0 0", fontSize: 14, fontStyle: "italic", color: T.text }}>Most bespoke creations take approximately six weeks, depending on the design.</p>
+            <Link to="/bespoke-design" className="v2-btn-outline" style={{ alignSelf: "flex-start", marginTop: 44, padding: "15px 28px", border: `1px solid ${T.ink}`, background: "transparent", color: T.text, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase" }}>Start a commission</Link>
           </div>
         </div>
       </section>
 
       {/* 5. WATCHES */}
       <section id="watches" style={{ padding: `${SP} ${pageX} 0` }}>
-        <div className="v2-reveal v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
+        <div className="v2-reveal v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.line}` }}>
           <div>
-            <div style={{ ...eyebrow, marginBottom: 14 }}>Watches — official stockist</div>
+            <div className="v2-eyebrow" style={{ ...eyebrow, marginBottom: 14 }}>Watches — official stockist</div>
             <h2 style={{ ...h2Style, fontSize: "clamp(30px, 3.2vw, 46px)" }}>New, pre-owned and serviced in house</h2>
           </div>
           <Link to="/watches" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>All watches</Link>
@@ -433,15 +437,15 @@ const MainContentV2 = (): JSX.Element => {
           {(watches.length ? watches : Array.from({ length: 4 })).map((w: any, i) => (
             w && w.slug ? (
               <Link key={w.id || i} to={`/watches/${w.slug}`} className={`v2-prodcard v2-reveal${i ? ` v2-reveal-d${Math.min(i, 3)}` : ""}`} style={{ display: "block" }}>
-                <div style={{ position: "relative", aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden" }}>
+                <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.sand, overflow: "hidden" }}>
                   {w.image?.url
-                    ? <img src={getMediaUrl(w.image.url)} alt={w.image.alt || w.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", padding: "14%" }} loading="lazy" />
+                    ? <img src={getMediaUrl(w.image.url)} alt={w.image.alt || w.name} className="v2-blend" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", padding: "14%" }} loading="lazy" />
                     : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: T.muted }}>{w.name}</div>}
                 </div>
-                <div style={{ marginTop: 16, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.muted }}>{w.brand?.name}</div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginTop: 4, fontSize: 15 }}>
+                <div style={{ marginTop: 16, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.textMuted }}>{w.brand?.name}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginTop: 4, fontSize: 15, color: T.text }}>
                   <span style={{ flex: "1 1 auto", minWidth: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{`${cleanWatchName(w.name, w.brand?.name, w.model_number || w.sku)} watch`}</span>
-                  <span style={{ color: "#56534D", flex: "none" }}>{roundPrice(w.sale_price || w.base_price)}</span>
+                  <span style={{ color: T.textMuted, flex: "none" }}>{roundPrice(w.sale_price || w.base_price)}</span>
                 </div>
               </Link>
             ) : (
@@ -460,31 +464,31 @@ const MainContentV2 = (): JSX.Element => {
                 sizes="(max-width: 767px) 92vw, 46vw" width={960} height={1086} alt="The original J. A. de Silva Jewellers shopfront" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
             </div>
             {/* Links the de Silva name in the photograph to McCulloch today (from the owner's account on Our Story). */}
-            <figcaption style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6, color: T.muted }}>The original J. A. de Silva Jewellers, founded in 1895. Hasita de Silva, J. A. de Silva’s great-grandson, took on Andrew McCulloch’s in Beeston in 2017.</figcaption>
+            <figcaption style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6, color: T.textMuted }}>The original J. A. de Silva Jewellers, founded in 1895. Hasita de Silva, J. A. de Silva’s great-grandson, took on Andrew McCulloch’s in Beeston in 2017.</figcaption>
           </figure>
           <div className="v2-reveal v2-reveal-d1">
-            <div style={{ ...eyebrow, marginBottom: 22 }}>Since 1895</div>
+            <div className="v2-eyebrow" style={{ ...eyebrow, marginBottom: 22 }}>Since 1895</div>
             <h2 style={{ ...h2Style, lineHeight: 1.14, fontSize: "clamp(30px, 3.4vw, 50px)", maxWidth: "18ch", marginBottom: 26 }}>Generations of jewellers, one bench, the same care.</h2>
-            <p style={{ margin: "0 0 22px", maxWidth: "46ch", fontSize: 16, lineHeight: 1.75, color: T.body }}>We cut, set, size and repair everything ourselves, which is why we can tell you exactly who made your ring and how long it took.</p>
+            <p style={{ margin: "0 0 22px", maxWidth: "46ch", fontSize: 16, lineHeight: 1.75, color: T.text }}>We cut, set, size and repair everything ourselves, which is why we can tell you exactly who made your ring and how long it took.</p>
             <Link to="/our-story" className="v2-textlink">Read our story</Link>
           </div>
         </div>
       </section>
 
       {/* 7. TESTIMONIALS — published reviews only, plus where to check them and how to leave one */}
-      <section style={{ background: T.tint, padding: `clamp(56px, 5vw, 88px) ${pageX}` }}>
+      <section style={{ background: T.cream, borderTop: `1px solid ${T.line}`, padding: `clamp(56px, 5vw, 88px) ${pageX}` }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: quotes.length ? "clamp(36px, 3.5vw, 56px)" : 0 }}>
-          <div style={eyebrow}>What clients say</div>
-          <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="v2-textlink" style={{ color: T.ink }}>Read our reviews on Google</a>
+          <div className="v2-eyebrow" style={eyebrow}>What clients say</div>
+          <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="v2-textlink" style={{ color: T.text }}>Read our reviews on Google</a>
         </div>
         {quotes.length > 0 && (
           <>
             <div ref={quotesRef} onScroll={onQuotesScroll} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(24px, 2.6vw, 48px)", alignItems: "stretch" }} className="v2-quotes">
               {quotes.map(([q, name, cat, date], i) => (
-                <figure key={name + i} style={{ margin: 0, display: "flex", flexDirection: "column", gap: 22, padding: "0 clamp(20px, 2.4vw, 44px)", borderLeft: `1px solid ${T.rule}`, opacity: quotesIn ? 1 : 0, transform: quotesIn ? "translateX(0)" : "translateX(-40px)", transition: "opacity 0.7s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1)", transitionDelay: `${i * 0.14}s` }}>
-                  <blockquote style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: "clamp(20px, 1.5vw, 23px)", lineHeight: 1.5, color: T.textPrimary }}>{q}</blockquote>
+                <figure key={name + i} style={{ margin: 0, display: "flex", flexDirection: "column", gap: 22, padding: "0 clamp(20px, 2.4vw, 44px)", borderLeft: `1px solid ${T.line}`, opacity: quotesIn ? 1 : 0, transform: quotesIn ? "translateX(0)" : "translateX(-40px)", transition: "opacity 0.7s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1)", transitionDelay: `${i * 0.14}s` }}>
+                  <blockquote style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: "clamp(20px, 1.5vw, 23px)", lineHeight: 1.5, color: T.text }}>{q}</blockquote>
                   <figcaption style={{ marginTop: "auto", display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                    <span style={{ color: T.textPrimary }}>{name}{date ? <span style={{ color: T.muted, textTransform: "none", letterSpacing: "0.02em" }}> · {date}</span> : null}</span><span style={{ color: T.muted }}>{cat}</span>
+                    <span style={{ color: T.text }}>{name}{date ? <span style={{ color: T.textMuted, textTransform: "none", letterSpacing: "0.02em" }}> · {date}</span> : null}</span><span style={{ color: T.textMuted }}>{cat}</span>
                   </figcaption>
                 </figure>
               ))}
@@ -495,14 +499,14 @@ const MainContentV2 = (): JSX.Element => {
                 <button key={name + i} type="button" aria-label={`Go to review ${i + 1}`} aria-current={activeQuote === i}
                   onClick={() => quotesRef.current?.scrollTo({ left: i * quotesRef.current.clientWidth, behavior: "smooth" })}
                   style={{ width: 44, height: 44, border: 0, padding: 0, cursor: "pointer", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ width: activeQuote === i ? 20 : 8, height: 8, borderRadius: 4, background: activeQuote === i ? T.gold : T.ruleStrong, transition: "width 0.3s ease, background 0.3s ease" }} />
+                  <span style={{ width: activeQuote === i ? 20 : 8, height: 8, borderRadius: 4, background: activeQuote === i ? T.gold : T.textMuted, transition: "width 0.3s ease, background 0.3s ease" }} />
                 </button>
               ))}
             </div>
           </>
         )}
-        <p style={{ margin: "clamp(28px, 3vw, 44px) 0 0", paddingTop: 22, borderTop: `1px solid ${T.rule}`, fontSize: 15, color: T.body }}>
-          Been to the bench? <Link to="/share-your-experience" style={{ color: T.ink, borderBottom: `1px solid ${T.ruleStrong}`, paddingBottom: 2 }}>Share your experience</Link>
+        <p style={{ margin: "clamp(28px, 3vw, 44px) 0 0", paddingTop: 22, borderTop: `1px solid ${T.line}`, fontSize: 15, color: T.text }}>
+          Been to the bench? <Link to="/share-your-experience" className="v2-textlink" style={{ color: T.text, textTransform: "none", letterSpacing: "normal", fontSize: 15, padding: "12px 0 2px" }}>Share your experience</Link>
         </p>
       </section>
 
@@ -510,35 +514,35 @@ const MainContentV2 = (): JSX.Element => {
       <JournalV2 pageX={pageX} h2Style={h2Style} />
 
       {/* 9. SHOWROOM / APPOINTMENT */}
-      <section id="appointment" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", borderTop: `1px solid ${T.rule}`, background: T.paper }} className="v2-split">
+      <section id="appointment" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", borderTop: `1px solid ${T.line}`, background: T.cream }} className="v2-split">
         <div className="v2-reveal" style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 40, padding: "clamp(56px, 6vw, 104px) clamp(32px, 4vw, 80px)" }}>
           <div>
-            <div style={{ ...eyebrow, marginBottom: 20 }}>Visit us</div>
+            <div className="v2-eyebrow" style={{ ...eyebrow, marginBottom: 20 }}>Visit us</div>
             <h2 style={{ ...h2Style, fontSize: "clamp(28px, 3.2vw, 46px)", lineHeight: 1.04, marginBottom: 18 }}>Come and see them in daylight.</h2>
-            <p style={{ maxWidth: "42ch", margin: 0, fontSize: 16, lineHeight: 1.7, color: "#56534D" }}>Appointments are free and take about an hour. Walk-ins welcome whenever we are open.</p>
+            <p style={{ maxWidth: "42ch", margin: 0, fontSize: 16, lineHeight: 1.7, color: T.textMuted }}>Appointments are free and take about an hour. Walk-ins welcome whenever we are open.</p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 32, fontSize: 15.5, lineHeight: 1.75, color: T.body }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 32, fontSize: 15.5, lineHeight: 1.75, color: T.text }}>
             <div>
-              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.body, marginBottom: 10 }}>Showroom</div>
+              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.textMuted, marginBottom: 10 }}>Showroom</div>
               7 The Square, Beeston<br />Nottingham NG9 2JG<br />
-              <a href="https://www.google.com/maps/dir/?api=1&destination=7+The+Square+Beeston+Nottingham+NG9+2JG" target="_blank" rel="noopener noreferrer" className="v2-textlink" style={{ color: T.ink, marginTop: 2 }}>Get directions</a>
+              <a href="https://www.google.com/maps/dir/?api=1&destination=7+The+Square+Beeston+Nottingham+NG9+2JG" target="_blank" rel="noopener noreferrer" className="v2-textlink" style={{ color: T.text, marginTop: 2 }}>Get directions</a>
             </div>
             <div>
-              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.body, marginBottom: 10 }}>Opening hours</div>
+              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.textMuted, marginBottom: 10 }}>Opening hours</div>
               Mon – Sat, 9 – 5:30<br />Sunday, closed
             </div>
             <div>
-              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.body, marginBottom: 10 }}>Call</div>
-              <a href="tel:+441159257552" style={{ color: T.ink, borderBottom: `1px solid ${T.ruleStrong}`, display: "inline-block", padding: "10px 0 2px" }}>0115 925 7552</a>
+              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.textMuted, marginBottom: 10 }}>Call</div>
+              <a href="tel:+441159257552" className="v2-textlink" style={{ color: T.text, textTransform: "none", letterSpacing: "normal", fontSize: 15.5, display: "inline-block", padding: "10px 0 2px" }}>0115 925 7552</a>
             </div>
             <div>
-              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.body, marginBottom: 10 }}>Email</div>
-              <a href="mailto:has@mccullochjewellers.co.uk" style={{ color: T.ink, borderBottom: `1px solid ${T.ruleStrong}`, display: "inline-block", padding: "10px 0 2px", wordBreak: "break-all" }}>has@mccullochjewellers.co.uk</a>
+              <div style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.textMuted, marginBottom: 10 }}>Email</div>
+              <a href="mailto:has@mccullochjewellers.co.uk" className="v2-textlink" style={{ color: T.text, textTransform: "none", letterSpacing: "normal", fontSize: 15.5, display: "inline-block", padding: "10px 0 2px", wordBreak: "break-all" }}>has@mccullochjewellers.co.uk</a>
             </div>
           </div>
-          <Link to="/contact" className="v2-btn-ink" style={{ alignSelf: "flex-start", padding: "15px 28px", background: T.ink, color: T.paper, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>Book an appointment</Link>
+          <Link to="/contact" className="v2-btn-ink" style={{ alignSelf: "flex-start", padding: "15px 28px", background: T.ink, color: T.cream, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>Book an appointment</Link>
         </div>
-        <div className="v2-reveal v2-reveal-d1" style={{ position: "relative", minHeight: "clamp(420px, 56vh, 620px)", borderLeft: `1px solid ${T.rule}` }}>
+        <div className="v2-reveal v2-reveal-d1" style={{ position: "relative", minHeight: "clamp(420px, 56vh, 620px)", borderLeft: `1px solid ${T.line}` }}>
           <img src="/images/shopfront-2-upscaled.webp" srcSet="/images/shopfront-2-upscaled-480.jpg 480w, /images/shopfront-2-upscaled.webp 764w" sizes="(max-width: 767px) 100vw, 50vw"
             width={764} height={1020} alt="The McCulloch showroom in Beeston" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
@@ -548,7 +552,7 @@ const MainContentV2 = (): JSX.Element => {
       {false && (
       <section style={{ borderTop: `1px solid ${T.rule}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, padding: `26px ${pageX}` }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.body }}>@andrewmccullochjewellers</div>
+          <div style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.text }}>@andrewmccullochjewellers</div>
           <a href="https://www.instagram.com/andrewmccullochjewellers/" target="_blank" rel="noreferrer" style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#6E6B64" }}>Follow</a>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 2 }} className="v2-iggrid">

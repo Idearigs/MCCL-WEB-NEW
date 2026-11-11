@@ -53,7 +53,7 @@ const CartSlide: React.FC<CartSlideProps> = ({
 
   const stepBtn: React.CSSProperties = {
     width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    border: `1px solid ${T.ruleSoft}`, background: 'transparent', color: T.body, cursor: 'pointer',
+    border: `1px solid ${T.line}`, background: 'transparent', color: T.text, cursor: 'pointer',
     transition: 'border-color 0.2s, color 0.2s',
   };
 
@@ -226,9 +226,9 @@ const CartSlide: React.FC<CartSlideProps> = ({
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: T.body, marginBottom: 14 }}>
                 <span>Delivery</span>
-                <span style={{ color: T.gold }}>Free, insured</span>
+                <span style={{ color: T.text }}>Free, insured</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', paddingTop: 14, borderTop: `1px solid ${T.ruleSoft}` }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', paddingTop: 14, borderTop: `1px solid ${T.line}` }}>
                 <span style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.ink }}>Total</span>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontFamily: FONT_DISPLAY, fontSize: 28, color: T.ink, lineHeight: 1 }}>{money(total)}</div>
@@ -248,7 +248,7 @@ const CartSlide: React.FC<CartSlideProps> = ({
                 to="/cart"
                 onClick={onClose}
                 className="cs2-viewbag"
-                style={{ display: 'block', textAlign: 'center', marginTop: 10, padding: '13px', background: 'transparent', color: T.ink, border: `1px solid ${T.ruleStrong}`, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', transition: 'background 0.25s' }}
+                style={{ display: 'block', textAlign: 'center', marginTop: 10, padding: '13px', background: 'transparent', color: T.text, border: `1px solid ${T.ink}`, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', textDecoration: 'none', transition: 'background 0.25s' }}
               >
                 View full bag
               </Link>

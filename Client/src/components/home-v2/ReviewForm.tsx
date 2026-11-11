@@ -67,7 +67,7 @@ const ReviewForm = (): JSX.Element => {
   return (
     <form onSubmit={submit} style={{ background: "#FFFFFF", border: `1px solid ${T.rule}`, boxShadow: "0 24px 48px -34px rgba(28,26,23,0.28)", padding: "clamp(24px, 3vw, 40px)", fontFamily: FONT_BODY }}>
       <style>{`
-        .rvf-star:hover{transform:scale(1.1)} .rvf-cta:hover{background:${T.inkDeep}}
+        .rvf-star:hover{transform:scale(1.1)} .rvf-cta:hover{background:${T.ink} !important;color:${T.cream} !important}
         .rvf-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
         @media (max-width:640px){ .rvf-grid{grid-template-columns:1fr;gap:16px} .rvf-in{font-size:16px !important} }
       `}</style>
@@ -120,7 +120,7 @@ const ReviewForm = (): JSX.Element => {
         type="submit"
         disabled={state === "sending"}
         className="rvf-cta"
-        style={{ marginTop: 20, padding: "14px 30px", background: T.ink, color: T.paper, border: 0, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.25s", opacity: state === "sending" ? 0.7 : 1 }}
+        style={{ marginTop: 20, padding: "14px 30px", background: "transparent", color: T.text, border: `1px solid ${T.ink}`, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.25s", opacity: state === "sending" ? 0.7 : 1 }}
       >
         {state === "sending" ? "Sending…" : "Submit review"}
       </button>

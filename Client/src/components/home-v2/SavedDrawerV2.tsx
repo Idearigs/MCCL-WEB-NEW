@@ -16,7 +16,7 @@ import { T, FONT_DISPLAY, FONT_BODY } from "./tokens";
  * live price; until that exists the note shows when the piece was saved.
  */
 
-const M2 = "#8A8377";
+const M2 = T.textMuted; // was #8A8377
 
 const money = (n?: number) => (n == null || isNaN(Number(n)) ? "" : "£" + Math.round(Number(n)).toLocaleString("en-GB"));
 
@@ -92,7 +92,7 @@ const SavedDrawerV2: React.FC<SavedDrawerV2Props> = ({ isOpen, isVisible, onClos
         @keyframes svScrimIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes svDrawerIn { from { transform: translateX(100%); } to { transform: none; } }
         .sv-nobar::-webkit-scrollbar { display: none; }
-        .sv-addbag:hover { background: ${T.gold} !important; }
+        .sv-addbag:hover { background: ${T.text} !important; }
         .sv-remove:hover { color: ${T.ink} !important; }
         @media (prefers-reduced-motion: reduce) { .sv-drawer { animation: none !important; } }
       `}</style>
@@ -157,7 +157,7 @@ const SavedDrawerV2: React.FC<SavedDrawerV2Props> = ({ isOpen, isVisible, onClos
           <p style={{ margin: "0 0 16px", fontSize: 12.5, lineHeight: 1.65, color: T.body }}>Saved pieces keep their specification. Nothing is reserved — everything is made to order.</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <Link to="/account" onClick={onClose} style={{ padding: 14, textAlign: "center", background: T.ink, color: T.paper, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>Open in account</Link>
-            <Link to="/contact" onClick={onClose} style={{ padding: 14, textAlign: "center", border: `1px solid ${T.ruleStrong}`, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink }}>See them in person</Link>
+            <Link to="/contact" onClick={onClose} style={{ padding: 14, textAlign: "center", border: `1px solid ${T.ink}`, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink }}>See them in person</Link>
           </div>
         </div>
       </aside>

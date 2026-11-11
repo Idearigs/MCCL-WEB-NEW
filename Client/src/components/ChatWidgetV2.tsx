@@ -17,7 +17,7 @@ import { T, FONT_DISPLAY, FONT_BODY } from "./home-v2/tokens";
  * (Mon–Sat 9–18) rather than always implying someone is online — the README requires that.
  */
 
-const M2 = "#8A8377";
+const M2 = T.textMuted; // was #8A8377
 const SOCKET_URL = API_BASE_URL.replace("/api/v1", "");
 
 const TOPICS = ["A commission", "An order", "Sizing", "A stone", "Repairs"];
@@ -223,10 +223,10 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
     <>
       <style>{`
         .cw2-nobar::-webkit-scrollbar { display: none; }
-        .cw2-launch:hover { background: ${T.gold} !important; }
+        .cw2-launch:hover { background: ${T.text} !important; }
         .cw2-x:hover { color: #FFFFFF !important; }
-        .cw2-send:hover { background: ${T.gold} !important; }
-        .cw2-cta:hover { background: ${T.gold} !important; }
+        .cw2-send:hover { background: ${T.text} !important; }
+        .cw2-cta:hover { background: ${T.text} !important; }
         .cw2-mini:hover { color: ${T.ink} !important; }
         @keyframes cw2In { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: none; } }
         @keyframes cw2Msg { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -280,7 +280,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                 {TOPICS.map((tp) => {
                   const on = tp === topic;
                   return (
-                    <button key={tp} type="button" onClick={() => setTopic(tp)} style={{ padding: "10px 13px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: on ? T.paper : T.body, background: on ? T.ink : "transparent", border: `1px solid ${on ? T.ink : T.ruleSoft}`, transition: "all 0.2s ease" }}>{tp}</button>
+                    <button key={tp} type="button" onClick={() => setTopic(tp)} style={{ padding: "10px 13px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: on ? T.paper : T.body, background: on ? T.ink : "transparent", border: `1px solid ${on ? T.ink : T.line}`, transition: "all 0.2s ease" }}>{tp}</button>
                   );
                 })}
               </div>
@@ -302,12 +302,12 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
           {state === "live" && (
             <>
               <div className="cw2-nobar" style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: 22 }}>
-                <div style={{ textAlign: "center", fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", color: "#A9A196", marginBottom: 22 }}>Today, {fmtTime(dividerAt)}</div>
+                <div style={{ textAlign: "center", fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.textMuted, marginBottom: 22 }}>Today, {fmtTime(dividerAt)}</div>
                 {messages.map((m, i) => {
                   const mine = m.sender_type === "customer";
                   return (
                     <div key={`${m.id}-${i}`} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start", marginBottom: 18, animation: "cw2Msg 0.3s cubic-bezier(0.22,1,0.36,1) both", animationDelay: `${Math.min(i * 0.05, 0.4)}s` }}>
-                      <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#A09889", marginBottom: 7 }}>{mine ? "You" : "McCulloch"}</span>
+                      <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: T.textMuted, marginBottom: 7 }}>{mine ? "You" : "McCulloch"}</span>
                       <span style={{ maxWidth: "84%", padding: "13px 15px", fontSize: 13.5, lineHeight: 1.65, color: mine ? "#F1EDE4" : T.heading, background: mine ? T.ink : T.tint, border: `1px solid ${mine ? T.ink : T.rule}` }}>
                         {m.attachment_url && <img src={`${SOCKET_URL}${m.attachment_url}`} alt="" style={{ display: "block", maxWidth: "100%", marginBottom: m.message ? 8 : 0 }} />}
                         {m.message}
@@ -317,7 +317,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                 })}
                 {theyTyping && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 10, letterSpacing: "0.12em", color: "#A09889", marginBottom: 7 }}>McCulloch</span>
+                    <span style={{ fontSize: 10, letterSpacing: "0.12em", color: T.textMuted, marginBottom: 7 }}>McCulloch</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 5, padding: 15, background: T.tint, border: `1px solid ${T.rule}` }}>
                       {[0, 0.2, 0.4].map((d) => <span key={d} style={{ width: 5, height: 5, borderRadius: "50%", background: M2, animation: `cw2Blink 1.4s ease-in-out ${d}s infinite` }} />)}
                     </span>
@@ -338,7 +338,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                   <input type="text" value={input} onChange={onInput} placeholder="Write a message" disabled={sending} style={{ width: "100%", padding: "13px 0", fontFamily: FONT_BODY, fontSize: isMobile ? 15 : 14, color: T.ink, background: "transparent", border: 0, outline: "none" }} />
                   <button type="submit" disabled={sending || (!input.trim() && !image)} className="cw2-send" style={{ padding: "12px 18px", cursor: sending ? "default" : "pointer", fontFamily: FONT_BODY, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.paper, background: T.ink, border: 0, opacity: sending || (!input.trim() && !image) ? 0.5 : 1, transition: "background 0.25s ease" }}>{sending ? "…" : "Send"}</button>
                 </form>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 12, fontSize: 11, color: "#A9A196" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 12, fontSize: 11, color: T.textMuted }}>
                   <button type="button" onClick={() => fileRef.current?.click()} className="cw2-mini" style={{ padding: 0, cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 11, color: M2 }}>Attach a photograph</button>
                   <a href="/contact" style={{ color: M2, textDecoration: "none" }}>Book a call instead</a>
                 </div>
