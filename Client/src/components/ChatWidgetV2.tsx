@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { io } from "socket.io-client";
+import { MessageCircle } from "lucide-react";
 import API_BASE_URL from "../config/api";
 import { useIsMobile } from "../hooks/use-mobile";
 import { T, FONT_DISPLAY, FONT_BODY } from "./home-v2/tokens";
@@ -69,6 +70,14 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
   const endRef = useRef<HTMLDivElement>(null);
 
   const open = isOpenNow();
+
+  // Escape closes the panel, like search and the bag.
+  useEffect(() => {
+    if (state === "closed") return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setState("closed"); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [state]);
 
   useEffect(() => { setForm((f) => ({ ...f, name: user?.name || f.name, email: user?.email || f.email })); }, [user]);
 
@@ -206,7 +215,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
   const panelWidth = isMobile ? "100vw" : "min(392px, calc(100vw - 40px))";
   const panelStyle: React.CSSProperties = isMobile
     ? { position: "fixed", inset: 0, zIndex: 75, display: "flex", flexDirection: "column", background: T.paper, animation: "cw2In 0.32s cubic-bezier(0.22,1,0.36,1) both" }
-    : { position: "fixed", right: 28, bottom: 28, zIndex: 75, display: "flex", flexDirection: "column", width: panelWidth, maxHeight: "min(620px, calc(100vh - 56px))", background: T.paper, border: `1px solid ${T.rule}`, boxShadow: "0 24px 60px rgba(20,18,15,0.28)", animation: "cw2In 0.32s cubic-bezier(0.22,1,0.36,1) both" };
+    : { position: "fixed", right: 28, bottom: 28, zIndex: 75, display: "flex", flexDirection: "column", width: panelWidth, maxHeight: "min(620px, calc(100vh - var(--v2nav-h, 112px) - 40px))", background: T.paper, border: `1px solid ${T.rule}`, boxShadow: "0 24px 60px rgba(20,18,15,0.28)", animation: "cw2In 0.32s cubic-bezier(0.22,1,0.36,1) both" };
 
   const dividerAt = messages[0]?.created_at;
 
@@ -223,14 +232,26 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
         @keyframes cw2Msg { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         @keyframes cw2Blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
         @media (prefers-reduced-motion: reduce) { .cw2-panel, .cw2-panel * { animation: none !important; } }
+        /* Hidden while the phone menu is open, where it covered "Book an appointment". */
+        body[data-v2-menu] .cw2-launch { display: none !important; }
       `}</style>
 
       {/* Launcher */}
       {state === "closed" && (
         <button type="button" onClick={() => setState("form")} className="cw2-launch" data-cw-launch
-          style={{ position: "fixed", right: isMobile ? 18 : 28, bottom: isMobile ? "calc(18px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", gap: 12, padding: "15px 22px", cursor: "pointer", background: onDark ? T.paper : T.ink, border: `1px solid ${onDark ? T.ruleStrong : "transparent"}`, boxShadow: onDark ? "0 12px 32px rgba(20,18,15,0.45)" : "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease" }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : (onDark ? T.gold : M2), transition: "background 0.4s ease" }} />
-          <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: onDark ? T.ink : T.paper, transition: "color 0.4s ease" }}>{isMobile ? "Ask us" : "Ask the workshop"}</span>
+          aria-label={isMobile ? "Ask us: chat with the workshop" : undefined}
+          style={{ position: "fixed", right: isMobile ? 16 : 28, bottom: isMobile ? "calc(16px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, ...(isMobile ? { width: 52, height: 52, padding: 0, borderRadius: "50%" } : { padding: "15px 22px" }), cursor: "pointer", background: onDark ? T.paper : T.ink, border: `1px solid ${onDark ? T.ruleStrong : "transparent"}`, boxShadow: onDark ? "0 12px 32px rgba(20,18,15,0.45)" : "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease" }}>
+          {isMobile ? (
+            <span style={{ position: "relative", display: "flex" }}>
+              <MessageCircle size={22} strokeWidth={1.6} color={onDark ? T.ink : T.paper} />
+              <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: "50%", background: open ? T.gold : M2, border: `1.5px solid ${onDark ? T.paper : T.ink}` }} />
+            </span>
+          ) : (
+            <>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : (onDark ? T.gold : M2), transition: "background 0.4s ease" }} />
+              <span style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: onDark ? T.ink : T.paper, transition: "color 0.4s ease" }}>Ask the workshop</span>
+            </>
+          )}
         </button>
       )}
 
@@ -265,7 +286,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
               </div>
 
               <div style={{ display: "grid", gap: 14 }}>
-                <label style={{ display: "block" }}><span style={labelStyle}>Your name</span><input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Hannah Ward" style={inputStyle} /></label>
+                <label style={{ display: "block" }}><span style={labelStyle}>Your name</span><input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="First and last name" style={inputStyle} /></label>
                 <label style={{ display: "block" }}><span style={labelStyle}>Email address</span><input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="you@example.co.uk" style={inputStyle} /></label>
                 <label style={{ display: "block" }}><span style={labelStyle}>Message</span><textarea rows={4} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} placeholder={PLACEHOLDERS[topic]} style={{ ...inputStyle, lineHeight: 1.6, resize: "vertical" }} /></label>
               </div>

@@ -21,51 +21,60 @@ const TRUST = [
   "Hand-finished in the UK",
 ];
 
-const TrustBarV2 = ({ solid = true }: { solid?: boolean }): JSX.Element => {
+const TrustBarV2 = ({ solid = true, hidden = false }: { solid?: boolean; hidden?: boolean }): JSX.Element => {
   const isMobile = useIsMobile();
   const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false); // tap the strip to stop / restart the rotation
   // Over the hero, match the header's translucent frosted chrome rather than being
   // fully see-through; once solid, go opaque dark ink.
   const bg = solid ? T.ink : "rgba(28,26,23,0.12)";
   const blur = solid ? "none" : "blur(14px)";
 
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile || paused) return;
     const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const t = setInterval(() => setIdx((i) => (i + 1) % TRUST.length), reduce ? 6000 : 3200);
     return () => clearInterval(t);
-  }, [isMobile]);
+  }, [isMobile, paused]);
+
+  // Collapses smoothly when `hidden` (homepage, once past the first screen).
+  const wrap: React.CSSProperties = { display: "grid", gridTemplateRows: hidden ? "0fr" : "1fr", transition: "grid-template-rows 0.3s ease" };
 
   // ── Mobile: one item at a time, centred, easing up ────────────────────────
   if (isMobile) {
     return (
+      <div style={wrap}><div style={{ overflow: "hidden" }}>
       <div style={{ background: bg, color: T.onDarkSoft, fontFamily: FONT_BODY, backdropFilter: blur, WebkitBackdropFilter: blur, transition: "background 0.35s ease" }}>
         <style>{`
           @keyframes trustRise { from { opacity: 0; transform: translateY(85%); } to { opacity: 1; transform: none; } }
           @media (prefers-reduced-motion: reduce){ .trust-rise { animation: none !important; } }
         `}</style>
-        <div style={{ position: "relative", height: 32, overflow: "hidden" }}>
-          <div key={idx} className="trust-rise"
-            style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 20px", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "#E8E0D2", textAlign: "center", lineHeight: 1.2, animation: "trustRise 0.5s cubic-bezier(0.22,1,0.36,1) both" }}>
+        <button type="button" onClick={() => setPaused(p => !p)} aria-label={paused ? "Resume rotating messages" : "Pause rotating messages"} title={paused ? "Tap to resume" : "Tap to pause"}
+          style={{ position: "relative", display: "block", width: "100%", height: 32, overflow: "hidden", background: "transparent", border: 0, padding: 0, cursor: "pointer", font: "inherit" }}>
+          <div key={idx} className="trust-rise" aria-live="off"
+            style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 20px", fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: "#E8E0D2", textAlign: "center", lineHeight: 1.2, animation: "trustRise 0.5s cubic-bezier(0.22,1,0.36,1) both" }}>
             {TRUST[idx]}
           </div>
-        </div>
+        </button>
       </div>
+      </div></div>
     );
   }
 
   // ── Desktop: static centred row with slash separators ─────────────────────
   return (
+    <div style={wrap}><div style={{ overflow: "hidden" }}>
     <div style={{ background: bg, color: T.onDarkSoft, fontFamily: FONT_BODY, backdropFilter: blur, WebkitBackdropFilter: blur, transition: "background 0.35s ease" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", padding: "8px 20px" }}>
         {TRUST.map((t, i) => (
           <React.Fragment key={t}>
-            <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "#D8CFC0" }}>{t}</span>
+            <span style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: "#D8CFC0" }}>{t}</span>
             {i < TRUST.length - 1 && <span style={{ padding: "0 20px", color: "#4A443B" }}>/</span>}
           </React.Fragment>
         ))}
       </div>
     </div>
+    </div></div>
   );
 };
 

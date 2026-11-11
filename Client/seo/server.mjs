@@ -137,6 +137,7 @@ const STATIC = {
   '/wedding-rings': { title: 'Wedding Rings — Gold, Platinum & Diamond Bands', desc: 'Wedding rings in 9ct and 18ct gold, platinum and palladium — court, flat and diamond-set bands for men and women, in every width and weight.' },
   '/earrings': { title: 'Earrings — Diamond Studs, Drops & Hoops', desc: 'Diamond and gemstone earrings — studs, drops, hoops and halo designs in gold and platinum.' },
   '/necklaces': { title: 'Necklaces & Pendants — Diamond and Gemstone', desc: 'Diamond and gemstone necklaces and pendants in gold and platinum.' },
+  '/share-your-experience': { title: 'Share Your Experience — Leave a Review', desc: 'Had a piece made, remodelled or repaired by McCulloch Jewellers in Beeston? Tell us about it — reviews are checked before they appear.' },
   '/pendants': { title: 'Pendants — Diamond & Gemstone Pendants', desc: 'Diamond and gemstone pendants — solitaire, halo, heart and cross designs in gold and platinum.' },
   '/bracelets': { title: 'Bracelets — Diamond, Tennis & Gold Bracelets', desc: 'Diamond tennis bracelets, bangles and gold bracelets, made and finished in our own workshop.' },
   '/jewellery': { title: 'Fine Jewellery — Earrings, Necklaces & Bracelets', desc: 'Fine jewellery from McCulloch: diamond and gemstone earrings, necklaces, pendants and bracelets in gold and platinum.' },

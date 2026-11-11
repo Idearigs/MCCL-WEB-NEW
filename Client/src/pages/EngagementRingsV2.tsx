@@ -141,8 +141,8 @@ const EngagementRingsV2 = (): JSX.Element => {
   const clearAll = () => { setSel({ style: [], gem: [], metal: [], collection: [] }); setMaxPrice(12000); };
 
   // A fully ticked group shows as one "All …" chip; removing it clears that group.
-  const chips: { key: GroupKey; label: string; all?: boolean }[] = GROUP_DEFS.flatMap(g =>
-    sel[g.key].length && off(g.key) ? [{ key: g.key, label: `All ${g.title.toLowerCase()}`, all: true }] : sel[g.key].map(v => ({ key: g.key, label: v })));
+  const chips: { key: GroupKey; label: string; shown?: string; all?: boolean }[] = GROUP_DEFS.flatMap(g =>
+    sel[g.key].length && off(g.key) ? [{ key: g.key, label: `All ${g.title.toLowerCase()}`, all: true }] : sel[g.key].map(v => ({ key: g.key, label: v, shown: g.key === "metal" ? v.replace(/\bRed\b/, "Rose") : v })));
   const priceLabel = maxPrice >= 12000 ? "Any" : "Up to " + money(maxPrice);
 
   const eyebrow: React.CSSProperties = { fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: T.gold };
@@ -179,7 +179,7 @@ const EngagementRingsV2 = (): JSX.Element => {
                     style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "9px 8px 9px 0", cursor: "pointer", background: "transparent", border: 0, textAlign: "left", fontFamily: FONT_BODY, fontSize: 13, color: on ? T.ink : T.body }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span style={{ width: 16, height: 16, flex: "none", border: `1px solid ${on ? T.ink : T.ruleStrong}`, background: on ? T.ink : "transparent" }} />
-                      {o}
+                      {g.key === "metal" ? o.replace(/\bRed\b/, "Rose") : o}
                     </span>
                     <span style={{ fontSize: 11.5, color: "#8A8377" }}>{n}</span>
                   </button>
@@ -260,7 +260,7 @@ const EngagementRingsV2 = (): JSX.Element => {
                 {chips.map((c, i) => (
                   <button key={i} onClick={() => c.all ? setSel(s => ({ ...s, [c.key]: [] })) : toggle(c.key, c.label)} className="erv2-chip"
                     style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 11px", cursor: "pointer", background: T.tint, border: `1px solid ${T.ruleSoft}`, fontFamily: FONT_BODY, fontSize: 11.5, color: T.ink }}>
-                    {c.label}<span style={{ color: "#8A8377" }}>×</span>
+                    {c.shown || c.label}<span style={{ color: "#8A8377" }}>×</span>
                   </button>
                 ))}
               </div>

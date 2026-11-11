@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { T, FONT_DISPLAY, FONT_BODY } from "./tokens";
 import PaymentBadges from "../PaymentBadges";
+import API_BASE_URL from "../../config/api";
 
 /**
  * FooterV2 — the homepage v2 dark footer. Visual design from the handoff;
@@ -65,10 +66,24 @@ const columns: { title: string; links: { label: string; to: string; external?: b
 const FooterV2 = (): JSX.Element => {
   const [email, setEmail] = useState("");
   const [foot, setFoot] = useState<string | null>(null);
-  const onSubmit = (e: React.FormEvent) => { e.preventDefault(); setEmail(""); };
+  const [signup, setSignup] = useState<"idle" | "sending" | "done" | "error">("idle");
+  // The sign-up used to clear the box and send nothing. It now emails the shop the address.
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (signup === "sending") return;
+    setSignup("sending");
+    try {
+      const r = await fetch(`${API_BASE_URL}/newsletter`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.success) throw new Error();
+      setSignup("done"); setEmail("");
+    } catch { setSignup("error"); }
+  };
 
   return (
-    <footer style={{ background: T.ink, color: T.onDarkSoft, padding: `clamp(56px, 5vw, 88px) clamp(24px, 3vw, 52px) 28px`, fontFamily: FONT_BODY }}>
+    // Bottom padding leaves room for the floating chat button, which otherwise covered the
+    // legal line on phones and the Cookies / Terms / Guarantees links on desktop.
+    <footer style={{ background: T.ink, color: T.onDarkSoft, padding: `clamp(56px, 5vw, 88px) clamp(24px, 3vw, 52px) 104px`, fontFamily: FONT_BODY }}>
       <style>{`
         .v2ft a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
         .v2ft a:hover { color: ${T.gold}; }
@@ -80,20 +95,27 @@ const FooterV2 = (): JSX.Element => {
           .v2-foottoggle { display: block; }
           .v2-footlinks { display: none !important; padding-bottom: 12px; }
           .v2-footlinks[data-open="1"] { display: flex !important; }
-          .v2-footbottom { flex-direction: column; gap: 14px !important; }
+          .v2-footbottom { flex-direction: column; align-items: flex-start !important; gap: 14px !important; }
+          .v2-footbottom a { display: inline-block; padding: 10px 0; }
         }
       `}</style>
       <div className="v2ft">
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.5fr) repeat(5, minmax(0, 1fr))", gap: "clamp(20px, 2.4vw, 44px)", paddingBottom: 52, borderBottom: `1px solid ${T.ruleDark}` }} className="v2-footgrid">
           <div>
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: 23, letterSpacing: "0.16em", color: "#FFFFFF" }}>McCulloch</div>
-            <div style={{ fontSize: 8.5, letterSpacing: "0.44em", textTransform: "uppercase", color: T.onDarkMuted, margin: "5px 0 26px 3px" }}>Fine jewellery</div>
-            <p style={{ margin: "0 0 20px", maxWidth: "32ch", fontSize: 13.5, lineHeight: 1.7 }}>New pieces and private viewings, before they reach the site.</p>
-            <form onSubmit={onSubmit} style={{ display: "flex", maxWidth: 320, borderBottom: `1px solid ${T.ruleDarkStrong}` }}>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address"
-                style={{ flex: 1, background: "transparent", border: 0, outline: "none", color: "#EDE7DC", fontFamily: FONT_BODY, fontSize: 13.5, padding: "11px 0" }} />
-              <button type="submit" style={{ background: "transparent", border: 0, color: "#EDE7DC", fontFamily: FONT_BODY, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", padding: "11px 0 11px 16px" }}>Sign up</button>
-            </form>
+            <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: T.onDarkMuted, margin: "5px 0 26px 3px" }}>Fine jewellery</div>
+            <p id="v2ft-news-label" style={{ margin: "0 0 20px", maxWidth: "32ch", fontSize: 15, lineHeight: 1.7 }}>New pieces and private viewings, before they reach the site.</p>
+            {signup === "done" ? (
+              <p role="status" style={{ margin: 0, fontSize: 14.5, color: "#EDE7DC" }}>Thank you. You’re on the list.</p>
+            ) : (
+              <form onSubmit={onSubmit} style={{ display: "flex", maxWidth: 320, borderBottom: `1px solid ${T.ruleDarkStrong}` }}>
+                <label htmlFor="v2ft-news" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}>Email address for new pieces and private viewings</label>
+                <input id="v2ft-news" type="email" required autoComplete="email" aria-describedby="v2ft-news-label" value={email} onChange={e => { setEmail(e.target.value); if (signup === "error") setSignup("idle"); }} placeholder="Email address"
+                  style={{ flex: 1, minWidth: 0, background: "transparent", border: 0, outline: "none", color: "#EDE7DC", fontFamily: FONT_BODY, fontSize: 16, padding: "12px 0" }} />
+                <button type="submit" disabled={signup === "sending"} style={{ background: "transparent", border: 0, color: "#EDE7DC", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", padding: "12px 0 12px 16px", minHeight: 44 }}>{signup === "sending" ? "Sending…" : "Sign up"}</button>
+              </form>
+            )}
+            {signup === "error" && <p role="alert" style={{ margin: "10px 0 0", fontSize: 13.5, color: "#E8B7AB" }}>That didn’t go through. Please try again, or call 0115 925 7552.</p>}
           </div>
 
           {columns.map(col => {
@@ -101,11 +123,11 @@ const FooterV2 = (): JSX.Element => {
             return (
               <div key={col.title} className="v2-footcol">
                 <button className="v2-foottitle" onClick={() => setFoot(open ? null : col.title)}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: 0, padding: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.onDarkMuted, marginBottom: 7 }}>
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: 0, padding: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.onDarkMuted, marginBottom: 7 }}>
                   <span>{col.title}</span>
                   <span className="v2-foottoggle" style={{ color: T.gold, fontSize: 16, lineHeight: 1, transform: open ? "rotate(45deg)" : "none", transition: "transform 0.28s ease" }}>+</span>
                 </button>
-                <div className="v2-footlinks" data-open={open ? "1" : "0"} style={{ display: "flex", flexDirection: "column", gap: 11, fontSize: 13 }}>
+                <div className="v2-footlinks" data-open={open ? "1" : "0"} style={{ display: "flex", flexDirection: "column", gap: 11, fontSize: 14 }}>
                   {col.links.map(l => (
                     l.external
                       ? <a key={l.label} href={l.to} target="_blank" rel="noreferrer">{l.label}</a>
@@ -121,8 +143,11 @@ const FooterV2 = (): JSX.Element => {
           <PaymentBadges textColor={T.onDarkSoft} align="flex-start" />
         </div>
 
-        <div className="v2-footbottom" style={{ display: "flex", justifyContent: "space-between", gap: 20, paddingTop: 18, fontSize: 10.5, letterSpacing: "0.08em", color: T.onDarkMuted, flexWrap: "wrap" }}>
-          <span>© {new Date().getFullYear()} Andrew McCulloch Jewellers — 7 The Square, Beeston, Nottingham · 0115 925 7552</span>
+        <div className="v2-footbottom" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, paddingTop: 18, fontSize: 12, letterSpacing: "0.06em", color: T.onDarkMuted, flexWrap: "wrap" }}>
+          <span>© {new Date().getFullYear()} Andrew McCulloch Jewellers — 7 The Square, Beeston, Nottingham ·{" "}
+            <a href="tel:+441159257552" style={{ color: T.onDarkStep, borderBottom: `1px solid ${T.ruleDarkStrong}` }}>0115 925 7552</a> ·{" "}
+            <a href="mailto:has@mccullochjewellers.co.uk" style={{ color: T.onDarkStep, borderBottom: `1px solid ${T.ruleDarkStrong}` }}>has@mccullochjewellers.co.uk</a>
+          </span>
           <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
             <Link to="/privacy">Privacy</Link>
             <Link to="/cookies">Cookies</Link>
@@ -130,7 +155,7 @@ const FooterV2 = (): JSX.Element => {
             <Link to="/trust-guarantees">Guarantees</Link>
           </div>
         </div>
-        <div style={{ paddingTop: 14, fontSize: 10, letterSpacing: "0.06em", color: T.onDarkMuted, lineHeight: 1.6 }}>
+        <div style={{ paddingTop: 14, fontSize: 12, letterSpacing: "0.04em", color: T.onDarkMuted, lineHeight: 1.6 }}>
           Beeston Jewellers Ltd, registered in England &amp; Wales No. 10915704. VAT No. 275322603. Registered office: 7 The Square, Beeston, Nottinghamshire, NG9 2JG.
         </div>
       </div>

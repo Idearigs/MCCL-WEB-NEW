@@ -291,15 +291,28 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
     [matches]
   );
 
-  // Browse tiles from real category depth
+  // Wedding bands and watches live in their own catalogues (not /products), so their
+  // browse-tile counts come from those endpoints; their pictures are the menu's own.
+  const [extraCounts, setExtraCounts] = useState<{ wedding: number; watches: number }>({ wedding: 0, watches: 0 });
+  useEffect(() => {
+    if (!isOpen || extraCounts.wedding || extraCounts.watches) return;
+    Promise.all([
+      fetch(`${API_BASE_URL}/wedding/designs`).then((r) => r.json()).then((d) => Number(d?.total) || 0).catch(() => 0),
+      fetch(`${API_BASE_URL}/watches?limit=1`).then((r) => r.json()).then((d) => Number(d?.data?.pagination?.total_items) || 0).catch(() => 0),
+    ]).then(([wedding, watches]) => setExtraCounts({ wedding, watches }));
+  }, [isOpen]); // eslint-disable-line
+
+  // Browse tiles from real category depth. A zero count is hidden rather than printed.
   const browse = useMemo(() => {
     return GROUP_ORDER.map((label) => {
       const items = catalogue.filter((e) => e.group === label);
-      const noun = label === "Wedding bands" ? "bands" : label === "Watches" ? "watches" : label === "Engagement rings" ? "rings" : "pieces";
+      const noun = label === "Wedding bands" ? "designs" : label === "Watches" ? "watches" : label === "Engagement rings" ? "rings" : "pieces";
       const short = label === "Engagement rings" ? "Engagement" : label === "Wedding bands" ? "Wedding" : label;
-      return { label: short, count: `${items.length} ${noun}`, image: items.find((i) => i.image)?.image, to: label === "Engagement rings" ? "/engagement-rings" : label === "Wedding bands" ? "/wedding" : label === "Watches" ? "/watches" : "/jewellery" };
+      const n = label === "Wedding bands" ? extraCounts.wedding : label === "Watches" ? extraCounts.watches : items.length;
+      const image = label === "Wedding bands" ? "/images/Wedding.jpg" : label === "Watches" ? "/images/sample-watch.avif" : items.find((i) => i.image)?.image;
+      return { label: short, count: n ? `${n.toLocaleString("en-GB")} ${noun}` : "", image, to: label === "Engagement rings" ? "/engagement-rings" : label === "Wedding bands" ? "/wedding" : label === "Watches" ? "/watches" : "/jewellery" };
     });
-  }, [catalogue]);
+  }, [catalogue, extraCounts]);
 
   const total = matches.length + guideMatches.length;
   const idle = !q;
@@ -412,10 +425,10 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
           {browse.map((b) => (
             <button key={b.label} type="button" onClick={() => go(b.to)} style={{ display: "block", textAlign: "left", background: "transparent", border: 0, padding: 0, cursor: "pointer", fontFamily: FONT_BODY }}>
               <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
-                {b.image && <img src={getMediaUrl(b.image)} alt={b.label} onError={onImgError} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
+                {b.image && <img src={b.image.startsWith("/images/") ? b.image : getMediaUrl(b.image)} alt={b.label} onError={onImgError} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
               </div>
               <div style={{ fontSize: 13, marginTop: 12, color: T.ink }}>{b.label}</div>
-              <div style={{ fontSize: 11.5, color: M2, marginTop: 4 }}>{b.count}</div>
+              {b.count && <div style={{ fontSize: 12, color: M2, marginTop: 4 }}>{b.count}</div>}
             </button>
           ))}
         </div>

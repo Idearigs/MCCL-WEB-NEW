@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, User as UserIcon } from "lucide-react";
+import { Menu, X, Search as SearchIcon, User as UserIcon } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoritesContext";
 import { useUserAuth } from "../../contexts/UserAuthContext";
@@ -110,9 +110,10 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
   const openWishlist = () => { setWishVisible(true); setTimeout(() => setWishOpen(true), 10); };
   const closeWishlist = () => { setWishOpen(false); setTimeout(() => setWishVisible(false), 300); };
 
-  // Scroll → solid header
+  // Scroll → solid header; on the homepage the top bar folds away after the first screen.
+  const [pastHero, setPastHero] = useState(false);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => { setScrolled(window.scrollY > 40); setPastHero(window.scrollY > window.innerHeight * 0.85); };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
@@ -124,6 +125,14 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
       .then(d => { if (d.success) setNavigationData(d.data); }).catch(() => {});
     fetch(`${API_BASE_URL}/watches/featured-collections`).then(r => r.json())
       .then(d => { if (d.success) setWatchBrands(d.data); }).catch(() => {});
+  }, []);
+
+  // The earring / necklace / bracelet type lists only appear in the Jewellery menu, so fetch
+  // them the first time that menu (or the phone drawer) opens, not on every page load.
+  const [wantJewelTypes, setWantJewelTypes] = useState(false);
+  useEffect(() => { if (menu === "jewellery" || mobileOpen) setWantJewelTypes(true); }, [menu, mobileOpen]);
+  useEffect(() => {
+    if (!wantJewelTypes) return;
     Promise.all([
       fetch(`${API_BASE_URL}/filters/earring-types`).then(r => r.json()).catch(() => ({})),
       fetch(`${API_BASE_URL}/filters/necklace-types`).then(r => r.json()).catch(() => ({})),
@@ -133,7 +142,14 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
       if (n.success) setNecklaceTypes(n.data || []);
       if (b.success) setBraceletTypes(b.data || []);
     });
-  }, []);
+  }, [wantJewelTypes]);
+
+  // While the phone menu is open the floating chat button is hidden (it covered the
+  // booking button); ChatWidgetV2 reads this attribute.
+  useEffect(() => {
+    if (mobileOpen) document.body.setAttribute("data-v2-menu", "open"); else document.body.removeAttribute("data-v2-menu");
+    return () => document.body.removeAttribute("data-v2-menu");
+  }, [mobileOpen]);
 
   const menuContent = useMemo<Record<string, MenuContent>>(() => {
     const enc = encodeURIComponent;
@@ -161,7 +177,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
           },
           {
             title: "Metals",
-            links: (navigationData?.metals || []).filter(i => !i.name.startsWith("_TEST")).slice(0, 7).map(i => ({ label: i.name, to: `/engagement-rings?metal=${enc(i.name)}` })),
+            links: (navigationData?.metals || []).filter(i => !i.name.startsWith("_TEST")).slice(0, 7).map(i => ({ label: i.name.replace(/\bRed\b/, "Rose"), to: `/engagement-rings?metal=${enc(i.name)}` })),
             shopAll: { label: "Shop all", to: "/engagement-rings?metal=all" },
           },
         ],
@@ -263,74 +279,9 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
 
   const active = menu ? menuContent[menu] : null;
 
-  return (
-    <>
-      <style>{`
-        .v2nav a { color: inherit; text-decoration: none; }
-        .v2nav-item { position: relative; padding: 6px 0; border-bottom: 1px solid transparent; white-space: nowrap; transition: border-color 0.25s ease, color 0.25s ease; }
-        .v2nav-item:hover { border-bottom-color: ${T.ink}; }
-        .v2nav-util { transition: color 0.25s ease; cursor: pointer; background: none; border: 0; font: inherit; padding: 0; }
-        .v2nav-util:hover { color: ${T.gold}; }
-        .v2nav-sublink { display: block; padding: 5px 6px 5px 8px; margin-left: -8px; font-size: 13px; color: ${T.body}; border-radius: 3px; transition: background 0.2s ease, color 0.2s ease; }
-        .v2nav-sublink:hover { background: ${T.tint}; color: ${T.ink}; }
-        .v2nav-shopall { display: inline-block; margin-top: 14px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid ${T.ruleStrong}; padding-bottom: 4px; transition: color 0.2s ease; }
-        .v2nav-shopall:hover { color: ${T.gold}; }
-        .v2nav-coltitle { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.ink}; padding-bottom: 14px; border-bottom: 1px solid ${T.rule}; margin-bottom: 14px; }
-        @keyframes v2drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-        @keyframes v2itemIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
-        @keyframes v2subIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-        @media (prefers-reduced-motion: reduce) { .v2drawer, .v2drawer * { animation: none !important; } }
-      `}</style>
-
-      <div ref={navRef} className="v2nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, fontFamily: FONT_BODY }}>
-        {/* Trust / reassurance strip — sits above the header on every page.
-            Transparent over the homepage hero (forceSolid false, not yet scrolled),
-            solid dark once scrolled or on any forced-solid page. */}
-        <TrustBarV2 solid={forceSolid || scrolled} />
-
-        {/* Header */}
-        <header
-          onMouseLeave={() => setMenu(null)}
-          style={{ position: "relative", zIndex: 50, background: headerBg, backdropFilter: blur, WebkitBackdropFilter: blur, borderBottom: `1px solid ${headerBorder}`, transition: "background 0.35s ease, border-color 0.35s ease" }}
-        >
-          {/* Desktop row */}
-          {/* Full link row from 1280px; below that the menu drawer (ten links need the width). */}
-          <div className="hidden xl:grid" style={{ gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "clamp(16px, 2vw, 48px)", padding: "16px clamp(24px, 3vw, 52px)" }}>
-            <Link to="/" onMouseEnter={() => setMenu(null)} style={{ display: "block", lineHeight: 1 }}>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 25, letterSpacing: "0.16em", color: navColor, transition: "color 0.35s ease" }}>McCulloch</div>
-              <div style={{ fontSize: 8.5, letterSpacing: "0.44em", textTransform: "uppercase", color: utilColor, marginTop: 5, paddingLeft: 3, transition: "color 0.35s ease" }}>Fine jewellery</div>
-            </Link>
-
-            <nav style={{ display: "flex", justifyContent: "center", gap: "clamp(12px, 1.3vw, 30px)", whiteSpace: "nowrap", fontSize: 12.5, letterSpacing: "0.02em", color: navColor, transition: "color 0.35s ease" }}>
-              {NAV_ITEMS.map(item => (
-                <Link key={item.key} to={item.to} reloadDocument={item.to.startsWith("/blog")} className="v2nav-item" onMouseEnter={() => setMenu(item.hasMenu ? item.key : null)}>
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "clamp(12px, 1.4vw, 20px)", whiteSpace: "nowrap", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor, transition: "color 0.35s ease" }}>
-              <button className="v2nav-util" onMouseEnter={() => setMenu(null)} onClick={() => setSearchOpen(true)}>Search</button>
-              <button className="v2nav-util" onClick={openWishlist} style={{ display: "flex", alignItems: "baseline", gap: 5 }}>Saved{favoritesCount > 0 ? <span style={{ color: T.gold }}>{favoritesCount}</span> : null}</button>
-              {isAuthenticated
-                ? <Link to="/account" className="v2nav-util" title={`Signed in as ${user?.email || accountFirstName}`} style={{ display: "flex", alignItems: "center", gap: 6 }}><UserIcon size={15} strokeWidth={1.6} /><span style={{ textTransform: "none", letterSpacing: "0.02em" }}>{accountFirstName}</span></Link>
-                : <button className="v2nav-util" onClick={() => setAuthOpen(true)}>Account</button>}
-              <button className="v2nav-util" onClick={openCart}>Bag ({getCartCount()})</button>
-            </div>
-          </div>
-
-          {/* Mobile row */}
-          <div className="flex xl:hidden" style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
-            <button className="v2nav-util" onClick={() => setMobileOpen(true)} aria-label="Menu"><Menu style={{ width: 22, height: 22, color: navColor }} /></button>
-            <Link to="/" style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, letterSpacing: "0.15em", color: navColor }}>McCulloch</div>
-            </Link>
-            <button className="v2nav-util" onClick={openCart} style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor }}>Bag ({getCartCount()})</button>
-          </div>
-
-          {/* Mega menu */}
-          {active && (
-            <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: T.paper, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}`, boxShadow: "0 24px 48px -32px rgba(28,26,23,0.22)" }}>
+  // Desktop mega menu: opened by hover or keyboard focus on its top-level link.
+  const megaPanel = active ? (
+            <div id="v2nav-panel" style={{ position: "absolute", top: "100%", left: 0, right: 0, whiteSpace: "normal", textAlign: "left", letterSpacing: "normal", fontSize: 14, color: T.ink, background: T.paper, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}`, boxShadow: "0 24px 48px -32px rgba(28,26,23,0.22)" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: "clamp(32px, 4vw, 72px)", padding: "clamp(32px, 3vw, 48px) clamp(24px, 3vw, 52px)", maxWidth: 1560, margin: "0 auto" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(24px, 3vw, 56px)" }}>
                   {active.columns.map((col, ci) => (
@@ -356,7 +307,94 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
                 </Link>
               </div>
             </div>
-          )}
+  ) : null;
+
+  return (
+    <>
+      <style>{`
+        .v2nav a { color: inherit; text-decoration: none; }
+        .v2nav-item { position: relative; padding: 6px 0; border-bottom: 1px solid transparent; white-space: nowrap; transition: border-color 0.25s ease, color 0.25s ease; }
+        .v2nav-item:hover { border-bottom-color: ${T.ink}; }
+        .v2nav-util { transition: color 0.25s ease; cursor: pointer; background: none; border: 0; font: inherit; padding: 10px 0; }
+        .v2nav-tap { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 !important; }
+        .v2-skip { position: fixed; left: 12px; top: -60px; z-index: 100; padding: 12px 18px; background: ${T.ink}; color: ${T.paper}; font-family: ${FONT_BODY}; font-size: 13px; text-decoration: none; transition: top 0.2s ease; }
+        .v2-skip:focus { top: 12px; }
+        .v2nav-util:hover { color: ${T.gold}; }
+        .v2nav-sublink { display: block; padding: 5px 6px 5px 8px; margin-left: -8px; font-size: 13px; color: ${T.body}; border-radius: 3px; transition: background 0.2s ease, color 0.2s ease; }
+        .v2nav-sublink:hover { background: ${T.tint}; color: ${T.ink}; }
+        .v2nav-shopall { display: inline-block; margin-top: 14px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid ${T.ruleStrong}; padding-bottom: 4px; transition: color 0.2s ease; }
+        .v2nav-shopall:hover { color: ${T.gold}; }
+        .v2nav-coltitle { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.ink}; padding-bottom: 14px; border-bottom: 1px solid ${T.rule}; margin-bottom: 14px; }
+        @keyframes v2drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes v2itemIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+        @keyframes v2subIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .v2drawer, .v2drawer * { animation: none !important; } }
+      `}</style>
+
+      <a href="#main" className="v2-skip">Skip to content</a>
+      <div ref={navRef} className="v2nav" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 60, fontFamily: FONT_BODY }}>
+        {/* Trust / reassurance strip — sits above the header on every page.
+            Transparent over the homepage hero (forceSolid false, not yet scrolled),
+            solid dark once scrolled or on any forced-solid page. */}
+        <TrustBarV2 solid={forceSolid || scrolled} hidden={!forceSolid && pastHero} />
+
+        {/* Header */}
+        <header
+          onMouseLeave={() => setMenu(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && menu) {
+              const key = menu; setMenu(null);
+              (document.getElementById(`v2nav-top-${key}`) as HTMLElement | null)?.focus();
+            }
+          }}
+          style={{ position: "relative", zIndex: 50, background: headerBg, backdropFilter: blur, WebkitBackdropFilter: blur, borderBottom: `1px solid ${headerBorder}`, transition: "background 0.35s ease, border-color 0.35s ease" }}
+        >
+          {/* Desktop row */}
+          {/* Full link row from 1280px; below that the menu drawer (ten links need the width). */}
+          <div className="hidden xl:grid" style={{ gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "clamp(16px, 2vw, 48px)", padding: "16px clamp(24px, 3vw, 52px)" }}>
+            <Link to="/" onMouseEnter={() => setMenu(null)} onFocus={() => setMenu(null)} style={{ display: "block", lineHeight: 1 }}>
+              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 25, letterSpacing: "0.16em", color: navColor, transition: "color 0.35s ease" }}>McCulloch</div>
+              <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: utilColor, marginTop: 5, paddingLeft: 3, transition: "color 0.35s ease" }}>Fine jewellery</div>
+            </Link>
+
+            <nav style={{ display: "flex", justifyContent: "center", gap: "clamp(12px, 1.3vw, 30px)", whiteSpace: "nowrap", fontSize: 12.5, letterSpacing: "0.02em", color: navColor, transition: "color 0.35s ease" }}>
+              {NAV_ITEMS.map(item => (
+                <React.Fragment key={item.key}>
+                  <Link id={`v2nav-top-${item.key}`} to={item.to} reloadDocument={item.to.startsWith("/blog")} className="v2nav-item"
+                    onMouseEnter={() => setMenu(item.hasMenu ? item.key : null)}
+                    onFocus={() => setMenu(item.hasMenu ? item.key : null)}
+                    aria-haspopup={item.hasMenu ? "true" : undefined}
+                    aria-expanded={item.hasMenu ? menu === item.key : undefined}
+                    aria-controls={item.hasMenu ? "v2nav-panel" : undefined}>
+                    {item.label}
+                  </Link>
+                  {item.hasMenu && menu === item.key && megaPanel}
+                </React.Fragment>
+              ))}
+            </nav>
+
+            <div onFocus={() => setMenu(null)} style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "clamp(12px, 1.4vw, 20px)", whiteSpace: "nowrap", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor, transition: "color 0.35s ease" }}>
+              <button className="v2nav-util" onMouseEnter={() => setMenu(null)} onClick={() => setSearchOpen(true)}>Search</button>
+              <button className="v2nav-util" onClick={openWishlist} style={{ display: "flex", alignItems: "baseline", gap: 5 }}>Saved{favoritesCount > 0 ? <span style={{ color: T.gold }}>{favoritesCount}</span> : null}</button>
+              {isAuthenticated
+                ? <Link to="/account" className="v2nav-util" title={`Signed in as ${user?.email || accountFirstName}`} style={{ display: "flex", alignItems: "center", gap: 6 }}><UserIcon size={15} strokeWidth={1.6} /><span style={{ textTransform: "none", letterSpacing: "0.02em" }}>{accountFirstName}</span></Link>
+                : <button className="v2nav-util" onClick={() => setAuthOpen(true)}>Account</button>}
+              <button className="v2nav-util" onClick={openCart}>Bag ({getCartCount()})</button>
+            </div>
+          </div>
+
+          {/* Mobile row */}
+          <div className="flex xl:hidden" style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
+            <button className="v2nav-util v2nav-tap" onClick={() => setMobileOpen(true)} aria-label="Menu" style={{ marginLeft: -11 }}><Menu style={{ width: 22, height: 22, color: navColor }} /></button>
+            <Link to="/" style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, letterSpacing: "0.15em", color: navColor }}>McCulloch</div>
+            </Link>
+            <div style={{ display: "flex", alignItems: "center", marginRight: -6 }}>
+              <button className="v2nav-util v2nav-tap" onClick={() => setSearchOpen(true)} aria-label="Search"><SearchIcon style={{ width: 19, height: 19, color: navColor }} strokeWidth={1.6} /></button>
+              <button className="v2nav-util v2nav-tap" onClick={openCart} style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor }}>Bag ({getCartCount()})</button>
+            </div>
+          </div>
+
         </header>
       </div>
 
@@ -365,7 +403,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
         <div className="v2drawer" style={{ position: "fixed", inset: 0, zIndex: 70, background: T.paper, fontFamily: FONT_BODY, display: "flex", flexDirection: "column", animation: "v2drawerIn 0.34s cubic-bezier(0.22,1,0.36,1)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${T.rule}`, flex: "none" }}>
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: 20, letterSpacing: "0.15em", color: T.ink }}>McCulloch</div>
-            <button className="v2nav-util" onClick={() => setMobileOpen(false)} aria-label="Close"><X style={{ width: 24, height: 24, color: T.ink }} /></button>
+            <button className="v2nav-util v2nav-tap" onClick={() => setMobileOpen(false)} aria-label="Close" style={{ marginRight: -10 }}><X style={{ width: 24, height: 24, color: T.ink }} /></button>
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", padding: "8px 20px 28px" }}>

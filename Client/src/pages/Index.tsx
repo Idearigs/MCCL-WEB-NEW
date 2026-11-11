@@ -22,7 +22,7 @@ const Index = (): JSX.Element => {
       <NavigationV2 />
       <SeasonalOfferV2 />
       <ChatWidget user={user} />
-      <MainContentV2 />
+      <main id="main"><MainContentV2 /></main>
       <FooterV2 />
     </div>
   );

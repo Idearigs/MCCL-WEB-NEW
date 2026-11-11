@@ -18,6 +18,7 @@ export const T = {
   onDarkStep: '#E5DFD4',
   // Accent
   gold: '#A8813C',
+  goldText: '#7A5C22', // gold for small text on cream/tint: 4.5:1+ (the brand gold is ~3.3:1)
   // Lines
   rule: '#E3DDD0',
   ruleSoft: '#DCD3C4',

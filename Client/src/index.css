@@ -595,3 +595,7 @@
     cursor: pointer;
   }
 }
+
+
+/* Keyboard focus: a clear ring that shows on both light pages and the hero video (audit L9). */
+:focus-visible { outline: 2px solid #A8813C; outline-offset: 3px; box-shadow: 0 0 0 5px rgba(28, 26, 23, 0.35); }
