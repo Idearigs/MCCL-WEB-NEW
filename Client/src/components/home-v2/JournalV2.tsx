@@ -58,7 +58,8 @@ const JournalV2 = ({ pageX, h2Style }: JournalV2Props): JSX.Element | null => {
   if (cards.length === 0) return null;
 
   return (
-    <section id="journal" style={{ padding: `0 ${pageX} ${SP}` }}>
+    // Carries its own top spacing: it only renders when there are posts, so the gap goes with it.
+    <section id="journal" style={{ padding: `${SP} ${pageX}` }}>
       <div className="v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
         <h2 style={{ ...h2Style, fontSize: "clamp(24px, 2.4vw, 34px)" }}>The journal</h2>
         <a href="/blog/" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>All articles</a>
