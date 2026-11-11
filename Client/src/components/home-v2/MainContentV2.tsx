@@ -510,7 +510,7 @@ const MainContentV2 = (): JSX.Element => {
       <JournalV2 pageX={pageX} h2Style={h2Style} />
 
       {/* 9. SHOWROOM / APPOINTMENT */}
-      <section id="appointment" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", borderTop: `1px solid ${T.rule}`, background: T.tint }} className="v2-split">
+      <section id="appointment" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", borderTop: `1px solid ${T.rule}`, background: T.paper }} className="v2-split">
         <div className="v2-reveal" style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 40, padding: "clamp(56px, 6vw, 104px) clamp(32px, 4vw, 80px)" }}>
           <div>
             <div style={{ ...eyebrow, marginBottom: 20 }}>Visit us</div>
