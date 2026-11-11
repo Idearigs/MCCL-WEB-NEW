@@ -145,7 +145,7 @@ const WeddingRingDetail = (): JSX.Element => {
     const col = design?.collection; if (!col) return;
     fetch(`${API_BASE_URL}/wedding/designs`)
       .then(r => r.json())
-      .then(d => { if (d.success) { setLabels(d.labels || {}); setMembers((d.designs || []).filter((x: any) => x.collection === col)); } })
+      .then(d => { if (d.success) { setLabels(d.labels || {}); setMembers((d.designs || []).filter((x: any) => x.collection === col && (x.category !== "Cluster" || x.category === design?.category))); } })
       .catch(() => {});
   }, [design?.collection]);
 

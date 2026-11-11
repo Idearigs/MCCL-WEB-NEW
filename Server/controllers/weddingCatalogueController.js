@@ -38,6 +38,9 @@ exports.listDesigns = async (req, res) => {
     const params = [];
     let where = 'WHERE d.is_active = TRUE';
     if (category && category !== 'all') { params.push(category); where += ` AND d.category = $${params.length}`; }
+    // Cluster rings are engagement-style pieces (moved to Engagement), so they never appear
+    // among the wedding bands unless that category is asked for explicitly.
+    else where += ` AND d.category <> 'Cluster'`;
 
     const { rows } = await pool.query(
       `SELECT d.design_id, d.category, d.design_name, d.design_family,

@@ -87,7 +87,8 @@ const WeddingListingV2 = (): JSX.Element => {
     let alive = true;
     fetch(`${API_BASE_URL}/wedding/designs`)
       .then(r => r.json())
-      .then(d => { if (alive && d.success) { setDesigns(d.designs || []); setLabels(d.labels || {}); } })
+      // Cluster (engagement-style) rings are never listed among wedding bands.
+      .then(d => { if (alive && d.success) { setDesigns((d.designs || []).filter((x: ApiDesign) => x.category !== "Cluster")); setLabels(d.labels || {}); } })
       .catch(() => {})
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
@@ -334,11 +335,11 @@ const WeddingListingV2 = (): JSX.Element => {
               <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6E6A60", marginBottom: 20 }}>
                 <Link to="/">Home</Link><span style={{ color: T.ruleStrong }}>/</span><span style={{ color: T.ink }}>Wedding rings</span>
               </div>
-              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(40px,5vw,78px)", lineHeight: 1.02, letterSpacing: "0.005em", margin: 0, maxWidth: "16ch" }}>Made for a lifetime.</h1>
+              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(40px,5vw,78px)", lineHeight: 1.02, letterSpacing: "0.005em", margin: 0, maxWidth: "16ch" }}>A ring for a lifetime.</h1>
             </div>
             <div style={{ margin: "0 0 6px", maxWidth: "46ch", fontSize: 15, lineHeight: 1.75, color: T.body }}>
-              <p style={{ margin: 0 }}>Discover our collection of beautifully crafted wedding bands, designed to celebrate your love and last a lifetime. Choose from a wide range of styles, precious metals and finishes, with each ring made to your individual preferences.</p>
-              <p style={{ margin: "14px 0 0" }}>From timeless simplicity to something uniquely yours, find the perfect symbol of your commitment.</p>
+              <p style={{ margin: 0 }}>From the simplicity of a classic wedding band to more distinctive designs, explore a wide selection of profiles, widths and stone settings.</p>
+              <p style={{ margin: "14px 0 0" }}>Whether your preference is timeless and understated or something more individual, our aim is to help you find a ring that feels perfectly suited to you.</p>
             </div>
           </div>
         </section>
