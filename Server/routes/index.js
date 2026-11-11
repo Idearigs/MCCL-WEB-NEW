@@ -23,6 +23,7 @@ const appointmentRoutes = require('./appointments');
 const pieceRoutes = require('./pieces');
 const weddingCatalogueRoutes = require('./weddingCatalogue');
 const secureViewingRoutes = require('./secureViewing');
+const contactRoutes = require('./contact');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -57,6 +58,7 @@ router.use('/appointments', appointmentRoutes);
 router.use('/pieces', pieceRoutes);
 router.use('/wedding', weddingCatalogueRoutes);
 router.use('/secure-viewing', secureViewingRoutes);
+router.use('/contact', contactRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {

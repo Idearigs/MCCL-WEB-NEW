@@ -334,9 +334,12 @@ const WeddingListingV2 = (): JSX.Element => {
               <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6E6A60", marginBottom: 20 }}>
                 <Link to="/">Home</Link><span style={{ color: T.ruleStrong }}>/</span><span style={{ color: T.ink }}>Wedding rings</span>
               </div>
-              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(40px,5vw,78px)", lineHeight: 1.02, letterSpacing: "0.005em", margin: 0, maxWidth: "16ch" }}>Bands made for wearing.</h1>
+              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(40px,5vw,78px)", lineHeight: 1.02, letterSpacing: "0.005em", margin: 0, maxWidth: "16ch" }}>Made for a lifetime.</h1>
             </div>
-            <p style={{ margin: "0 0 6px", maxWidth: "42ch", fontSize: 15, lineHeight: 1.75, color: T.body }}>{designs.length ? `${designs.length.toLocaleString()} designs` : "Our full collection"}, each made to your width, profile and weight in up to thirteen metals. Every design is shown once — choose the colourway on the left to see them in yellow, white or rose.</p>
+            <div style={{ margin: "0 0 6px", maxWidth: "46ch", fontSize: 15, lineHeight: 1.75, color: T.body }}>
+              <p style={{ margin: 0 }}>Discover our collection of beautifully crafted wedding bands, designed to celebrate your love and last a lifetime. Choose from a wide range of styles, precious metals and finishes, with each ring made to your individual preferences.</p>
+              <p style={{ margin: "14px 0 0" }}>From timeless simplicity to something uniquely yours, find the perfect symbol of your commitment.</p>
+            </div>
           </div>
         </section>
 
@@ -351,6 +354,10 @@ const WeddingListingV2 = (): JSX.Element => {
           <aside className="wl-aside-desktop" style={{ position: "sticky", top: NAV_H + 12 }}>{rail}</aside>
 
           <div>
+            {/* Design count and colourway guidance, beside the filters (client copy review, Nov 2026) */}
+            <p style={{ margin: "0 0 16px", maxWidth: "78ch", fontSize: 13, lineHeight: 1.65, color: T.body }}>
+              {designs.length ? `${designs.length.toLocaleString()} designs` : "Our full collection"}, each made to your width, profile and weight in up to thirteen metals. Every design is shown once — choose a colourway in the filters to see them in yellow, white or rose.
+            </p>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", gap: 16, paddingBottom: 14, borderBottom: `1px solid ${T.rule}` }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
                 <span style={{ fontSize: 13, color: T.ink }}>{loading ? "Loading…" : (grouped.length === 1 ? "1 design" : grouped.length.toLocaleString() + " designs")}</span>

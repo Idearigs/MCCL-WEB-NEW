@@ -146,12 +146,12 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
               ...(navigationData?.ring_types || []).filter(i => !/cluster/i.test(i.name)).slice(0, 8).map(i => ({ label: i.name, to: `/engagement-rings?ringType=${enc(i.name)}` })),
               { label: "Cluster", to: `/engagement-rings?ringType=${enc("Cluster")}` },
             ],
-            shopAll: { label: "Shop all", to: "/engagement-rings" },
+            shopAll: { label: "Shop all", to: "/engagement-rings?ringType=all" },
           },
           {
             title: "Gemstones",
             links: (navigationData?.gemstones || []).slice(0, 8).map(i => ({ label: i.name, to: `/engagement-rings?gemstone=${enc(i.name)}` })),
-            shopAll: { label: "Shop all", to: "/engagement-rings" },
+            shopAll: { label: "Shop all", to: "/engagement-rings?gemstone=all" },
           },
           {
             title: "Eternity rings",
@@ -160,7 +160,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
           {
             title: "Metals",
             links: (navigationData?.metals || []).filter(i => !i.name.startsWith("_TEST")).slice(0, 7).map(i => ({ label: i.name, to: `/engagement-rings?metal=${enc(i.name)}` })),
-            shopAll: { label: "Shop all", to: "/engagement-rings" },
+            shopAll: { label: "Shop all", to: "/engagement-rings?metal=all" },
           },
         ],
         feature: { title: "The Celestial Collection", to: "/engagement-rings", img: "/images/Engagement.png" },

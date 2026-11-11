@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import API_BASE_URL, { getMediaUrl } from "../../config/api";
 import { T, FONT_DISPLAY, FONT_BODY, SP } from "./tokens";
 import ReviewForm from "./ReviewForm";
-import PromoBarV2 from "./PromoBarV2";
 
 /**
  * MainContentV2 — the homepage v2 body (everything between nav and footer).
@@ -252,9 +251,6 @@ const MainContentV2 = (): JSX.Element => {
         </div>
       </section>
 
-      {/* Seasonal promotion strip — moved here, directly under the hero */}
-      <PromoBarV2 />
-
       {/* 2. CATEGORY BAND */}
       <section style={{ display: "flex", height: "clamp(380px, 46vh, 500px)", gap: 2, background: T.paper }} className="v2-catband">
         {[
@@ -312,16 +308,24 @@ const MainContentV2 = (): JSX.Element => {
           </div>
           <div className="v2-reveal" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "clamp(56px, 6vw, 104px) clamp(32px, 4.5vw, 88px)" }}>
             <div style={{ ...eyebrow, marginBottom: 22 }}>03 — Bespoke</div>
-            <h2 style={{ ...h2Style, color: "#FFFFFF", fontSize: "clamp(34px, 3.8vw, 58px)", marginBottom: 24 }}>Designed with you, over six weeks.</h2>
-            <p style={{ maxWidth: "44ch", margin: "0 0 44px", fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>You meet the person who will make it. We draw, you choose the stone, and the piece is cut, set and finished on site.</p>
+            <h2 style={{ ...h2Style, color: "#FFFFFF", fontSize: "clamp(34px, 3.8vw, 58px)", marginBottom: 24 }}>Designed with you.<br />Crafted by us.</h2>
+            <p style={{ maxWidth: "44ch", margin: "0 0 44px", fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>A truly personal journey, from your first idea to the finished piece. Work directly with our jewellers to create something uniquely yours, combining your vision with generations of craftsmanship.</p>
             <div>
-              {[["01", "Consultation, in the showroom or by video"], ["02", "Drawings and stone selection"], ["03", "Making, setting and hallmarking"]].map(([n, label], i, a) => (
+              {[
+                ["01", "Personal consultation", "Share your ideas, inspirations and preferences with our jeweller."],
+                ["02", "Design & gemstone selection", "Explore your design and choose the perfect stones and precious metals."],
+                ["03", "Crafted especially for you", "Your piece is expertly made, set and finished with meticulous attention to detail."],
+              ].map(([n, label, note], i, a) => (
                 <div key={n} style={{ display: "grid", gridTemplateColumns: "26px 1fr", gap: 14, alignItems: "baseline", padding: "20px 0", borderTop: `1px solid ${T.ruleDark}`, borderBottom: i === a.length - 1 ? `1px solid ${T.ruleDark}` : undefined }}>
                   <span style={{ fontSize: 12, letterSpacing: "0.14em", color: T.onDarkMuted }}>{n}</span>
-                  <span style={{ fontSize: 14.5, color: T.onDarkStep }}>{label}</span>
+                  <span>
+                    <span style={{ display: "block", fontSize: 14.5, color: T.onDarkStep }}>{label}</span>
+                    <span style={{ display: "block", marginTop: 6, fontSize: 13.5, lineHeight: 1.6, color: T.onDarkBody }}>{note}</span>
+                  </span>
                 </div>
               ))}
             </div>
+            <p style={{ margin: "22px 0 0", fontSize: 13, fontStyle: "italic", color: T.onDarkMuted }}>Most bespoke creations take approximately six weeks, depending on the design.</p>
             <Link to="/bespoke-design" className="v2-btn-outline-d" style={{ alignSelf: "flex-start", marginTop: 44, padding: "14px 28px", border: `1px solid ${T.ruleDarkStrong}`, color: "#FFFFFF", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Start a commission</Link>
           </div>
         </div>

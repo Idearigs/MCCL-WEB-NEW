@@ -25,7 +25,9 @@ type Key = "availability" | "style" | "metal" | "stone" | "detail";
 const AVAIL_LIVE = "Ready to ship";
 const AVAIL_ORDER = "Made to order";
 interface CatDef {
-  slug: string; label: string; standfirst: string;
+  slug: string; label: string;
+  standfirst: string[]; // intro paragraphs (client-approved copy, Nov 2026)
+  cta?: { label: string; to: string; kind: "link" | "button" };
   only?: RegExp; // keep only products whose name matches (pendants share the necklaces category)
   styles: string[]; detailTitle: string; detailOptions: string[];
   band: { headline: string; body: string; guide: { k: string; title: string; meta: string; note: string }[] };
@@ -37,7 +39,11 @@ const STONES = ["Diamond", "Sapphire", "Emerald", "None"];
 const CATS: Record<string, CatDef> = {
   earrings: {
     slug: "earrings", label: "Earrings",
-    standfirst: "Studs, hoops and drops made to order on our own bench — balanced for the weight of an evening, not just the look in the box.",
+    standfirst: [
+      "Discover our beautiful collection of earrings, from timeless classics to distinctive designs. Perfect for everyday elegance, special occasions or thoughtful gifts.",
+      "Looking for something unique? Let us create your perfect pair with our bespoke jewellery service.",
+    ],
+    cta: { label: "Explore Our Bespoke Service", to: "/bespoke-design", kind: "link" },
     styles: ["Studs", "Hoops", "Drops", "Climbers"],
     detailTitle: "Fastening", detailOptions: ["Butterfly", "Screw", "Lever", "Hook"],
     band: {
@@ -53,7 +59,11 @@ const CATS: Record<string, CatDef> = {
   },
   necklaces: {
     slug: "necklaces", label: "Necklaces",
-    standfirst: "Pendants and chains cut to the length you actually wear, hung on chains made to carry them without kinking.",
+    standfirst: [
+      "Discover our carefully selected necklaces and pendants, featuring beautiful gemstones and distinctive designs.",
+      "Have a particular stone, colour, shape or setting in mind? We can create a bespoke piece to suit your style and budget.",
+    ],
+    cta: { label: "Enquire About Bespoke Jewellery", to: "/contact", kind: "button" },
     styles: ["Pendant", "Chain", "Collar", "Station"],
     detailTitle: "Length", detailOptions: ['16"', '18"', '20"', '24"'],
     band: {
@@ -70,7 +80,11 @@ const CATS: Record<string, CatDef> = {
   // Pendants are stored under the necklaces category; this page shows just the pendants.
   pendants: {
     slug: "necklaces", label: "Pendants", only: /pendant/i,
-    standfirst: "Diamond and gemstone pendants made on our own bench, hung on a chain cut to the length you actually wear.",
+    standfirst: [
+      "Discover our carefully selected pendants, featuring beautiful gemstones and distinctive designs.",
+      "Have a particular stone, colour, shape or setting in mind? We can create a bespoke piece to suit your style and budget.",
+    ],
+    cta: { label: "Enquire About Bespoke Jewellery", to: "/contact", kind: "button" },
     styles: ["Solitaire", "Halo", "Cluster", "Drop", "Heart", "Cross"],
     detailTitle: "Length", detailOptions: ['16"', '18"', '20"', '24"'],
     band: {
@@ -86,7 +100,7 @@ const CATS: Record<string, CatDef> = {
   },
   bracelets: {
     slug: "bracelets", label: "Bracelets",
-    standfirst: "Tennis lines, bangles and chains sized to your wrist, so the clasp stays where it should and the piece stays on.",
+    standfirst: ["Tennis lines, bangles and chains sized to your wrist, so the clasp stays where it should and the piece stays on."],
     styles: ["Tennis", "Bangle", "Chain", "Cuff"],
     detailTitle: "Fit", detailOptions: ["Sized to wrist", "Bangle", "Adjustable", "Cuff"],
     band: {
@@ -262,7 +276,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
       {/* Commission card inside the rail */}
       <div style={{ marginTop: 22, padding: "20px", background: T.tint }}>
         <div style={{ fontFamily: FONT_DISPLAY, fontSize: 18, marginBottom: 8 }}>Not quite it?</div>
-        <p style={{ margin: "0 0 14px", fontSize: 13, lineHeight: 1.6, color: T.body }}>If nothing here is right, we make {cat.label.toLowerCase()} to order on our own bench.</p>
+        <p style={{ margin: "0 0 14px", fontSize: 13, lineHeight: 1.6, color: T.body }}>If nothing here is right, we can create a bespoke piece for you.</p>
         <Link to="/bespoke-design" style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink, borderBottom: `1px solid ${T.ruleStrong}`, paddingBottom: 2 }}>Commission it</Link>
       </div>
     </>
@@ -307,7 +321,15 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
 
           <section style={{ padding: "clamp(20px,3vw,40px) clamp(24px,3vw,52px) clamp(36px,4vw,56px)", borderBottom: `1px solid ${T.rule}` }}>
             <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(44px, 5.2vw, 84px)", lineHeight: 1, letterSpacing: "0.005em", margin: "0 0 20px" }}>{cat.label}</h1>
-            <p style={{ margin: 0, maxWidth: "48ch", fontSize: 15, lineHeight: 1.75, color: T.body }}>{cat.standfirst}</p>
+            {cat.standfirst.map((para, i) => (
+              <p key={i} style={{ margin: i ? "14px 0 0" : 0, maxWidth: "52ch", fontSize: 15, lineHeight: 1.75, color: T.body }}>{para}</p>
+            ))}
+            {cat.cta?.kind === "link" && (
+              <Link to={cat.cta.to} style={{ display: "inline-block", marginTop: 18, fontSize: 14, fontWeight: 500, color: T.gold, borderBottom: `1px solid ${T.gold}`, paddingBottom: 2 }}>{cat.cta.label}</Link>
+            )}
+            {cat.cta?.kind === "button" && (
+              <Link to={cat.cta.to} style={{ display: "inline-block", marginTop: 22, padding: "15px 28px", background: T.ink, color: T.paper, fontSize: 11.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>{cat.cta.label}</Link>
+            )}
           </section>
 
           {/* Mobile trigger bar */}

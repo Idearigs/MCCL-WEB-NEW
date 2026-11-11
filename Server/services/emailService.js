@@ -662,7 +662,33 @@ const sendViewingDeclinedEmail = async ({ email, fullName, code }) => sendViewin
     <p style="margin:0; color:#4b5563;">Please speak to a member of our team in the showroom, who will be happy to help.</p>`),
 });
 
+// ── Contact-page enquiries ──────────────────────────────────────────────────
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL || SUPPORT_EMAIL;
+
+/** Shop: a customer sent the contact form. Reply goes straight to the customer. */
+const sendContactEnquiryEmail = async ({ name, email, phone, subject, message, newsletter }) => {
+  const row = (k, v) => `<tr><td style="padding:8px 0; color:#9a8a70; font-size:12px; letter-spacing:1px; text-transform:uppercase; width:120px; vertical-align:top;">${k}</td><td style="padding:8px 0; color:#1a1a1a; font-size:14.5px;">${esc(v) || '—'}</td></tr>`;
+  const when = new Date().toLocaleString('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const transporter = createTransporter();
+  const result = await transporter.sendMail({
+    from: `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+    to: CONTACT_EMAIL,
+    replyTo: `"${String(name).replace(/["\r\n]/g, '')}" <${email}>`,
+    subject: `Website enquiry (${subject}) – ${name}`,
+    html: viewingEmailShell('Website enquiry', 'Website enquiry', esc(subject), `
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${row('Name', name)}${row('Email', email)}${row('Phone', phone)}${row('Subject', subject)}${row('Received', when)}${row('Newsletter', newsletter ? 'Yes, keep them posted' : 'No')}
+      </table>
+      <div style="margin:22px 0 0; padding:18px 20px; background:#f9f6f1; border-radius:4px; color:#1a1a1a; font-size:14.5px; line-height:1.7; white-space:pre-wrap;">${esc(message)}</div>
+      <p style="margin:18px 0 0; color:#6b7280; font-size:13px;">Reply to this email to answer ${esc(name)} directly.</p>`),
+    text: `Website enquiry (${subject})\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '-'}\nReceived: ${when}\nNewsletter: ${newsletter ? 'yes' : 'no'}\n\n${message}`,
+  });
+  logger.info(`Contact enquiry from ${email} sent to ${CONTACT_EMAIL}`);
+  return result;
+};
+
 module.exports = {
+  sendContactEnquiryEmail,
   sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail, sendWelcomeEmail,
   sendViewingRequestReceivedEmail, sendViewingRequestOwnerEmail, sendViewingApprovedEmail, sendViewingDeclinedEmail,
 };
