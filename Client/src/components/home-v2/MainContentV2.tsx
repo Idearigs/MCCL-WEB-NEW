@@ -235,9 +235,10 @@ const MainContentV2 = (): JSX.Element => {
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "end", gap: 48, width: "100%" }} className="v2-hero-grid">
             <div>
               <div className="v2-hero-eyebrow" style={{ fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: "#DED7CB", marginBottom: 20 }}>The Celestial Collection — 2026</div>
-              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(40px, 5vw, 78px)", lineHeight: 0.98, margin: 0, maxWidth: "15ch", color: "#FFFFFF" }}>
-                <span className="v2-hero-line"><span style={{ animationDelay: "0.15s" }}>Made once, for one</span></span>
-                <span className="v2-hero-line"><span style={{ animationDelay: "0.32s" }}>person.</span></span>
+              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(40px, 5vw, 78px)", lineHeight: 0.98, margin: 0, maxWidth: "19ch", color: "#FFFFFF" }}>
+                {/* One sentence per line; a long line wraps evenly rather than leaving one word alone. */}
+                <span className="v2-hero-line"><span style={{ animationDelay: "0.15s", textWrap: "balance" } as React.CSSProperties}>A heritage of craftsmanship.</span></span>
+                <span className="v2-hero-line"><span style={{ animationDelay: "0.32s", textWrap: "balance" } as React.CSSProperties}>A lifetime of meaning.</span></span>
               </h1>
             </div>
             <div style={{ maxWidth: 340, paddingBottom: 6, marginLeft: "auto", marginRight: "clamp(40px, 7vw, 130px)" }}>
