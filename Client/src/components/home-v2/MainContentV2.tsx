@@ -472,7 +472,7 @@ const MainContentV2 = (): JSX.Element => {
       </section>
 
       {/* 7. TESTIMONIALS — published reviews only, plus where to check them and how to leave one */}
-      <section style={{ background: T.tint, padding: `clamp(56px, 5vw, 88px) ${pageX}`, marginBottom: SP }}>
+      <section style={{ background: T.tint, padding: `clamp(56px, 5vw, 88px) ${pageX}` }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: quotes.length ? "clamp(36px, 3.5vw, 56px)" : 0 }}>
           <div style={eyebrow}>What clients say</div>
           <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="v2-textlink" style={{ color: T.ink }}>Read our reviews on Google</a>
