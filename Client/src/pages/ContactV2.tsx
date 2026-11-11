@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
+import API_BASE_URL from "../config/api";
 
 /**
  * Contact — v2 redesign (design_handoff_mcculloch_bag_checkout_contact).
@@ -36,15 +37,31 @@ const DEPARTMENTS: { name: string; note: string; ext: string }[] = [
 const ContactV2 = (): JSX.Element => {
   const [form, setForm] = useState({ name: "", phone: "", email: "", subject: "bespoke", message: "", newsletter: false });
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [website, setWebsite] = useState(""); // hidden spam trap
 
   const set = (k: string, v: string | boolean) => setForm(f => ({ ...f, [k]: v }));
   const placeholder = SUBJECTS.find(s => s.value === form.subject)?.placeholder || "How can we help?";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Emailed to the shop by the API; "sent" is only shown once that has worked.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // No enquiry endpoint yet — surface a confirmation and log the payload.
-    console.log("Contact enquiry:", form);
-    setSent(true);
+    if (sending) return;
+    setSending(true); setError("");
+    try {
+      const r = await fetch(`${API_BASE_URL}/contact`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, website }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.success) throw new Error(d.message || "");
+      setSent(true);
+    } catch (err) {
+      setError(`${(err as Error).message || "We could not send your enquiry just now."} Please try again, or call us on 0115 925 7552.`);
+    } finally {
+      setSending(false);
+    }
   };
 
   const input: React.CSSProperties = {
@@ -175,7 +192,13 @@ const ContactV2 = (): JSX.Element => {
                   Keep me posted on new pieces and events.
                 </label>
 
-                <button type="submit" className="cv2-btn-ink" style={{ width: "100%", padding: 16, cursor: "pointer", background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase" }}>Send enquiry</button>
+                {/* Spam trap: hidden from people, often filled in by bots */}
+                <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" value={website} onChange={e => setWebsite(e.target.value)}
+                  style={{ position: "absolute", left: "-10000px", width: 1, height: 1, opacity: 0 }} />
+
+                {error && <p role="alert" style={{ margin: "0 0 16px", fontSize: 13.5, lineHeight: 1.6, color: "#9B2C2C" }}>{error}</p>}
+
+                <button type="submit" disabled={sending} className="cv2-btn-ink" style={{ width: "100%", padding: 16, cursor: sending ? "default" : "pointer", opacity: sending ? 0.6 : 1, background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase" }}>{sending ? "Sending…" : "Send enquiry"}</button>
               </form>
             )}
           </div>

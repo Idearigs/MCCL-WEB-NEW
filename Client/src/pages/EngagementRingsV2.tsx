@@ -61,15 +61,21 @@ const EngagementRingsV2 = (): JSX.Element => {
     return () => { document.body.style.overflow = ""; };
   }, [sheet, sortSheet]);
 
-  // Seed a filter from the URL (nav mega-menu links pass ?ringType=/?metal= etc.)
+  // Seed a filter from the URL (nav mega-menu links pass ?ringType=/?metal= etc.).
+  // "all" (the menu's "Shop all" links) ticks every option in that group and clears the
+  // others, so the page shows the whole range with that group's choices visible.
   useEffect(() => {
+    const params: [string, GroupKey][] = [["ringType", "style"], ["gemstone", "gem"], ["metal", "metal"], ["collection", "collection"]];
     const seed: Partial<Record<GroupKey, string[]>> = {};
-    const rt = searchParams.get("ringType"); if (rt) seed.style = [rt];
-    const gm = searchParams.get("gemstone"); if (gm) seed.gem = [gm];
-    const mt = searchParams.get("metal"); if (mt) seed.metal = [mt];
-    const co = searchParams.get("collection"); if (co) seed.collection = [co];
-    if (Object.keys(seed).length) setSel(s => ({ ...s, ...seed }));
-  }, [searchParams]);
+    let shopAll = false;
+    for (const [param, key] of params) {
+      const v = searchParams.get(param); if (!v) continue;
+      if (v === "all") { shopAll = true; seed[key] = opts[key]; setOpen(o => ({ ...o, [key]: true })); }
+      else seed[key] = [v];
+    }
+    if (!Object.keys(seed).length) return;
+    setSel(s => shopAll ? { style: [], gem: [], metal: [], collection: [], ...seed } : { ...s, ...seed });
+  }, [searchParams, opts]);
 
   // Reference facets
   useEffect(() => {
@@ -107,11 +113,13 @@ const EngagementRingsV2 = (): JSX.Element => {
     hasImage: !!(p.image?.url || p.images?.[0]?.url),
   })), [products]);
 
+  // Every option ticked = no restriction (so rings without a value for that group stay in).
+  const off = (k: GroupKey) => !sel[k].length || (opts[k].length > 0 && opts[k].every(o => sel[k].includes(o)));
   const matches = (r: typeof rows[number], ignore?: GroupKey) => {
-    const okStyle = ignore === "style" || !sel.style.length || sel.style.some(v => r.styles.includes(v));
-    const okGem = ignore === "gem" || !sel.gem.length || sel.gem.some(v => r.gems.includes(v));
-    const okMetal = ignore === "metal" || !sel.metal.length || sel.metal.some(v => r.metals.includes(v));
-    const okCol = ignore === "collection" || !sel.collection.length || sel.collection.includes(r.collection);
+    const okStyle = ignore === "style" || off("style") || sel.style.some(v => r.styles.includes(v));
+    const okGem = ignore === "gem" || off("gem") || sel.gem.some(v => r.gems.includes(v));
+    const okMetal = ignore === "metal" || off("metal") || sel.metal.some(v => r.metals.includes(v));
+    const okCol = ignore === "collection" || off("collection") || sel.collection.includes(r.collection);
     const okPrice = r.price <= maxPrice;
     return okStyle && okGem && okMetal && okCol && okPrice;
   };
@@ -132,7 +140,9 @@ const EngagementRingsV2 = (): JSX.Element => {
     setSel(s => ({ ...s, [key]: s[key].includes(val) ? s[key].filter(v => v !== val) : [...s[key], val] }));
   const clearAll = () => { setSel({ style: [], gem: [], metal: [], collection: [] }); setMaxPrice(12000); };
 
-  const chips = GROUP_DEFS.flatMap(g => sel[g.key].map(v => ({ key: g.key, label: v })));
+  // A fully ticked group shows as one "All …" chip; removing it clears that group.
+  const chips: { key: GroupKey; label: string; all?: boolean }[] = GROUP_DEFS.flatMap(g =>
+    sel[g.key].length && off(g.key) ? [{ key: g.key, label: `All ${g.title.toLowerCase()}`, all: true }] : sel[g.key].map(v => ({ key: g.key, label: v })));
   const priceLabel = maxPrice >= 12000 ? "Any" : "Up to " + money(maxPrice);
 
   const eyebrow: React.CSSProperties = { fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: T.gold };
@@ -248,7 +258,7 @@ const EngagementRingsV2 = (): JSX.Element => {
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 12.5, color: T.muted }}>{loading ? "Loading…" : `${results.length} ${results.length === 1 ? "ring" : "rings"}`}</span>
                 {chips.map((c, i) => (
-                  <button key={i} onClick={() => toggle(c.key, c.label)} className="erv2-chip"
+                  <button key={i} onClick={() => c.all ? setSel(s => ({ ...s, [c.key]: [] })) : toggle(c.key, c.label)} className="erv2-chip"
                     style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 11px", cursor: "pointer", background: T.tint, border: `1px solid ${T.ruleSoft}`, fontFamily: FONT_BODY, fontSize: 11.5, color: T.ink }}>
                     {c.label}<span style={{ color: "#8A8377" }}>×</span>
                   </button>
