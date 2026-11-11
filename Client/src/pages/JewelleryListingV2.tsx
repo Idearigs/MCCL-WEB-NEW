@@ -100,7 +100,10 @@ const CATS: Record<string, CatDef> = {
   },
   bracelets: {
     slug: "bracelets", label: "Bracelets",
-    standfirst: ["Tennis lines, bangles and chains sized to your wrist, so the clasp stays where it should and the piece stays on."],
+    standfirst: [
+      "From delicate tennis bracelets to elegant link designs, discover our carefully selected collection in yellow, white and rose gold.",
+      "Explore our collection below and discover a bracelet to treasure for years to come.",
+    ],
     styles: ["Tennis", "Bangle", "Chain", "Cuff"],
     detailTitle: "Fit", detailOptions: ["Sized to wrist", "Bangle", "Adjustable", "Cuff"],
     band: {
