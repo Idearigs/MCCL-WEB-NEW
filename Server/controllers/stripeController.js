@@ -129,6 +129,20 @@ async function computeServerFloor(cartItems, models) {
   return floor;
 }
 
+// ── Binding the order to the priced cart ────────────────────────────────────
+// create-intent prices the cart and stores each line's identity (product, variant,
+// quantity, unit price) in the PaymentIntent's metadata. confirm builds the order only
+// if the cart it is given is exactly that cart, so a cheap paid intent cannot be
+// confirmed with different, more expensive items. Stripe allows 50 metadata keys of up
+// to 500 characters, which bounds the number of cart lines.
+const MAX_CART_LINES = 40;
+const cartLine = (i) => [
+  String((i && i.product_id) || ''),
+  String((i && i.variant_id) || ''),
+  Math.max(1, parseInt(i && i.quantity, 10) || 1),
+  (Number.parseFloat(i && i.price) || 0).toFixed(2),
+].join('|').slice(0, 490);
+
 /**
  * Create a payment intent for the cart
  * POST /api/v1/payments/create-intent
@@ -148,6 +162,18 @@ const createPaymentIntent = asyncHandler(async (req, res) => {
       success: false,
       message: 'Invalid amount'
     });
+  }
+
+  // Prices are in pounds; the floor below is a GBP figure, so the charge must be too.
+  if (String(currency).toLowerCase() !== 'gbp') {
+    return res.status(400).json({ success: false, message: 'Payments are taken in pounds sterling only.' });
+  }
+  // An empty cart has no price floor, so it must not be chargeable.
+  if (!Array.isArray(cartItems) || cartItems.length === 0) {
+    return res.status(400).json({ success: false, message: 'Your bag is empty.' });
+  }
+  if (cartItems.length > MAX_CART_LINES) {
+    return res.status(400).json({ success: false, message: `Please check out at most ${MAX_CART_LINES} different items at a time.` });
   }
 
   // ── SECURITY: never trust the client-sent amount blindly ──────────────────
@@ -179,12 +205,13 @@ const createPaymentIntent = asyncHandler(async (req, res) => {
   try {
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency,
+      amount: Math.round(amount * 100), // Convert to pence
+      currency: 'gbp',
       description: description || 'McCulloch Purchase',
       metadata: {
-        customerId: customerId || 'guest',
-        cartItems: JSON.stringify(cartItems || [])
+        customerId: String(customerId || 'guest').slice(0, 100),
+        cart_n: String(cartItems.length),
+        ...Object.fromEntries(cartItems.map((it, k) => [`c${k}`, cartLine(it)])),
       }
     });
 
@@ -239,6 +266,29 @@ const confirmPayment = asyncHandler(async (req, res) => {
         message: 'Payment not confirmed',
         status: paymentIntent.status
       });
+    }
+
+    // SECURITY: the order must be the cart that create-intent priced and was paid for.
+    if (paymentIntent.currency !== 'gbp') {
+      logger.error(`Confirm rejected: intent ${paymentIntentId} is in ${paymentIntent.currency}, not GBP`);
+      return res.status(400).json({ success: false, message: 'This payment could not be matched to your bag. Please contact us and quote ' + paymentIntentId + '.' });
+    }
+    const md = paymentIntent.metadata || {};
+    const lineCount = parseInt(md.cart_n, 10);
+    if (lineCount > 0) {
+      const expected = Array.from({ length: lineCount }, (_, k) => md[`c${k}`] || '').sort();
+      const given = cartItems.map(cartLine).sort();
+      if (expected.length !== given.length || expected.some((v, k) => v !== given[k])) {
+        logger.error(`Confirm rejected: cart does not match the cart priced for intent ${paymentIntentId}`);
+        return res.status(400).json({ success: false, message: 'Your payment was received but could not be matched to your bag. Please contact us and quote ' + paymentIntentId + '.' });
+      }
+    } else {
+      // Intent created before cart binding existed: re-price the given cart instead.
+      const floor = await computeServerFloor(cartItems, getModels());
+      if (!(floor > 0) || paymentIntent.amount / 100 < floor * 0.95) {
+        logger.error(`Confirm rejected: paid £${paymentIntent.amount / 100} below floor £${floor} for intent ${paymentIntentId}`);
+        return res.status(400).json({ success: false, message: 'Your payment was received but could not be matched to your bag. Please contact us and quote ' + paymentIntentId + '.' });
+      }
     }
 
     // SECURITY / idempotency: one PaymentIntent = one order. If an order already
