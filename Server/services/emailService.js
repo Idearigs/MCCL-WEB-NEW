@@ -507,7 +507,7 @@ const sendWelcomeEmail = async (customerEmail, firstName) => {
           <div style="margin-top:34px; color:#374151; font-size:15px; line-height:1.75;">
 
             <div style="font-size:11px; letter-spacing:3px; color:#C9A96E; text-transform:uppercase; margin-bottom:14px;">Welcome</div>
-            <h1 style="font-family:Cambria,'Times New Roman',serif; font-weight:400; font-size:30px; line-height:1.15; color:#1a1a1a; margin:0 0 18px;">Welcome to McCulloch, ${name}.</h1>
+            <h1 style="font-family:Cambria,'Times New Roman',serif; font-weight:400; font-size:30px; line-height:1.15; color:#1a1a1a; margin:0 0 18px;">Welcome to McCulloch, ${esc(name)}.</h1>
 
             <p style="margin:0 0 20px; color:#4b5563;">Thank you for joining us. For over seventy years our workshop in Beeston has cut, set and finished fine jewellery by hand — and your account is now the home for everything we make with and for you.</p>
 
@@ -705,7 +705,29 @@ const sendNewsletterSignupEmail = async ({ email }) => {
   return result;
 };
 
+// Account email confirmation. Proves the signer-up controls the address before any
+// guest orders, appointments or pieces recorded under that email are shown to them.
+const sendEmailVerificationEmail = async (customerEmail, firstName, token) => {
+  const link = `${FRONTEND_URL.replace(/\/$/, '')}/verify-email?token=${encodeURIComponent(token)}`;
+  const body = `
+    <p style="margin:0 0 18px;">Hello${firstName ? ' ' + esc(String(firstName).trim()) : ''},</p>
+    <p style="margin:0 0 22px;">Please confirm that this is your email address. Once you do, any orders, appointments and pieces we hold under it will appear in your account.</p>
+    <p style="margin:0 0 26px;"><a href="${esc(link)}" style="display:inline-block; padding:14px 28px; background:#1a1a1a; color:#ffffff; text-decoration:none; letter-spacing:2px; text-transform:uppercase; font-size:12px;">Confirm my email</a></p>
+    <p style="margin:0; color:#6b7280; font-size:13px;">This link works for 24 hours. If you did not create an account with us, you can ignore this email.</p>`;
+  const transporter = createTransporter();
+  const result = await transporter.sendMail({
+    from:    `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+    to:      customerEmail,
+    subject: 'Please confirm your email address',
+    html:    viewingEmailShell('Confirm your email', 'Your account', 'Confirm your email address', body),
+    replyTo: SUPPORT_EMAIL,
+  });
+  logger.info(`Verification email sent to ${customerEmail}`);
+  return result;
+};
+
 module.exports = {
+  sendEmailVerificationEmail,
   sendContactEnquiryEmail, sendNewsletterSignupEmail,
   sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail, sendWelcomeEmail,
   sendViewingRequestReceivedEmail, sendViewingRequestOwnerEmail, sendViewingApprovedEmail, sendViewingDeclinedEmail,

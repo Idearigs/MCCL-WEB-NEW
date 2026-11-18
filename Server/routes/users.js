@@ -7,8 +7,8 @@ const { authMiddleware: auth } = require('../middleware/auth');
 const { adminAuth } = require('../middleware/adminAuth');
 const { authRateLimit } = require('../middleware/security');
 const crypto = require('crypto');
-const { sendVerificationEmail, sendWelcomeEmail } = require('../utils/emailService');
-const { sendWelcomeEmail: sendLuxuryWelcomeEmail } = require('../services/emailService');
+// (legacy utils/emailService templates are no longer used here)
+const { sendWelcomeEmail: sendLuxuryWelcomeEmail, sendEmailVerificationEmail } = require('../services/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
@@ -115,26 +115,14 @@ router.post('/signup', async (req, res) => {
       [user.id, refreshToken, refreshExpires, req.headers['user-agent'], req.ip]
     );
 
-    // TEMPORARY: Auto-verify emails until SMTP is configured
-    // Remove this block when email service is ready
-    await pool.query(
-      'UPDATE users SET email_verified = TRUE WHERE id = $1',
-      [user.id]
-    );
-    user.email_verified = true;
-
-    // Send the luxury welcome email on first sign-up (non-blocking)
-    sendLuxuryWelcomeEmail(user.email, user.first_name).catch(emailError => {
-      console.error('Failed to send welcome email:', emailError.message);
+    // The address is NOT verified until the owner clicks the emailed link. Until then the
+    // account works (sign-in, saved items, addresses) but nothing recorded under that email
+    // by someone else (guest orders, appointments, pieces) is shown, and a Google sign-in
+    // for the address takes the account over (config/passport.js). The welcome email is
+    // sent after verification.
+    sendEmailVerificationEmail(user.email, user.first_name, verificationToken).catch(emailError => {
+      console.error('Failed to send verification email:', emailError.message);
     });
-
-    // Send verification email (disabled until SMTP configured)
-    // try {
-    //   await sendVerificationEmail(user.email, verificationToken, user.first_name);
-    //   console.log(`Verification email sent to ${user.email}`);
-    // } catch (emailError) {
-    //   console.error('Failed to send verification email:', emailError);
-    // }
 
     res.status(201).json({
       success: true,
@@ -639,12 +627,10 @@ router.get('/verify-email/:token', async (req, res) => {
       [user.id]
     );
 
-    // Send welcome email
-    try {
-      await sendWelcomeEmail(user.email, user.first_name);
-    } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
-    }
+    // Send the welcome email now that the address is confirmed (non-blocking)
+    sendLuxuryWelcomeEmail(user.email, user.first_name).catch(emailError => {
+      console.error('Failed to send welcome email:', emailError.message);
+    });
 
     res.status(200).json({
       success: true,
@@ -710,7 +696,7 @@ router.post('/resend-verification', auth, async (req, res) => {
 
     // Send verification email
     try {
-      await sendVerificationEmail(user.email, verificationToken, user.first_name);
+      await sendEmailVerificationEmail(user.email, user.first_name, verificationToken);
 
       res.status(200).json({
         success: true,
@@ -744,7 +730,7 @@ router.get('/orders', auth, async (req, res) => {
 
     // Get user's email to match with orders
     const userResult = await pool.query(
-      'SELECT id, email FROM users WHERE id = $1',
+      'SELECT id, email, email_verified FROM users WHERE id = $1',
       [userId]
     );
 
@@ -753,6 +739,12 @@ router.get('/orders', auth, async (req, res) => {
         success: false,
         message: 'User not found'
       });
+    }
+
+    // Orders are keyed by the checkout email, so they are only released to an account
+    // that has proven it owns that address.
+    if (!userResult.rows[0].email_verified) {
+      return res.json({ success: true, data: { orders: [], stats: { totalOrders: 0, totalSpent: 0, pendingOrders: 0 } }, emailVerified: false });
     }
 
     const userEmail = userResult.rows[0].email;

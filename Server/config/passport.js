@@ -19,8 +19,21 @@ passport.use(
         );
 
         if (existingUser.rows.length > 0) {
-          // User exists, return user
-          return done(null, existingUser.rows[0]);
+          const user = existingUser.rows[0];
+          // Google has proven this person controls the address. If the existing account
+          // never proved it (a password sign-up that was not verified), someone else may
+          // have registered it: remove that password and its sessions before linking.
+          if (!user.email_verified && profile.emails[0].verified !== false) {
+            await pool.query(
+              `UPDATE users SET email_verified = TRUE, password_hash = 'GOOGLE_OAUTH',
+                 verification_token = NULL, verification_token_expires = NULL WHERE id = $1`,
+              [user.id]
+            );
+            await pool.query('UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1', [user.id]);
+            user.email_verified = true;
+            user.password_hash = 'GOOGLE_OAUTH';
+          }
+          return done(null, user);
         }
 
         // Create new user

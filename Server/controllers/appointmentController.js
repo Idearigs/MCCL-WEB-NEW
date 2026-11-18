@@ -32,7 +32,8 @@ exports.getMyAppointments = async (req, res) => {
   try {
     const email = await emailForUser(req.user.userId);
     const { rows } = await pool.query(
-      `SELECT * FROM appointments WHERE user_id = $1 OR (customer_email IS NOT NULL AND LOWER(customer_email) = LOWER($2))
+      `SELECT * FROM appointments WHERE user_id = $1 OR (customer_email IS NOT NULL AND LOWER(customer_email) = LOWER($2)
+         AND EXISTS (SELECT 1 FROM users u WHERE u.id = $1 AND u.email_verified = TRUE))
        ORDER BY scheduled_at DESC`,
       [req.user.userId, email]
     );
