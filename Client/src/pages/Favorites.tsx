@@ -1,208 +1,101 @@
-import React from 'react';
-import { Heart, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import LuxuryNavigationWhite from '../components/LuxuryNavigationWhite';
-import { FooterSection } from '../components/FooterSection';
-import { useFavorites } from '../contexts/FavoritesContext';
-import { useUserAuth } from '../contexts/UserAuthContext';
-import { useCart } from '../contexts/CartContext';
+import React, { useMemo } from "react";
+import { Link } from "react-router-dom";
+import NavigationV2 from "../components/home-v2/NavigationV2";
+import FooterV2 from "../components/home-v2/FooterV2";
+import { useFavorites } from "../contexts/FavoritesContext";
+import { useUserAuth } from "../contexts/UserAuthContext";
+import { useCart } from "../contexts/CartContext";
+import { getMediaUrl } from "../config/api";
+import { ACCOUNT_CSS, money, tidy, EmptyPane, Notice } from "../components/home-v2/accountShared";
+
+/**
+ * Saved (route /favorites), light redesign (Nov 2026): the new navigation and footer and the
+ * same piece tiles as the account page. It now also works before signing in, showing the pieces
+ * saved on this device, where the old page only said "sign in".
+ *
+ * Two faults in the old page are gone with the rewrite: it called a cart function that does
+ * not exist (addItem), and it formatted product.price, which the saved-items API does not send
+ * (it sends basePrice / salePrice), so both would throw.
+ */
+
+const favPrice = (p: any): number | undefined => {
+  const v = p?.salePrice ?? p?.basePrice ?? p?.price;
+  return v == null ? undefined : Number(v);
+};
 
 const Favorites: React.FC = () => {
-  const { favorites, favoritesCount, isLoading, removeFavorite } = useFavorites();
-  const { isAuthenticated } = useUserAuth();
-  const { addItem } = useCart();
+  const { favorites, localFavorites, favoritesCount, isLoading, removeFavorite } = useFavorites();
+  const { isAuthenticated, isLoading: authLoading } = useUserAuth();
+  const { addToCart } = useCart();
 
-  const handleRemove = async (productId: string) => {
-    try {
-      await removeFavorite(productId);
-    } catch (error) {
-      console.error('Failed to remove favorite:', error);
+  const items = useMemo(() => {
+    if (isAuthenticated) {
+      return favorites.map((f) => {
+        const p: any = f.product;
+        return { id: p.id as string, name: p.name as string, price: favPrice(p), image: (p.image || p.images?.[0]?.url) as string | undefined, to: p?.slug ? `/product/${p.slug}` : "#" };
+      });
     }
-  };
+    return localFavorites.map((f) => ({ id: f.productId, name: f.name || "Saved item", price: undefined as number | undefined, image: f.image, to: f.url || "#" }));
+  }, [isAuthenticated, favorites, localFavorites]);
 
-  const handleAddToCart = (product: any) => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image || product.images?.[0]?.url,
-      quantity: 1,
-    });
-  };
+  const addToBag = (s: (typeof items)[number]) =>
+    addToCart({ id: s.id, name: s.name, price: money(s.price) || "£0", image: s.image ? getMediaUrl(s.image) : "", type: "jewelry" });
 
-  if (!isAuthenticated) {
-    return (
-      <>
-        <LuxuryNavigationWhite />
-        <div className="min-h-screen bg-gray-50 pt-32">
-          <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-            <Heart className="w-16 h-16 mx-auto text-gray-300 mb-6" />
-            <h1 className="text-3xl font-light text-gray-900 mb-4">Sign in to view your favorites</h1>
-            <p className="text-gray-600 font-light mb-8">
-              Create an account or sign in to save your favorite pieces
-            </p>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white px-8 py-3 rounded-md hover:from-amber-700 hover:to-amber-800 transition-all duration-200 font-light"
-            >
-              Continue Shopping
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-        <FooterSection />
-      </>
-    );
+  const shell = (children: React.ReactNode) => (
+    <div className="ac">
+      <style>{ACCOUNT_CSS}</style>
+      <NavigationV2 solid />
+      {children}
+      <FooterV2 />
+    </div>
+  );
+
+  if (authLoading || isLoading) {
+    return shell(<Notice title="Loading your saved pieces"><span className="ac-spinner" style={{ margin: 0 }} /></Notice>);
   }
 
-  if (isLoading) {
-    return (
-      <>
-        <LuxuryNavigationWhite />
-        <div className="min-h-screen bg-gray-50 pt-32">
-          <div className="max-w-6xl mx-auto px-4 py-16">
-            <div className="animate-pulse space-y-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-lg p-6 h-48" />
-              ))}
-            </div>
-          </div>
-        </div>
-        <FooterSection />
-      </>
-    );
-  }
-
-  return (
+  return shell(
     <>
-      <LuxuryNavigationWhite />
-      <div className="min-h-screen bg-gray-50 pt-32">
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          {/* Header */}
-          <div className="mb-12">
-            <div className="flex items-center gap-3 mb-2">
-              <Heart className="w-8 h-8 text-rose-500 fill-rose-500" />
-              <h1 className="text-4xl font-light text-gray-900">My Favorites</h1>
-            </div>
-            <p className="text-gray-600 font-light">
-              {favoritesCount} {favoritesCount === 1 ? 'item' : 'items'} saved for later
-            </p>
-          </div>
+      <section className="ac-wrap ac-open">
+        <div className="ac-crumb"><Link to="/">Home</Link><span>/</span><span>Saved</span></div>
+        <h1 className="ac-h1" style={{ marginTop: 0 }}>Saved</h1>
+        <div className="ac-eyebrow" style={{ marginTop: 16 }}>{favoritesCount} {favoritesCount === 1 ? "piece" : "pieces"}</div>
+      </section>
 
-          {/* Empty state */}
-          {favoritesCount === 0 ? (
-            <div className="text-center py-20">
-              <Heart className="w-20 h-20 mx-auto text-gray-200 mb-6" />
-              <h2 className="text-2xl font-light text-gray-900 mb-3">No favorites yet</h2>
-              <p className="text-gray-600 font-light mb-8 max-w-md mx-auto">
-                Start adding pieces you love to your favorites. Click the heart icon on any product to save it here.
-              </p>
-              <Link
-                to="/products"
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white px-8 py-3 rounded-md hover:from-amber-700 hover:to-amber-800 transition-all duration-200 font-light shadow-lg shadow-amber-500/20"
-              >
-                Explore Products
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          ) : (
-            /* Favorites grid */
-            <div className="grid gap-6">
-              {favorites.map((favorite) => (
-                <div
-                  key={favorite.favoriteId}
-                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
-                >
-                  <div className="flex flex-col md:flex-row gap-6 p-6">
-                    {/* Product image */}
-                    <Link
-                      to={`/${favorite.product.category?.slug || 'product'}/${favorite.product.slug}`}
-                      className="flex-shrink-0 w-full md:w-48 h-48 bg-gray-100 rounded-md overflow-hidden group"
-                    >
-                      {favorite.product.image ? (
-                        <img
-                          src={favorite.product.image}
-                          alt={favorite.product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          No image
-                        </div>
-                      )}
-                    </Link>
-
-                    {/* Product details */}
-                    <div className="flex-1 flex flex-col">
-                      <div className="flex-1">
-                        <Link
-                          to={`/${favorite.product.category?.slug || 'product'}/${favorite.product.slug}`}
-                          className="group"
-                        >
-                          <h3 className="text-xl font-light text-gray-900 group-hover:text-amber-700 transition-colors mb-2">
-                            {favorite.product.name}
-                          </h3>
-                        </Link>
-                        <p className="text-sm text-gray-600 font-light line-clamp-2 mb-3">
-                          {favorite.product.description}
-                        </p>
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="text-2xl font-light text-gray-900">
-                            £{favorite.product.price.toFixed(2)}
-                          </span>
-                          {favorite.product.compareAtPrice && (
-                            <span className="text-sm text-gray-400 line-through font-light">
-                              £{favorite.product.compareAtPrice.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                            favorite.product.inStock
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {favorite.product.inStock ? 'In Stock' : 'Out of Stock'}
-                          </span>
-                          <span className="text-xs text-gray-500 font-light">
-                            SKU: {favorite.product.sku}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                        <button
-                          onClick={() => handleAddToCart(favorite.product)}
-                          disabled={!favorite.product.inStock}
-                          className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white px-6 py-2.5 rounded-md hover:from-amber-700 hover:to-amber-800 transition-all duration-200 font-light text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                        >
-                          <ShoppingBag className="w-4 h-4" />
-                          Add to Cart
-                        </button>
-                        <Link
-                          to={`/${favorite.product.category?.slug || 'product'}/${favorite.product.slug}`}
-                          className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200 font-light text-sm"
-                        >
-                          View Details
-                        </Link>
-                        <button
-                          onClick={() => handleRemove(favorite.product.id)}
-                          className="ml-auto p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors duration-200"
-                          title="Remove from favorites"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+      <main className="ac-wrap" style={{ paddingBottom: "clamp(64px, 7vw, 112px)" }}>
+        {items.length === 0 ? (
+          <EmptyPane head="Nothing saved yet." body="Tap the heart on any piece and it will wait here for you." cta={{ label: "Browse engagement rings", to: "/engagement-rings" }} />
+        ) : (
+          <div className="ac-saved is-four" style={{ marginTop: "clamp(30px, 3.6vw, 52px)" }}>
+            {items.map((s) => (
+              <div key={s.id} data-saved>
+                <div style={{ position: "relative" }}>
+                  <Link to={s.to} className="ac-piece-img" aria-label={s.name}>
+                    {s.image && <img src={getMediaUrl(s.image)} alt={s.name} loading="lazy" />}
+                  </Link>
+                  <button type="button" className="ac-piece-x" data-unsave onClick={() => removeFavorite(s.id).catch(() => {})} aria-label={`Remove ${s.name} from saved`}>
+                    <svg width="20" height="18" viewBox="0 0 20 18" fill="currentColor" aria-hidden="true"><path d="M10 16.6C4.6 12.7 1 9.6 1 5.9 1 3.3 3 1.4 5.4 1.4c1.8 0 3.5 1 4.6 2.7 1.1-1.7 2.8-2.7 4.6-2.7C17 1.4 19 3.3 19 5.9c0 3.7-3.6 6.800-9 10.700z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" /></svg>
+                  </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-      <FooterSection />
+                <div className="ac-piece-name">
+                  <Link to={s.to}>{tidy(s.name)}</Link>
+                  {s.price != null && <span>{money(s.price)}</span>}
+                </div>
+                {s.price != null
+                  ? <button type="button" className="ac-ghost" onClick={() => addToBag(s)}>Add to bag</button>
+                  : <Link to={s.to} className="ac-ghost" style={{ textAlign: "center" }}>View piece</Link>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isAuthenticated && items.length > 0 && (
+          <div style={{ marginTop: "clamp(40px, 5vw, 64px)", paddingTop: 28, borderTop: "1px solid #E3DDD0", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "14px 30px" }}>
+            <span style={{ fontSize: 15, lineHeight: 1.7 }}>These are saved on this device only. Sign in to keep them wherever you are.</span>
+            <Link to="/account" className="ac-link">Sign in</Link>
+          </div>
+        )}
+      </main>
     </>
   );
 };

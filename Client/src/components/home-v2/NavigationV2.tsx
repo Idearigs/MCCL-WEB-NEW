@@ -11,7 +11,7 @@ import SearchOverlayV2 from "./SearchOverlayV2";
 import AuthModal from "../AuthModalV2";
 import TrustBarV2 from "./TrustBarV2";
 import API_BASE_URL from "../../config/api";
-import { T, FONT_DISPLAY, FONT_BODY } from "./tokens";
+import { T, FONT_DISPLAY, FONT_LOGO, FONT_BODY } from "./tokens";
 
 /**
  * NavigationV2 — the homepage v2 header.
@@ -42,6 +42,119 @@ interface MenuContent {
   feature: { title: string; to: string; img: string };
 }
 
+
+// ── Menu icons: fine line drawings in the site's ink, with gem and metal colours kept muted ──────────
+const INK = "#332F2A";
+const PAGE = "#FFFEFD";
+type Stone = { x: number; r: number };
+const ringIcon = (kind: string): JSX.Element => {
+  // A ring seen from above: the band as a line, the setting drawn over it.
+  const band = <path d="M1 8H31" stroke={INK} strokeWidth="1" strokeLinecap="round" />;
+  const stone = (st: Stone, i: number, table = true) => (
+    <g key={i}>
+      <circle cx={st.x} cy="8" r={st.r} fill={PAGE} stroke={INK} strokeWidth="0.9" />
+      {table && st.r > 2.4 && <circle cx={st.x} cy="8" r={st.r * 0.5} fill="none" stroke={INK} strokeWidth="0.5" opacity="0.7" />}
+      {table && st.r > 3 && [0, 45, 90, 135].map(a => {
+        const c = Math.cos((a * Math.PI) / 180), sn = Math.sin((a * Math.PI) / 180);
+        return <path key={a} d={`M${st.x + c * st.r * 0.5} ${8 + sn * st.r * 0.5}L${st.x + c * st.r} ${8 + sn * st.r}M${st.x - c * st.r * 0.5} ${8 - sn * st.r * 0.5}L${st.x - c * st.r} ${8 - sn * st.r}`} stroke={INK} strokeWidth="0.45" opacity="0.6" />;
+      })}
+    </g>
+  );
+  const k = kind.toLowerCase();
+  let body: JSX.Element;
+  if (k.includes("shoulder")) body = <>{[{ x: 5.6, r: 1.2 }, { x: 9.2, r: 1.6 }, { x: 22.8, r: 1.6 }, { x: 26.4, r: 1.2 }].map((st, i) => stone(st, i, false))}{stone({ x: 16, r: 4 }, 9)}</>;
+  else if (k.includes("hidden")) body = <>{stone({ x: 16, r: 4.4 }, 0, false)}<circle cx="16" cy="8" r="2.6" fill="none" stroke={INK} strokeWidth="0.6" strokeDasharray="1 1.1" /></>;
+  else if (k.includes("halo")) body = <><circle cx="16" cy="8" r="5.8" fill={PAGE} stroke={INK} strokeWidth="0.9" />{Array.from({ length: 12 }).map((_, i) => { const a = (i * 30 * Math.PI) / 180; return <circle key={i} cx={16 + Math.cos(a) * 4.7} cy={8 + Math.sin(a) * 4.7} r="0.55" fill={INK} opacity="0.75" />; })}{stone({ x: 16, r: 3.3 }, 20)}</>;
+  else if (k.includes("trilogy")) body = <>{stone({ x: 9.4, r: 2.7 }, 0)}{stone({ x: 22.6, r: 2.7 }, 1)}{stone({ x: 16, r: 4 }, 2)}</>;
+  else if (k.includes("bezel")) body = <><circle cx="16" cy="8" r="4.7" fill={PAGE} stroke={INK} strokeWidth="2" /><circle cx="16" cy="8" r="2.1" fill="none" stroke={INK} strokeWidth="0.5" opacity="0.7" /></>;
+  else if (k.includes("2 stone") || k.includes("two")) body = <>{stone({ x: 12.4, r: 3.5 }, 0)}{stone({ x: 19.6, r: 3.5 }, 1)}</>;
+  else if (k.includes("vintage")) body = <><path d="M9 8Q16 0.6 23 8Q16 15.4 9 8Z" fill={PAGE} stroke={INK} strokeWidth="0.9" /><path d="M12.4 8Q16 4 19.6 8Q16 12 12.4 8Z" fill="none" stroke={INK} strokeWidth="0.5" opacity="0.7" /><circle cx="6.4" cy="8" r="1.1" fill={PAGE} stroke={INK} strokeWidth="0.7" /><circle cx="25.6" cy="8" r="1.1" fill={PAGE} stroke={INK} strokeWidth="0.7" /></>;
+  else if (k.includes("cluster")) body = <>{Array.from({ length: 6 }).map((_, i) => { const a = (i * 60 * Math.PI) / 180; return <circle key={i} cx={16 + Math.cos(a) * 3.9} cy={8 + Math.sin(a) * 3.9} r="2" fill={PAGE} stroke={INK} strokeWidth="0.8" />; })}<circle cx="16" cy="8" r="2.2" fill={PAGE} stroke={INK} strokeWidth="0.9" /></>;
+  else body = stone({ x: 16, r: 4.4 }, 0);
+  return <svg viewBox="0 0 32 16" width="42" height="21" aria-hidden="true" style={{ flex: "none", display: "block" }}>{band}{body}</svg>;
+};
+// Gem colours: [name contains, body colour, is it a dark stone?]
+const GEM_FILL: [string, string, boolean][] = [
+  ["yellow", "#E9C84F", false], ["black", "#26262A", true], ["sapphire", "#2647A6", true], ["ruby", "#B01E3A", true],
+  ["emerald", "#178A5A", true], ["aquamarine", "#8FD0DA", false], ["diamond", "#E9EDF1", false],
+];
+const mix = (hex: string, to: number, amt: number) => {
+  const n = parseInt(hex.slice(1), 16); const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(v => Math.round(v + (to - v) * amt));
+  return `rgb(${ch[0]},${ch[1]},${ch[2]})`;
+};
+// A round brilliant seen from above: table, eight bezel facets and sixteen girdle facets, shaded so it catches light.
+const gemIcon = (name: string): JSX.Element => {
+  const hit = GEM_FILL.find(g => name.toLowerCase().includes(g[0])) || GEM_FILL[GEM_FILL.length - 1];
+  const [key, base, dark] = hit;
+  const id = `v2gem-${key}`;
+  const P = (deg: number, r: number) => `${(12 + Math.cos((deg * Math.PI) / 180) * r).toFixed(2)} ${(12 + Math.sin((deg * Math.PI) / 180) * r).toFixed(2)}`;
+  const facets: JSX.Element[] = [];
+  for (let i = 0; i < 8; i++) {
+    const t0 = 22.5 + 45 * i, t1 = t0 + 45, gPrev = 45 * i, gMid = 45 * i + 45;
+    // light falls from the upper left, so facets facing that way are brighter
+    const lit = Math.cos(((t0 + 22.5 + 135) * Math.PI) / 180);
+    facets.push(<path key={`b${i}`} d={`M${P(t0, 5.2)}L${P(t1, 5.2)}L${P(gMid, 11)}Z`} fill="#fff" opacity={(dark ? 0.1 : 0.2) + Math.max(0, -lit) * (dark ? 0.32 : 0.5)} />);
+    facets.push(<path key={`l${i}`} d={`M${P(t0, 5.2)}L${P(gPrev, 11)}L${P(t0, 11)}Z`} fill="#000" opacity={0.05 + Math.max(0, lit) * (dark ? 0.3 : 0.2)} />);
+    facets.push(<path key={`r${i}`} d={`M${P(t0, 5.2)}L${P(t0, 11)}L${P(gMid, 11)}Z`} fill="#fff" opacity={0.04 + Math.max(0, -lit) * (dark ? 0.2 : 0.34)} />);
+  }
+  const table = Array.from({ length: 8 }).map((_, i) => P(22.5 + 45 * i, 5.2)).join("L");
+  const lines = Array.from({ length: 8 }).map((_, i) => `M${P(22.5 + 45 * i, 5.2)}L${P(45 * i, 11)}M${P(22.5 + 45 * i, 5.2)}L${P(45 * i + 45, 11)}M${P(22.5 + 45 * i, 5.2)}L${P(22.5 + 45 * i, 11)}`).join("");
+  const edge = dark ? "rgba(255,255,255,0.42)" : "rgba(40,50,60,0.34)";
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" style={{ flex: "none", display: "block" }}>
+      <defs>
+        <radialGradient id={id} cx="38%" cy="34%" r="75%">
+          <stop offset="0" stopColor={mix(base, 255, dark ? 0.32 : 0.6)} />
+          <stop offset="0.55" stopColor={base} />
+          <stop offset="1" stopColor={mix(base, 0, dark ? 0.45 : 0.28)} />
+        </radialGradient>
+        <clipPath id={`${id}-c`}><circle cx="12" cy="12" r="11" /></clipPath>
+      </defs>
+      <circle cx="12" cy="12" r="11" fill={`url(#${id})`} />
+      <g clipPath={`url(#${id}-c)`}>
+        {facets}
+        <path d={`M${table}Z`} fill="#fff" opacity={dark ? 0.12 : 0.3} />
+        <path d={`M${P(202.5, 5.2)}L${P(247.5, 5.2)}L${P(292.5, 5.2)}L12 12Z`} fill="#fff" opacity={dark ? 0.2 : 0.45} />
+        <path d={lines} stroke={edge} strokeWidth="0.35" fill="none" />
+        <path d={`M${table}Z`} stroke={edge} strokeWidth="0.45" fill="none" />
+      </g>
+      <circle cx="12" cy="12" r="11" fill="none" stroke={dark ? mix(base, 0, 0.5) : "rgba(40,50,60,0.42)"} strokeWidth="0.6" />
+      <path d="M6.2 5.2l0.5 1.3 1.3 0.5-1.3 0.5-0.5 1.3-0.5-1.3-1.3-0.5 1.3-0.5z" fill="#fff" opacity="0.95" />
+    </svg>
+  );
+};
+// A polished metal bead: a bevelled rim and a domed centre, each with its own sheen.
+const metalIcon = (name: string): JSX.Element => {
+  const k = name.toLowerCase();
+  const [key, base] = k.includes("rose") || k.includes("red") ? ["rose", "#D99C86"] : k.includes("yellow") ? ["yellow", "#DDB552"] : k.includes("platinum") ? ["platinum", "#C9CCD0"] : ["white", "#D6D5D1"];
+  const id = `v2metal-${key}`;
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" style={{ flex: "none", display: "block" }}>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={mix(base, 255, 0.72)} /><stop offset="0.3" stopColor={base} /><stop offset="0.52" stopColor={mix(base, 0, 0.3)} />
+          <stop offset="0.72" stopColor={base} /><stop offset="1" stopColor={mix(base, 255, 0.5)} />
+        </linearGradient>
+        <linearGradient id={`${id}-i`} x1="1" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor={mix(base, 255, 0.55)} /><stop offset="0.45" stopColor={base} /><stop offset="1" stopColor={mix(base, 0, 0.22)} />
+        </linearGradient>
+        <radialGradient id={`${id}-h`} cx="34%" cy="30%" r="42%"><stop offset="0" stopColor="#fff" stopOpacity="0.95" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></radialGradient>
+      </defs>
+      <circle cx="12" cy="12" r="10.6" fill={`url(#${id})`} stroke={mix(base, 0, 0.38)} strokeWidth="0.5" />
+      <circle cx="12" cy="12" r="7.6" fill={`url(#${id}-i)`} stroke={mix(base, 0, 0.22)} strokeWidth="0.35" />
+      <circle cx="12" cy="12" r="7.6" fill={`url(#${id}-h)`} />
+      <path d="M5.6 15.8A8 8 0 0 0 16.4 18.4" fill="none" stroke="#fff" strokeOpacity="0.5" strokeWidth="0.7" strokeLinecap="round" />
+    </svg>
+  );
+};
+const menuIcon = (colTitle: string, label: string): JSX.Element | null => {
+  const t = colTitle.toLowerCase();
+  if (t.includes("ring type")) return ringIcon(label);
+  if (t.includes("gemstone")) return gemIcon(label);
+  if (t.includes("metal")) return metalIcon(label);
+  return null;
+};
+
 const NAV_ITEMS = [
   { key: "engagement", label: "Engagement", to: "/engagement-rings", hasMenu: true },
   { key: "wedding", label: "Wedding", to: "/wedding", hasMenu: true },
@@ -57,6 +170,7 @@ const NAV_ITEMS = [
 ];
 
 const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.Element => {
+  // Preview-only: open a menu from the URL hash so the panel can be captured (not for the real site).
   const [menu, setMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -280,30 +394,49 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
   const active = menu ? menuContent[menu] : null;
 
   // Desktop mega menu: opened by hover or keyboard focus on its top-level link.
+  const activeItem = NAV_ITEMS.find(i => i.key === menu);
   const megaPanel = active ? (
-            <div id="v2nav-panel" style={{ position: "absolute", top: "100%", left: 0, right: 0, whiteSpace: "normal", textAlign: "left", letterSpacing: "normal", fontSize: 14, color: T.ink, background: T.paper, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}`, boxShadow: "0 24px 48px -32px rgba(28,26,23,0.22)" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: "clamp(32px, 4vw, 72px)", padding: "clamp(32px, 3vw, 48px) clamp(24px, 3vw, 52px)", maxWidth: 1560, margin: "0 auto" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(24px, 3vw, 56px)" }}>
+            <div id="v2nav-panel" style={{ position: "absolute", top: "100%", left: 0, right: 0, whiteSpace: "normal", textAlign: "left", letterSpacing: "normal", fontSize: 14, color: T.text, background: "#FFFEFD", borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}`, boxShadow: "0 22px 40px -34px rgba(28,26,23,0.25)" }}>
+              {/* Three zones: the section name, short link groups, one small feature. Kept shallow so it never fills the screen. */}
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 3fr) minmax(0, 0.9fr)", gap: "clamp(28px, 4vw, 72px)", alignItems: "start", padding: "clamp(30px, 2.8vw, 44px) clamp(24px, 3vw, 52px) clamp(32px, 3vw, 48px)", maxWidth: 1354, margin: "0 auto" }}>
+                <div>
+                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(22px, 1.9vw, 28px)", lineHeight: 1.18, color: T.text }}>{activeItem?.label}</div>
+                  {/* Rings can be bought two ways; say so before the detailed lists */}
+                  {activeItem?.key === "engagement" && (
+                    <div style={{ marginTop: 20, borderTop: `1px solid ${T.rule}` }}>
+                      {[
+                        { label: "Ready to ship", note: "In the showroom now. Ships in 48 hours.", to: "/rings?availability=live" },
+                        { label: "Made to order", note: "Made for you, in up to six weeks.", to: "/rings?availability=order" },
+                      ].map(o => (
+                        <Link key={o.to} to={o.to} className="v2nav-way" style={{ display: "block", padding: "13px 0", borderBottom: `1px solid ${T.rule}` }}>
+                          <span style={{ display: "block", fontSize: 14, fontWeight: 500, color: T.ink }}>{o.label}</span>
+                          <span style={{ display: "block", marginTop: 3, fontSize: 12.5, lineHeight: 1.5, color: T.muted }}>{o.note}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  {activeItem && <Link to={activeItem.to} className="v2nav-shopall" style={{ marginTop: 18 }}>View all</Link>}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(active.columns.length, 1)}, minmax(0, 1fr))`, gap: "clamp(16px, 2vw, 36px)" }}>
                   {active.columns.map((col, ci) => (
                     <div key={ci}>
                       {col.titleTo
-                        ? <Link to={col.titleTo} className="v2nav-coltitle" style={{ display: "block" }}>{col.title}</Link>
-                        : <div className="v2nav-coltitle">{col.title}</div>}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        {col.links.map((l, li) => (
-                          <Link key={li} to={l.to} className="v2nav-sublink">{l.label}</Link>
+                        ? <Link to={col.titleTo} className="v2nav-coltitle" style={{ display: "block", border: 0, padding: 0, marginBottom: 12, color: T.muted }}>{col.title}</Link>
+                        : <div className="v2nav-coltitle" style={{ border: 0, padding: 0, marginBottom: 12, color: T.muted }}>{col.title}</div>}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                        {col.links.slice(0, 6).map((l, li) => (
+                          <Link key={li} to={l.to} className="v2nav-sublink" style={{ fontSize: 13, color: T.text, display: "flex", alignItems: "center", gap: 12 }}>{menuIcon(col.title, l.label)}<span style={{ whiteSpace: "nowrap" }}>{l.label.replace(/\bRed\b/, "Rose")}</span></Link>
                         ))}
                       </div>
-                      {col.shopAll && <Link to={col.shopAll.to} className="v2nav-shopall">{col.shopAll.label}</Link>}
+                      {(col.shopAll || col.links.length > 6) && <Link to={(col.shopAll || { to: activeItem?.to || "/" }).to} className="v2nav-shopall" style={{ marginTop: 12 }}>{col.links.length > 6 ? `All ${col.links.length}` : "View all"}</Link>}
                     </div>
                   ))}
                 </div>
                 <Link to={active.feature.to} style={{ display: "block" }}>
-                  <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
+                  <div style={{ position: "relative", aspectRatio: "1 / 1", background: T.tint, overflow: "hidden" }}>
                     <img src={active.feature.img} alt={active.feature.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                   </div>
-                  <div className="v2-eyebrow" style={{ fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", margin: "14px 0 7px" }}>Featured</div>
-                  <div style={{ fontSize: 14.5, lineHeight: 1.4, color: T.ink }}>{active.feature.title}</div>
+                  <div style={{ marginTop: 12, fontSize: 13, lineHeight: 1.4, color: T.text }}>{active.feature.title}</div>
                 </Link>
               </div>
             </div>
@@ -324,6 +457,8 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
         .v2nav-sublink:hover { text-decoration: underline; text-decoration-color: ${T.gold}; text-decoration-thickness: 1px; text-underline-offset: 5px; }
         .v2nav-shopall { display: inline-block; margin-top: 14px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid ${T.line}; padding-bottom: 4px; transition: color 0.2s ease; }
         .v2nav-shopall:hover { border-bottom-color: ${T.gold}; }
+        .v2nav-way span:first-child { transition: color 0.2s ease; }
+        .v2nav-way:hover span:first-child { text-decoration: underline; text-decoration-color: ${T.gold}; text-decoration-thickness: 1px; text-underline-offset: 5px; }
         .v2nav-coltitle { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.ink}; padding-bottom: 14px; border-bottom: 1px solid ${T.rule}; margin-bottom: 14px; }
         @keyframes v2drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         @keyframes v2itemIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
@@ -353,7 +488,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
           {/* Full link row from 1280px; below that the menu drawer (ten links need the width). */}
           <div className="hidden xl:grid" style={{ gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: "clamp(16px, 2vw, 48px)", padding: "16px clamp(24px, 3vw, 52px)" }}>
             <Link to="/" onMouseEnter={() => setMenu(null)} onFocus={() => setMenu(null)} style={{ display: "block", lineHeight: 1 }}>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 25, letterSpacing: "0.16em", color: navColor, transition: "color 0.35s ease" }}>McCulloch</div>
+              <div style={{ fontFamily: FONT_LOGO, fontSize: 25, letterSpacing: "0.16em", color: navColor, transition: "color 0.35s ease" }}>McCulloch</div>
               <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: utilColor, marginTop: 5, paddingLeft: 3, transition: "color 0.35s ease" }}>Fine jewellery</div>
             </Link>
 
@@ -387,7 +522,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
           <div className="flex xl:hidden" style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
             <button className="v2nav-util v2nav-tap" onClick={() => setMobileOpen(true)} aria-label="Menu" style={{ marginLeft: -11 }}><Menu style={{ width: 22, height: 22, color: navColor }} /></button>
             <Link to="/" style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 19, letterSpacing: "0.15em", color: navColor }}>McCulloch</div>
+              <div style={{ fontFamily: FONT_LOGO, fontSize: 19, letterSpacing: "0.15em", color: navColor }}>McCulloch</div>
             </Link>
             <div style={{ display: "flex", alignItems: "center", marginRight: -6 }}>
               <button className="v2nav-util v2nav-tap" onClick={() => setSearchOpen(true)} aria-label="Search"><SearchIcon style={{ width: 19, height: 19, color: navColor }} strokeWidth={1.6} /></button>
@@ -402,7 +537,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
       {mobileOpen && (
         <div className="v2drawer" style={{ position: "fixed", inset: 0, zIndex: 70, background: T.paper, fontFamily: FONT_BODY, display: "flex", flexDirection: "column", animation: "v2drawerIn 0.34s cubic-bezier(0.22,1,0.36,1)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${T.rule}`, flex: "none" }}>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 20, letterSpacing: "0.15em", color: T.ink }}>McCulloch</div>
+            <div style={{ fontFamily: FONT_LOGO, fontSize: 20, letterSpacing: "0.15em", color: T.ink }}>McCulloch</div>
             <button className="v2nav-util v2nav-tap" onClick={() => setMobileOpen(false)} aria-label="Close" style={{ marginRight: -10 }}><X style={{ width: 24, height: 24, color: T.ink }} /></button>
           </div>
 

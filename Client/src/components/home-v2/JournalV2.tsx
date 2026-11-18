@@ -37,6 +37,14 @@ const toCard = (p: WpPost): Card => {
   };
 };
 
+// The shop's existing guide pages, used while the blog is empty.
+const GUIDES: Card[] = [
+  { id: -1, href: "/jewellery-care", title: "Looking after fine jewellery", category: "Guide", img: "/images/at-the-bench-1300.jpg", alt: "A jeweller working at the bench" },
+  { id: -2, href: "/diamond-guide", title: "The diamond guide", category: "Guide", img: null, alt: "" },
+  { id: -3, href: "/gemstone-guide", title: "Choosing a coloured gemstone", category: "Guide", img: null, alt: "" },
+  { id: -4, href: "/ring-size-guide", title: "Finding your ring size", category: "Guide", img: null, alt: "" },
+];
+
 interface JournalV2Props { pageX: string; h2Style: React.CSSProperties }
 
 const JournalV2 = ({ pageX, h2Style }: JournalV2Props): JSX.Element | null => {
@@ -55,25 +63,42 @@ const JournalV2 = ({ pageX, h2Style }: JournalV2Props): JSX.Element | null => {
     return () => ctrl.abort();
   }, []);
 
-  if (cards.length === 0) return null;
+  // Until the blog has real posts, the section shows the shop's own guides so it is never empty.
+  const fromBlog = cards.length > 0;
+  const list = fromBlog ? cards : GUIDES;
+  const [lead, ...rest] = list;
 
   return (
-    // Carries its own top spacing: it only renders when there are posts, so the gap goes with it.
-    <section id="journal" style={{ padding: `${SP} ${pageX}` }}>
-      <div className="v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, paddingBottom: 22, borderBottom: `1px solid ${T.rule}` }}>
-        <h2 style={{ ...h2Style, fontSize: "clamp(24px, 2.4vw, 34px)" }}>The journal</h2>
-        <a href="/blog/" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>All articles</a>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "clamp(20px, 2.4vw, 40px)", marginTop: 36 }} className="v2-journalgrid">
-        {cards.map(c => (
-          <a key={c.id} href={c.href} className="v2-prodcard" style={{ display: "block" }}>
-            <div style={{ position: "relative", aspectRatio: "3 / 2", overflow: "hidden", background: T.tint }}>
-              {c.img && <img src={c.img} alt={c.alt} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
+    // One lead article with a photograph, the others as a plain list beside it.
+    <section id="journal" className="v2-s-journal" style={{ padding: `${SP} ${pageX} 0` }}>
+      <div style={{ maxWidth: 1250, margin: "0 auto" }}>
+        <div className="v2-stagger v2-sechead" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32 }}>
+          <div>
+            <div className="v2-eyebrow" style={{ fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", color: T.text, marginBottom: 14 }}>{fromBlog ? "The journal" : "Guides"}</div>
+            <h2 style={{ ...h2Style, fontSize: "clamp(23px, 2.2vw, 31px)" }}>{fromBlog ? "From the journal" : "Good to know before you choose"}</h2>
+          </div>
+          {fromBlog && <a href="/blog/" className="v2-textlink" style={{ whiteSpace: "nowrap" }}>All articles</a>}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.15fr) minmax(0, 1fr)", gap: "clamp(32px, 6vw, 96px)", alignItems: "center", marginTop: 40 }} className="v2-split">
+          <a href={lead.href} className="v2-prodcard v2-reveal" style={{ display: "block" }}>
+            <div className="v2-reveal v2-rv-mask" style={{ position: "relative", aspectRatio: "16 / 10", overflow: "hidden", background: T.tint }}>
+              {lead.img && <img src={lead.img} alt={lead.alt} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
             </div>
-            <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.gold, margin: "18px 0 10px" }}>{c.category}</div>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 22, lineHeight: 1.25, color: T.ink }}>{c.title}</div>
+            <div style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.muted, margin: "18px 0 8px" }}>{lead.category}</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(19px, 1.7vw, 23px)", lineHeight: 1.28, color: T.text }}>{lead.title}</div>
           </a>
-        ))}
+          <div className="v2-stagger">
+            {rest.map((c, i) => (
+              <a key={c.id} href={c.href} className="v2-journalrow" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, padding: "clamp(18px, 2vw, 26px) 0", borderTop: `1px solid ${T.rule}`, borderBottom: i === rest.length - 1 ? `1px solid ${T.rule}` : undefined }}>
+                <span>
+                  <span style={{ display: "block", fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.muted, marginBottom: 8 }}>{c.category}</span>
+                  <span style={{ display: "block", fontFamily: FONT_DISPLAY, fontSize: "clamp(16.5px, 1.35vw, 19px)", lineHeight: 1.3, color: T.text }}>{c.title}</span>
+                </span>
+                <span aria-hidden="true" style={{ flex: "none", fontSize: 18, color: T.muted }}>→</span>
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -35,7 +35,10 @@ export const T = {
   ruleDarkStrong: '#4A443B',
 } as const;
 
-export const FONT_DISPLAY = "'Italiana', 'Cormorant Garamond', serif";
+// Headings: Marcellus. Text, labels and buttons: Instrument Sans. Two fonts only.
+export const FONT_DISPLAY = "'Marcellus', Georgia, serif";
+// The "McCulloch" wordmark keeps its own lettering; it is the logo, not a heading.
+export const FONT_LOGO = "'Italiana', 'Marcellus', serif";
 export const FONT_BODY = "'Instrument Sans', system-ui, sans-serif";
 
 // Section rhythm (vertical spacing between major sections)

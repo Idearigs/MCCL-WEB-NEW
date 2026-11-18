@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { T, FONT_BODY } from '../components/home-v2/tokens';
+import { GROUND } from '../components/home-v2/listingShared';
 import { useUserAuth } from '../contexts/UserAuthContext';
 import { API_BASE_URL } from '../config/api';
 
@@ -57,10 +58,11 @@ const AuthCallback: React.FC = () => {
   }, [searchParams, navigate, setUser]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <Loader2 className="w-12 h-12 animate-spin text-amber-600 mx-auto mb-4" />
-        <p className="text-gray-600 font-light">Completing sign in...</p>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: GROUND, fontFamily: FONT_BODY, color: T.text }}>
+      <style>{`@keyframes authSpin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ textAlign: "center" }}>
+        <span style={{ display: "block", width: 26, height: 26, margin: "0 auto 22px", borderRadius: "50%", border: `1px solid ${T.line}`, borderTopColor: T.gold, animation: "authSpin 0.9s linear infinite" }} />
+        <p style={{ margin: 0, fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase" }}>Completing sign in</p>
       </div>
     </div>
   );

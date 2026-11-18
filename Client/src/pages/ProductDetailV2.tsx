@@ -13,6 +13,9 @@ import { T, FONT_DISPLAY, FONT_BODY } from '../components/home-v2/tokens';
 import { trackViewContent, trackAddToCart } from '../services/pixelService';
 import { useCountry } from '../hooks/useCountry';
 import DiamondHelpNudge from '../components/DiamondHelpNudge';
+// Redesign (Nov 2026): the listing pages' ground and tile, and the saved-pieces heart.
+import { GROUND, TILE } from '../components/home-v2/listingShared';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 /**
  * The primary product film.
@@ -166,6 +169,336 @@ const renderDescription = (text: string | undefined) => {
   );
 };
 
+
+// ── Redesign (Nov 2026): the client's own description, read into its parts so the page can
+// set it properly: a tagline, an introduction, then titled chapters. A chapter holds
+// paragraphs and/or a specification ("Key: Value" lines). Nothing is reworded.
+interface StoryChapter { title: string; paras: string[]; specs: [string, string][] }
+const parseDescription = (text: string | undefined, productName?: string): { tagline: string; intro: string[]; chapters: StoryChapter[] } => {
+  const out = { tagline: '', intro: [] as string[], chapters: [] as StoryChapter[] };
+  if (!text) return out;
+  const isSectionHeader = (line: string) =>
+    /^specifications?:?$/i.test(line) ||
+    (line.length < 65 && !line.endsWith('.') && !line.endsWith(':') && /^[A-Z]/.test(line) && line.split(' ').length >= 2 && !/:\s/.test(line));
+  let body = '';
+  const flush = () => {
+    const t = body.trim(); body = '';
+    if (!t) return;
+    if (out.chapters.length) out.chapters[out.chapters.length - 1].paras.push(t); else out.intro.push(t);
+  };
+  for (const raw of String(text).split('\n')) {
+    const line = raw.trim().replace(/^[•·*]\s*/, '');
+    if (!line) { flush(); continue; }
+    // "Rosalind – Hand-Engraved Heritage, Timeless Form": the part after the dash is the tagline.
+    if (!out.tagline && !out.chapters.length && !out.intro.length && line.includes('–') && line.length < 120) { out.tagline = line.split('–').slice(1).join('–').trim() || line; continue; }
+    // Stock pieces often open by repeating their own name; the page already shows it.
+    if (productName && !out.intro.length && !out.chapters.length && line.toLowerCase() === productName.trim().toLowerCase()) continue;
+    if (isSectionHeader(line)) { flush(); out.chapters.push({ title: line.replace(/:$/, ''), paras: [], specs: [] }); continue; }
+    // "Clasp: Lobster Clasp" inside a chapter is a line of the specification.
+    const spec = line.match(/^([A-Z][A-Za-z /&-]{1,34}):\s+(.{1,180})$/);
+    if (spec && !/^(please )?note$/i.test(spec[1])) {
+      flush();
+      // "Metal: 18ct White Gold" lines with no heading above them still make a specification.
+      if (!out.chapters.length) out.chapters.push({ title: 'Specifications', paras: [], specs: [] });
+      out.chapters[out.chapters.length - 1].specs.push([spec[1], spec[2]]);
+      continue;
+    }
+    body += (body ? ' ' : '') + line;
+  }
+  flush();
+  out.chapters = out.chapters.filter(c => c.paras.length || c.specs.length);
+  return out;
+};
+
+const PD_X = 'clamp(20px, 4vw, 64px)';
+const PD_CSS = `
+  .pd a { color: inherit; text-decoration: none; }
+  .pd-wrap { max-width: 1400px; margin: 0 auto; padding-left: ${PD_X}; padding-right: ${PD_X}; }
+  .pd-crumb { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: clamp(24px, 2.8vw, 40px) 0 clamp(26px, 3vw, 44px); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: ${T.textMuted}; }
+  .pd-crumb a:hover { color: ${T.text}; }
+  .pd-main { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(420px, 0.88fr); align-items: start; }
+  .pd-eyebrow { display: flex; align-items: center; gap: 12px; font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: ${T.text}; }
+  .pd-eyebrow i { width: 18px; height: 1px; background: ${T.gold}; }
+  .pd-h1 { font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: clamp(34px, 3.4vw, 50px); line-height: 1.06; margin: 0; color: ${T.text}; }
+  .pd-h2 { font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: clamp(26px, 2.6vw, 38px); line-height: 1.18; margin: 0; color: ${T.text}; text-wrap: balance; }
+  .pd-link { display: inline-block; cursor: pointer; background: transparent; border: 0; border-bottom: 1px solid ${T.ruleStrong}; padding: 0 0 3px; font-family: ${FONT_BODY}; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: ${T.text}; white-space: nowrap; transition: border-color 0.2s ease; }
+  .pd-link:hover { border-bottom-color: ${T.gold}; }
+  .pd-btn { display: inline-block; padding: 17px clamp(24px, 3vw, 44px); background: ${T.ink}; color: ${T.cream} !important; border: 0; cursor: pointer; font-family: ${FONT_BODY}; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; white-space: nowrap; transition: background 0.3s ease; }
+  .pd-btn:hover { background: ${T.text}; }
+  .pd-btn[disabled] { opacity: 0.7; cursor: default; }
+
+  /* ── the plate ── */
+  .pd-plate { position: sticky; top: var(--v2nav-h, 113px); height: calc(100vh - var(--v2nav-h, 113px)); min-height: 480px; background: ${TILE}; overflow: hidden; }
+  .pd-stage { position: absolute; inset: 0; }
+  .pd-slide { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.9s ease; }
+  .pd-slide[data-on="1"] { opacity: 1; pointer-events: auto; }
+  .pd-slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 6% 8% 84px; mix-blend-mode: multiply; cursor: zoom-in; }
+  .pd-slide video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  /* stock pieces are photographed, not rendered: the photograph fills the plate edge to edge */
+  .pd-plate.is-photo .pd-slide img { object-fit: cover; padding: 0; mix-blend-mode: normal; }
+  .pd-index { position: absolute; left: ${PD_X}; right: clamp(20px, 3vw, 44px); bottom: 26px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+  .pd-index > div { display: flex; gap: clamp(18px, 2.4vw, 36px); }
+  .pd-index button { position: relative; padding: 8px 0 10px; cursor: pointer; background: transparent; border: 0; font-family: ${FONT_BODY}; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.textMuted}; font-variant-numeric: tabular-nums; transition: color 0.3s ease; }
+  .pd-index button::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: ${T.gold}; transform: scaleX(0); transform-origin: left; transition: transform 0.5s cubic-bezier(0.22,1,0.36,1); }
+  .pd-index button:hover, .pd-index button[aria-selected="true"] { color: ${T.text}; }
+  .pd-index button[aria-selected="true"]::after { transform: scaleX(1); }
+  .pd-index .pd-enlarge { cursor: zoom-in; }
+  .pd-index .pd-enlarge:hover::after { transform: scaleX(1); }
+  .pd-dots { display: none; }
+
+  /* ── buy column ── */
+  .pd-buy { min-width: 0; padding: 0 ${PD_X} clamp(48px, 5vw, 80px) clamp(32px, 4.6vw, 80px); }
+  .pd-buy-in { max-width: 520px; }
+  .pd-status { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: ${T.text}; }
+  .pd-status i { width: 6px; height: 6px; border-radius: 50%; background: ${T.gold}; }
+  .pd-h1.is-long { font-size: clamp(28px, 2.6vw, 38px); line-height: 1.14; }
+  .pd-facts { margin: 30px 0 0; display: grid; gap: 12px; }
+  .pd-facts > div { display: flex; align-items: baseline; gap: 10px; font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: ${T.text}; }
+  .pd-facts dt::after { content: ":"; }
+  .pd-facts dd { margin: 0; }
+  .pd-titlerow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .pd-save { flex: none; width: 44px; height: 44px; margin: 4px -11px 0 0; display: flex; align-items: center; justify-content: center; cursor: pointer; background: transparent; border: 0; color: ${T.text}; transition: opacity 0.2s ease; }
+  .pd-save:hover { opacity: 0.55; }
+  .pd-tagline { margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: ${T.textMuted}; }
+  .pd-priceline { margin-top: 18px; }
+  .pd-price { font-family: ${FONT_BODY}; font-size: 20px; letter-spacing: 0.04em; line-height: 1.2; color: ${T.text}; font-variant-numeric: tabular-nums lining-nums; }
+  .pd-bar-price { font-family: ${FONT_DISPLAY}; font-size: 30px; line-height: 1; color: ${T.text}; font-variant-numeric: tabular-nums lining-nums; }
+  .pd-bar-price small { margin-left: 10px; font-family: ${FONT_BODY}; font-size: 12px; color: ${T.textMuted}; }
+  .pd-notice { margin-top: 16px; padding: 14px 16px; border: 1px solid ${T.line}; border-left: 1px solid ${T.gold}; }
+  .pd-notice p { margin: 0; font-size: 14px; line-height: 1.65; color: ${T.text}; }
+  .pd-suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .pd-suggest button { text-align: left; cursor: pointer; background: transparent; border: 1px solid ${T.line}; padding: 10px 13px; font-family: ${FONT_BODY}; transition: border-color 0.2s ease; }
+  .pd-suggest button:hover { border-color: ${T.text}; }
+  .pd-suggest b { display: block; font-weight: 400; font-size: 13.5px; color: ${T.text}; }
+  .pd-suggest span { display: block; margin-top: 3px; font-size: 12.5px; color: ${T.textMuted}; }
+  .pd-estimate { display: flex; align-items: baseline; gap: 10px; margin-top: 12px; font-size: 13.5px; line-height: 1.55; color: ${T.text}; }
+  .pd-estimate i { flex: none; width: 6px; height: 6px; border-radius: 50%; border: 1px solid ${T.gold}; transform: translateY(-1px); }
+
+
+  /* the choices: as little as possible on show, and no rules between them */
+  .pd-line { padding: 34px 0 0; }
+  .pd-linehead { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  .pd-linename, .pd-optname { font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: ${T.text}; }
+  .pd-linename b, .pd-optname b { font-weight: 400; }
+  .pd-optname span { margin-left: 14px; letter-spacing: 0; text-transform: none; font-size: 13px; color: ${T.textMuted}; }
+  .pd-words { display: flex; flex-wrap: wrap; align-items: center; gap: 2px clamp(18px, 2vw, 28px); margin-top: 8px; }
+  .pd-word { position: relative; display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 6px 0 8px; cursor: pointer; background: transparent; border: 0; font-family: ${FONT_BODY}; font-size: 15px; color: ${T.textMuted}; transition: color 0.25s ease; }
+  .pd-word::after { content: ""; position: absolute; left: 0; right: 0; bottom: 4px; height: 1px; background: ${T.gold}; transform: scaleX(0); transform-origin: left; transition: transform 0.45s cubic-bezier(0.22,1,0.36,1); }
+  .pd-word:hover, .pd-word[aria-checked="true"] { color: ${T.text}; }
+  .pd-word[aria-checked="true"]::after { transform: scaleX(1); }
+  .pd-word[disabled] { opacity: 0.4; cursor: default; }
+  .pd-optnote { font-size: 13px; color: ${T.textMuted}; font-variant-numeric: tabular-nums; }
+
+  /* things to pick: a medallion each, a fine gold ring round the one chosen */
+  .pd-tray { display: flex; flex-wrap: wrap; gap: 14px 14px; margin-top: 16px; }
+  .pd-tray.is-four { display: grid; grid-template-columns: repeat(4, 68px); gap: 12px 10px; }
+  .pd-stone { display: flex; flex-direction: column; align-items: center; padding: 0; cursor: pointer; background: transparent; border: 0; font-family: ${FONT_BODY}; }
+  .pd-disc { position: relative; display: block; width: 58px; height: 58px; padding: 5px; border-radius: 50%; border: 1px solid transparent; transition: border-color 0.3s ease; }
+  .pd-disc.is-photo { width: 70px; height: 70px; }
+  .pd-disc img, .pd-disc svg, .pd-metal { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+  .pd-disc.is-photo img { background: ${TILE}; mix-blend-mode: multiply; }
+  .pd-disc.is-photo::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: ${TILE}; }
+  .pd-disc.is-photo img { position: relative; }
+  .pd-metal { box-shadow: inset 0 0 0 1px rgba(51,47,42,0.10), inset 0 -3px 6px rgba(51,47,42,0.10); }
+  .pd-stone:hover .pd-disc { border-color: ${T.ruleStrong}; }
+  .pd-stone[aria-checked="true"] .pd-disc { border-color: ${T.gold}; }
+  .pd-stone b { margin-top: 6px; font-weight: 400; font-size: 13px; letter-spacing: 0.04em; color: ${T.textMuted}; transition: color 0.25s ease; }
+  .pd-stone[aria-checked="true"] b, .pd-stone:hover b { color: ${T.text}; }
+  .pd-stone[data-off] { cursor: default; opacity: 0.32; }
+  .pd-stone[data-off]:hover .pd-disc { border-color: transparent; }
+  .pd-stone[data-off]:hover b { color: ${T.textMuted}; }
+  .pd-karats { display: flex; align-items: center; gap: 22px; margin-top: 18px; }
+  .pd-karats .pd-words { margin-top: 0; }
+  .pd-karats.is-idle { opacity: 0.45; }
+  .pd-word[disabled] { opacity: 0.32; }
+  .pd-stone small { min-height: 15px; font-size: 11px; color: ${T.textMuted}; font-variant-numeric: tabular-nums; }
+
+  /* the diamond's choices */
+  .pd-diamond { padding: 0 0 6px; }
+  .pd-opt { padding-top: 24px; }
+
+  .carat-slider { position: relative; height: 30px; margin-top: 16px; }
+  .carat-track { position: absolute; left: 11px; right: 11px; top: 50%; height: 1px; background: ${T.ruleStrong}; }
+  .carat-fill { position: absolute; left: 11px; top: 50%; height: 1px; background: ${T.gold}; }
+  .carat-tick { position: absolute; top: 50%; width: 1px; height: 9px; transform: translate(-50%, -50%); background: ${T.ruleStrong}; }
+  .carat-tick[data-on="1"] { background: ${T.gold}; }
+  .carat-handle { position: absolute; top: 50%; width: 20px; height: 20px; transform: translate(-50%, -50%); border-radius: 50%; background: ${GROUND}; border: 1px solid ${T.text}; box-shadow: 0 1px 6px rgba(51,47,42,0.14); pointer-events: none; z-index: 3; }
+  .carat-handle::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: ${T.gold}; }
+  .carat-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: grab; z-index: 4; -webkit-appearance: none; appearance: none; background: transparent; }
+  .carat-input:active { cursor: grabbing; }
+  .carat-input:focus-visible ~ .carat-handle, .carat-slider:focus-within .carat-handle { outline: 2px solid ${T.text}; outline-offset: 3px; }
+  .carat-input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 30px; height: 30px; cursor: grab; }
+  .carat-input::-moz-range-thumb { width: 30px; height: 30px; border: 0; background: transparent; cursor: grab; }
+  .carat-labels { position: relative; height: 18px; margin-top: 6px; }
+  .carat-labels span { position: absolute; transform: translateX(-50%); font-size: 12px; cursor: pointer; white-space: nowrap; color: ${T.textMuted}; font-variant-numeric: tabular-nums; }
+  .carat-labels span[data-on="1"] { color: ${T.text}; font-weight: 500; }
+
+  /* ring size */
+  .pd-size { position: relative; }
+  .pd-sizebtn { width: 100%; height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 18px; cursor: pointer; background: transparent; border: 1px solid ${T.ruleStrong}; font-family: ${FONT_BODY}; color: ${T.text}; text-align: left; transition: border-color 0.2s ease; }
+  .pd-sizebtn:hover, .pd-sizebtn[aria-expanded="true"] { border-color: ${T.text}; }
+  .pd-sizebtn > span:last-child { display: inline-flex; align-items: center; gap: 14px; }
+  .pd-sizebtn b { font-weight: 400; font-size: 15px; letter-spacing: 0.04em; }
+  .pd-actions { display: grid; gap: 12px; margin-top: 34px; }
+  .pd-add { width: 100%; padding: 21px 24px; }
+  .pd-btn2 { display: block; padding: 19px 24px; border: 1px solid ${T.ruleStrong}; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; color: ${T.text}; transition: border-color 0.2s ease; }
+  .pd-btn2:hover { border-color: ${T.text}; }
+  .pd-note { margin: 18px 0 0; font-size: 13.5px; line-height: 1.6; color: ${T.textMuted}; }
+  .pd-note a { color: ${T.text}; border-bottom: 1px solid ${T.ruleStrong}; padding-bottom: 1px; white-space: nowrap; }
+  .pd-sizemenu { display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; max-height: 296px; overflow-y: auto; z-index: 40; padding: 5px; background: #FFFFFF; border: 1px solid ${T.ruleStrong}; box-shadow: 0 18px 40px -18px rgba(51,47,42,0.28); scrollbar-width: thin; scrollbar-color: ${T.ruleStrong} transparent; }
+  .pd-sizemenu.is-open { display: block; }
+  .pd-sizemenu button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 12px; cursor: pointer; background: transparent; border: 0; border-left: 1px solid transparent; font-family: ${FONT_BODY}; text-align: left; transition: background 0.12s ease; }
+  .pd-sizemenu button:hover { background: ${TILE}; }
+  .pd-sizemenu button[aria-selected="true"] { background: ${TILE}; border-left-color: ${T.gold}; }
+  .pd-sizemenu b { font-weight: 400; font-size: 14.5px; color: ${T.text}; }
+  .pd-sizemenu button[aria-selected="true"] b { font-weight: 500; }
+  .pd-sizemenu span { font-size: 13px; color: ${T.textMuted}; font-variant-numeric: tabular-nums; }
+
+  /* reassurance, other ways to buy, accordions */
+  .pd-assure { list-style: none; margin: 16px 0 0; padding: 30px 0 26px; border-top: 1px solid ${T.line}; display: grid; gap: 11px; }
+  .pd-assure li { display: flex; align-items: baseline; gap: 12px; font-size: 14.5px; line-height: 1.5; color: ${T.text}; }
+  .pd-assure .pd-tick { flex: none; width: 12px; }
+  .pd-ways { display: flex; flex-wrap: wrap; gap: 10px 28px; padding: 0 0 30px; }
+  .pd-ways a { padding-bottom: 3px; border-bottom: 1px solid ${T.ruleStrong}; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: ${T.text}; transition: border-color 0.2s ease; }
+  .pd-ways a:hover { border-bottom-color: ${T.gold}; }
+  .pd-accs { margin-top: 44px; border-top: 1px solid ${T.line}; }
+  .pd-accitem { border-bottom: 1px solid ${T.line}; }
+  .pd-acc { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 19px 0; cursor: pointer; background: transparent; border: 0; text-align: left; font-family: ${FONT_BODY}; font-size: 15px; color: ${T.text}; }
+  .pd-row > .pd-acc { padding: 0; }
+  .pd-plus { position: relative; flex: none; width: 13px; height: 13px; }
+  .pd-plus::before, .pd-plus::after { content: ""; position: absolute; left: 0; top: 6px; width: 13px; height: 1px; background: ${T.text}; transition: transform 0.3s ease; }
+  .pd-plus::after { transform: rotate(90deg); }
+  .pd-acc[aria-expanded="true"] .pd-plus::after { transform: rotate(0deg); }
+  .pd-accbody { display: none; padding: 0 0 22px; }
+  .pd-row > .pd-accbody { padding: 14px 0 0; }
+  .pd-accbody.is-open { display: block; }
+  .pd-accbody p { margin: 0; max-width: 56ch; font-size: 14.5px; line-height: 1.75; color: ${T.text}; }
+  .pd-spec { margin: 0; display: grid; grid-template-columns: 1fr; }
+  .pd-spec > div { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; font-size: 14px; }
+  .pd-spec > div:first-child { padding-top: 0; }
+  .pd-spec dt { color: ${T.textMuted}; }
+  .pd-spec dd { margin: 0; text-align: right; color: ${T.text}; }
+
+  /* price bar */
+  .pd-bar { display: none; position: sticky; bottom: 0; z-index: 30; margin-top: 28px; background: rgba(255,254,253,0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid ${T.line}; }
+  .pd-bar-in { display: flex; align-items: center; gap: 16px; padding: 14px 0 calc(14px + env(safe-area-inset-bottom)); }
+  .pd-bar-sum { font-size: 12.5px; color: ${T.textMuted}; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pd-bar-price { font-size: 26px; }
+
+  /* ── below the fold ── */
+  .pd-story { border-top: 1px solid ${T.line}; padding: clamp(64px, 7vw, 112px) 0; }
+  .pd-story-open { max-width: 660px; margin: 0 auto; text-align: center; }
+  .pd-story-open .pd-h2 { margin-top: 18px; font-size: clamp(30px, 3.4vw, 48px); line-height: 1.12; }
+  .pd-story-open p { margin: 18px 0 0; font-size: 16px; line-height: 1.8; color: ${T.text}; text-align: left; }
+  .pd-story-open p.is-lead { margin-top: 26px; font-size: 18px; line-height: 1.75; text-align: center; }
+  /* the catalogue entry: the specification as a grid of facts */
+  .pd-catalogue { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 36px 24px; max-width: 1080px; margin: clamp(48px, 5.4vw, 76px) auto 0; text-align: center; }
+  .pd-catalogue dt { font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: ${T.textMuted}; }
+  .pd-catalogue dd { margin: 10px 0 0; font-family: ${FONT_DISPLAY}; font-size: 18px; line-height: 1.3; color: ${T.text}; overflow-wrap: anywhere; }
+  .pd-catmore { margin-top: clamp(40px, 4.6vw, 64px); text-align: center; }
+  .pd-catrest { display: none; max-width: 660px; margin: 30px auto 0; text-align: left; }
+  .pd-catrest.is-open { display: block; animation: pdFade 0.5s ease; }
+  .pd-catrest p { margin: 0 0 16px; font-size: 16px; line-height: 1.8; color: ${T.text}; }
+  .pd-catrest p:last-child { margin-bottom: 0; }
+  @media (max-width: 1000px) { .pd-catalogue { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .pd-catalogue { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 14px; } .pd-catalogue dd { font-size: 16.5px; } }
+  /* chapters: titles down the left, the open one's text beside them */
+  .pd-chapters { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); column-gap: clamp(32px, 6vw, 104px); max-width: 1040px; margin: clamp(48px, 5.4vw, 84px) auto 0; align-items: start; }
+  .pd-chapter { display: contents; }
+  .pd-chaptitle { grid-column: 1; display: flex; align-items: baseline; gap: 18px; padding: 11px 0; cursor: pointer; background: transparent; border: 0; text-align: left; font-family: ${FONT_DISPLAY}; font-size: clamp(19px, 1.8vw, 23px); line-height: 1.3; color: ${T.textMuted}; transition: color 0.3s ease; }
+  .pd-chaptitle span { flex: none; width: 22px; font-family: ${FONT_BODY}; font-size: 11.5px; letter-spacing: 0.12em; color: ${T.textMuted}; font-variant-numeric: tabular-nums; transition: color 0.3s ease; }
+  .pd-chaptitle:hover, .pd-chapter[data-on="1"] .pd-chaptitle { color: ${T.text}; }
+  .pd-chapter[data-on="1"] .pd-chaptitle span { color: ${T.gold}; }
+  .pd-chaptext { display: none; grid-column: 2; grid-row: 1 / span 12; padding-top: 12px; max-width: 58ch; }
+  .pd-chapter[data-on="1"] .pd-chaptext { display: block; animation: pdFade 0.6s ease; }
+  .pd-chaptext p { margin: 0 0 16px; font-size: 16px; line-height: 1.8; color: ${T.text}; }
+  .pd-chaptext p.is-note { margin: 22px 0 0; font-size: 14.5px; line-height: 1.7; color: ${T.textMuted}; }
+  .pd-chaptext > :last-child { margin-bottom: 0; }
+  .pd-specs { margin: 0; display: grid; gap: 11px; }
+  .pd-specs > div { display: grid; grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr); gap: 18px; font-size: 15px; line-height: 1.55; }
+  .pd-specs dt { color: ${T.textMuted}; }
+  .pd-specs dd { margin: 0; color: ${T.text}; }
+  .pd-chapters.is-one { grid-template-columns: minmax(0, 1fr); max-width: 660px; }
+  .pd-chapters.is-one .pd-chaptitle { cursor: default; justify-content: center; color: ${T.text}; font-size: 11.5px; font-family: ${FONT_BODY}; letter-spacing: 0.2em; text-transform: uppercase; }
+  .pd-chapters.is-one .pd-chaptitle span { display: none; }
+  .pd-chapters.is-one .pd-chaptext { grid-column: 1; grid-row: auto; max-width: none; padding-top: 14px; }
+  .pd-promise { background: ${T.sand}; padding: clamp(64px, 7vw, 112px) 0; text-align: center; }
+  .pd-promise-open { max-width: 620px; margin: 0 auto; }
+  .pd-promise-open .pd-h2 { margin-top: 18px; font-size: clamp(30px, 3.4vw, 48px); line-height: 1.12; }
+  .pd-promise-open p { margin: 22px 0 0; font-size: 16px; line-height: 1.8; color: ${T.text}; }
+  .pd-promise-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px clamp(20px, 3vw, 48px); max-width: 1120px; margin: clamp(48px, 5.4vw, 80px) auto 0; }
+  .pd-promise-grid svg { display: block; margin: 0 auto; }
+  .pd-promise-grid b { display: block; margin: 18px 0 8px; font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: 20px; line-height: 1.25; color: ${T.text}; }
+  .pd-promise-grid p { margin: 0 auto; max-width: 26ch; font-size: 14.5px; line-height: 1.65; color: ${T.text}; }
+  .pd-promise-acts { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px 34px; margin-top: clamp(40px, 4.4vw, 60px); }
+  .pd-recs { padding-top: clamp(56px, 6vw, 96px); padding-bottom: clamp(64px, 7vw, 112px); }
+  .pd-recs { text-align: center; }
+  .pd-recs .pd-rec-card { text-align: left; }
+  .pd-recgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(28px, 3vw, 44px) clamp(12px, 1.6vw, 24px); margin-top: clamp(30px, 3.4vw, 48px); }
+  .pd-rec-card { display: block; }
+  .pd-rec-card > div { position: relative; aspect-ratio: 1 / 1.1; background: ${TILE}; overflow: hidden; }
+  .pd-rec-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 9%; mix-blend-mode: multiply; transition: transform 0.7s cubic-bezier(0.22,1,0.36,1); }
+  .pd-rec-card:hover img { transform: scale(1.035); }
+  .pd-rec-card p { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin: 14px 0 0; font-size: 14.5px; line-height: 1.45; color: ${T.text}; }
+  .pd-rec-card p span:last-child { flex: none; }
+
+  /* ── enlarged view ── */
+  @keyframes pdFade { from { opacity: 0; } }
+  .pd-lb { position: fixed; inset: 0; z-index: 300; display: flex; flex-direction: column; background: ${TILE}; animation: pdFade 0.3s ease; }
+  .pd-lb-x { position: absolute; top: 14px; right: 14px; z-index: 2; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: transparent; border: 0; color: ${T.text}; }
+  .pd-lb-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 16px; }
+  .pd-lb-stage img { max-width: 100%; max-height: 100%; object-fit: contain; mix-blend-mode: multiply; cursor: zoom-in; transition: transform 0.35s cubic-bezier(0.22,1,0.36,1); }
+  .pd-lb-stage img[data-zoom="1"] { cursor: zoom-out; }
+  .pd-lb-stage video { max-width: 100%; max-height: 100%; }
+  .pd-lb-nav { display: flex; align-items: center; justify-content: center; gap: 26px; padding: 12px 16px calc(18px + env(safe-area-inset-bottom)); font-size: 12.5px; letter-spacing: 0.1em; color: ${T.text}; font-variant-numeric: tabular-nums; }
+  .pd-lb-nav button { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: transparent; border: 1px solid ${T.line}; color: ${T.text}; transition: border-color 0.2s ease; }
+  .pd-lb-nav button:hover { border-color: ${T.text}; }
+
+  @media (max-width: 900px) {
+    .pd-main { grid-template-columns: minmax(0, 1fr); }
+    /* phone: the plate becomes a full-width square that swipes sideways through the views */
+    .pd-plate { position: relative; top: auto; height: auto; min-height: 0; aspect-ratio: 1; }
+    .pd-stage { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .pd-stage::-webkit-scrollbar { display: none; }
+    .pd-slide { position: relative; inset: auto; flex: 0 0 100%; scroll-snap-align: center; opacity: 1; pointer-events: auto; transition: none; }
+    .pd-slide img { padding: 4% 6% 40px; }
+    .pd-index { left: auto; right: 8px; bottom: 6px; }
+    .pd-index > div { display: none; }
+    .pd-index .pd-enlarge { font-size: 10.5px; padding: 12px 10px; }
+    .pd-dots { display: flex; justify-content: center; gap: 6px; position: absolute; left: 0; right: 0; bottom: 16px; pointer-events: none; }
+    .pd-dots button { pointer-events: auto; width: 18px; height: 2px; padding: 0; border: 0; background: ${T.ruleStrong}; cursor: pointer; transition: background 0.2s ease; }
+    .pd-dots button[data-on="1"] { background: ${T.gold}; }
+    .pd-buy { padding: 0 ${PD_X}; }
+    .pd-buy-in { max-width: none; }
+    .pd-crumb { padding: 20px 0 18px; }
+    /* on a phone the price bar is fixed to the bottom of the screen so it is never cut off */
+    .pd-bar { display: block; position: fixed; left: 0; right: 0; bottom: 0; margin: 0; z-index: 55; }
+    .pd-add { display: none; }
+    .pd-bar-in { padding-left: ${PD_X}; padding-right: ${PD_X}; }
+    .pd-bar-price { font-size: 22px; }
+    .pd-buy { padding-bottom: 8px; }
+    .pd { padding-bottom: 86px; }
+    .pd-chapters { grid-template-columns: minmax(0, 1fr); }
+    .pd-chaptext { grid-column: 1; grid-row: auto; padding: 4px 0 18px 40px; }
+    .pd-chapters.is-one .pd-chaptext { padding-left: 0; }
+    .pd-promise-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 16px; }
+    .pd-recgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 12px; }
+    .pd-rec-card p { display: block; font-size: 14px; }
+    .pd-rec-card p span:last-child { display: block; margin-top: 4px; }
+  }
+  @media (max-width: 560px) {
+    .pd-disc { width: 52px; height: 52px; }
+    .pd-disc.is-photo { width: 60px; height: 60px; }
+    .pd-tray { gap: 12px 6px; }
+    .pd-line.is-group > .pd-words, .pd-line.is-group > .pd-recline, .pd-line.is-group > .pd-size, .pd-line.is-group > .pd-helpline, .pd-line.is-group > .pd-sub { margin-left: 0; }
+    .pd-line.is-group ~ .pd-line:not(.is-group) { padding-left: 0; }
+    .pd-stephead h2 { font-size: 22px; }
+    .pd-stone small { font-size: 10.5px; }
+    .pd-bar .pd-btn { padding: 16px 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .pd-lb, .pd-lb-stage img, .pd-slide { animation: none; transition: none; } }
+`;
+
 const ProductDetail = () => {
   const { productId } = useParams();
   const location = useLocation();
@@ -214,6 +547,8 @@ const ProductDetail = () => {
 
   // Use global cart context
   const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites(); // redesign: save heart beside the title
+  const lightboxStep = useRef<(d: number) => void>();    // redesign: arrow keys in the enlarged view
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [playingTiles, setPlayingTiles] = useState<Record<number, boolean>>({});
   const mosaicRef = useRef<HTMLDivElement>(null); // mobile carousel scroller
@@ -265,6 +600,20 @@ const ProductDetail = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [sizeDropdownOpen]);
+
+  // Redesign: while the enlarged view is open, hold the page still and listen for Escape / arrows.
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setIsLightboxOpen(false); setZoomLevel(1); }
+      if (e.key === 'ArrowRight') lightboxStep.current?.(1);
+      if (e.key === 'ArrowLeft') lightboxStep.current?.(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = prevOverflow; window.removeEventListener('keydown', onKey); };
+  }, [isLightboxOpen]);
 
   // Helper function to filter images and videos by selected metal AND diamond size
   const getMetalSpecificMedia = (allImages: any[], selectedMetalId: string, selectedDiamondSizeId?: string) => {
@@ -1056,56 +1405,52 @@ const ProductDetail = () => {
   // Static fallback data will be replaced by API data
   // const staticProductData = { ... }; // Removed - using dynamic productData from API
 
+  // Loading, error and not-found, in the site's own navigation and footer (redesign).
+  const stateShell = (children: React.ReactNode) => (
+    <div style={{ background: GROUND, color: T.text, fontFamily: FONT_BODY, minHeight: '100vh', paddingTop: 'var(--v2nav-h, 113px)' }}>
+      <style>{`@keyframes pdSpin { to { transform: rotate(360deg); } }`}</style>
+      <NavigationV2 solid />
+      <div style={{ maxWidth: 620, margin: '0 auto', padding: 'clamp(72px, 14vh, 160px) 24px clamp(88px, 14vw, 180px)', textAlign: 'center' }}>{children}</div>
+      <FooterV2 />
+    </div>
+  );
+  const stateTitle: React.CSSProperties = { fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(30px, 3.6vw, 44px)', lineHeight: 1.12, margin: 0, color: T.text };
+  const stateBtn: React.CSSProperties = { display: 'inline-block', marginTop: 28, padding: '16px 30px', background: T.ink, color: T.cream, border: 0, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none' };
+
   // Handle loading state
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading product...</p>
-        </div>
-      </div>
+    return stateShell(
+      <>
+        <span style={{ display: 'block', width: 26, height: 26, margin: '0 auto 24px', borderRadius: '50%', border: `1px solid ${T.line}`, borderTopColor: T.gold, animation: 'pdSpin 0.9s linear infinite' }} />
+        <p style={{ margin: 0, fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase' }}>Loading the piece</p>
+      </>
     );
   }
 
   // Handle error state
   if (error) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 text-lg">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
+    return stateShell(
+      <>
+        <h1 style={stateTitle}>We couldn’t load this piece.</h1>
+        <p role="alert" style={{ margin: '18px 0 0', fontSize: 15.5, lineHeight: 1.8 }}>{error}</p>
+        <button type="button" onClick={() => window.location.reload()} style={stateBtn}>Try again</button>
+      </>
     );
   }
 
   // Handle case where product not found
   if (!productData) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 text-lg">Product not found</p>
-          <Link
-            to="/rings"
-            className="mt-4 inline-block px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800"
-          >
-            Back to Rings
-          </Link>
-        </div>
-      </div>
+    return stateShell(
+      <>
+        <h1 style={stateTitle}>We couldn’t find that piece.</h1>
+        <Link to="/rings" style={stateBtn}>Back to rings</Link>
+      </>
     );
   }
 
   // Get filtered images and videos based on selected metal
   const displayImages = productData ? getMetalSpecificMedia(productData.images || [], selectedMetal, selectedDiamondSize || undefined) : [];
 
-  // ---- v2 render helpers ----
   const NAV_H = 96;
   const money = (n: number) => '£' + Math.round(n || 0).toLocaleString('en-GB');
   // Ring-only UI (size selector, ring-size spec) is shown only for ring categories.
@@ -1150,29 +1495,6 @@ const ProductDetail = () => {
   const sizeLabel = ringSizes.find(s => s.value === selectedSize)?.label || selectedSize;
   const diamondName = productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.display_name || productData?.available_diamond_sizes?.find((d: any) => d.id === selectedDiamondSize)?.name || '';
   const configSummary = [metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName, isRingCat && selectedSize && ('Size ' + selectedSize), productData?.nivoda_enabled && selectedCarat && (selectedCarat + 'ct ' + selectedColour + ' ' + selectedClarity), selectedVariant?.gemstone_type].filter(Boolean).join('  ·  ');
-
-  // Guided-step helpers (redesigned buy flow)
-  const subHelp: React.CSSProperties = { fontSize: 12.5, color: T.muted, margin: '-2px 0 16px 38px', lineHeight: 1.5 };
-  const metalBtn = (on: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 15px', minHeight: 44, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 13, border: `1px solid ${on ? T.ink : T.ruleSoft}`, background: on ? T.tint : '#FFFFFF', color: T.ink });
-  const StepHead = ({ n, title, right }: { n: string; title: string; right?: React.ReactNode }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-      <span style={{ width: 26, height: 26, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BODY, fontSize: 12, fontWeight: 600, flex: 'none', border: `1px solid ${T.ruleStrong}`, color: T.ink }}>{n}</span>
-      <span style={{ fontFamily: FONT_DISPLAY, fontSize: 24, color: T.ink, lineHeight: 1, flex: 1 }}>{title}</span>
-      {right}
-    </div>
-  );
-  // Minimal, separated option rows for the diamond step (each divided by a hairline)
-  const optRow: React.CSSProperties = { padding: '18px 0', borderTop: `1px solid ${T.rule}` };
-  const optHeadRow: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 };
-  const optName: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.ink, fontWeight: 500 };
-  const optRecTag: React.CSSProperties = { fontSize: 10.5, letterSpacing: '0.06em', color: T.gold };
-  const optCurVal: React.CSSProperties = { marginLeft: 'auto', fontSize: 12.5, color: T.body };
-  const infoBtn: React.CSSProperties = { width: 16, height: 16, borderRadius: '50%', border: `1px solid ${T.ruleStrong}`, color: T.muted, fontSize: 10, cursor: 'pointer', background: 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontStyle: 'italic', lineHeight: 1, flex: 'none' };
-  const helpLine: React.CSSProperties = { fontSize: 12, color: T.muted, lineHeight: 1.55, margin: '-4px 0 12px' };
-  const scaleRow: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 500, color: T.body, marginTop: 10, letterSpacing: '0.02em' };
-  const InfoI = ({ k, label }: { k: string; label: string }) => (
-    <button onClick={() => toggleSection(k)} aria-label={label} title={label} style={infoBtn}>i</button>
-  );
   // Recommended centre-diamond spec by stone type: lab-grown → E / VVS1, natural → G / VS2.
   const recColour = selectedStoneType === 'natural' ? 'G' : 'E';
   const recClarity = selectedStoneType === 'natural' ? 'VS2' : 'VVS1';
@@ -1233,504 +1555,590 @@ const ProductDetail = () => {
     );
   };
 
+  // ---- Render (light redesign, Nov 2026). Everything above this line is the page's
+  // existing logic, unchanged apart from the three additions marked "redesign". ----
+  // Metal colours, drawn as polished metal: a soft highlight top-left over a light-to-shadow sweep.
+  const SW = { white: 'radial-gradient(circle at 32% 26%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 42%), linear-gradient(135deg, #F6F4EF 0%, #DEDBD3 38%, #BDB9AF 68%, #DEDBD3 100%)', yellow: 'radial-gradient(circle at 32% 26%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 42%), linear-gradient(135deg, #FBEBB8 0%, #E6C063 38%, #B98B30 68%, #E6C063 100%)', rose: 'radial-gradient(circle at 32% 26%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 42%), linear-gradient(135deg, #F9DFD2 0%, #E3AE95 38%, #BE826A 68%, #E3AE95 100%)', plat: 'radial-gradient(circle at 32% 26%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 42%), linear-gradient(135deg, #F3F5F7 0%, #D2D7DC 38%, #A9B0B8 68%, #D2D7DC 100%)', silver: 'radial-gradient(circle at 32% 26%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 42%), linear-gradient(135deg, #FCFCFC 0%, #D9D9D9 38%, #A8A8A8 68%, #D9D9D9 100%)' };
+  // "Metal: 18ct White Gold" — the name of the choice and what is chosen, on one line.
+  const lineHead = (name: string, value?: React.ReactNode, key?: string) => (
+    <div className="pd-linehead"><span className="pd-linename">{name}{value ? <>: <b data-valfor={key}>{value}</b></> : null}</span></div>
+  );
+  // The ring pictured in a given metal colour (white / yellow / rose), if it has been shot.
+  const COLOUR_ID: Record<string, string> = { white: '99297e85-1558-40e3-9e32-be59384da430', yellow: '39b04f2f-1d7f-442a-b1f6-dc355c7b5976', rose: '15d201d9-089b-43d8-9306-85f61971ae44' };
+  const metalPicture = (colour: string): string | undefined => {
+    const stills = (productData.images || []).filter((im: any) => im.type !== 'video' && im.metal_id);
+    const named = (productData.available_metals || []).find((m: any) => (m.name || '').toLowerCase().includes(colour) && stills.some((im: any) => im.metal_id === m.id));
+    const id = named?.id || COLOUR_ID[colour];
+    return stills.find((im: any) => im.metal_id === id)?.url;
+  };
+  // A metal to pick: the piece itself in that metal where we have the picture, else its colour.
+  const medal = (key: string, group: string, on: boolean, onClick: () => void, label: string, picture: string | undefined, swatch: string, caption?: string, offered = true) => (
+    <button key={key} type="button" role="radio" aria-checked={on} aria-label={offered ? label : `${label}, not offered for this piece`} title={offered ? label : 'Not offered for this piece'} data-radio={group} data-name={label} className="pd-stone" disabled={!offered} data-off={offered ? undefined : '1'} onClick={onClick}>
+      <span className={`pd-disc${picture ? ' is-photo' : ''}`}>{picture ? <img src={getMediaUrl(picture)} alt="" loading="lazy" /> : <span className="pd-metal" style={{ background: swatch }} />}</span>
+      {caption && <b>{caption}</b>}
+    </button>
+  );
+  // A numbered step: the order the choices are made in, with the current choice on the right.
+  let stepNo = 0;
+  const stepHead = (name: string, value?: React.ReactNode) => (
+    <div className="pd-stephead"><span className="pd-stepn">{++stepNo}</span><h2>{name}</h2><span className="pd-lineval">{value}</span></div>
+  );
+  const stepNames = [
+    (priceVariants.length > 0 || purchasableMetals.length > 0 || (productData.available_metals || []).length > 0) && 'metal',
+    priceVariants.length > 0 && variantStones.length > 0 && 'stone',
+    productData.nivoda_enabled && 'diamond',
+    isRingCat && 'ring size',
+  ].filter(Boolean) as string[];
+  const stepWords = ['', 'One choice', 'Two choices', 'Three choices', 'Four choices'];
+  const tick = <svg className="pd-tick" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true"><path d="M1 5.2l3.2 3.2L11 1.4" stroke={T.gold} strokeWidth="1.4" /></svg>;
+  // A choice set as a plain word; a fine gold line draws under the one chosen.
+  const word = (key: string, group: string, on: boolean, onClick: () => void, label: React.ReactNode, extra?: { swatch?: string; note?: React.ReactNode; disabled?: boolean }) => (
+    <button key={key} type="button" role="radio" aria-checked={on} data-radio={group} className="pd-word" disabled={extra?.disabled} onClick={onClick}>
+      {extra?.swatch && <span className="pd-swatch" style={{ background: extra.swatch }} />}
+      <span>{label}</span>
+      {extra?.note != null && <span className="pd-optnote">{extra.note}</span>}
+    </button>
+  );
+  const infoBtn = (k: string, label: string) => (
+    <button type="button" className="pd-info" onClick={() => toggleSection(k)} aria-label={label} aria-expanded={!!expandedSections[k]} title={label}>i</button>
+  );
+  // The metal actually being bought. Priced-option pieces (bracelets) carry it in the variant,
+  // which the old summary line ignored: it showed the ring-pricing default ("18ct White Gold")
+  // beside a 9ct yellow gold bracelet. The basket was always right; this is the display.
+  const selectedMetalLabel = variantMetalLabel || metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName;
+  const summaryLine = [selectedMetalLabel, isRingCat && selectedSize && ('Size ' + selectedSize), productData?.nivoda_enabled && selectedCarat && (selectedCarat + 'ct ' + selectedColour + ' ' + selectedClarity), selectedVariant?.gemstone_type].filter(Boolean).join('  ·  ');
+  const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const saved = isFavorite(productData.id);
+  const heroImage = (gallery.find((m: any) => !isVid(m)) || gallery[0])?.url;
+  const story = parseDescription(productData.description, productData.name);
+  // A stock piece: one finished piece on the shelf, nothing to configure. The page then shows
+  // what it is (a few facts from its own specification) where a made-to-order piece shows choices.
+  const isStock = !!productData.is_live_stock && !productData.nivoda_enabled && priceVariants.length === 0 && purchasableMetals.length === 0 && (productData.available_metals || []).length === 0;
+  const stockFacts: [string, string][] = (() => {
+    if (!isStock) return [];
+    const all = story.chapters.flatMap(c => c.specs);
+    const pick = (...keys: string[]) => all.find(([k]) => keys.includes(k.trim().toLowerCase()));
+    return [
+      pick('metal'),
+      pick('centre stone', 'center stone', 'main gemstone', 'gemstone', 'stone'),
+      pick('stone size', 'diamond size', 'gemstone size'),
+      pick('ring weight', 'weight'),
+    ].filter(Boolean).slice(0, 3) as [string, string][];
+  })();
+  const stockCount = Number(productData.stock_quantity);
+  // A description made of an introduction and one specification is set as a catalogue entry.
+  const catalogue = story.chapters.length === 1 && story.chapters[0].specs.length > 0 ? story.chapters[0] : null;
+  const catalogueRest = catalogue ? [...story.intro.slice(1), ...catalogue.paras] : [];
+  // Which chapter of the description is open (kept in the page's existing section state).
+  const chapterRaw = (expandedSections as any).chapter;
+  const chapterOn: number = typeof chapterRaw === 'number' ? chapterRaw : 0;
+  const leadTime = productData.is_live_stock ? 'Ready to ship' : 'Made to order';
+  // Index click: fade to that view (laptop) and move the swipe strip to it (phone).
+  const showView = (i: number) => { setCurrentImageIndex(i); goToSlide(i); };
+  const lightboxItem = gallery[lightboxImageIndex] || gallery[0];
+  lightboxStep.current = (d: number) => { if (gallery.length) goToLightboxImage((lightboxImageIndex + d + gallery.length) % gallery.length); };
+
   return (
-    <div style={{ background: '#FFFFFF', color: T.ink, fontFamily: FONT_BODY, minHeight: '100vh' }}>
-      <style>{`
-        .pdpv2 a{color:inherit;text-decoration:none}
-        .pdpv2-tile{border:1px solid ${T.rule};cursor:pointer;transition:border-color .2s}
-        .pdpv2-tile:hover,.pdpv2-tile[data-on="1"]{border-color:${T.ink}}
-        .pdpv2-chip:hover{border-color:${T.ink}}
-        .pdpv2-sizeopt{transition:background-color .12s}
-        .pdpv2-sizeopt:hover[data-on="0"]{background:${T.paper}}
-        .pdpv2-sizemenu{scrollbar-width:thin;scrollbar-color:${T.ruleStrong} transparent}
-        .pdpv2-sizemenu::-webkit-scrollbar{width:8px}
-        .pdpv2-sizemenu::-webkit-scrollbar-thumb{background:${T.ruleStrong};border-radius:4px;border:2px solid #fff}
-        .pdpv2-card img{transition:transform .5s}
-        .pdpv2-card:hover img{transform:scale(1.04)}
-        .pdpv2-addbtn:not(:disabled):hover{background:${T.gold}}
-      `}</style>
+    <div className="pd" style={{ background: GROUND, color: T.text, fontFamily: FONT_BODY, minHeight: '100vh', paddingTop: 'var(--v2nav-h, 113px)' }}>
+      <style>{PD_CSS}</style>
 
       <NavigationV2 solid />
 
-      <div className="pdpv2" style={{ paddingTop: NAV_H }}>
-        <div style={{ display: 'flex', gap: 10, padding: 'clamp(26px,3vw,40px) clamp(24px,3vw,52px) 18px', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A8377' }}>
-          <Link to="/">Home</Link><span>/</span><Link to={`/${productData.category?.slug || 'engagement-rings'}`}>{productData.category?.name || 'Engagement rings'}</Link><span>/</span><span style={{ color: T.ink }}>{productData.name}</span>
-        </div>
-
-        <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.25fr) minmax(430px, 0.75fr)', gap: 'clamp(32px,4vw,72px)', padding: 'clamp(8px,2vw,24px) clamp(24px,3vw,52px) clamp(56px,5vw,88px)', alignItems: 'start' }} className="pdpv2-main">
-          {/* Gallery — mosaic showing every render + film at once; sticks while the
-              details column scrolls, so no white space opens up on the left. */}
-          <div className="pdpv2-gallery" style={{ top: NAV_H + 12 }}>
-            {gallery.length === 1 ? (
-              <div style={{ position: 'relative', aspectRatio: '1', background: '#FFFFFF', border: `1px solid ${T.rule}`, overflow: 'hidden' }}>
-                {isVid(gallery[0])
-                  ? <FilmVideo url={getMediaUrl(gallery[0].url)} poster={undefined} />
-                  : <img src={getMediaUrl(gallery[0].url)} alt={productData.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+      <main className="pd-main">
+        {/* The plate. One tall picture that runs to the edge of the screen and stays put
+            while the options scroll. The views are a numbered index, not thumbnails, and
+            fade into one another; the picture follows the chosen metal and keeps the same
+            angle when the metal changes. On a phone the same views are a full-width swipe. */}
+        <div className={`pd-plate${isStock ? ' is-photo' : ''}`}>
+          <div className="pd-stage" ref={mosaicRef} onScroll={onMosaicScroll}>
+            {gallery.map((m: any, i: number) => (
+              <div key={i} className="pd-slide" data-on={i === Math.min(currentImageIndex, gallery.length - 1) ? '1' : '0'}>
+                {isVid(m)
+                  ? <video src={toStreamUrl(getMediaUrl(m.url))} autoPlay muted loop playsInline preload="auto" />
+                  : <img src={getMediaUrl(m.url)} alt={`${productData.name}${gallery.length > 1 ? `, view ${i + 1}` : ''}`} loading={i === 0 ? undefined : 'lazy'} onClick={() => openLightbox(i)} />}
               </div>
-            ) : (
-              // Desktop: masonry (2 balanced columns), full images never cropped.
-              // Mobile: the same items become a swipeable single-image carousel (CSS).
-              <div style={{ position: 'relative' }}>
-                <div className="pdpv2-mosaic" ref={mosaicRef} onScroll={onMosaicScroll} style={{ columnCount: 2, columnGap: 8 }}>
-                  {gallery.map((m: any, i: number) => (
-                    <div key={i} className="pdpv2-tile2" style={{ breakInside: 'avoid', WebkitColumnBreakInside: 'avoid', marginBottom: 8, position: 'relative', overflow: 'hidden', background: '#FFFFFF', border: `1px solid ${T.rule}` }}>
-                      {isVid(m)
-                        ? <><video src={toStreamUrl(getMediaUrl(m.url))} autoPlay muted loop playsInline preload="auto" style={{ width: '100%', height: 'auto', display: 'block' }} />
-                            <span style={{ position: 'absolute', bottom: 8, left: 8, padding: '2px 7px', background: 'rgba(28,26,23,0.72)', color: '#fff', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', pointerEvents: 'none' }}>Film</span></>
-                        : <img src={getMediaUrl(m.url)} alt={productData.name} style={{ width: '100%', height: 'auto', display: 'block' }} loading="lazy" />}
-                    </div>
-                  ))}
-                </div>
-                {/* Mobile carousel controls */}
-                <button className="pdpv2-galnav" aria-label="Next image" onClick={() => goToSlide((currentImageIndex + 1) % gallery.length)}>
-                  <ChevronRight size={20} />
-                </button>
-                <div className="pdpv2-galdots">
-                  {gallery.map((_: any, i: number) => (
-                    <button key={i} aria-label={`Image ${i + 1}`} onClick={() => goToSlide(i)} className="pdpv2-galdot" data-on={i === currentImageIndex ? '1' : '0'} />
-                  ))}
-                </div>
-              </div>
-            )}
+            ))}
+            {gallery.length === 0 && <div className="pd-slide" data-on="1" />}
           </div>
-
-          {/* Buy column */}
-          <div>
-            <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(34px,3.6vw,54px)', lineHeight: 1.02, margin: '0 0 10px' }}>{productData.name}</h1>
-            {productData.sku && <div style={{ fontSize: 11.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.muted, margin: '0 0 16px' }}>Product code&nbsp;·&nbsp;{productData.sku}</div>}
-
-            {/* Simple header: name (above), small live price, then the current spec.
-                The prominent live total + Add to bag live in the fixed bottom bar. */}
-            <div style={{ padding: '4px 0 22px', marginBottom: 28, borderBottom: `1px solid ${T.rule}` }}>
-              <div className="pdpv2-price" style={{ fontFamily: "'Lora', Georgia, serif", fontWeight: 400, fontSize: 26, lineHeight: 1.2, letterSpacing: '0.005em', fontVariantNumeric: 'tabular-nums', color: T.ink, padding: '2px 0' }}>{money(totalPrice)}<span style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: 11, color: T.muted, marginLeft: 8 }}>incl. VAT</span></div>
-              <div style={{ fontSize: 12, color: T.muted, marginTop: 8 }}>{configSummary}{nivodaPriceLoading ? '  ·  updating…' : ''}</div>
-              {!diamondAvailable && !nivodaPriceLoading && (
-                <div style={{ marginTop: 10 }}>
-                  <div style={{ padding: '10px 12px', background: '#FBF3E6', border: '1px solid #E6D3AE', borderRadius: 6, fontSize: 12.5, color: '#7A5E2E', lineHeight: 1.5 }}>
-                    This exact diamond isn’t in our live inventory right now — the price shown is indicative and we’ll hand-source it to your spec, confirmed before payment.{diamondSuggestions.length > 0 ? ' Or choose a similar stone available now:' : ''}
-                  </div>
-                  {diamondSuggestions.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-                      {diamondSuggestions.map((s: any, i: number) => (
-                        <button key={i} type="button" onClick={() => applySuggestion(s)} title="Select this available diamond" style={{ textAlign: 'left', cursor: 'pointer', background: '#FFFFFF', border: `1px solid ${T.rule}`, borderRadius: 6, padding: '8px 11px', lineHeight: 1.4 }}>
-                          <div style={{ fontSize: 12, fontWeight: 500, color: T.ink }}>{s.carat}ct · {s.color} · {s.clarity}{s.cut ? ` · ${s.cut}` : ''}</div>
-                          <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{[s.shape, s.lab].filter(Boolean).join(' · ')}{(s.shape || s.lab) ? ' · ' : ''}{money(s.priceGBP)}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              {priceEstimated && diamondAvailable && !nivodaPriceLoading && (
-                <div style={{ fontSize: 11.5, color: T.gold, marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.gold, flex: 'none' }} />
-                  Made to order — indicative price, hand-sourced and confirmed before payment
-                </div>
+          {gallery.length > 0 && (
+            <div className="pd-index">
+              <div role="tablist" aria-label="Views">
+                {gallery.length > 1 && gallery.map((m: any, i: number) => (
+                  <button key={i} type="button" role="tab" data-view={i} aria-selected={i === currentImageIndex} aria-label={isVid(m) ? 'Film' : `View ${i + 1} of ${gallery.length}`} onClick={() => showView(i)}>
+                    {isVid(m) ? 'Film' : String(i + 1).padStart(2, '0')}
+                  </button>
+                ))}
+              </div>
+              {!isVid(gallery[currentImageIndex] || gallery[0]) && (
+                <button type="button" className="pd-enlarge" data-enlarge onClick={() => openLightbox(Math.min(currentImageIndex, gallery.length - 1))}>Enlarge</button>
               )}
             </div>
+          )}
+          {gallery.length > 1 && (
+            <div className="pd-dots">
+              {gallery.map((_: any, i: number) => <button key={i} type="button" aria-label={`View ${i + 1}`} onClick={() => showView(i)} data-on={i === currentImageIndex ? '1' : '0'} />)}
+            </div>
+          )}
+        </div>
 
-            {priceVariants.length > 0 && (
-              <div style={{ marginBottom: 30 }}>
-                <StepHead n="1" title="Choose your metal" />
-                <div style={subHelp}>Pick the gold and its colour. The price updates as you choose.</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 12px 38px' }}>
-                  {variantKarats.map(k => {
-                    const p = variantPrice(k, variantStones.length ? variantStone : '');
-                    return (
-                      <button key={k} type="button" onClick={() => setVariantKarat(k)} style={metalBtn(variantKarat === k)}>
-                        {k}{p != null && <span style={{ color: T.muted, fontSize: 12 }}>{money(p)}</span>}
+        {/* Buy column */}
+        <div className="pd-buy"><div className="pd-buy-in">
+        <nav className="pd-crumb" aria-label="Breadcrumb">
+          <Link to="/">Home</Link><span>/</span><Link to={`/${productData.category?.slug || 'engagement-rings'}`}>{productData.category?.name || 'Engagement rings'}</Link><span>/</span><span style={{ color: T.text }}>{productData.name}</span>
+        </nav>
+            {isStock && (
+              <div className="pd-status"><i />In stock{stockCount === 1 ? ' · the only one' : ''}</div>
+            )}
+            <div className="pd-titlerow">
+              <h1 className={`pd-h1${(productData.name || '').length > 30 ? ' is-long' : ''}`}>{productData.name}</h1>
+              <button type="button" className="pd-save" aria-pressed={saved} aria-label={saved ? `Remove ${productData.name} from saved` : `Save ${productData.name}`}
+                onClick={() => toggleFavorite(productData.id, productData.name, heroImage ? getMediaUrl(heroImage) : '', location.pathname)}>
+                <svg width="22" height="20" viewBox="0 0 20 18" fill={saved ? 'currentColor' : 'none'} aria-hidden="true"><path d="M10 16.6C4.6 12.7 1 9.6 1 5.9 1 3.3 3 1.4 5.4 1.4c1.8 0 3.5 1 4.6 2.7 1.1-1.7 2.8-2.7 4.6-2.7C17 1.4 19 3.3 19 5.9c0 3.7-3.6 6.8-9 10.700z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" /></svg>
+              </button>
+            </div>
+
+            {/* Deliberately little on show: the price, then one row per choice. The diamond
+                opens on our recommended stone, with its choices (type, carat, colour, clarity)
+                laid out underneath. */}
+            <div className="pd-priceline"><span className="pd-price" data-total>{money(totalPrice)}</span></div>
+            {!diamondAvailable && !nivodaPriceLoading && (
+              <div className="pd-notice" role="status">
+                <p>This exact diamond isn’t in our live inventory right now. The price shown is indicative, and we’ll hand-source it to your specification and confirm before payment.{diamondSuggestions.length > 0 ? ' Or choose a similar stone available now:' : ''}</p>
+                {diamondSuggestions.length > 0 && (
+                  <div className="pd-suggest">
+                    {diamondSuggestions.map((s: any, i: number) => (
+                      <button key={i} type="button" onClick={() => applySuggestion(s)} title="Select this available diamond">
+                        <b>{s.carat}ct · {s.color} · {s.clarity}{s.cut ? ` · ${s.cut}` : ''}</b>
+                        <span>{[s.shape, s.lab].filter(Boolean).join(' · ')}{(s.shape || s.lab) ? ' · ' : ''}{money(s.priceGBP)}</span>
                       </button>
-                    );
-                  })}
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 0 38px' }}>
-                  {['Yellow gold', 'White gold', 'Rose gold'].map(c => (
-                    <button key={c} type="button" onClick={() => setVariantColour(c)} style={chip(variantColour === c)}>{c}</button>
-                  ))}
-                </div>
-                {variantStones.length > 0 && (
-                  <div style={{ marginTop: 26 }}>
-                    <StepHead n="2" title="Choose your stone" />
-                    <div style={subHelp}>The gemstones set in the bracelet.</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 0 38px' }}>
-                      {variantStones.map(s => {
-                        const p = variantPrice(variantKarat, s);
-                        return (
-                          <button key={s} type="button" disabled={p == null} onClick={() => setVariantStone(s)} style={{ ...metalBtn(variantStone === s), opacity: p == null ? 0.4 : 1 }}>
-                            {s}{p != null && <span style={{ color: T.muted, fontSize: 12 }}>{money(p)}</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
             )}
+            {priceEstimated && diamondAvailable && !nivodaPriceLoading && (
+              <div className="pd-estimate"><i />Made to order. Indicative price, hand-sourced and confirmed before payment.</div>
+            )}
 
+            {/* A stock piece: the facts that matter, in place of choices */}
+            {stockFacts.length > 0 && (
+              <dl className="pd-facts">
+                {stockFacts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+              </dl>
+            )}
+
+            {/* Metal: priced options (one variant per karat, and per stone where offered) */}
+            {priceVariants.length > 0 && (
+              <section className="pd-line">
+                {lineHead('Metal', variantMetalLabel)}
+                <div className="pd-tray" role="radiogroup" aria-label="Gold colour">
+                  {['Yellow gold', 'White gold', 'Rose gold'].map(c => medal(c, 'vcolour', variantColour === c, () => setVariantColour(c), c, undefined, c.startsWith('Yellow') ? SW.yellow : c.startsWith('Rose') ? SW.rose : SW.white, c.split(' ')[0]))}
+                </div>
+                {variantKarats.length > 1 && (
+                  <div className="pd-words" role="radiogroup" aria-label="Gold carat">
+                    {variantKarats.map(k => {
+                      const p = variantPrice(k, variantStones.length ? variantStone : '');
+                      return word(k, 'vkarat', variantKarat === k, () => setVariantKarat(k), k, { note: p != null ? money(p) : undefined });
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
+            {priceVariants.length > 0 && variantStones.length > 0 && (
+              <section className="pd-line">
+                {lineHead('Stone', variantStone)}
+                <div className="pd-words" role="radiogroup" aria-label="Stone">
+                  {variantStones.map(s => {
+                    const p = variantPrice(variantKarat, s);
+                    return word(s, 'vstone', variantStone === s, () => setVariantStone(s), s, { note: p != null ? money(p) : undefined, disabled: p == null });
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Metal: rings priced per metal. The ring itself, pictured in each metal. */}
             {priceVariants.length === 0 && (purchasableMetals.length > 0 || (productData.available_metals || []).length > 0) && (
-              <div style={{ marginBottom: 30 }}>
-                <StepHead n="1" title="Choose your metal" />
-                <div style={subHelp}>The band. Pick a metal{purchasableMetals.some(o => getMetalKarat(o.value)) ? ', then a colour and carat.' : '.'}</div>
+              <section className="pd-line">
+                {lineHead('Metal', selectedMetalLabel, 'metal')}
                 {purchasableMetals.length > 0 ? (() => {
                   const golds = purchasableMetals.filter(o => getMetalKarat(o.value));
-                  const families = [
-                    golds.length > 0 && { k: 'gold', label: 'Gold', dot: 'linear-gradient(135deg,#F4DFA6,#E3B85E)' },
-                    purchasableMetals.some(o => o.value === 'platinum') && { k: 'platinum', label: 'Platinum', dot: '#E5E4E2' },
-                    purchasableMetals.some(o => o.value === 'silver') && { k: 'silver', label: 'Silver', dot: '#C7C7C7' },
-                  ].filter(Boolean) as { k: string; label: string; dot: string }[];
                   const curBase = getMetalBase(selectedMetalType);
                   const curKarat = getMetalKarat(selectedMetalType) || '18ct';
-                  const curFamily = selectedMetalType === 'platinum' ? 'platinum' : selectedMetalType === 'silver' ? 'silver' : (curBase.endsWith('gold') ? 'gold' : (families[0]?.k || 'gold'));
-                  const colourLabel: Record<string, string> = { 'white-gold': 'White', 'yellow-gold': 'Yellow', 'rose-gold': 'Rose' };
+                  const isGold = curBase.endsWith('gold');
+                  const colourLabel: Record<string, string> = { 'white-gold': 'White gold', 'yellow-gold': 'Yellow gold', 'rose-gold': 'Rose gold' };
                   const availColours = ['white-gold', 'yellow-gold', 'rose-gold'].filter(c => golds.some(o => getMetalBase(o.value) === c));
                   const availKarats = ['9ct', '14ct', '18ct'].filter(k => golds.some(o => getMetalKarat(o.value) === k));
                   const comboValid = (c: string, k: string) => golds.some(o => o.value === `${k}-${c}`);
-                  const dotOf = (c: string) => c === 'yellow-gold' ? 'linear-gradient(135deg,#F4DFA6,#E3B85E)' : c === 'rose-gold' ? 'linear-gradient(135deg,#F1D2C4,#DCA98E)' : 'linear-gradient(135deg,#F1F0F2,#DCDBDE)';
-                  const pickFamily = (fk: string) => {
-                    if (fk === 'platinum') return handleMetalTypeClick('platinum');
-                    if (fk === 'silver') return handleMetalTypeClick('silver');
-                    const pref = golds.find(o => o.value === '18ct-white-gold') || golds.find(o => getMetalBase(o.value) === 'white-gold') || golds[0];
-                    if (pref) handleMetalTypeClick(pref.value);
-                  };
+                  const dotOf = (c: string) => c === 'yellow-gold' ? SW.yellow : c === 'rose-gold' ? SW.rose : SW.white;
                   const pickColour = (c: string) => { let k = curKarat; if (!comboValid(c, k)) k = availKarats.find(kk => comboValid(c, kk)) || availKarats[0]; handleMetalTypeClick(`${k}-${c}`); };
-                  const pickKarat = (k: string) => { let c = curBase.endsWith('gold') ? curBase : 'white-gold'; if (!comboValid(c, k)) c = availColours.find(cc => comboValid(cc, k)) || availColours[0]; handleMetalTypeClick(`${k}-${c}`); };
+                  const pickKarat = (k: string) => { let c = isGold ? curBase : 'white-gold'; if (!comboValid(c, k)) c = availColours.find(cc => comboValid(cc, k)) || availColours[0]; handleMetalTypeClick(`${k}-${c}`); };
+                  // The full menu, always in the same order: the three golds, platinum, silver; and
+                  // under a gold, its three carats. Anything this piece is not priced in is shown
+                  // faint and cannot be chosen, so the menu never changes shape between pieces.
+                  const ALL_COLOURS = ['white-gold', 'yellow-gold', 'rose-gold'];
+                  const ALL_KARATS = ['9ct', '14ct', '18ct'];
+                  const shortLabel: Record<string, string> = { 'white-gold': 'White', 'yellow-gold': 'Yellow', 'rose-gold': 'Rose' };
+                  const hasPlatinum = purchasableMetals.some(o => o.value === 'platinum');
+                  const hasSilver = purchasableMetals.some(o => o.value === 'silver');
+                  const karatOffered = (k: string) => (isGold ? comboValid(curBase, k) : golds.some(o => getMetalKarat(o.value) === k));
                   return (
                     <>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {families.map(f => <button key={f.k} onClick={() => pickFamily(f.k)} style={metalBtn(curFamily === f.k)}><span style={{ width: 16, height: 16, borderRadius: '50%', background: f.dot, border: '1px solid rgba(0,0,0,0.15)' }} />{f.label}</button>)}
+                      <div className="pd-tray" role="radiogroup" aria-label="Metal">
+                        {ALL_COLOURS.map(c => medal(c, 'finish', isGold && curBase === c, () => pickColour(c), colourLabel[c], undefined, dotOf(c), shortLabel[c], availColours.includes(c)))}
+                        {medal('platinum', 'finish', selectedMetalType === 'platinum', () => handleMetalTypeClick('platinum'), 'Platinum', undefined, SW.plat, 'Platinum', hasPlatinum)}
+                        {medal('silver', 'finish', selectedMetalType === 'silver', () => handleMetalTypeClick('silver'), 'Silver', undefined, SW.silver, 'Silver', hasSilver)}
                       </div>
-                      {curFamily === 'gold' && (
-                        <>
-                          <div style={{ ...subLabel, marginTop: 18 }}>Colour</div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                            {availColours.map(c => <button key={c} onClick={() => pickColour(c)} style={metalBtn(curBase === c)}><span style={{ width: 16, height: 16, borderRadius: '50%', background: dotOf(c), border: '1px solid rgba(0,0,0,0.15)' }} />{colourLabel[c]} Gold</button>)}
+                      {golds.length > 0 && (
+                        <div className={`pd-karats${isGold ? '' : ' is-idle'}`}>
+                          <span className="pd-optname">Gold carat</span>
+                          <div className="pd-words" role="radiogroup" aria-label="Gold carat">
+                            {ALL_KARATS.map(k => word(k, 'karat', isGold && curKarat === k, () => pickKarat(k), k, { disabled: !karatOffered(k) }))}
                           </div>
-                          <div style={{ ...subLabel, marginTop: 18 }}>Carat</div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                            {availKarats.map(k => <button key={k} onClick={() => pickKarat(k)} style={metalBtn(curKarat === k)}>{k}</button>)}
-                          </div>
-                        </>
+                        </div>
                       )}
                     </>
                   );
                 })() : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {(productData.available_metals || []).map((m: any) => {
-                      const on = selectedMetal === m.id;
-                      return <button key={m.id} onClick={() => handleMetalThumbnailClick(m.id)} style={metalBtn(on)}><span style={{ width: 16, height: 16, borderRadius: '50%', background: m.color_code || '#D8D2C6', border: '1px solid rgba(0,0,0,0.15)' }} />{m.name}</button>;
-                    })}
+                  <div className="pd-tray" role="radiogroup" aria-label="Metal">
+                    {(productData.available_metals || []).map((m: any) => medal(m.id, 'metal', selectedMetal === m.id, () => handleMetalThumbnailClick(m.id), m.name, undefined, m.color_code || '#D8D2C6', m.name))}
                   </div>
                 )}
-              </div>
+              </section>
             )}
 
+            {/* Diamond: the current stone on one line, its choices open underneath */}
             {productData.nivoda_enabled && (
-              <div style={{ marginBottom: 30, borderTop: `1px solid ${T.rule}`, paddingTop: 26 }}>
-                <StepHead n="2" title="Choose your diamond" />
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: T.tint, border: `1px solid ${T.rule}`, padding: '11px 14px', marginBottom: 4, marginTop: 6 }}>
-                  <div style={{ fontSize: 12.5, color: T.body }}>Recommended: <strong style={{ color: T.ink, fontWeight: 500 }}>1ct · {recColour} · {recClarity}</strong></div>
-                  <button onClick={useRecommendation} style={{ border: `1px solid ${T.ink}`, background: 'transparent', color: T.ink, padding: '8px 13px', cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Use recommendation</button>
+              <section className="pd-line">
+                <div className="pd-linehead">
+                  <span className="pd-linename">Diamond: <b>{selectedCarat ? `${parseFloat(selectedCarat).toFixed(2)}ct · ${selectedColour} · ${selectedClarity} · ${selectedStoneType === 'natural' ? 'Natural' : 'Lab-grown'}` : ''}</b></span>
                 </div>
-
-                <div style={optRow}>
-                  <div style={optHeadRow}><span style={optName}>Type</span></div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    {stoneOptions.stoneType.map((o: any) => { const on = selectedStoneType === o.value; return <button key={o.value} onClick={() => handleStoneTypeSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}
+                <div className="pd-diamond is-open">
+                  <div className="pd-opt">
+                    <div className="pd-optname">Type</div>
+                    <div className="pd-words" role="radiogroup" aria-label="Diamond type">
+                      {stoneOptions.stoneType.map((o: any) => word(o.value, 'stonetype', selectedStoneType === o.value, () => handleStoneTypeSelect(o.value), o.label))}
+                    </div>
                   </div>
+
+                  {stoneOptions.carat.length > 0 && (() => {
+                    const carats = stoneOptions.carat;
+                    const n = carats.length;
+                    const idx = Math.max(0, carats.findIndex((o: any) => o.value === selectedCarat));
+                    const at = (i: number) => `calc(11px + ${n > 1 ? i / (n - 1) : 0} * (100% - 22px))`;
+                    return (
+                      <div className="pd-opt">
+                        <div className="pd-optname">Carat: <b data-caratval>{carats[idx]?.value}ct</b></div>
+                        <div className="carat-slider" data-carats={carats.map((o: any) => o.value).join(',')}>
+                          <div className="carat-track" />
+                          <div className="carat-fill" style={{ width: `calc(${n > 1 ? idx / (n - 1) : 0} * (100% - 22px))` }} />
+                          {carats.map((o: any, i: number) => <div key={'t' + o.value} className="carat-tick" data-on={i <= idx ? '1' : '0'} style={{ left: at(i) }} />)}
+                          <div className="carat-handle" style={{ left: at(idx) }} />
+                          <input type="range" className="carat-input" min={0} max={n - 1} step={1} value={idx} onChange={e => handleCaratSelect(carats[+e.target.value].value)} aria-label="Total carat" aria-valuetext={`${carats[idx]?.value} carat`} />
+                        </div>
+                        <div className="carat-labels">
+                          {carats.map((o: any, i: number) => (
+                            <span key={'l' + o.value} onClick={() => handleCaratSelect(o.value)} data-on={i === idx ? '1' : '0'} style={{ left: at(i) }}>{parseFloat(o.value).toFixed(2)}</span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {stoneOptions.colour.length > 0 && (() => {
+                    const avail = COLOUR_IMG.filter(col => stoneOptions.colour.some((o: any) => o.value === col));
+                    const colours = avail.length ? avail : COLOUR_IMG;
+                    return (
+                      <div className="pd-opt">
+                        <div className="pd-optname">Colour: <b data-optval>{selectedColour}</b><span>D is the whitest</span></div>
+                        <div className="pd-tray" role="radiogroup" aria-label="Diamond colour">
+                          {colours.map((col) => (
+                            <button key={col} type="button" role="radio" aria-checked={selectedColour === col} data-radio="dcolour" className="pd-stone" onClick={() => handleColourSelect(col)}>
+                              <span className="pd-disc"><img src={`/diamond-colours/${col}.webp`} alt="" loading="lazy" /></span>
+                              <b>{col}</b>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {stoneOptions.clarity.length > 0 && (() => {
+                    // Build one stable VS2-baseline diamond price from EVERY grade that currently
+                    // has live stock (each normalised by its clarity multiplier, then median-ed so
+                    // a thin-stock outlier can't skew it). Every grade's price is then derived from
+                    // that baseline — so the preview is always complete and monotonic, even when the
+                    // SELECTED grade itself is out of stock (its narrow spec returns nothing).
+                    const baseVS2 = (() => {
+                      // Primary anchor: the live price of the SELECTED stone (the server always
+                      // returns one — exact or indicative), normalised to the VS2 base.
+                      if (nivodaPrice?.avg && CLARITY_MULT[selectedClarity]) return nivodaPrice.avg / CLARITY_MULT[selectedClarity];
+                      // Fallback: median of whatever per-grade previews we have.
+                      const xs = Object.keys(clarityPrices)
+                        .map(g => (clarityPrices[g] > 0 && CLARITY_MULT[g]) ? clarityPrices[g] / CLARITY_MULT[g] : 0)
+                        .filter(x => x > 0)
+                        .sort((a, b) => a - b);
+                      return xs.length ? xs[Math.floor((xs.length - 1) / 2)] : 0;
+                    })();
+                    const selPrice = baseVS2 * (CLARITY_MULT[selectedClarity] ?? 1);
+                    return (
+                      <div className="pd-opt">
+                        <div className="pd-optname">Clarity: <b data-optval>{selectedClarity}</b><span>FL is the cleanest</span></div>
+                        <div className="pd-tray is-four" role="radiogroup" aria-label="Diamond clarity">
+                          {stoneOptions.clarity.map((o: any) => {
+                            const on = selectedClarity === o.value;
+                            const gMult = CLARITY_MULT[o.value] ?? 1;
+                            const delta = baseVS2 ? Math.round(baseVS2 * gMult - selPrice) : 0;
+                            const priceText = on ? '' : !baseVS2 ? '' : delta > 0 ? '+' + money(delta) : delta < 0 ? '−' + money(-delta) : '';
+                            return (
+                              <button key={o.value} type="button" role="radio" aria-checked={on} data-radio="dclarity" className="pd-stone" onClick={() => handleClaritySelect(o.value)}>
+                                <span className="pd-disc"><DiamondIcon grade={o.value} /></span>
+                                <b>{o.value}</b>
+                                <small>{priceText}</small>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {stoneOptions.cut && stoneOptions.cut.length > 0 && (
+                    <div className="pd-opt">
+                      <div className="pd-optname">Cut: <b>{selectedCut}</b></div>
+                      <div className="pd-words" role="radiogroup" aria-label="Cut">{stoneOptions.cut.map((o: any) => word(o.value, 'cut', selectedCut === o.value, () => handleCutSelect(o.value), o.label))}</div>
+                    </div>
+                  )}
+
+                  {(((stoneOptions as any).polish && (stoneOptions as any).polish.length) || ((stoneOptions as any).symmetry && (stoneOptions as any).symmetry.length) || ((stoneOptions as any).certificate && (stoneOptions as any).certificate.length)) ? (
+                    <div className="pd-opt">
+                      <button type="button" className="pd-link" data-faq aria-expanded={!!expandedStoneOptions.advanced} onClick={() => toggleStoneOption('advanced')}>Grading &amp; certification</button>
+                      <div className={`pd-accbody${expandedStoneOptions.advanced ? ' is-open' : ''}`} style={{ padding: '6px 0 0' }}>
+                        {(stoneOptions as any).polish && (stoneOptions as any).polish.length > 0 && <><div className="pd-optname" style={{ marginTop: 16 }}>Polish</div><div className="pd-words" role="radiogroup" aria-label="Polish">{(stoneOptions as any).polish.map((o: any) => word(o.value, 'polish', selectedPolish === o.value, () => handlePolishSelect(o.value), o.label))}</div></>}
+                        {(stoneOptions as any).symmetry && (stoneOptions as any).symmetry.length > 0 && <><div className="pd-optname" style={{ marginTop: 16 }}>Symmetry</div><div className="pd-words" role="radiogroup" aria-label="Symmetry">{(stoneOptions as any).symmetry.map((o: any) => word(o.value, 'symmetry', selectedSymmetry === o.value, () => handleSymmetrySelect(o.value), o.label))}</div></>}
+                        {(stoneOptions as any).certificate && (stoneOptions as any).certificate.length > 0 && <><div className="pd-optname" style={{ marginTop: 16 }}>Certificate lab</div><div className="pd-words" role="group" aria-label="Certificate lab">{(stoneOptions as any).certificate.map((o: any) => { const on = selectedCertificate === o.value; return word(o.value, 'cert', on, () => setSelectedCertificate(on ? '' : o.value), o.label); })}</div></>}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-                {stoneOptions.carat.length > 0 && (() => {
-                  const carats = stoneOptions.carat;
-                  const n = carats.length;
-                  const idx = Math.max(0, carats.findIndex((o: any) => o.value === selectedCarat));
-                  const at = (i: number) => `calc(11px + ${n > 1 ? i / (n - 1) : 0} * (100% - 22px))`;
-                  return (
-                    <div style={optRow}>
-                      <div style={optHeadRow}><span style={optName}>Total carat</span><InfoI k="help-carat" label="What is carat?" /><span style={{ ...optCurVal, color: T.gold, fontWeight: 600 }}>{carats[idx]?.value}ct</span></div>
-                      {expandedSections['help-carat'] && <div style={helpLine}>Carat is the diamond's size — bigger looks more impressive and costs more. 1 carat is the most popular.</div>}
-                      <div className="carat-slider" style={{ position: 'relative', height: 30, marginTop: 12 }}>
-                        <div className="carat-track" />
-                        {carats.map((o: any, i: number) => <div key={'t' + o.value} className="carat-tick" style={{ left: at(i) }} />)}
-                        <div className="carat-handle" style={{ left: at(idx) }} />
-                        <input type="range" className="carat-input" min={0} max={n - 1} step={1} value={idx} onChange={e => handleCaratSelect(carats[+e.target.value].value)} aria-label="Total carat" />
-                      </div>
-                      <div style={{ position: 'relative', height: 16, marginTop: 6 }}>
-                        {carats.map((o: any, i: number) => (
-                          <span key={'l' + o.value} onClick={() => handleCaratSelect(o.value)} style={{ position: 'absolute', left: at(i), transform: 'translateX(-50%)', fontSize: 10.5, cursor: 'pointer', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', color: i === idx ? T.ink : T.muted, fontWeight: i === idx ? 700 : 400 }}>{parseFloat(o.value).toFixed(2)}</span>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-                {stoneOptions.colour.length > 0 && (() => {
-                  const avail = COLOUR_IMG.filter(col => stoneOptions.colour.some((o: any) => o.value === col));
-                  const colours = avail.length ? avail : COLOUR_IMG;
-                  return (
-                    <div style={optRow}>
-                      <div style={optHeadRow}><span style={optName}>Colour</span><span style={optRecTag}>{recColour} recommended</span><InfoI k="help-colour" label="What is colour?" /><span style={optCurVal}>{selectedColour}</span></div>
-                      {expandedSections['help-colour'] && <div style={helpLine}>How icy-white the diamond is. D is the most colourless (and priciest); G still looks bright white for far less.</div>}
-                      <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }} className="pdpv2-nobar">
-                        {colours.map((col) => {
-                          const on = selectedColour === col;
-                          return (
-                            <button key={col} onClick={() => handleColourSelect(col)} style={{ flex: '0 0 auto', width: 92, padding: '10px 8px 9px', cursor: 'pointer', background: on ? T.tint : '#FFFFFF', border: `1px solid ${on ? T.ink : T.ruleSoft}`, boxShadow: on ? `inset 0 0 0 1px ${T.ink}` : 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                              <img src={`/diamond-colours/${col}.webp`} alt={`${col} colour diamond`} style={{ width: 64, height: 64, objectFit: 'cover' }} loading="lazy" />
-                              <span style={{ fontSize: 11.5, fontWeight: on ? 600 : 500, color: T.ink }}>{col}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div style={scaleRow}><span>◀ Icy white (pricier)</span><span>Warmer ▶</span></div>
-                    </div>
-                  );
-                })()}
-                {stoneOptions.clarity.length > 0 && (() => {
-                  // Build one stable VS2-baseline diamond price from EVERY grade that currently
-                  // has live stock (each normalised by its clarity multiplier, then median-ed so
-                  // a thin-stock outlier can't skew it). Every grade's price is then derived from
-                  // that baseline — so the preview is always complete and monotonic, even when the
-                  // SELECTED grade itself is out of stock (its narrow spec returns nothing).
-                  const baseVS2 = (() => {
-                    // Primary anchor: the live price of the SELECTED stone (the server always
-                    // returns one — exact or indicative), normalised to the VS2 base.
-                    if (nivodaPrice?.avg && CLARITY_MULT[selectedClarity]) return nivodaPrice.avg / CLARITY_MULT[selectedClarity];
-                    // Fallback: median of whatever per-grade previews we have.
-                    const xs = Object.keys(clarityPrices)
-                      .map(g => (clarityPrices[g] > 0 && CLARITY_MULT[g]) ? clarityPrices[g] / CLARITY_MULT[g] : 0)
-                      .filter(x => x > 0)
-                      .sort((a, b) => a - b);
-                    return xs.length ? xs[Math.floor((xs.length - 1) / 2)] : 0;
-                  })();
-                  const selPrice = baseVS2 * (CLARITY_MULT[selectedClarity] ?? 1);
-                  return (
-                    <div style={optRow}>
-                      <div style={optHeadRow}><span style={optName}>Clarity</span><span style={optRecTag}>{recClarity} recommended</span><InfoI k="help-clarity" label="What is clarity?" /><span style={optCurVal}>{selectedClarity}</span></div>
-                      {expandedSections['help-clarity'] && <div style={helpLine}>How clean the diamond looks inside. From VS2 up, no marks are visible to the naked eye.</div>}
-                      <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }} className="pdpv2-nobar">
-                        {stoneOptions.clarity.map((o: any) => {
-                          const on = selectedClarity === o.value;
-                          const gMult = CLARITY_MULT[o.value] ?? 1;
-                          const delta = baseVS2 ? Math.round(baseVS2 * gMult - selPrice) : 0;
-                          const priceText = on ? 'Included' : !baseVS2 ? '' : delta > 0 ? '+' + money(delta) : delta < 0 ? '−' + money(-delta) : '±£0';
-                          return (
-                            <button key={o.value} onClick={() => handleClaritySelect(o.value)} style={{ flex: '0 0 auto', width: 92, padding: '12px 8px 10px', cursor: 'pointer', background: on ? T.tint : '#FFFFFF', border: `1px solid ${on ? T.ink : T.ruleSoft}`, boxShadow: on ? `inset 0 0 0 1px ${T.ink}` : 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
-                              <span style={{ width: 64, height: 64 }}><DiamondIcon grade={o.value} /></span>
-                              <span style={{ fontSize: 11.5, fontWeight: on ? 600 : 500, color: T.ink }}>{o.value}</span>
-                              <span style={{ fontSize: 10, fontWeight: 500, color: delta > 0 ? T.gold : T.muted, minHeight: 12, fontVariantNumeric: 'tabular-nums' }}>{priceText}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div style={scaleRow}><span>◀ Cleaner (pricier)</span><span>More marks ▶</span></div>
-                    </div>
-                  );
-                })()}
-                {stoneOptions.cut && stoneOptions.cut.length > 0 && (
-                  <div style={optRow}>
-                    <div style={optHeadRow}><span style={optName}>Cut</span><span style={optCurVal}>{selectedCut}</span></div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{stoneOptions.cut.map((o: any) => { const on = selectedCut === o.value; return <button key={o.value} onClick={() => handleCutSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div>
-                  </div>
-                )}
-
-                {(((stoneOptions as any).polish && (stoneOptions as any).polish.length) || ((stoneOptions as any).symmetry && (stoneOptions as any).symmetry.length) || ((stoneOptions as any).certificate && (stoneOptions as any).certificate.length)) ? (
-                  <div style={optRow}>
-                    <button onClick={() => toggleStoneOption('advanced')} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', background: 'transparent', border: 0, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.ink, padding: 0, fontWeight: 500 }}>
-                      <span>Grading &amp; certification</span><span style={{ color: T.muted, fontSize: 16, lineHeight: 1 }}>{expandedStoneOptions.advanced ? '−' : '+'}</span>
-                    </button>
-                    {expandedStoneOptions.advanced && (
-                      <div style={{ marginTop: 14 }}>
-                        {(stoneOptions as any).polish && (stoneOptions as any).polish.length > 0 && <><div style={subLabel}>Polish</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>{(stoneOptions as any).polish.map((o: any) => { const on = selectedPolish === o.value; return <button key={o.value} onClick={() => handlePolishSelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div></>}
-                        {(stoneOptions as any).symmetry && (stoneOptions as any).symmetry.length > 0 && <><div style={subLabel}>Symmetry</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>{(stoneOptions as any).symmetry.map((o: any) => { const on = selectedSymmetry === o.value; return <button key={o.value} onClick={() => handleSymmetrySelect(o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div></>}
-                        {(stoneOptions as any).certificate && (stoneOptions as any).certificate.length > 0 && <><div style={subLabel}>Certificate lab</div><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{(stoneOptions as any).certificate.map((o: any) => { const on = selectedCertificate === o.value; return <button key={o.value} onClick={() => setSelectedCertificate(on ? '' : o.value)} className="pdpv2-chip" style={chip(on)}>{o.label}</button>; })}</div></>}
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-                {nivodaPriceError && <div style={{ marginTop: 14, fontSize: 12, color: '#9A6A4A' }}>{nivodaPriceError}</div>}
-              </div>
+                {nivodaPriceError && <div className="pd-estimate" role="status"><i />{nivodaPriceError.replace(/\s+—\s+/g, '. ').replace(/\. c/, '. C')}</div>}
+              </section>
             )}
 
+            {/* Ring size: one field */}
             {isRingCat && (
-            <div style={{ marginBottom: 30 }}>
-              <StepHead n={productData.nivoda_enabled ? '3' : '2'} title="Ring size" right={<Link to="/customer-service" style={{ fontSize: 11, color: T.gold, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Size guide</Link>} />
-              <div style={subHelp}>Not sure of the size? Order anyway — we offer complimentary resizing.</div>
-              {(() => {
-                const splitLbl = (l: string) => { const m = l.match(/^(.*?)\s*\((.*)\)\s*$/); return { uk: m ? m[1] : l, conv: m ? m[2] : '' }; };
-                const cur = splitLbl(sizeLabel);
-                return (
-                  <div className="size-dropdown-container" style={{ position: 'relative' }}>
-                    <button type="button" onClick={() => setSizeDropdownOpen(o => !o)} aria-haspopup="listbox" aria-expanded={sizeDropdownOpen}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 16px', fontFamily: FONT_BODY, background: '#FFFFFF', border: `1px solid ${sizeDropdownOpen ? T.ink : T.ruleStrong}`, cursor: 'pointer', textAlign: 'left', transition: 'border-color .15s' }}>
-                      <span style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{cur.uk}</span>
-                        {cur.conv && <span style={{ fontSize: 12, color: T.muted }}>{cur.conv}</span>}
-                      </span>
-                      <ChevronDown size={16} style={{ color: T.muted, transform: sizeDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s', flex: 'none' }} />
-                    </button>
-                    {sizeDropdownOpen && (
-                      <div role="listbox" className="pdpv2-sizemenu" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, maxHeight: 288, overflowY: 'auto', background: '#FFFFFF', border: `1px solid ${T.ruleStrong}`, boxShadow: '0 14px 36px rgba(20,18,15,0.16)', zIndex: 40, padding: 5 }}>
+              <section className="pd-line">
+                {(() => {
+                  const splitLbl = (l: string) => { const m = l.match(/^(.*?)\s*\((.*)\)\s*$/); return { uk: m ? m[1] : l, conv: m ? m[2] : '' }; };
+                  const cur = splitLbl(sizeLabel);
+                  return (
+                    <div className="size-dropdown-container pd-size">
+                      <button type="button" className="pd-sizebtn" data-sizebtn onClick={() => setSizeDropdownOpen(o => !o)} aria-haspopup="listbox" aria-expanded={sizeDropdownOpen}>
+                        <span className="pd-linename">Size</span>
+                        <span><b data-sizeuk>{cur.uk.replace('UK Size ', 'UK ')}</b><ChevronDown size={16} strokeWidth={1.25} style={{ transform: sizeDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform .18s' }} /></span>
+                      </button>
+                      <div role="listbox" aria-label="Ring size" className={`pd-sizemenu${sizeDropdownOpen ? ' is-open' : ''}`}>
                         {ringSizes.map(s => {
                           const on = s.value === selectedSize; const p = splitLbl(s.label);
                           return (
-                            <button key={s.value} type="button" role="option" aria-selected={on} onClick={() => { setSelectedSize(s.value); setSizeDropdownOpen(false); }} className="pdpv2-sizeopt" data-on={on ? '1' : '0'}
-                              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '11px 12px', border: 'none', borderLeft: `2px solid ${on ? T.gold : 'transparent'}`, background: on ? T.tint : 'transparent', cursor: 'pointer', textAlign: 'left' }}>
-                              <span style={{ fontSize: 13.5, fontWeight: on ? 600 : 500, color: T.ink }}>{p.uk}</span>
-                              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 12, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>{p.conv}</span>
-                                {on && <Check size={14} style={{ color: T.gold, flex: 'none' }} />}
-                              </span>
+                            <button key={s.value} type="button" role="option" aria-selected={on} data-sizeopt onClick={() => { setSelectedSize(s.value); setSizeDropdownOpen(false); }}>
+                              <b>{p.uk}</b><span>{p.conv}</span>
                             </button>
                           );
                         })}
                       </div>
-                    )}
-                  </div>
-                );
-              })()}
-              {(productData.available_diamond_sizes || []).length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-                  {productData.available_diamond_sizes.map((d: any) => {
-                    const on = selectedDiamondSize === d.id;
-                    return <button key={d.id} onClick={() => setSelectedDiamondSize(d.id)} className="pdpv2-chip" style={chip(on)}>{d.display_name || d.name}</button>;
-                  })}
-                </div>
-              )}
-            </div>
+                    </div>
+                  );
+                })()}
+                {(productData.available_diamond_sizes || []).length > 0 && (
+                  <>
+                    <div className="pd-optname" style={{ marginTop: 22 }}>Diamond size</div>
+                    <div className="pd-words" role="radiogroup" aria-label="Diamond size">
+                      {productData.available_diamond_sizes.map((d: any) => word(d.id, 'dsize', selectedDiamondSize === d.id, () => setSelectedDiamondSize(d.id), d.display_name || d.name))}
+                    </div>
+                  </>
+                )}
+              </section>
             )}
 
-            {/* Primary CTA lives in the fixed bottom bar (always in view). */}
-            <div style={{ textAlign: 'center', fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.muted, padding: '18px 0', borderBottom: `1px solid ${T.rule}`, borderTop: `1px solid ${T.rule}`, margin: '4px 0 18px' }}>Free insured delivery</div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: T.rule, marginBottom: 8 }}>
-              {[['01', 'Book an appointment', '/contact'], ['02', 'Order by phone', '/contact'], ['03', 'Drop a hint', '/contact']].map(([n, l, href]) => (
-                <Link key={n} to={href} style={{ background: T.paper, padding: '18px 14px', textAlign: 'center' }}>
-                  <div style={{ fontFamily: FONT_DISPLAY, color: T.gold, fontSize: 18 }}>{n}</div>
-                  <div style={{ fontSize: 12, color: T.body, marginTop: 6 }}>{l}</div>
-                </Link>
-              ))}
+            <div className="pd-actions">
+              <button type="button" onClick={handleAddToCart} disabled={isLoading} className="pd-btn pd-add" data-addbag>{isLoading ? 'Adding…' : 'Add to bag'}</button>
+              <Link to="/book-appointment" className="pd-btn2">{isStock ? 'See it in the showroom' : 'Book an appointment'}</Link>
             </div>
+            <p className="pd-note">
+              {productData.is_live_stock ? 'In stock, usually dispatched within 2 to 3 working days.' : 'Made to order in our own workshop, up to 6 weeks.'} Free insured UK delivery.{isStock ? ' 30-day returns.' : ''}
+              {isRingCat && <> <Link to="/ring-size-guide">Size guide</Link></>}
+            </p>
 
-            <div style={{ marginTop: 22 }}>
-              {[['about', 'About this piece', productData.description ? String(productData.description) : (productData.is_live_stock ? 'A ready-to-ship piece from our own workshop.' : 'Made to order in our own workshop, cut and set by hand.')], ['delivery', 'Delivery information', productData.is_live_stock ? 'Free insured UK delivery. In stock and ready to ship — usually dispatched within 2–3 working days. 30-day returns.' : 'Free insured UK delivery. Made to order — please allow up to 6 weeks. Made-to-order pieces are not eligible for the 30-day return once work has begun.'], ['insurance', 'Complimentary insurance', 'Every piece includes complimentary insurance for the first year and a 1-year warranty.']].map(([key, title, body]) => (
-                <div key={key} style={{ borderTop: `1px solid ${T.rule}` }}>
-                  <button onClick={() => toggleSection(key)} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '16px 0', background: 'transparent', border: 0, cursor: 'pointer', fontFamily: FONT_BODY, fontSize: 12.5, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.ink }}>
-                    <span>{title}</span><span>{expandedSections[key] ? '−' : '+'}</span>
+            <div className="pd-accs">
+              {[['delivery', 'Delivery information', productData.is_live_stock ? 'Free insured UK delivery. In stock and ready to ship, usually dispatched within 2 to 3 working days. 30-day returns.' : 'Free insured UK delivery. Made to order: please allow up to 6 weeks. Made-to-order pieces are not eligible for the 30-day return once work has begun.'], ['insurance', 'Complimentary insurance', 'Every piece includes complimentary insurance for the first year and a 1-year warranty.']].map(([key, title, body]) => (
+                <div key={key} className="pd-accitem">
+                  <button type="button" className="pd-acc" data-faq aria-expanded={!!expandedSections[key]} onClick={() => toggleSection(key)}>
+                    <span>{title}</span><span className="pd-plus" aria-hidden="true" />
                   </button>
-                  {expandedSections[key] && <div style={{ paddingBottom: 18, fontSize: 14, lineHeight: 1.7, color: T.body, whiteSpace: 'pre-line' }}>{body}</div>}
+                  <div className={`pd-accbody${expandedSections[key] ? ' is-open' : ''}`}><p>{body}</p></div>
                 </div>
               ))}
-            </div>
-
-            <div className="pdpv2-spec" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: 24, marginTop: 22, borderTop: `1px solid ${T.rule}` }}>
-              {([(metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName) && ['Metal', metalTypeOptions.find(m => m.value === selectedMetalType)?.label || metalName], isRingCat && ['Size', sizeLabel], diamondName && ['Diamond', diamondName], productData.nivoda_enabled && selectedCarat && ['Carat', selectedCarat + ' ct'], productData.nivoda_enabled && selectedClarity && ['Clarity', selectedClarity], productData.nivoda_enabled && selectedColour && ['Colour', selectedColour]].filter(Boolean) as any[]).map((row: any, i: number) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '11px 0', borderBottom: `1px solid ${T.rule}`, fontSize: 13 }}>
-                  <span style={{ color: T.muted }}>{row[0]}</span><span>{row[1]}</span>
+              <div className="pd-accitem">
+                <button type="button" className="pd-acc" data-faq aria-expanded={!!expandedSections.selection} onClick={() => toggleSection('selection')}>
+                  <span>Your selection</span><span className="pd-plus" aria-hidden="true" />
+                </button>
+                <div className={`pd-accbody${expandedSections.selection ? ' is-open' : ''}`}>
+                  <dl className="pd-spec">
+                    {([selectedMetalLabel && ['Metal', selectedMetalLabel], isRingCat && ['Size', sizeLabel], diamondName && ['Diamond', diamondName], selectedVariant?.gemstone_type && ['Stone', selectedVariant.gemstone_type], productData.nivoda_enabled && ['Diamond type', selectedStoneType === 'natural' ? 'Natural' : 'Lab-Grown'], productData.nivoda_enabled && selectedCarat && ['Carat', selectedCarat + ' ct'], productData.nivoda_enabled && selectedClarity && ['Clarity', selectedClarity], productData.nivoda_enabled && selectedColour && ['Colour', selectedColour], productData.sku && ['Product code', productData.sku]].filter(Boolean) as any[]).map((row: any, i: number) => (
+                      <div key={i}><dt>{row[0]}</dt><dd>{row[1]}</dd></div>
+                    ))}
+                  </dl>
                 </div>
-              ))}
-            </div>
-
-            {/* Price bar — aligned to this column, pinned to the viewport bottom while the
-                customer scrolls the options (Diamond-Heaven style). */}
-            <div className="pdpv2-pricebar" style={{ position: 'sticky', bottom: 0, zIndex: 30, marginTop: 30, background: T.tint, border: `1px solid ${T.rule}`, boxShadow: '0 -8px 24px rgba(33,30,25,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '15px 18px calc(15px + env(safe-area-inset-bottom))' }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 11, color: T.muted, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{configSummary}{nivodaPriceLoading ? '  ·  updating…' : ''}</div>
-                  <div className="pdpv2-price" style={{ fontFamily: "'Lora', Georgia, serif", fontWeight: 400, fontSize: 25, lineHeight: 1.15, letterSpacing: '0.005em', fontVariantNumeric: 'tabular-nums', color: T.ink }}>{money(totalPrice)}<span style={{ fontFamily: FONT_BODY, fontSize: 11, fontWeight: 400, color: T.muted, marginLeft: 8 }}>incl. VAT</span></div>
-                </div>
-                <button onClick={handleAddToCart} disabled={isLoading} className="pdpv2-addbtn" style={{ padding: '16px clamp(24px,3vw,44px)', cursor: isLoading ? 'default' : 'pointer', background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{isLoading ? 'Adding…' : 'Add to bag'}</button>
               </div>
             </div>
-          </div>
-        </main>
 
-        {/* Our promise */}
-        <section style={{ background: T.ink, color: T.onDarkSoft, padding: 'clamp(60px,5.5vw,100px) clamp(24px,3vw,52px)' }}>
-          <div style={{ maxWidth: 1240, margin: '0 auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'end', paddingBottom: 36, borderBottom: `1px solid ${T.ruleDark}` }} className="pdpv2-promise-top">
-              <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(30px,3.4vw,52px)', lineHeight: 1.08, margin: 0, maxWidth: '15ch', color: '#fff' }}>Where craftsmanship meets distinction.</h2>
-              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.75, color: T.onDarkBody }}>{productData.is_live_stock
-                ? 'Ready to ship from our showroom in Beeston, with a 1-year warranty. Sizing, repairs and servicing are all done in our own workshop.'
-                : 'Every made-to-order piece is cut, set and finished by hand in our own workshop — the same bench, the same care, for generations.'}</p>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }} className="pdpv2-promise-grid">
-              {[['I', 'White glove delivery', 'Insured, tracked and hand-delivered to your door.'], ['II', 'Signature presentation', 'Every piece arrives in our signature box, ready to give.'], ['III', 'Ethical excellence', 'Responsibly sourced stones and metals, hallmarked in the UK.'], ['IV', 'Sizing expertise', 'Complimentary resizing to get the fit exactly right.']].map(([n, t, d], i) => (
-                <div key={n} style={{ padding: 34, borderRight: i < 3 ? `1px solid ${T.ruleDark}` : undefined }}>
-                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: 26, color: T.gold, marginBottom: 14 }}>{n}</div>
-                  <div style={{ fontSize: 14.5, color: '#fff', marginBottom: 8 }}>{t}</div>
-                  <div style={{ fontSize: 13.5, lineHeight: 1.6, color: T.onDarkMuted }}>{d}</div>
+            {/* Price bar: sits at the foot of this column and stays at the bottom of the screen
+                while the options scroll, so the total and Add to bag are always in reach. */}
+            <div className="pd-bar">
+              <div className="pd-bar-in">
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="pd-bar-sum">{summaryLine}{nivodaPriceLoading ? '  ·  updating…' : ''}</div>
+                  <div className="pd-bar-price"><span data-total>{money(totalPrice)}</span><small>incl. VAT</small></div>
                 </div>
-              ))}
+                <button type="button" onClick={handleAddToCart} disabled={isLoading} className="pd-btn" data-addbag>{isLoading ? 'Adding…' : 'Add to bag'}</button>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 40, paddingTop: 32, borderTop: `1px solid ${T.ruleDark}` }}>
-              <Link to="/contact" style={{ padding: '14px 30px', background: T.paper, color: T.ink, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Book a private consultation</Link>
-              <Link to="/contact" style={{ padding: '14px 30px', border: `1px solid ${T.ruleDarkStrong}`, color: '#fff', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Order by phone</Link>
+        </div></div>
+      </main>
+
+      {/* About this piece. The client's own words, given room: a centred opening, then the
+          chapters named down the left with one open at a time beside them, so there is only
+          ever one thing to read. A specification is set as a quiet two-column list. */}
+      {(story.intro.length > 0 || story.chapters.length > 0) && (
+        <section className="pd-story">
+          <div className="pd-wrap">
+            <div className="pd-story-open">
+              <div className="pd-eyebrow" style={{ justifyContent: 'center' }}>About this piece</div>
+              {story.tagline && <h2 className="pd-h2">{story.tagline}</h2>}
+              {(catalogue ? story.intro.slice(0, 1) : story.intro).map((t, i) => <p key={i} className={i === 0 ? 'is-lead' : undefined}>{t}</p>)}
             </div>
+
+            {/* The catalogue entry: a description that is an introduction plus a specification
+                (stock pieces, bracelets) shows the specification as a grid of facts, and keeps
+                the rest of the wording behind one link. */}
+            {catalogue && (
+              <>
+                <dl className="pd-catalogue">
+                  {catalogue.specs.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+                </dl>
+                {catalogueRest.length > 0 && (
+                  <div className="pd-catmore">
+                    <button type="button" className="pd-link" data-catmore aria-expanded={!!expandedSections.fullstory} onClick={() => toggleSection('fullstory')}>{expandedSections.fullstory ? 'Show less' : 'Read the full description'}</button>
+                    <div className={`pd-catrest${expandedSections.fullstory ? ' is-open' : ''}`}>
+                      {catalogueRest.map((t, i) => <p key={i}>{t}</p>)}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {!catalogue && story.chapters.length > 0 && (
+              <div className={`pd-chapters${story.chapters.length === 1 ? ' is-one' : ''}`}>
+                {story.chapters.map((c, i) => {
+                  const on = story.chapters.length === 1 || chapterOn === i;
+                  return (
+                    <div key={i} className="pd-chapter" data-on={on ? '1' : '0'}>
+                      <button type="button" className="pd-chaptitle" data-chap={i} aria-expanded={on} onClick={() => setExpandedSections((prev: any) => ({ ...prev, chapter: chapterOn === i ? -1 : i }))}>
+                        <span>{String(i + 1).padStart(2, '0')}</span>{c.title}
+                      </button>
+                      <div className="pd-chaptext">
+                        {c.specs.length === 0 && c.paras.map((t, j) => <p key={j}>{t}</p>)}
+                        {c.specs.length > 0 && (
+                          <dl className="pd-specs">
+                            {c.specs.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+                          </dl>
+                        )}
+                        {c.specs.length > 0 && c.paras.map((t, j) => <p key={'n' + j} className="is-note">{t}</p>)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
+      )}
 
-        {(recommendedProducts || []).length > 0 && (
-          <section style={{ padding: 'clamp(48px,5vw,80px) clamp(24px,3vw,52px)', background: T.paper }}>
-            <div style={{ ...eyebrow, marginBottom: 14 }}>You may also like</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'clamp(16px,1.6vw,28px)', marginTop: 20 }} className="pdpv2-rec">
-              {recommendedProducts.slice(0, 4).map((r: any) => {
-                // The recommendations API returns `image` as a plain URL string
-                // (rec.images[0].image_url), not an object — handle both shapes.
-                const rimg = (typeof r.image === 'string' ? r.image : r.image?.url) || r.images?.[0]?.url;
-                return (
-                  <Link key={r.id} to={`/${r.category?.slug || 'engagement-rings'}/${r.slug}`} className="pdpv2-card" style={{ display: 'block' }}>
-                    <div style={{ position: 'relative', aspectRatio: '4 / 5', background: '#FFFFFF', overflow: 'hidden' }}>
-                      {rimg ? <img src={getMediaUrl(rimg)} alt={r.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" /> : null}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 14, fontSize: 14 }}><span>{r.name}</span><span style={{ color: '#56534D' }}>{r.price}</span></div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
-      </div>
+      {/* Our promise: the page's one sand band. Centred and spare: one heading, one sentence,
+          then the four promises side by side, each a small gold mark, a name and a line. */}
+      <section className="pd-promise">
+        <div className="pd-wrap">
+          <div className="pd-promise-open">
+            <div className="pd-eyebrow" style={{ justifyContent: 'center' }}>Our promise</div>
+            <h2 className="pd-h2">Where craftsmanship meets distinction.</h2>
+            <p>{productData.is_live_stock
+              ? 'Ready to ship from our showroom in Beeston, with a 1-year warranty. Sizing, repairs and servicing are all done in our own workshop.'
+              : 'Every made-to-order piece is cut, set and finished by hand in our own workshop. The same bench, the same care, for generations.'}</p>
+          </div>
+          <div className="pd-promise-grid">
+            {([
+              ['White glove delivery', 'Insured, tracked and hand-delivered to your door.', <path key="a" d="M4 9.5l10-5 10 5v10l-10 5-10-5z M4 9.5l10 5 10-5 M14 14.5v10" />],
+              ['Signature presentation', 'Every piece arrives in our signature box, ready to give.', <path key="b" d="M5.5 12.5h17v11h-17z M4 8.5h20v4H4z M14 8.5v15 M14 8.5c-2.5-4.5-7.5-3-5 0 M14 8.5c2.5-4.5 7.5-3 5 0" />],
+              ['Ethical excellence', 'Responsibly sourced stones and metals, hallmarked in the UK.', <path key="c" d="M14 3.5l9 3v7c0 6-4 9.5-9 11.5-5-2-9-5.5-9-11.5v-7z M10 14l3 3 5.5-6" />],
+              ['Sizing expertise', 'Complimentary resizing to get the fit exactly right.', <path key="d" d="M14 24.5a7 7 0 100-14 7 7 0 000 14z M11 4.5h6l2 2.5-5 3.5-5-3.5z" />],
+            ] as [string, string, React.ReactNode][]).map(([t, d, icon]) => (
+              <div key={t}>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke={T.gold} strokeWidth="1" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">{icon}</svg>
+                <b>{t}</b>
+                <p>{d}</p>
+              </div>
+            ))}
+          </div>
+          <div className="pd-promise-acts">
+            <Link to="/book-appointment" className="pd-link">Book a private consultation</Link>
+            <a href="tel:01159257552" className="pd-link">Order by phone</a>
+          </div>
+        </div>
+      </section>
+
+      {(recommendedProducts || []).length > 0 && (
+        <section className="pd-wrap pd-recs">
+          <h2 className="pd-h2">You may also like</h2>
+          <div className="pd-recgrid">
+            {recommendedProducts.slice(0, 4).map((r: any) => {
+              // The recommendations API returns `image` as a plain URL string
+              // (rec.images[0].image_url), not an object — handle both shapes.
+              const rimg = (typeof r.image === 'string' ? r.image : r.image?.url) || r.images?.[0]?.url;
+              return (
+                <Link key={r.id} to={`/${r.category?.slug || 'engagement-rings'}/${r.slug}`} className="pd-rec-card">
+                  <div>{rimg ? <img src={getMediaUrl(rimg)} alt={r.name} loading="lazy" /> : null}</div>
+                  <p><span>{r.name}</span><span>{r.price}</span></p>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <FooterV2 />
 
-      <style>{`
-        .pdpv2-gallery{ position: sticky; align-self: start; }
-        .pdpv2-galnav, .pdpv2-galdots{ display:none; }
-        .pdpv2-galnav{ position:absolute; top:50%; right:12px; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.94); border:1px solid ${T.rule}; align-items:center; justify-content:center; cursor:pointer; color:${T.ink}; box-shadow:0 2px 12px rgba(28,26,23,0.16); z-index:4; }
-        .pdpv2-galdots{ position:absolute; bottom:14px; left:0; right:0; justify-content:center; gap:7px; z-index:4; }
-        .pdpv2-galdot{ width:7px; height:7px; border-radius:50%; border:0; padding:0; background:rgba(28,26,23,0.28); cursor:pointer; transition:background .2s,width .2s; }
-        .pdpv2-galdot[data-on="1"]{ background:${T.gold}; }
-        .pdpv2-nobar{ scrollbar-width:thin; }
-        .pdpv2-nobar::-webkit-scrollbar{ height:5px; }
-        .pdpv2-nobar::-webkit-scrollbar-thumb{ background:${T.ruleStrong}; border-radius:3px; }
-        .carat-track{ position:absolute; left:11px; right:11px; top:50%; height:5px; transform:translateY(-50%); background:${T.ink}; border-radius:3px; }
-        .carat-tick{ position:absolute; top:50%; width:2px; height:13px; transform:translate(-50%,-50%); background:${T.ink}; border-radius:1px; z-index:2; }
-        .carat-handle{ position:absolute; top:50%; width:13px; height:26px; transform:translate(-50%,-50%); border-radius:4px; background:linear-gradient(180deg,#F7EFD8,#E7D3A2); border:1.5px solid ${T.gold}; box-shadow:0 1px 5px rgba(33,30,25,0.32); pointer-events:none; z-index:3; }
-        .carat-handle::after{ content:''; position:absolute; left:50%; top:5px; bottom:5px; width:1px; transform:translateX(-50%); background:rgba(184,146,63,0.75); }
-        .carat-input{ position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:grab; z-index:4; -webkit-appearance:none; appearance:none; background:transparent; }
-        .carat-input:active{ cursor:grabbing; }
-        .carat-input::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:26px; height:26px; cursor:grab; }
-        .carat-input::-moz-range-thumb{ width:26px; height:26px; border:0; background:transparent; cursor:grab; }
-        @media (max-width:900px){
-          .pdpv2-main{ grid-template-columns:minmax(0,1fr) !important; padding-left:16px !important; padding-right:16px !important }
-          .pdpv2-gallery{ position:static !important; min-width:0; margin:0 -16px 30px; width:calc(100% + 32px) }
-          /* on mobile the price bar is fixed to the viewport bottom so it's never cut off */
-          .pdpv2-pricebar{ position:fixed !important; left:0; right:0; bottom:0; margin:0 !important; border-left:0 !important; border-right:0 !important; z-index:55 }
-          .pdpv2{ padding-bottom:92px }
-          /* gallery becomes a full-bleed, borderless, swipeable single-image carousel */
-          .pdpv2-mosaic{ column-count:1 !important; display:flex !important; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:0 !important; }
-          .pdpv2-mosaic::-webkit-scrollbar{ display:none }
-          .pdpv2-tile2{ flex:0 0 100% !important; margin:0 !important; scroll-snap-align:center; aspect-ratio:1/1; border:0 !important; }
-          .pdpv2-tile2 img, .pdpv2-tile2 video{ width:100% !important; height:100% !important; }
-          .pdpv2-tile2 img{ object-fit:contain !important; }
-          .pdpv2-tile2 video{ object-fit:cover !important; }
-          .pdpv2-galnav{ display:flex !important }
-          .pdpv2-galdots{ display:flex !important }
-          .pdpv2-price{ font-size:20px !important }
-          .pdpv2-promise-top,.pdpv2-promise-grid{ grid-template-columns:1fr !important }
-          .pdpv2-rec{ grid-template-columns:repeat(2,1fr) !important }
-          .pdpv2-spec{ grid-template-columns:1fr !important }
-        }
-      `}</style>
+      {/* Enlarged view: click the picture to step in closer, move to look around */}
+      {isLightboxOpen && lightboxItem && (
+        <div className="pd-lb" role="dialog" aria-modal="true" aria-label={`${productData.name}, enlarged view`}>
+          <button type="button" className="pd-lb-x" aria-label="Close" onClick={closeLightbox}><svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" /></svg></button>
+          <div className="pd-lb-stage" onClick={(e) => { if (e.target === e.currentTarget) closeLightbox(); }}>
+            {isVid(lightboxItem)
+              ? <video src={toStreamUrl(getMediaUrl(lightboxItem.url))} autoPlay muted loop playsInline controls />
+              : <img src={getMediaUrl(lightboxItem.url)} alt={productData.name} data-zoom={zoomLevel > 1 ? '1' : '0'}
+                  style={{ transform: `scale(${zoomLevel > 1 ? 2.2 : 1})` }}
+                  onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`; setZoomLevel(zoomLevel > 1 ? 1 : 2); }}
+                  onMouseMove={(e) => { if (zoomLevel <= 1) return; const r = e.currentTarget.parentElement!.getBoundingClientRect(); e.currentTarget.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`; }} />}
+          </div>
+          {gallery.length > 1 && (
+            <div className="pd-lb-nav">
+              <button type="button" aria-label="Previous view" onClick={() => lightboxStep.current?.(-1)}><svg width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true"><path d="M8 1L1 8l7 7" stroke="currentColor" /></svg></button>
+              <span>{lightboxImageIndex + 1} / {gallery.length}</span>
+              <button type="button" aria-label="Next view" onClick={() => lightboxStep.current?.(1)}><svg width="9" height="16" viewBox="0 0 9 16" fill="none" aria-hidden="true"><path d="M1 1l7 7-7 7" stroke="currentColor" /></svg></button>
+            </div>
+          )}
+        </div>
+      )}
+
       {productData?.nivoda_enabled && <DiamondHelpNudge productName={productData?.name} />}
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { T, FONT_DISPLAY, FONT_BODY } from "./tokens";
+import { T, FONT_LOGO, FONT_BODY } from "./tokens";
 import PaymentBadges from "../PaymentBadges";
 import API_BASE_URL from "../../config/api";
 
@@ -102,7 +102,7 @@ const FooterV2 = (): JSX.Element => {
       <div className="v2ft">
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.5fr) repeat(5, minmax(0, 1fr))", gap: "clamp(20px, 2.4vw, 44px)", paddingBottom: 52, borderBottom: `1px solid ${T.ruleDark}` }} className="v2-footgrid">
           <div>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 23, letterSpacing: "0.16em", color: "#FFFFFF" }}>McCulloch</div>
+            <div style={{ fontFamily: FONT_LOGO, fontSize: 23, letterSpacing: "0.16em", color: "#FFFFFF" }}>McCulloch</div>
             <div style={{ fontSize: 10, letterSpacing: "0.4em", textTransform: "uppercase", color: T.onDarkMuted, margin: "5px 0 26px 3px" }}>Fine jewellery</div>
             <p id="v2ft-news-label" style={{ margin: "0 0 20px", maxWidth: "32ch", fontSize: 15, lineHeight: 1.7 }}>New pieces and private viewings, before they reach the site.</p>
             {signup === "done" ? (
