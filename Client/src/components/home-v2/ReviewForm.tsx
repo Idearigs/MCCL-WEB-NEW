@@ -12,7 +12,7 @@ const CATEGORIES = ["Bespoke", "Engagement", "Wedding", "Servicing", "Watches", 
 
 const ReviewForm = (): JSX.Element => {
   const [form, setForm] = useState({ author_name: "", location: "", category: "", body: "", email: "" });
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0); // nothing pre-selected: the visitor chooses
   const [hover, setHover] = useState(0);
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
@@ -21,6 +21,7 @@ const ReviewForm = (): JSX.Element => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!rating) { setError("Please choose a star rating."); return; }
     if (!form.author_name.trim() || !form.body.trim()) {
       setError("Please add your name and a few words.");
       return;
@@ -50,7 +51,7 @@ const ReviewForm = (): JSX.Element => {
     width: "100%", padding: "12px 0", background: "transparent", border: 0, borderBottom: `1px solid ${T.ruleStrong}`,
     outline: "none", color: T.ink, fontFamily: FONT_BODY, fontSize: 15,
   };
-  const label: React.CSSProperties = { display: "block", fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.muted, marginBottom: 4 };
+  const label: React.CSSProperties = { display: "block", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: T.muted, marginBottom: 4 };
 
   if (state === "done") {
     return (
@@ -66,14 +67,14 @@ const ReviewForm = (): JSX.Element => {
   return (
     <form onSubmit={submit} style={{ background: "#FFFFFF", border: `1px solid ${T.rule}`, boxShadow: "0 24px 48px -34px rgba(28,26,23,0.28)", padding: "clamp(24px, 3vw, 40px)", fontFamily: FONT_BODY }}>
       <style>{`
-        .rvf-star:hover{transform:scale(1.1)} .rvf-cta:hover{background:${T.inkDeep}}
+        .rvf-star:hover{transform:scale(1.1)} .rvf-cta:hover{background:${T.ink} !important;color:${T.cream} !important}
         .rvf-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-        @media (max-width:640px){ .rvf-grid{grid-template-columns:1fr;gap:16px} }
+        @media (max-width:640px){ .rvf-grid{grid-template-columns:1fr;gap:16px} .rvf-in{font-size:16px !important} }
       `}</style>
 
       {/* Rating */}
-      <div style={label}>Your rating</div>
-      <div style={{ display: "flex", gap: 4, marginBottom: 18 }}>
+      <div id="rvf-rating-label" style={label}>Your rating</div>
+      <div role="radiogroup" aria-labelledby="rvf-rating-label" style={{ display: "flex", gap: 0, margin: "0 0 14px -9px" }}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
@@ -82,8 +83,10 @@ const ReviewForm = (): JSX.Element => {
             onMouseEnter={() => setHover(n)}
             onMouseLeave={() => setHover(0)}
             onClick={() => setRating(n)}
+            role="radio"
+            aria-checked={rating === n}
             aria-label={`${n} star${n > 1 ? "s" : ""}`}
-            style={{ background: "transparent", border: 0, cursor: "pointer", fontSize: 26, lineHeight: 1, color: (hover || rating) >= n ? T.gold : T.ruleStrong, transition: "transform 0.15s, color 0.15s", padding: 0 }}
+            style={{ background: "transparent", border: 0, cursor: "pointer", fontSize: 26, lineHeight: 1, color: (hover || rating) >= n ? T.gold : T.ruleStrong, transition: "transform 0.15s, color 0.15s", width: 44, height: 44, padding: 0 }}
           >
             ★
           </button>
@@ -91,24 +94,24 @@ const ReviewForm = (): JSX.Element => {
       </div>
 
       <div className="rvf-grid">
-        <div><label style={label}>Name</label><input style={input} value={form.author_name} onChange={(e) => set("author_name", e.target.value)} required /></div>
-        <div><label style={label}>Location (optional)</label><input style={input} value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Nottingham" /></div>
+        <div><label htmlFor="rvf-name" style={label}>Name</label><input id="rvf-name" className="rvf-in" autoComplete="name" style={input} value={form.author_name} onChange={(e) => set("author_name", e.target.value)} required /></div>
+        <div><label htmlFor="rvf-location" style={label}>Location (optional)</label><input id="rvf-location" className="rvf-in" autoComplete="address-level2" style={input} value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Nottingham" /></div>
       </div>
 
       <div className="rvf-grid" style={{ marginTop: 16 }}>
         <div>
-          <label style={label}>About (optional)</label>
-          <select style={{ ...input, appearance: "none", cursor: "pointer" }} value={form.category} onChange={(e) => set("category", e.target.value)}>
+          <label htmlFor="rvf-about" style={label}>About (optional)</label>
+          <select id="rvf-about" className="rvf-in" style={{ ...input, appearance: "none", cursor: "pointer" }} value={form.category} onChange={(e) => set("category", e.target.value)}>
             <option value="">Choose…</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-        <div><label style={label}>Email (optional, private)</label><input style={input} type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
+        <div><label htmlFor="rvf-email" style={label}>Email (optional, private)</label><input id="rvf-email" className="rvf-in" autoComplete="email" style={input} type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <label style={label}>Your review</label>
-        <textarea style={{ ...input, resize: "vertical", minHeight: 96 }} value={form.body} onChange={(e) => set("body", e.target.value)} rows={4} placeholder="Tell us about your experience with McCulloch." required />
+        <label htmlFor="rvf-body" style={label}>Your review</label>
+        <textarea id="rvf-body" className="rvf-in" style={{ ...input, resize: "vertical", minHeight: 96 }} value={form.body} onChange={(e) => set("body", e.target.value)} rows={4} placeholder="Tell us about your experience with McCulloch." required />
       </div>
 
       {error && <p style={{ color: "#b23b2e", fontSize: 13, marginTop: 12 }}>{error}</p>}
@@ -117,7 +120,7 @@ const ReviewForm = (): JSX.Element => {
         type="submit"
         disabled={state === "sending"}
         className="rvf-cta"
-        style={{ marginTop: 20, padding: "14px 30px", background: T.ink, color: T.paper, border: 0, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.25s", opacity: state === "sending" ? 0.7 : 1 }}
+        style={{ marginTop: 20, padding: "14px 30px", background: "transparent", color: T.text, border: `1px solid ${T.ink}`, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.25s", opacity: state === "sending" ? 0.7 : 1 }}
       >
         {state === "sending" ? "Sending…" : "Submit review"}
       </button>

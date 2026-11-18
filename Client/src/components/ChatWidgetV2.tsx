@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { io } from "socket.io-client";
+import { MessageCircle } from "lucide-react";
 import API_BASE_URL from "../config/api";
 import { useIsMobile } from "../hooks/use-mobile";
 import { T, FONT_DISPLAY, FONT_BODY } from "./home-v2/tokens";
@@ -16,7 +17,7 @@ import { T, FONT_DISPLAY, FONT_BODY } from "./home-v2/tokens";
  * (Mon–Sat 9–18) rather than always implying someone is online — the README requires that.
  */
 
-const M2 = "#8A8377";
+const M2 = T.textMuted; // was #8A8377
 const SOCKET_URL = API_BASE_URL.replace("/api/v1", "");
 
 const TOPICS = ["A commission", "An order", "Sizing", "A stone", "Repairs"];
@@ -69,6 +70,14 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
   const endRef = useRef<HTMLDivElement>(null);
 
   const open = isOpenNow();
+
+  // Escape closes the panel, like search and the bag.
+  useEffect(() => {
+    if (state === "closed") return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setState("closed"); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [state]);
 
   useEffect(() => { setForm((f) => ({ ...f, name: user?.name || f.name, email: user?.email || f.email })); }, [user]);
 
@@ -206,7 +215,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
   const panelWidth = isMobile ? "100vw" : "min(392px, calc(100vw - 40px))";
   const panelStyle: React.CSSProperties = isMobile
     ? { position: "fixed", inset: 0, zIndex: 75, display: "flex", flexDirection: "column", background: T.paper, animation: "cw2In 0.32s cubic-bezier(0.22,1,0.36,1) both" }
-    : { position: "fixed", right: 28, bottom: 28, zIndex: 75, display: "flex", flexDirection: "column", width: panelWidth, maxHeight: "min(620px, calc(100vh - 56px))", background: T.paper, border: `1px solid ${T.rule}`, boxShadow: "0 24px 60px rgba(20,18,15,0.28)", animation: "cw2In 0.32s cubic-bezier(0.22,1,0.36,1) both" };
+    : { position: "fixed", right: 28, bottom: 28, zIndex: 75, display: "flex", flexDirection: "column", width: panelWidth, maxHeight: "min(620px, calc(100vh - var(--v2nav-h, 112px) - 40px))", background: T.paper, border: `1px solid ${T.rule}`, boxShadow: "0 24px 60px rgba(20,18,15,0.28)", animation: "cw2In 0.32s cubic-bezier(0.22,1,0.36,1) both" };
 
   const dividerAt = messages[0]?.created_at;
 
@@ -214,23 +223,35 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
     <>
       <style>{`
         .cw2-nobar::-webkit-scrollbar { display: none; }
-        .cw2-launch:hover { background: ${T.gold} !important; }
+        .cw2-launch:hover { background: ${T.text} !important; }
         .cw2-x:hover { color: #FFFFFF !important; }
-        .cw2-send:hover { background: ${T.gold} !important; }
-        .cw2-cta:hover { background: ${T.gold} !important; }
+        .cw2-send:hover { background: ${T.text} !important; }
+        .cw2-cta:hover { background: ${T.text} !important; }
         .cw2-mini:hover { color: ${T.ink} !important; }
         @keyframes cw2In { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: none; } }
         @keyframes cw2Msg { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         @keyframes cw2Blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
         @media (prefers-reduced-motion: reduce) { .cw2-panel, .cw2-panel * { animation: none !important; } }
+        /* Hidden while the phone menu is open, where it covered "Book an appointment". */
+        body[data-v2-menu] .cw2-launch { display: none !important; }
       `}</style>
 
       {/* Launcher */}
       {state === "closed" && (
         <button type="button" onClick={() => setState("form")} className="cw2-launch" data-cw-launch
-          style={{ position: "fixed", right: isMobile ? 18 : 28, bottom: isMobile ? "calc(18px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", gap: 12, padding: "15px 22px", cursor: "pointer", background: onDark ? T.paper : T.ink, border: `1px solid ${onDark ? T.ruleStrong : "transparent"}`, boxShadow: onDark ? "0 12px 32px rgba(20,18,15,0.45)" : "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease" }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : (onDark ? T.gold : M2), transition: "background 0.4s ease" }} />
-          <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: onDark ? T.ink : T.paper, transition: "color 0.4s ease" }}>{isMobile ? "Ask us" : "Ask the workshop"}</span>
+          aria-label={isMobile ? "Ask us: chat with the workshop" : undefined}
+          style={{ position: "fixed", right: isMobile ? 16 : 28, bottom: isMobile ? "calc(16px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, ...(isMobile ? { width: 52, height: 52, padding: 0, borderRadius: "50%" } : { padding: "15px 22px" }), cursor: "pointer", background: onDark ? T.paper : T.ink, border: `1px solid ${onDark ? T.ruleStrong : "transparent"}`, boxShadow: onDark ? "0 12px 32px rgba(20,18,15,0.45)" : "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease" }}>
+          {isMobile ? (
+            <span style={{ position: "relative", display: "flex" }}>
+              <MessageCircle size={22} strokeWidth={1.6} color={onDark ? T.ink : T.paper} />
+              <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: "50%", background: open ? T.gold : M2, border: `1.5px solid ${onDark ? T.paper : T.ink}` }} />
+            </span>
+          ) : (
+            <>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : (onDark ? T.gold : M2), transition: "background 0.4s ease" }} />
+              <span style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: onDark ? T.ink : T.paper, transition: "color 0.4s ease" }}>Ask the workshop</span>
+            </>
+          )}
         </button>
       )}
 
@@ -259,13 +280,13 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                 {TOPICS.map((tp) => {
                   const on = tp === topic;
                   return (
-                    <button key={tp} type="button" onClick={() => setTopic(tp)} style={{ padding: "10px 13px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: on ? T.paper : T.body, background: on ? T.ink : "transparent", border: `1px solid ${on ? T.ink : T.ruleSoft}`, transition: "all 0.2s ease" }}>{tp}</button>
+                    <button key={tp} type="button" onClick={() => setTopic(tp)} style={{ padding: "10px 13px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: on ? T.paper : T.body, background: on ? T.ink : "transparent", border: `1px solid ${on ? T.ink : T.line}`, transition: "all 0.2s ease" }}>{tp}</button>
                   );
                 })}
               </div>
 
               <div style={{ display: "grid", gap: 14 }}>
-                <label style={{ display: "block" }}><span style={labelStyle}>Your name</span><input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Hannah Ward" style={inputStyle} /></label>
+                <label style={{ display: "block" }}><span style={labelStyle}>Your name</span><input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="First and last name" style={inputStyle} /></label>
                 <label style={{ display: "block" }}><span style={labelStyle}>Email address</span><input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="you@example.co.uk" style={inputStyle} /></label>
                 <label style={{ display: "block" }}><span style={labelStyle}>Message</span><textarea rows={4} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} placeholder={PLACEHOLDERS[topic]} style={{ ...inputStyle, lineHeight: 1.6, resize: "vertical" }} /></label>
               </div>
@@ -281,12 +302,12 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
           {state === "live" && (
             <>
               <div className="cw2-nobar" style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: 22 }}>
-                <div style={{ textAlign: "center", fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", color: "#A9A196", marginBottom: 22 }}>Today, {fmtTime(dividerAt)}</div>
+                <div style={{ textAlign: "center", fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.textMuted, marginBottom: 22 }}>Today, {fmtTime(dividerAt)}</div>
                 {messages.map((m, i) => {
                   const mine = m.sender_type === "customer";
                   return (
                     <div key={`${m.id}-${i}`} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start", marginBottom: 18, animation: "cw2Msg 0.3s cubic-bezier(0.22,1,0.36,1) both", animationDelay: `${Math.min(i * 0.05, 0.4)}s` }}>
-                      <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#A09889", marginBottom: 7 }}>{mine ? "You" : "McCulloch"}</span>
+                      <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: T.textMuted, marginBottom: 7 }}>{mine ? "You" : "McCulloch"}</span>
                       <span style={{ maxWidth: "84%", padding: "13px 15px", fontSize: 13.5, lineHeight: 1.65, color: mine ? "#F1EDE4" : T.heading, background: mine ? T.ink : T.tint, border: `1px solid ${mine ? T.ink : T.rule}` }}>
                         {m.attachment_url && <img src={`${SOCKET_URL}${m.attachment_url}`} alt="" style={{ display: "block", maxWidth: "100%", marginBottom: m.message ? 8 : 0 }} />}
                         {m.message}
@@ -296,7 +317,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                 })}
                 {theyTyping && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 10, letterSpacing: "0.12em", color: "#A09889", marginBottom: 7 }}>McCulloch</span>
+                    <span style={{ fontSize: 10, letterSpacing: "0.12em", color: T.textMuted, marginBottom: 7 }}>McCulloch</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 5, padding: 15, background: T.tint, border: `1px solid ${T.rule}` }}>
                       {[0, 0.2, 0.4].map((d) => <span key={d} style={{ width: 5, height: 5, borderRadius: "50%", background: M2, animation: `cw2Blink 1.4s ease-in-out ${d}s infinite` }} />)}
                     </span>
@@ -317,7 +338,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                   <input type="text" value={input} onChange={onInput} placeholder="Write a message" disabled={sending} style={{ width: "100%", padding: "13px 0", fontFamily: FONT_BODY, fontSize: isMobile ? 15 : 14, color: T.ink, background: "transparent", border: 0, outline: "none" }} />
                   <button type="submit" disabled={sending || (!input.trim() && !image)} className="cw2-send" style={{ padding: "12px 18px", cursor: sending ? "default" : "pointer", fontFamily: FONT_BODY, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.paper, background: T.ink, border: 0, opacity: sending || (!input.trim() && !image) ? 0.5 : 1, transition: "background 0.25s ease" }}>{sending ? "…" : "Send"}</button>
                 </form>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 12, fontSize: 11, color: "#A9A196" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 12, fontSize: 11, color: T.textMuted }}>
                   <button type="button" onClick={() => fileRef.current?.click()} className="cw2-mini" style={{ padding: 0, cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 11, color: M2 }}>Attach a photograph</button>
                   <a href="/contact" style={{ color: M2, textDecoration: "none" }}>Book a call instead</a>
                 </div>

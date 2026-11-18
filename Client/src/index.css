@@ -595,3 +595,17 @@
     cursor: pointer;
   }
 }
+
+
+/* ── Colour-usage brief (Nov 2026) ───────────────────────────────────────── */
+/* Keyboard focus: 2px ink outline on light grounds; cream on ink, video and photo areas. */
+:focus-visible { outline: 2px solid #1C1A17; outline-offset: 2px; }
+.v2-on-dark :focus-visible, .v2-on-dark:focus-visible { outline-color: #F8F6F0; }
+
+/* Small labels on light grounds: text colour with a short gold hairline before them. */
+.v2-eyebrow { display: flex; align-items: center; gap: 12px; color: #332F2A; }
+.v2-eyebrow::before { content: ""; flex: none; width: 24px; height: 1px; background: #A8813C; }
+
+/* Link hover: a 1px gold underline, text colour unchanged. */
+.v2-hover-line { text-decoration: none; text-underline-offset: 6px; text-decoration-thickness: 1px; }
+.v2-hover-line:hover { text-decoration-line: underline; text-decoration-color: #A8813C; }

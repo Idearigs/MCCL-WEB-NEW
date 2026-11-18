@@ -6,35 +6,25 @@ import AuthModal from "../components/AuthModalV2";
 import { useUserAuth } from "../contexts/UserAuthContext";
 import { useFavorites } from "../contexts/FavoritesContext";
 import { useCart } from "../contexts/CartContext";
-import { useIsMobile } from "../hooks/use-mobile";
 import API_BASE_URL, { getMediaUrl } from "../config/api";
-import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
+import { T, FONT_DISPLAY } from "../components/home-v2/tokens";
+import { ACCOUNT_CSS, money, isLive, statusLabel, tidy, Tick, OrderRow, EmptyPane, Notice, AcOrder } from "../components/home-v2/accountShared";
 
 /**
- * AccountV2 — the client ledger, wired to the existing backend.
- * VISUAL design: design_handoff_mcculloch_account_search_saved (Account.dc.html).
+ * AccountV2, light redesign (Nov 2026), wired to the existing backend exactly as before.
+ * A centred greeting over three figures, an "in progress" line when an order is live, then
+ * six sections: a rail down the side on a laptop, a row of tabs that parks under the
+ * navigation on a phone (the old phone layout needed a tap into each section and a tap back).
  *
- * REAL data:
+ * REAL data (unchanged):
  *   • Orders + stats  → GET  /users/orders
  *   • Profile fields  → GET  /users/profile   (name, email, phone, newsletter, sms)
  *   • Save details    → PUT  /users/profile
- *   • Saved items     → FavoritesContext (GET /favorites)  — products expose
- *                       basePrice/salePrice and link via the universal /product/:slug route
- *   • Addresses       → derived from the latest order's shipping_address
- *
- * The backend holds no Appointments or "Your pieces" records yet, so those panes show
- * honest empty states rather than invented content. Ring size has no column yet, so it
- * is an editable field that is not persisted (marked below).
+ *   • Saved items     → FavoritesContext (GET /favorites)
+ *   • Addresses       → /users/addresses (list, add, edit, remove, make default)
+ *   • Appointments / pieces → /appointments/mine, /pieces/mine (empty states until there are any)
  */
 
-const M2 = "#8A8377";
-const PAST = "#C4BCB0";
-const CHAMP_LIVE = "#E4DBC6";
-const A9 = "#A9A196";
-
-const DELIVERED = ["delivered", "completed", "fulfilled", "cancelled", "refunded"];
-
-const money = (n?: number | null) => (n == null || isNaN(Number(n)) ? "" : "£" + Math.round(Number(n)).toLocaleString("en-GB"));
 const favPrice = (p: any): number | undefined => {
   const v = p?.salePrice ?? p?.basePrice ?? p?.price;
   return v == null ? undefined : Number(v);
@@ -49,18 +39,7 @@ const authFetch = (endpoint: string, options: RequestInit = {}) => {
   }).then((r) => r.json());
 };
 
-const fmtDate = (iso?: string) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-};
-
-interface OrderItem { id: string; name: string; quantity: number; unitPrice: number; totalPrice: number }
-interface Order {
-  id: string; orderNumber: string; status: string; paymentStatus: string; total: number;
-  createdAt: string; shippingAddress: any; trackingNumber?: string; itemsCount: number; items: OrderItem[];
-}
+type Order = AcOrder;
 
 const TABS: { id: string; label: string }[] = [
   { id: "orders", label: "Orders" },
@@ -71,26 +50,15 @@ const TABS: { id: string; label: string }[] = [
   { id: "addresses", label: "Addresses & payment" },
 ];
 
-const SectionHead = ({ title, right }: { title: string; right?: React.ReactNode }) => (
-  <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, paddingBottom: 18, borderBottom: `1px solid ${T.rule}` }}>
-    <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(26px, 2.6vw, 38px)", lineHeight: 1, margin: 0 }}>{title}</h2>
-    {right}
-  </div>
+const PaneHead = ({ title, right }: { title: string; right?: React.ReactNode }) => (
+  <div className="ac-panehead"><h2 className="ac-h2">{title}</h2>{right}</div>
 );
 
-const Field = ({ label, value, onChange, type = "text", span2 = false, hint }: { label: string; value: string; onChange?: (v: string) => void; type?: string; span2?: boolean; hint?: string }) => (
-  <label style={{ display: "block", gridColumn: span2 ? "span 2" : undefined }}>
-    <span style={{ display: "block", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: M2, marginBottom: 8 }}>{label}</span>
-    <input type={type} value={value} onChange={(e) => onChange?.(e.target.value)} style={{ width: "100%", padding: 14, fontFamily: FONT_BODY, fontSize: 14, color: T.ink, background: "#FFFFFF", border: `1px solid ${T.ruleStrong}`, borderRadius: 0, outline: "none" }} />
-    {hint && <span style={{ display: "block", fontSize: 11, color: M2, marginTop: 6 }}>{hint}</span>}
-  </label>
-);
-
-const EmptyPane = ({ head, body, cta }: { head: string; body: string; cta?: { label: string; to: string } }) => (
-  <div style={{ padding: "60px 0 20px", textAlign: "center" }}>
-    <div style={{ fontFamily: FONT_DISPLAY, fontSize: 30, marginBottom: 14 }}>{head}</div>
-    <p style={{ margin: "0 auto 26px", maxWidth: "44ch", fontSize: 14.5, lineHeight: 1.7, color: T.muted }}>{body}</p>
-    {cta && <Link to={cta.to} style={{ display: "inline-block", padding: "14px 28px", background: T.ink, color: T.paper, fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase" }}>{cta.label}</Link>}
+const Field = ({ id, label, value, onChange, type = "text", wide = false, hint, autoComplete }: { id: string; label: string; value: string; onChange?: (v: string) => void; type?: string; wide?: boolean; hint?: string; autoComplete?: string }) => (
+  <div className={wide ? "is-wide" : undefined}>
+    <label className="ac-label" htmlFor={id}>{label}</label>
+    <input id={id} className="ac-input" type={type} value={value} readOnly={!onChange} autoComplete={autoComplete} onChange={(e) => onChange?.(e.target.value)} />
+    {hint && <span className="ac-hint">{hint}</span>}
   </div>
 );
 
@@ -98,9 +66,8 @@ const AccountV2 = (): JSX.Element => {
   const { user, isAuthenticated, logout } = useUserAuth();
   const { favorites, localFavorites, favoritesCount, removeFavorite } = useFavorites();
   const { addToCart } = useCart();
-  const isMobile = useIsMobile();
 
-  const [pane, setPane] = useState<string | null>("orders");
+  const [pane, setPane] = useState("orders");
   const [authOpen, setAuthOpen] = useState(false);
 
   // Real backend state
@@ -168,8 +135,7 @@ const AccountV2 = (): JSX.Element => {
     }));
   }, [profile, user]);
 
-  useEffect(() => { setPane(isMobile ? null : "orders"); }, [isMobile]);
-  useEffect(() => { document.body.style.background = T.paper; window.scrollTo(0, 0); }, []);
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const savedItems = useMemo(() => {
     if (isAuthenticated) {
@@ -190,10 +156,10 @@ const AccountV2 = (): JSX.Element => {
 
   const clientSince = useMemo(() => {
     const created = profile?.createdAt || (user as any)?.createdAt;
-    return created ? String(new Date(created).getFullYear()) : "—";
+    return created ? String(new Date(created).getFullYear()) : "";
   }, [profile, user]);
 
-  const liveOrder = useMemo(() => orders.find((o) => !DELIVERED.includes(String(o.status).toLowerCase())), [orders]);
+  const liveOrder = useMemo(() => orders.find((o) => isLive(o.status)), [orders]);
 
   const orderCount = ordersStats?.totalOrders ?? orders.length;
 
@@ -231,64 +197,30 @@ const AccountV2 = (): JSX.Element => {
   // ————— Not signed in —————
   if (!isAuthenticated || !user) {
     return (
-      <div style={{ background: T.paper, minHeight: "100vh", fontFamily: FONT_BODY }}>
+      <div className="ac">
+        <style>{ACCOUNT_CSS}</style>
         <NavigationV2 solid />
-        <div style={{ maxWidth: 560, margin: "0 auto", padding: "clamp(140px, 22vh, 240px) 24px clamp(80px, 12vw, 160px)", textAlign: "center" }}>
-          <div style={{ fontSize: 10.5, letterSpacing: "0.24em", textTransform: "uppercase", color: T.gold, marginBottom: 18 }}>Your account</div>
-          <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(34px, 5vw, 56px)", lineHeight: 1.04, margin: "0 0 18px" }}>Sign in to your account.</h1>
-          <p style={{ fontSize: 15, lineHeight: 1.7, color: T.body, maxWidth: "44ch", margin: "0 auto 30px" }}>Your orders, saved designs and details — all in one place.</p>
-          <button onClick={() => setAuthOpen(true)} style={{ padding: "15px 34px", background: T.ink, color: T.paper, border: 0, cursor: "pointer", fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase" }}>Sign in</button>
-        </div>
+        <Notice eyebrow="Your account" title="Sign in to your account." body="Your orders, saved designs and details, all in one place.">
+          <button type="button" className="ac-btn" onClick={() => setAuthOpen(true)}>Sign in</button>
+        </Notice>
         <FooterV2 />
         <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} initialView="login" />
       </div>
     );
   }
 
-  const activePane = pane || "orders";
-  const showIndex = isMobile && pane === null;
-
   const renderPane = (p: string) => {
     switch (p) {
       case "orders":
         return (
           <div>
-            <SectionHead title="Orders" right={<span style={{ fontSize: 12, color: T.muted }}>{loadingOrders ? "Loading…" : orderCount === 1 ? "1 order" : `${orderCount} orders`}</span>} />
+            <PaneHead title="Orders" right={<span>{loadingOrders ? "Loading…" : orderCount === 1 ? "1 order" : `${orderCount} orders`}</span>} />
             {loadingOrders ? (
-              <div style={{ padding: "60px 0", color: T.muted, fontSize: 14 }}>Fetching your orders…</div>
+              <div className="ac-muted" style={{ padding: "60px 0", fontSize: 15 }}>Fetching your orders…</div>
             ) : orders.length === 0 ? (
               <EmptyPane head="No orders yet." body="When you commission or buy a piece, it will appear here with its status and documents." cta={{ label: "Browse engagement rings", to: "/engagement-rings" }} />
             ) : (
-              orders.map((o) => {
-                const live = !DELIVERED.includes(String(o.status).toLowerCase());
-                const label = o.status ? o.status.charAt(0).toUpperCase() + o.status.slice(1) : "Order";
-                return (
-                  <div key={o.id} style={{ padding: "26px 0", borderBottom: `1px solid ${T.rule}` }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", gap: 16, marginBottom: 20 }}>
-                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "clamp(12px, 2vw, 28px)" }}>
-                        <span style={{ fontSize: 14 }}>{o.orderNumber || `#${String(o.id).slice(0, 8)}`}</span>
-                        <span style={{ fontSize: 12.5, color: T.muted }}>{fmtDate(o.createdAt)}</span>
-                        <span style={{ fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", padding: "5px 11px", color: live ? T.ink : T.muted, background: live ? CHAMP_LIVE : T.tint }}>{label}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: "clamp(12px, 2vw, 24px)" }}>
-                        <span style={{ fontSize: 14 }}>{money(o.total)}</span>
-                        <Link to={`/orders/${o.id}`} className="acc-link">{live ? "Track order" : "View order"}</Link>
-                      </div>
-                    </div>
-                    {o.items.map((it) => (
-                      <div key={it.id} style={{ display: "grid", gridTemplateColumns: "76px minmax(0, 1fr) auto", gap: 18, alignItems: "start", marginBottom: 14 }}>
-                        <div style={{ aspectRatio: "4 / 5", background: T.tint }} />
-                        <div>
-                          <div style={{ fontSize: 14.5, marginBottom: 5 }}>{it.name}</div>
-                          {it.quantity > 1 && <div style={{ fontSize: 12.5, color: T.muted }}>Quantity {it.quantity}</div>}
-                          {o.trackingNumber && live && <div style={{ fontSize: 12, color: M2, marginTop: 5 }}>Tracking {o.trackingNumber}</div>}
-                        </div>
-                        <div style={{ fontSize: 13.5, textAlign: "right", whiteSpace: "nowrap" }}>{money(it.totalPrice)}</div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })
+              orders.map((o) => <OrderRow key={o.id} o={o} />)
             )}
           </div>
         );
@@ -296,22 +228,26 @@ const AccountV2 = (): JSX.Element => {
       case "saved":
         return (
           <div>
-            <SectionHead title="Saved items" right={<span style={{ fontSize: 12, color: T.muted }}>Kept for as long as you like</span>} />
+            <PaneHead title="Saved items" right={<span>Kept for as long as you like</span>} />
             {savedItems.length === 0 ? (
-              <EmptyPane head="Nothing saved yet." body="Tap the save mark on any piece and it will wait here — specification and all." cta={{ label: "Browse engagement rings", to: "/engagement-rings" }} />
+              <EmptyPane head="Nothing saved yet." body="Tap the heart on any piece and it will wait here for you." cta={{ label: "Browse engagement rings", to: "/engagement-rings" }} />
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: "clamp(16px, 2vw, 28px)", marginTop: 28 }}>
+              <div className="ac-saved">
                 {savedItems.map((s) => (
-                  <div key={s.id}>
-                    <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
-                      {s.image && <img src={getMediaUrl(s.image)} alt={s.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
-                      <button type="button" onClick={() => removeFavorite(s.id)} aria-label="Remove" style={{ position: "absolute", top: 8, right: 8, width: 30, height: 30, cursor: "pointer", background: "rgba(248,246,240,0.9)", border: 0, fontFamily: FONT_BODY, fontSize: 15, color: T.body }}>×</button>
+                  <div key={s.id} data-saved>
+                    <div style={{ position: "relative" }}>
+                      <Link to={s.to} className="ac-piece-img" aria-label={s.name}>
+                        {s.image && <img src={getMediaUrl(s.image)} alt={s.name} loading="lazy" />}
+                      </Link>
+                      <button type="button" className="ac-piece-x" data-unsave onClick={() => removeFavorite(s.id)} aria-label={`Remove ${s.name} from saved`}>
+                        <svg width="20" height="18" viewBox="0 0 20 18" fill="currentColor" aria-hidden="true"><path d="M10 16.6C4.6 12.7 1 9.6 1 5.9 1 3.3 3 1.4 5.4 1.4c1.8 0 3.5 1 4.6 2.7 1.1-1.7 2.8-2.7 4.6-2.7C17 1.4 19 3.3 19 5.9c0 3.7-3.6 6.8-9 10.700z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" /></svg>
+                      </button>
                     </div>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, margin: "16px 0 6px" }}>
-                      <Link to={s.to} style={{ fontSize: 14 }}>{s.name}</Link>
-                      {s.price != null && <span style={{ fontSize: 13.5, whiteSpace: "nowrap" }}>{money(s.price)}</span>}
+                    <div className="ac-piece-name">
+                      <Link to={s.to}>{tidy(s.name)}</Link>
+                      {s.price != null && <span>{money(s.price)}</span>}
                     </div>
-                    <button type="button" onClick={() => addSavedToBag(s)} className="acc-outline" style={{ width: "100%", padding: 12, marginTop: 8, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink, background: "transparent", border: `1px solid ${T.ruleStrong}` }}>Add to bag</button>
+                    <button type="button" className="ac-ghost" onClick={() => addSavedToBag(s)}>Add to bag</button>
                   </div>
                 ))}
               </div>
@@ -322,28 +258,25 @@ const AccountV2 = (): JSX.Element => {
       case "appointments":
         return (
           <div>
-            <SectionHead title="Appointments" right={<Link to="/contact" className="acc-link">Book one</Link>} />
+            <PaneHead title="Appointments" right={<Link to="/contact" className="ac-link">Book one</Link>} />
             {appointments.length === 0 ? (
-              <EmptyPane head="No appointments booked." body="This house books consultations, fittings and services. When you book one, it will show here with its notes." cta={{ label: "Book an appointment", to: "/contact" }} />
+              <EmptyPane head="No appointments booked." body="We book consultations, fittings and services. When you book one, it will show here with its notes." cta={{ label: "Book an appointment", to: "/contact" }} />
             ) : (
               appointments.map((a) => {
                 const d = a.scheduledAt ? new Date(a.scheduledAt) : null;
                 const dateStr = d ? d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
                 const timeStr = d ? d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
-                const statusLabel = a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1) : "";
                 return (
-                  <div key={a.id} style={{ display: "grid", gridTemplateColumns: isMobile ? "104px 1fr" : "132px minmax(0, 1fr) auto", gap: "clamp(16px, 2.5vw, 40px)", alignItems: "baseline", padding: "24px 0", borderBottom: `1px solid ${T.rule}` }}>
+                  <div key={a.id} className="ac-rowitem">
                     <div>
-                      <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, lineHeight: 1, color: a.upcoming ? T.gold : PAST }}>{dateStr}</div>
-                      <div style={{ fontSize: 11.5, color: M2, marginTop: 8 }}>{[timeStr, a.duration].filter(Boolean).join(", ")}</div>
+                      <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, lineHeight: 1, color: a.upcoming ? T.text : T.textMuted }}>{dateStr}</div>
+                      <div className="ac-muted" style={{ fontSize: 13, marginTop: 8 }}>{[timeStr, a.duration].filter(Boolean).join(", ")}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 15, marginBottom: 7 }}>{a.kind}</div>
-                      {a.note && <div style={{ fontSize: 13, lineHeight: 1.65, color: T.muted }}>{a.note}</div>}
+                      <div style={{ fontSize: 16, marginBottom: 6 }}>{a.kind}</div>
+                      {a.note && <div className="ac-muted" style={{ fontSize: 14, lineHeight: 1.65 }}>{a.note}</div>}
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "flex-start" : "flex-end", gap: 10, gridColumn: isMobile ? "span 2" : undefined, marginTop: isMobile ? 6 : 0 }}>
-                      <span style={{ fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", padding: "5px 11px", color: a.upcoming ? T.ink : T.muted, background: a.upcoming ? CHAMP_LIVE : T.tint }}>{statusLabel}</span>
-                    </div>
+                    <div><span className={`ac-tag${a.upcoming ? " is-live" : ""}`}><i />{a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1) : ""}</span></div>
                   </div>
                 );
               })
@@ -354,37 +287,29 @@ const AccountV2 = (): JSX.Element => {
       case "pieces":
         return (
           <div>
-            <SectionHead title="Your pieces" />
-            <p style={{ margin: "22px 0 8px", maxWidth: "56ch", fontSize: 14.5, lineHeight: 1.75, color: T.body }}>
-              Everything we make for you is recorded here — with its certification and servicing history. Anything on this list comes back to the bench that made it, for as long as it exists.
-            </p>
+            <PaneHead title="Your pieces" />
+            <p className="ac-lede">Everything we make for you is recorded here, with its certification and servicing history. Anything on this list comes back to the bench that made it, for as long as it exists.</p>
             {pieces.length === 0 ? (
               <EmptyPane head="Nothing here yet." body="Once you have a piece made with us, its certificate, valuation and service record will live here." cta={{ label: "Explore bespoke", to: "/bespoke-design" }} />
             ) : (
               <div style={{ marginTop: 24 }}>
                 {pieces.map((p) => (
-                  <div key={p.id} style={{ display: "grid", gridTemplateColumns: isMobile ? "88px 1fr" : "108px minmax(0, 1fr) minmax(0, 0.9fr)", gap: "clamp(18px, 3vw, 40px)", alignItems: "start", padding: "26px 0", borderBottom: `1px solid ${T.rule}` }}>
-                    <div style={{ position: "relative", aspectRatio: "4 / 5", background: T.tint, overflow: "hidden" }}>
-                      {p.image && <img src={getMediaUrl(p.image)} alt={p.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
+                  <div key={p.id} className="ac-rowitem is-piece">
+                    <div className="ac-piece-img">{p.image && <img src={getMediaUrl(p.image)} alt={p.name} loading="lazy" />}</div>
+                    <div>
+                      <div style={{ fontFamily: FONT_DISPLAY, fontSize: 23, lineHeight: 1.2, marginBottom: 10 }}>{p.name}</div>
+                      {p.spec && <div className="ac-muted" style={{ fontSize: 14, lineHeight: 1.65, marginBottom: 12 }}>{p.spec}</div>}
+                      {(p.madeOn || p.maker) && <div className="ac-muted" style={{ fontSize: 13 }}>{[p.madeOn && `Made ${p.madeOn}`, p.maker].filter(Boolean).join(" · ")}</div>}
                     </div>
                     <div>
-                      <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, lineHeight: 1.1, marginBottom: 10 }}>{p.name}</div>
-                      {p.spec && <div style={{ fontSize: 13, lineHeight: 1.65, color: T.muted, marginBottom: 14 }}>{p.spec}</div>}
-                      {(p.madeOn || p.maker) && <div style={{ fontSize: 12, color: M2 }}>{[p.madeOn && `Made ${p.madeOn}`, p.maker].filter(Boolean).join(" · ")}</div>}
-                    </div>
-                    <div style={{ gridColumn: isMobile ? "span 2" : undefined, marginTop: isMobile ? 8 : 0 }}>
                       {(p.documents || []).map((d: any, di: number) => (
                         d.url ? (
-                          <a key={di} href={getMediaUrl(d.url)} target="_blank" rel="noreferrer" className="acc-doc" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, padding: "11px 0", borderBottom: `1px solid ${T.rule}`, fontSize: 13 }}>
-                            <span>{d.label}</span><span style={{ fontSize: 11, color: M2 }}>{d.meta}</span>
-                          </a>
+                          <a key={di} href={getMediaUrl(d.url)} target="_blank" rel="noreferrer" className="ac-doc"><span>{d.label}</span><span className="ac-muted" style={{ fontSize: 12.5 }}>{d.meta}</span></a>
                         ) : (
-                          <div key={di} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, padding: "11px 0", borderBottom: `1px solid ${T.rule}`, fontSize: 13 }}>
-                            <span>{d.label}</span><span style={{ fontSize: 11, color: M2 }}>{d.meta}</span>
-                          </div>
+                          <div key={di} className="ac-doc"><span>{d.label}</span><span className="ac-muted" style={{ fontSize: 12.5 }}>{d.meta}</span></div>
                         )
                       ))}
-                      <Link to="/contact" className="acc-link" style={{ display: "inline-block", marginTop: 16 }}>Book a service</Link>
+                      <Link to="/contact" className="ac-link" style={{ marginTop: 16 }}>Book a service</Link>
                     </div>
                   </div>
                 ))}
@@ -396,41 +321,34 @@ const AccountV2 = (): JSX.Element => {
       case "details":
         return (
           <div>
-            <div style={{ paddingBottom: 18, borderBottom: `1px solid ${T.rule}` }}>
-              <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(26px, 2.6vw, 38px)", lineHeight: 1, margin: 0 }}>Your details</h2>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, maxWidth: 680, marginTop: 28 }}>
-              <Field label="First name" value={details.firstName} onChange={(v) => setDetails((d) => ({ ...d, firstName: v }))} />
-              <Field label="Last name" value={details.lastName} onChange={(v) => setDetails((d) => ({ ...d, lastName: v }))} />
-              <Field label="Email address" value={details.email} type="email" span2 hint="Email changes are handled by the workshop — write to us to update it." />
-              <Field label="Telephone" value={details.phone} onChange={(v) => setDetails((d) => ({ ...d, phone: v }))} type="tel" />
-              <Field label="Ring size" value={details.ringSize} onChange={(v) => setDetails((d) => ({ ...d, ringSize: v }))} hint="We hold this so you never have to measure again." />
+            <PaneHead title="Your details" />
+            <div className="ac-fields" style={{ marginTop: 28 }}>
+              <Field id="ac-first" label="First name" autoComplete="given-name" value={details.firstName} onChange={(v) => setDetails((d) => ({ ...d, firstName: v }))} />
+              <Field id="ac-last" label="Last name" autoComplete="family-name" value={details.lastName} onChange={(v) => setDetails((d) => ({ ...d, lastName: v }))} />
+              <Field id="ac-email" label="Email address" value={details.email} type="email" wide hint="To change your email address, write to us and we will update it for you." />
+              <Field id="ac-tel" label="Telephone" autoComplete="tel" value={details.phone} onChange={(v) => setDetails((d) => ({ ...d, phone: v }))} type="tel" />
+              <Field id="ac-ring" label="Ring size" value={details.ringSize} onChange={(v) => setDetails((d) => ({ ...d, ringSize: v }))} hint="We hold this so you never have to measure again." />
             </div>
 
-            <div style={{ maxWidth: 680, marginTop: 40, paddingTop: 26, borderTop: `1px solid ${T.rule}` }}>
-              <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: M2, marginBottom: 16 }}>What we send you</div>
+            <div style={{ maxWidth: 680, marginTop: 44 }}>
+              <div className="ac-eyebrow" style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>What we send you</div>
               {[
                 { key: "newsletter", label: "The journal", note: "Four or five times a year. Workshop notes, nothing promotional." },
                 { key: "sms", label: "Reminders by text", note: "A message the day before an appointment or service." },
               ].map((row) => {
                 const on = (prefs as any)[row.key];
                 return (
-                  <button key={row.key} type="button" onClick={() => setPrefs((pr) => ({ ...pr, [row.key]: !on }))} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, width: "100%", padding: "15px 0", cursor: "pointer", background: "transparent", border: 0, borderBottom: `1px solid ${T.rule}`, textAlign: "left", fontFamily: FONT_BODY }}>
-                    <span>
-                      <span style={{ display: "block", fontSize: 14, color: T.ink, marginBottom: 5 }}>{row.label}</span>
-                      <span style={{ display: "block", fontSize: 12.5, color: T.muted }}>{row.note}</span>
-                    </span>
-                    <span style={{ flex: "none", width: isMobile ? 44 : 42, height: isMobile ? 24 : 22, padding: 3, background: on ? T.ink : T.ruleSoft, transition: "background 0.25s ease" }}>
-                      <span style={{ display: "block", width: isMobile ? 18 : 16, height: isMobile ? 18 : 16, background: T.paper, transform: on ? "translateX(20px)" : "none", transition: "transform 0.25s ease" }} />
-                    </span>
+                  <button key={row.key} type="button" role="switch" aria-checked={!!on} className="ac-switch" data-switch onClick={() => setPrefs((pr) => ({ ...pr, [row.key]: !on }))}>
+                    <span><b>{row.label}</b><small>{row.note}</small></span>
+                    <i />
                   </button>
                 );
               })}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: 32 }}>
-              <button type="button" onClick={saveDetails} disabled={saving} className="acc-save" style={{ padding: "16px 32px", cursor: saving ? "default" : "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.paper, background: T.ink, border: 0, opacity: saving ? 0.7 : 1 }}>{saving ? "Saving…" : "Save changes"}</button>
-              {savedOk && <span style={{ fontSize: 12.5, color: T.gold }}>Saved.</span>}
+              <button type="button" className="ac-btn" data-savebtn onClick={saveDetails} disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
+              {savedOk && <span role="status" style={{ display: "inline-flex", alignItems: "center", gap: 9, fontSize: 14 }}><Tick />Saved</span>}
             </div>
           </div>
         );
@@ -438,25 +356,25 @@ const AccountV2 = (): JSX.Element => {
       case "addresses":
         return (
           <div>
-            <SectionHead title="Addresses" right={<button type="button" onClick={() => setAddrForm({ country: "United Kingdom", fullName: `${details.firstName} ${details.lastName}`.trim() })} className="acc-link" style={{ background: "transparent", border: 0, borderBottom: `1px solid ${T.ruleStrong}` }}>Add an address</button>} />
+            <PaneHead title="Addresses" right={<button type="button" className="ac-link" data-addaddr onClick={() => setAddrForm({ country: "United Kingdom", fullName: `${details.firstName} ${details.lastName}`.trim() })}>Add an address</button>} />
 
             {addresses.length === 0 && !addrForm ? (
-              <EmptyPane head="No saved addresses." body="Add an address and we will have it ready at checkout — and mark one as your default." />
+              <EmptyPane head="No saved addresses." body="Add an address and we will have it ready at checkout. You can mark one as your default." />
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "clamp(16px, 2vw, 24px)", marginTop: 28 }}>
+              <div className="ac-addrs">
                 {addresses.map((a) => (
-                  <div key={a.id} style={{ padding: 24, border: `1px solid ${a.isDefault ? T.ruleStrong : T.rule}`, background: a.isDefault ? T.tint : "transparent" }}>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
-                      <span style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: M2 }}>{a.addressType === "billing" ? "Billing" : "Delivery"}</span>
-                      {a.isDefault && <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: T.gold }}>Default</span>}
+                  <div key={a.id} className={`ac-addr${a.isDefault ? " is-default" : ""}`}>
+                    <div className="ac-addr-head">
+                      <span className="ac-eyebrow">{a.addressType === "billing" ? "Billing" : "Delivery"}</span>
+                      {a.isDefault && <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13 }}><Tick />Default</span>}
                     </div>
-                    <div style={{ fontSize: 14.5, lineHeight: 1.8, color: T.ink }}>
+                    <div className="ac-addr-lines">
                       {[a.fullName, a.line1, a.line2, a.city, a.postcode, a.country].filter(Boolean).map((l: string, i: number) => <div key={i}>{l}</div>)}
                     </div>
-                    <div style={{ display: "flex", gap: 18, marginTop: 20, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: M2 }}>
-                      <button type="button" onClick={() => setAddrForm({ ...a })} className="acc-mini" style={{ background: "transparent", border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: M2, padding: 0 }}>Edit</button>
-                      {!a.isDefault && <button type="button" onClick={() => makeDefaultAddress(a.id)} className="acc-mini" style={{ background: "transparent", border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: M2, padding: 0 }}>Make default</button>}
-                      <button type="button" onClick={() => removeAddress(a.id)} className="acc-mini" style={{ background: "transparent", border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: M2, padding: 0 }}>Remove</button>
+                    <div className="ac-addr-acts">
+                      <button type="button" className="ac-link" onClick={() => setAddrForm({ ...a })}>Edit</button>
+                      {!a.isDefault && <button type="button" className="ac-link" onClick={() => makeDefaultAddress(a.id)}>Make default</button>}
+                      <button type="button" className="ac-link" onClick={() => removeAddress(a.id)}>Remove</button>
                     </div>
                   </div>
                 ))}
@@ -464,31 +382,31 @@ const AccountV2 = (): JSX.Element => {
             )}
 
             {addrForm && (
-              <div style={{ marginTop: 28, padding: 24, border: `1px solid ${T.ruleStrong}`, maxWidth: 620 }}>
-                <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: M2, marginBottom: 18 }}>{addrForm.id ? "Edit address" : "New address"}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <Field label="Full name" value={addrForm.fullName || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, fullName: v }))} span2 />
-                  <Field label="Address line 1" value={addrForm.line1 || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, line1: v }))} span2 />
-                  <Field label="Address line 2 (optional)" value={addrForm.line2 || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, line2: v }))} span2 />
-                  <Field label="City" value={addrForm.city || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, city: v }))} />
-                  <Field label="Postcode" value={addrForm.postcode || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, postcode: v }))} />
-                  <Field label="Country" value={addrForm.country || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, country: v }))} />
-                  <Field label="Telephone (optional)" value={addrForm.phone || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, phone: v }))} type="tel" />
+              <div className="ac-form">
+                <div className="ac-eyebrow" style={{ marginBottom: 20 }}>{addrForm.id ? "Edit address" : "New address"}</div>
+                <div className="ac-fields">
+                  <Field id="ad-name" label="Full name" autoComplete="name" value={addrForm.fullName || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, fullName: v }))} wide />
+                  <Field id="ad-l1" label="Address line 1" autoComplete="address-line1" value={addrForm.line1 || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, line1: v }))} wide />
+                  <Field id="ad-l2" label="Address line 2 (optional)" autoComplete="address-line2" value={addrForm.line2 || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, line2: v }))} wide />
+                  <Field id="ad-city" label="City" autoComplete="address-level2" value={addrForm.city || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, city: v }))} />
+                  <Field id="ad-post" label="Postcode" autoComplete="postal-code" value={addrForm.postcode || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, postcode: v }))} />
+                  <Field id="ad-country" label="Country" autoComplete="country-name" value={addrForm.country || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, country: v }))} />
+                  <Field id="ad-tel" label="Telephone (optional)" autoComplete="tel" value={addrForm.phone || ""} onChange={(v) => setAddrForm((f: any) => ({ ...f, phone: v }))} type="tel" />
                 </div>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, cursor: "pointer", fontSize: 13, color: T.body }}>
-                  <input type="checkbox" checked={!!addrForm.isDefault} onChange={(e) => setAddrForm((f: any) => ({ ...f, isDefault: e.target.checked }))} style={{ accentColor: T.ink }} />
+                <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18, cursor: "pointer", fontSize: 14.5 }}>
+                  <input type="checkbox" checked={!!addrForm.isDefault} onChange={(e) => setAddrForm((f: any) => ({ ...f, isDefault: e.target.checked }))} style={{ width: 16, height: 16, accentColor: T.ink }} />
                   Make this my default address
                 </label>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 20 }}>
-                  <button type="button" onClick={saveAddress} disabled={addrSaving} className="acc-save" style={{ padding: "14px 28px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.paper, background: T.ink, border: 0, opacity: addrSaving ? 0.7 : 1 }}>{addrSaving ? "Saving…" : "Save address"}</button>
-                  <button type="button" onClick={() => setAddrForm(null)} style={{ background: "transparent", border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12.5, color: M2 }}>Cancel</button>
+                <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 24 }}>
+                  <button type="button" className="ac-btn" onClick={saveAddress} disabled={addrSaving}>{addrSaving ? "Saving…" : "Save address"}</button>
+                  <button type="button" className="ac-link" data-canceladdr onClick={() => setAddrForm(null)}>Cancel</button>
                 </div>
               </div>
             )}
 
-            <div style={{ marginTop: 40, paddingTop: 26, borderTop: `1px solid ${T.rule}` }}>
-              <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: M2, marginBottom: 16 }}>Payment methods</div>
-              <p style={{ fontSize: 13.5, lineHeight: 1.7, color: T.muted, maxWidth: "52ch" }}>Cards are never stored on our servers — each payment is taken securely through Stripe at checkout. There is nothing to manage here.</p>
+            <div style={{ marginTop: 48, paddingTop: 26, borderTop: `1px solid ${T.line}` }}>
+              <div className="ac-eyebrow">Payment methods</div>
+              <p className="ac-muted" style={{ margin: "14px 0 0", fontSize: 14.5, lineHeight: 1.75, maxWidth: "54ch" }}>Cards are never stored on our servers. Each payment is taken securely through Stripe at checkout, so there is nothing to manage here.</p>
             </div>
           </div>
         );
@@ -497,133 +415,66 @@ const AccountV2 = (): JSX.Element => {
     }
   };
 
-  const figures = (
-    <div style={{ display: "flex", gap: isMobile ? 28 : "clamp(24px, 3vw, 48px)", alignItems: "baseline" }}>
-      {[{ n: loadingOrders ? "—" : String(orderCount), l: "Orders" }, { n: String(favoritesCount), l: "Saved" }, { n: clientSince, l: "Client since" }].map((f, i) => (
-        <div key={i}>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: 30, lineHeight: 1 }}>{f.n}</div>
-          <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.muted, marginTop: 8 }}>{f.l}</div>
-        </div>
-      ))}
-    </div>
-  );
-
-  const jewellerCard = (
-    <div style={{ padding: 22, background: T.tint }}>
-      <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: M2, marginBottom: 12 }}>Your jeweller</div>
-      <div style={{ fontSize: 14.5, marginBottom: 6 }}>The McCulloch workshop</div>
-      <div style={{ fontSize: 12.5, lineHeight: 1.65, color: T.muted, marginBottom: 16 }}>Beeston, Nottingham. Five generations at the bench — write to us any time.</div>
-      <Link to="/contact" className="acc-link">Write to us</Link>
-    </div>
-  );
-
+  const figures = [
+    { n: loadingOrders ? "" : String(orderCount), l: orderCount === 1 ? "Order" : "Orders" },
+    { n: String(favoritesCount), l: "Saved" },
+    { n: clientSince, l: "Client since" },
+  ];
   const counts: Record<string, number | string> = { orders: loadingOrders ? "" : orderCount, saved: favoritesCount, appointments: appointments.length || "", pieces: pieces.length || "", details: "", addresses: addresses.length || "" };
 
+  const jeweller = (
+    <div className="ac-card">
+      <div className="ac-eyebrow">Your jeweller</div>
+      <div style={{ fontSize: 15, marginTop: 12 }}>The McCulloch workshop</div>
+      <p>Beeston, Nottingham. Five generations at the bench. Write to us any time.</p>
+      <Link to="/contact" className="ac-link">Write to us</Link>
+    </div>
+  );
+  const signOut = <button type="button" className="ac-link" onClick={() => logout()} style={{ marginTop: 24 }}>Sign out</button>;
+
   return (
-    <div style={{ background: T.paper, minHeight: "100vh", fontFamily: FONT_BODY, color: T.ink }}>
-      <style>{`
-        .accv2 a { color: inherit; text-decoration: none; }
-        .acc-link { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; padding-bottom: 4px; border-bottom: 1px solid ${T.ruleStrong}; color: ${T.ink}; cursor: pointer; transition: color 0.25s ease, border-color 0.25s ease; }
-        .acc-link:hover { color: ${T.gold}; border-color: ${T.gold}; }
-        .acc-outline:hover { border-color: ${T.ink} !important; }
-        .acc-save:hover { background: ${T.gold} !important; }
-        .acc-mini:hover { color: ${T.gold} !important; }
-        .acc-doc { cursor: pointer; transition: color 0.2s ease; }
-        .acc-doc:hover span:first-child { color: ${T.gold}; }
-        .acc-tab { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%; padding: 15px 0; cursor: pointer; background: transparent; border: 0; border-bottom: 1px solid ${T.rule}; text-align: left; font-family: ${FONT_BODY}; font-size: 14px; transition: color 0.25s ease; }
-        .acc-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 20px 0; cursor: pointer; background: transparent; border: 0; border-bottom: 1px solid ${T.rule}; text-align: left; font-family: ${FONT_BODY}; }
-        @keyframes accPaneIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        @keyframes accPaneInX { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
-        @media (prefers-reduced-motion: reduce) { .acc-pane { animation: none !important; } }
-      `}</style>
+    <div className="ac">
+      <style>{ACCOUNT_CSS}</style>
+      <NavigationV2 solid />
 
-      <div className="accv2">
-        <NavigationV2 solid />
-        <div style={{ height: isMobile ? 96 : 118 }} />
-
-        {isMobile ? (
-          showIndex ? (
-            <div style={{ padding: "clamp(28px, 6vw, 44px) 20px 60px" }}>
-              <div style={{ fontSize: 10.5, letterSpacing: "0.24em", textTransform: "uppercase", color: T.gold, marginBottom: 14 }}>Your account</div>
-              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(34px, 11vw, 46px)", lineHeight: 1.03, margin: "0 0 24px" }}>{greeting}</h1>
-              <div style={{ paddingBottom: 26, borderBottom: `1px solid ${T.rule}` }}>{figures}</div>
-
-              {liveOrder && (
-                <div style={{ margin: "26px 0", padding: 20, background: T.tint }}>
-                  <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: M2, marginBottom: 14 }}>On the bench now</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "64px 1fr", gap: 16, alignItems: "center" }}>
-                    <div style={{ aspectRatio: "4 / 5", background: "#E4DECF" }} />
-                    <div>
-                      <div style={{ fontSize: 15, marginBottom: 4 }}>{liveOrder.items[0]?.name || liveOrder.orderNumber}</div>
-                      <div style={{ fontSize: 12.5, color: T.muted, textTransform: "capitalize" }}>{liveOrder.status}</div>
-                    </div>
-                  </div>
-                  <Link to={`/orders/${liveOrder.id}`} className="acc-link" style={{ display: "inline-block", marginTop: 16 }}>Track this order</Link>
-                </div>
-              )}
-
-              {TABS.map((t) => (
-                <button key={t.id} className="acc-row" onClick={() => { setPane(t.id); window.scrollTo(0, 0); }}>
-                  <span style={{ fontSize: 18 }}>{t.label}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                    {counts[t.id] !== "" && <span style={{ fontSize: 13, color: T.muted }}>{counts[t.id]}</span>}
-                    <span style={{ color: T.gold, fontSize: 17 }}>→</span>
-                  </span>
-                </button>
-              ))}
-
-              <div style={{ marginTop: 28 }}>{jewellerCard}</div>
-              <button onClick={() => logout()} style={{ display: "block", marginTop: 22, background: "none", border: 0, padding: 0, fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: M2, cursor: "pointer" }}>Sign out</button>
-            </div>
-          ) : (
-            <>
-              <div style={{ position: "sticky", top: 69, zIndex: 40, display: "flex", alignItems: "center", gap: 16, padding: "12px 20px", background: "rgba(248,246,240,0.96)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", borderBottom: `1px solid ${T.rule}` }}>
-                <button onClick={() => setPane(null)} style={{ background: "none", border: 0, padding: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: T.muted }}>← Account</button>
-                <span style={{ fontFamily: FONT_DISPLAY, fontSize: 20 }}>{TABS.find((t) => t.id === activePane)?.label}</span>
-              </div>
-              <div key={activePane} className="acc-pane" style={{ padding: "24px 20px 64px", minHeight: 480, animation: "accPaneInX 0.35s cubic-bezier(0.22,1,0.36,1) both" }}>
-                {renderPane(activePane)}
-              </div>
-            </>
-          )
-        ) : (
-          <>
-            <section style={{ padding: "clamp(36px, 4vw, 64px) clamp(24px, 3vw, 52px) clamp(28px, 3vw, 40px)", borderBottom: `1px solid ${T.rule}` }}>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: 28 }}>
-                <div>
-                  <div style={{ fontSize: 10.5, letterSpacing: "0.24em", textTransform: "uppercase", color: T.gold, marginBottom: 18 }}>Your account</div>
-                  <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(38px, 4.4vw, 68px)", lineHeight: 1.02, letterSpacing: "0.005em", margin: 0 }}>{greeting}</h1>
-                </div>
-                {figures}
-              </div>
-            </section>
-
-            <main style={{ display: "grid", gridTemplateColumns: "248px minmax(0, 1fr)", gap: "clamp(32px, 4vw, 72px)", padding: "clamp(32px, 4vw, 56px) clamp(24px, 3vw, 52px) clamp(56px, 6vw, 96px)", alignItems: "start" }}>
-              <aside style={{ position: "sticky", top: 118 }}>
-                <div style={{ borderTop: `1px solid ${T.rule}` }}>
-                  {TABS.map((t) => {
-                    const on = activePane === t.id;
-                    return (
-                      <button key={t.id} className="acc-tab" onClick={() => setPane(t.id)} style={{ color: on ? T.ink : T.muted }}>
-                        <span>{t.label}</span>
-                        <span style={{ fontSize: 11, color: on ? T.gold : A9 }}>{counts[t.id]}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div style={{ marginTop: 28 }}>{jewellerCard}</div>
-                <button onClick={() => logout()} style={{ display: "block", marginTop: 22, background: "none", border: 0, padding: 0, fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: M2, cursor: "pointer" }}>Sign out</button>
-              </aside>
-
-              <div key={activePane} className="acc-pane" style={{ minHeight: 620, animation: "accPaneIn 0.35s cubic-bezier(0.22,1,0.36,1) both" }}>
-                {renderPane(activePane)}
-              </div>
-            </main>
-          </>
+      <section className="ac-wrap ac-open">
+        <div className="ac-eyebrow">Your account</div>
+        <h1 className="ac-h1">{greeting}</h1>
+        <div className="ac-facts">
+          {figures.map((f) => <div key={f.l} className="ac-fact"><b>{f.n}</b><span>{f.l}</span></div>)}
+        </div>
+        {liveOrder && (
+          <div className="ac-live">
+            <span style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px 18px" }}>
+              <span className="ac-tag is-live"><i />{statusLabel(liveOrder.status)}</span>
+              <b>{tidy(liveOrder.items[0]?.name) || `Order ${liveOrder.orderNumber}`}</b>
+            </span>
+            <Link to={`/orders/${liveOrder.id}`} className="ac-link">Track this order</Link>
+          </div>
         )}
+      </section>
 
-        <FooterV2 />
-      </div>
+      <main className="ac-wrap ac-main">
+        <aside className="ac-rail">
+          <div className="ac-tabs" role="tablist" aria-label="Account sections">
+            {TABS.map((t) => (
+              <button key={t.id} type="button" role="tab" aria-selected={pane === t.id} className="ac-tab" data-tab={t.id} onClick={() => setPane(t.id)}>
+                <span>{t.label}</span><small>{counts[t.id]}</small>
+              </button>
+            ))}
+          </div>
+          <div className="ac-rail-extra">{jeweller}{signOut}</div>
+        </aside>
+
+        <div key={pane} className="ac-pane" role="tabpanel" data-pane={pane}>
+          {renderPane(pane)}
+        </div>
+      </main>
+
+      {/* Phone and tablet: the jeweller card and sign-out sit under the section instead of beside it */}
+      <div className="ac-wrap ac-foot-extra">{jeweller}{signOut}</div>
+
+      <FooterV2 />
     </div>
   );
 };

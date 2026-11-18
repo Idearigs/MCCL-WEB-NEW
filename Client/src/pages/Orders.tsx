@@ -1,266 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import { Package, Calendar, TrendingUp, ShoppingBag, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import LuxuryNavigationWhite from '../components/LuxuryNavigationWhite';
-import { FooterSection } from '../components/FooterSection';
-import { useUserAuth } from '../contexts/UserAuthContext';
-import { Link } from 'react-router-dom';
-import { api } from '../config/api';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import NavigationV2 from "../components/home-v2/NavigationV2";
+import FooterV2 from "../components/home-v2/FooterV2";
+import { useUserAuth } from "../contexts/UserAuthContext";
+import { api } from "../config/api";
+import { ACCOUNT_CSS, money, OrderRow, EmptyPane, Notice, AcOrder } from "../components/home-v2/accountShared";
 
-interface OrderItem {
-  id: string;
-  name: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
+/**
+ * Orders, light redesign (Nov 2026): the new navigation and footer, a centred title over three
+ * figures, and the same order rows the account page uses. Data is unchanged: GET /users/orders.
+ */
 
-interface Order {
-  id: string;
-  orderNumber: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: string;
-  total: number;
-  createdAt: string;
-  itemsCount: number;
-  items: OrderItem[];
-}
-
-interface OrdersData {
-  orders: Order[];
-  stats: {
-    totalOrders: number;
-    totalSpent: number;
-    pendingOrders: number;
-  };
-}
+type Order = AcOrder;
+interface OrdersData { orders: Order[]; stats: { totalOrders: number; totalSpent: number; pendingOrders: number } }
 
 const Orders: React.FC = () => {
-  const { user, isAuthenticated } = useUserAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useUserAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState({ totalOrders: 0, totalSpent: 0, pendingOrders: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchOrders();
-    }
+    if (isAuthenticated && user) fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem('user_access_token');
+      const token = localStorage.getItem("user_access_token");
+      if (!token) { setError("Authentication token not found"); return; }
 
-      if (!token) {
-        setError('Authentication token not found');
-        return;
-      }
+      const response = await fetch(api("/users/orders"), { headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error(`Failed to fetch orders: ${response.statusText}`);
 
-      const response = await fetch(api('/users/orders'), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch orders: ${response.statusText}`);
-      }
-
-      const data = await response.json() as { success: boolean; data: OrdersData };
-
+      const data = (await response.json()) as { success: boolean; data: OrdersData };
       if (data.success && data.data) {
         setOrders(data.data.orders);
         setStats(data.data.stats);
       } else {
-        setError('Failed to load orders');
+        setError("Failed to load orders");
       }
     } catch (err) {
-      console.error('Error fetching orders:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch orders');
+      console.error("Error fetching orders:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch orders");
     } finally {
       setLoading(false);
     }
   };
 
+  const shell = (children: React.ReactNode) => (
+    <div className="ac">
+      <style>{ACCOUNT_CSS}</style>
+      <NavigationV2 solid />
+      {children}
+      <FooterV2 />
+    </div>
+  );
+
+  if (authLoading || (isAuthenticated && user && loading)) {
+    return shell(<Notice title="Loading your orders"><span className="ac-spinner" style={{ margin: 0 }} /></Notice>);
+  }
   if (!isAuthenticated || !user) {
-    return (
-      <>
-        <LuxuryNavigationWhite />
-        <div className="min-h-screen bg-gray-50 pt-48">
-          <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h1 className="text-3xl font-light text-gray-900 mb-4">Please sign in to view your orders</h1>
-            <p className="text-gray-600 font-light mb-8">Sign in to access your order history and track your purchases.</p>
-            <Link
-              to="/account"
-              className="inline-block bg-gray-900 text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
-            >
-              Sign In
-            </Link>
-          </div>
-        </div>
-        <FooterSection />
-      </>
+    return shell(
+      <Notice eyebrow="Your orders" title="Please sign in to view your orders." body="Sign in to see your order history and follow anything on its way to you.">
+        <Link to="/account" className="ac-btn">Sign in</Link>
+      </Notice>
     );
   }
 
-  if (loading) {
-    return (
-      <>
-        <LuxuryNavigationWhite />
-        <div className="min-h-screen bg-gray-50 pt-48">
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <Loader2 className="w-12 h-12 animate-spin text-amber-600 mx-auto mb-4" />
-              <p className="text-gray-600 font-light">Loading your orders...</p>
-            </div>
-          </div>
-        </div>
-        <FooterSection />
-      </>
-    );
-  }
+  const figures = [
+    { n: String(stats.totalOrders), l: stats.totalOrders === 1 ? "Order" : "Orders" },
+    { n: money(stats.totalSpent) || "£0", l: "Total spent" },
+    { n: String(stats.pendingOrders), l: "In progress" },
+  ];
 
-  return (
+  return shell(
     <>
-      <LuxuryNavigationWhite />
-      <div className="min-h-screen bg-gray-50 pt-48">
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-light text-gray-900 mb-2">My Orders</h1>
-            <p className="text-gray-600 font-light">View and track your order history</p>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-8 bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-700 font-light">{error}</p>
-            </div>
-          )}
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-light text-gray-600">Total Orders</span>
-                <Package className="w-5 h-5 text-gray-400" />
-              </div>
-              <div className="text-3xl font-light text-gray-900">{stats.totalOrders}</div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-light text-gray-600">Total Spent</span>
-                <TrendingUp className="w-5 h-5 text-green-500" />
-              </div>
-              <div className="text-3xl font-light text-gray-900">£{stats.totalSpent.toFixed(2)}</div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-light text-gray-600">Pending Orders</span>
-                <Clock className="w-5 h-5 text-amber-500" />
-              </div>
-              <div className="text-3xl font-light text-gray-900">{stats.pendingOrders}</div>
-            </div>
-          </div>
-
-          {/* Orders List */}
-          <div className="bg-white rounded-lg shadow-sm">
-            {orders.length === 0 ? (
-              <div className="text-center py-16">
-                <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-light text-gray-900 mb-2">No orders yet</h3>
-                <p className="text-gray-600 font-light mb-6">
-                  When you place an order, it will appear here.
-                </p>
-                <Link
-                  to="/"
-                  className="inline-block bg-gray-900 text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors font-light"
-                >
-                  Start Shopping
-                </Link>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-200">
-                {orders.map((order) => {
-                  const statusColors: Record<string, string> = {
-                    'delivered': 'bg-green-100 text-green-700',
-                    'processing': 'bg-blue-100 text-blue-700',
-                    'pending': 'bg-amber-100 text-amber-700',
-                    'shipped': 'bg-purple-100 text-purple-700',
-                    'cancelled': 'bg-red-100 text-red-700'
-                  };
-
-                  return (
-                    <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-1">
-                            Order #{order.orderNumber}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 font-light">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>{new Date(order.createdAt).toLocaleDateString('en-GB')}</span>
-                            </div>
-                            <span>•</span>
-                            <span>{order.itemsCount} {order.itemsCount === 1 ? 'item' : 'items'}</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xl font-light text-gray-900 mb-2">
-                            £{order.total.toFixed(2)}
-                          </div>
-                          <span
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                              statusColors[order.status] || 'bg-gray-100 text-gray-700'
-                            }`}
-                          >
-                            {order.status === 'delivered' && <CheckCircle className="w-3 h-3" />}
-                            {order.status === 'pending' && <Clock className="w-3 h-3" />}
-                            {order.status === 'cancelled' && <XCircle className="w-3 h-3" />}
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Order Items Preview */}
-                      <div className="space-y-2 mb-4">
-                        {order.items.slice(0, 2).map((item) => (
-                          <div key={item.id} className="flex items-center gap-3 text-sm">
-                            <span className="font-light text-gray-700">{item.name}</span>
-                            <span className="text-gray-500">×{item.quantity}</span>
-                            <span className="text-gray-500 ml-auto">£{item.totalPrice.toFixed(2)}</span>
-                          </div>
-                        ))}
-                        {order.items.length > 2 && (
-                          <p className="text-sm text-gray-500 font-light">
-                            +{order.items.length - 2} more {order.items.length - 2 === 1 ? 'item' : 'items'}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex gap-3">
-                        <Link
-                          to={`/orders/${order.id}`}
-                          className="text-sm text-gray-700 hover:text-gray-900 font-light underline"
-                        >
-                          View Details
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+      <section className="ac-wrap is-narrow ac-open">
+        <div className="ac-crumb"><Link to="/">Home</Link><span>/</span><Link to="/account">Account</Link><span>/</span><span style={{ color: "inherit" }}>Orders</span></div>
+        <div className="ac-eyebrow">Your account</div>
+        <h1 className="ac-h1">Your orders</h1>
+        <div className="ac-facts">
+          {figures.map((f) => <div key={f.l} className="ac-fact"><b>{f.n}</b><span>{f.l}</span></div>)}
         </div>
-      </div>
-      <FooterSection />
+      </section>
+
+      <main className="ac-wrap is-narrow" style={{ paddingTop: "clamp(20px, 3vw, 40px)", paddingBottom: "clamp(64px, 7vw, 112px)" }}>
+        {error && <div className="ac-error" role="alert">{error}</div>}
+        {orders.length === 0 ? (
+          !error && <EmptyPane head="No orders yet." body="When you place an order, it will appear here with its status." cta={{ label: "Start shopping", to: "/" }} />
+        ) : (
+          orders.map((o) => <OrderRow key={o.id} o={o} />)
+        )}
+        <div style={{ marginTop: 34 }}><Link to="/account" className="ac-link">Back to your account</Link></div>
+      </main>
     </>
   );
 };

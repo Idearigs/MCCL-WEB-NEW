@@ -70,7 +70,7 @@ const RingsV2 = (): JSX.Element => {
     const gm = searchParams.get("gemstone"); if (gm) seed.gem = [gm];
     const mt = searchParams.get("metal"); if (mt) seed.metal = [mt];
     const co = searchParams.get("collection"); if (co) seed.collection = [co];
-    const av = searchParams.get("availability"); if (av === "live") seed.availability = [LIVE];
+    const av = searchParams.get("availability"); if (av === "live") seed.availability = [LIVE]; if (av === "order") seed.availability = [ORDER];
     if (Object.keys(seed).length) setSel(s => ({ ...s, ...seed }));
   }, [searchParams]);
 

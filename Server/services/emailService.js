@@ -687,8 +687,26 @@ const sendContactEnquiryEmail = async ({ name, email, phone, subject, message, n
   return result;
 };
 
+/** Shop: someone signed up in the footer for new pieces and private viewings. */
+const sendNewsletterSignupEmail = async ({ email }) => {
+  const when = new Date().toLocaleString('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const transporter = createTransporter();
+  const result = await transporter.sendMail({
+    from: `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+    to: CONTACT_EMAIL,
+    replyTo: email,
+    subject: `Newsletter sign-up – ${email}`,
+    html: viewingEmailShell('Newsletter sign-up', 'Website sign-up', 'New pieces and private viewings', `
+      <p style="margin:0 0 12px; color:#4b5563;"><b>${esc(email)}</b> asked to hear about new pieces and private viewings.</p>
+      <p style="margin:0; color:#6b7280; font-size:13px;">Signed up ${esc(when)} from the website footer. Add them to your mailing list.</p>`),
+    text: `Newsletter sign-up: ${email} (${when}). Add them to your mailing list.`,
+  });
+  logger.info(`Newsletter sign-up ${email} sent to ${CONTACT_EMAIL}`);
+  return result;
+};
+
 module.exports = {
-  sendContactEnquiryEmail,
+  sendContactEnquiryEmail, sendNewsletterSignupEmail,
   sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail, sendWelcomeEmail,
   sendViewingRequestReceivedEmail, sendViewingRequestOwnerEmail, sendViewingApprovedEmail, sendViewingDeclinedEmail,
 };

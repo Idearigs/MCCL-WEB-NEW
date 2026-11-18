@@ -1,15 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Check } from "lucide-react";
 import { trackPurchase } from "../services/pixelService";
 import { getMediaUrl } from "../config/api";
-import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
+import { T, FONT_DISPLAY, FONT_LOGO, FONT_BODY } from "../components/home-v2/tokens";
+import { GROUND } from "../components/home-v2/listingShared";
 
 /**
- * Thank You — v2 redesign (design_handoff_mcculloch_bespoke_story_thankyou).
- * Typographic confirmation (no tick badge), a made-to-order timeline, an EFEADF
- * order summary and an ink contact band. Consumes the state passed by
- * CheckoutV2's handleSuccess. Original preserved at pages/ThankYou.original.tsx.
+ * Thank You, light redesign (Nov 2026). A centred confirmation, "what happens next" drawn as a
+ * line with a gold mark at the step already done, the order on the page's one sand panel, and
+ * the three ways to reach the shop on a light row (the black band is gone).
+ * Consumes the state passed by CheckoutV2's handleSuccess; tracking and the redirect when
+ * there is no order are unchanged. Original preserved at pages/ThankYou.original.tsx.
+ *
+ * One change in what is said: the steps follow what was bought. An order of in-stock pieces
+ * only (watches) no longer promises a jeweller at the bench and "week 5 / week 6"; it shows
+ * the 48-hour dispatch the bag already quoted.
  */
 
 interface OrderItemData {
@@ -36,12 +41,19 @@ interface OrderState {
 }
 
 const money = (n: number): string => `£${Math.round(n).toLocaleString("en-GB")}`;
+// Display only: "Clubmaster Classic - Chrono - Black" reads "Clubmaster Classic, Chrono, Black".
+const tidy = (n: string): string => (n || "").replace(/\s+-\s+/g, ", ");
 
-const TIMELINE = [
+const MADE_TO_ORDER = [
   { title: "Confirmation by email", note: "Your receipt and order reference are on their way.", when: "Now", done: true },
   { title: "Onto the bench", note: "We write with the name of the jeweller making your piece.", when: "Within 3 days", done: false },
   { title: "Hallmarking and final check", note: "Assayed, hallmarked and inspected before it leaves us.", when: "Week 5", done: false },
   { title: "Insured delivery", note: "Fully insured and signed for, or ready to collect.", when: "Week 6", done: false },
+];
+const IN_STOCK = [
+  { title: "Confirmation by email", note: "Your receipt and order reference are on their way.", when: "Now", done: true },
+  { title: "Checked and packed", note: "Inspected at our Beeston showroom before it leaves us.", when: "Within 48 hours", done: false },
+  { title: "Insured delivery", note: "Fully insured and signed for, or ready to collect.", when: "After dispatch", done: false },
 ];
 
 const INCLUDED = ["Certification & documentation", "First-year insurance", "Free resizing", "Lifetime servicing"];
@@ -51,7 +63,8 @@ const configSummary = (it: OrderItemData): string => {
   if (it.product_type === "watch") return [a.brand, a.variant_name].filter(Boolean).join(" · ");
   return [a.metal, a.size && `Size ${a.size}`].filter(Boolean).join(" · ");
 };
-const leadTime = (it: OrderItemData): string => (it.product_type === "watch" ? "In stock, ships in 48 hours" : "Made to order, up to 6 weeks");
+const isStock = (it: OrderItemData): boolean => it.product_type === "watch";
+const leadTime = (it: OrderItemData): string => (isStock(it) ? "In stock, ships in 48 hours" : "Made to order, up to 6 weeks");
 
 const ThankYouV2 = (): JSX.Element => {
   const navigate = useNavigate();
@@ -87,177 +100,202 @@ const ThankYouV2 = (): JSX.Element => {
   const vat = Math.round(total - total / 1.2);
   const addr = order.shippingAddress || {};
 
-  const eyebrow: React.CSSProperties = { fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: T.gold };
-  const pageX = "clamp(24px, 4vw, 64px)";
+  const timeline = items.length > 0 && items.every(isStock) ? IN_STOCK : MADE_TO_ORDER;
+  const eyebrow: React.CSSProperties = { fontSize: 11.5, letterSpacing: "0.2em", textTransform: "uppercase", color: T.text };
+  const pageX = "clamp(20px, 4vw, 64px)";
+  const tick = <svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true" style={{ flex: "none" }}><path d="M1 5.2l3.2 3.2L11 1.4" stroke={T.gold} strokeWidth="1.3" /></svg>;
 
   return (
-    <div style={{ minHeight: "100vh", background: T.paper, fontFamily: FONT_BODY, color: T.body }}>
+    <div className="ty" style={{ minHeight: "100vh", background: GROUND, fontFamily: FONT_BODY, color: T.text }}>
       <style>{`
-        @keyframes tyRise { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: none } }
-        @keyframes tyRule { from { transform: scaleX(0) } to { transform: scaleX(1) } }
-        .ty-rise { animation: tyRise 0.7s cubic-bezier(0.22,1,0.36,1) both; }
-        .ty-rule { transform-origin: center; animation: tyRule 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s both; }
-        .ty-cta:hover { background: ${T.inkDeep} !important; }
-        .ty-outline:hover { background: ${T.tint} !important; }
-        .ty-mobile { display: none; }
-        @media (prefers-reduced-motion: reduce) { .ty-rise, .ty-rule { animation: none !important; } }
+        .ty a { color: inherit; text-decoration: none; }
+        @keyframes tyRise { from { opacity: 0; transform: translateY(18px) } }
+        @keyframes tyRule { from { transform: scaleX(0) } }
+        @keyframes tyGrow { from { transform: scaleY(0) } }
+        .ty-rise { animation: tyRise 1s cubic-bezier(0.22,1,0.36,1) backwards; }
+        .ty-rise.d1 { animation-delay: 0.15s; } .ty-rise.d2 { animation-delay: 0.3s; }
+        .ty-rule { width: 64px; height: 1px; background: ${T.gold}; margin: 28px auto; transform-origin: center; animation: tyRule 0.9s cubic-bezier(0.22,1,0.36,1) 0.35s backwards; }
+
+        .ty-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 20px ${pageX}; background: ${T.cream}; border-bottom: 1px solid ${T.line}; }
+        .ty-word { font-family: ${FONT_LOGO}; font-size: 25px; letter-spacing: 0.16em; line-height: 1; color: ${T.text}; }
+        .ty-wrap { max-width: 1200px; margin: 0 auto; padding: 0 ${pageX}; }
+        .ty-h1 { font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: clamp(42px, 5.4vw, 80px); line-height: 1.04; margin: 16px auto 0; max-width: 15ch; color: ${T.text}; text-wrap: balance; }
+        .ty-h2 { font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: clamp(24px, 2.3vw, 30px); line-height: 1.2; margin: 0; color: ${T.text}; }
+        .ty-btn { display: inline-block; padding: 17px 32px; background: ${T.ink}; color: ${T.cream} !important; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; transition: background 0.3s ease; }
+        .ty-btn:hover { background: ${T.text}; }
+        .ty-link { display: inline-block; border-bottom: 1px solid ${T.ruleStrong}; padding: 0 0 4px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: ${T.text}; transition: border-color 0.2s ease; }
+        .ty-link:hover { border-bottom-color: ${T.gold}; }
+
+        .ty-main { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr); gap: clamp(36px, 6vw, 96px); align-items: start; padding-bottom: clamp(60px, 7vw, 104px); }
+
+        /* what happens next: a line with a mark at each step */
+        .ty-steps { list-style: none; margin: 26px 0 0; padding: 0; position: relative; }
+        .ty-steps::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: 30px; width: 1px; background: ${T.line}; transform-origin: top; animation: tyGrow 1.4s cubic-bezier(0.22,1,0.36,1) 0.5s backwards; }
+        .ty-steps li { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 24px; align-items: baseline; padding: 0 0 26px 38px; }
+        .ty-steps li:last-child { padding-bottom: 0; }
+        .ty-steps li::before { content: ""; position: absolute; left: 0; top: 5px; width: 13px; height: 13px; border-radius: 50%; background: ${GROUND}; border: 1px solid ${T.ruleStrong}; }
+        .ty-steps li.is-done::before { background: ${T.gold}; border-color: ${T.gold}; }
+        .ty-steps b { font-weight: 400; font-size: 16px; color: ${T.text}; }
+        .ty-steps p { grid-column: 1; margin: 0; font-size: 14px; line-height: 1.65; color: ${T.textMuted}; }
+        .ty-when { grid-column: 2; grid-row: 1; font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: ${T.text}; white-space: nowrap; }
+
+        .ty-2up { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 40px; padding-top: 30px; border-top: 1px solid ${T.line}; }
+        .ty-2up > div > div:last-child { margin-top: 12px; font-size: 15px; line-height: 1.7; color: ${T.text}; }
+        .ty-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 30px; margin-top: 36px; }
+
+        /* the order: the page's one sand panel. Only full-strength text sits on sand. */
+        .ty-order { background: ${T.sand}; padding: clamp(24px, 2.4vw, 32px); }
+        .ty-line { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px 0; border-bottom: 1px solid ${T.ruleStrong}; }
+        .ty-thumb { position: relative; width: 72px; aspect-ratio: 1 / 1.1; background: ${GROUND}; overflow: hidden; }
+        .ty-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 8%; mix-blend-mode: multiply; }
+        .ty-pnote { margin-top: 3px; font-size: 13px; color: ${T.text}; opacity: 0.82; }
+        .ty-row { display: flex; justify-content: space-between; gap: 16px; font-size: 14.5px; color: ${T.text}; margin-top: 12px; }
+        .ty-total { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-top: 18px; margin-top: 18px; border-top: 1px solid ${T.ruleStrong}; }
+        .ty-total span:first-child { font-size: 11.5px; letter-spacing: 0.18em; text-transform: uppercase; }
+        .ty-total span:last-child { font-family: ${FONT_DISPLAY}; font-size: 32px; line-height: 1; }
+        .ty-incl { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 11px; }
+        .ty-incl li { display: flex; align-items: center; gap: 12px; font-size: 14px; color: ${T.text}; }
+
+        /* here to help */
+        .ty-help { border-top: 1px solid ${T.line}; padding: clamp(52px, 6vw, 88px) 0 clamp(60px, 7vw, 104px); text-align: center; }
+        .ty-ways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: clamp(30px, 3.4vw, 48px); border-top: 1px solid ${T.line}; border-bottom: 1px solid ${T.line}; }
+        .ty-way { display: block; padding: clamp(24px, 2.6vw, 36px) 16px; border-left: 1px solid ${T.line}; }
+        .ty-way:first-child { border-left: 0; }
+        .ty-way span { display: block; }
+        .ty-way .v { margin-top: 12px; font-family: ${FONT_DISPLAY}; font-size: clamp(18px, 1.7vw, 22px); color: ${T.text}; overflow-wrap: anywhere; transition: color 0.2s ease; }
+        .ty-way .n { margin-top: 8px; font-size: 13.5px; color: ${T.textMuted}; }
+
+        @media (prefers-reduced-motion: reduce) { .ty-rise, .ty-rule, .ty-steps::before { animation: none !important; } }
         @media (max-width: 900px) {
-          .ty-main { grid-template-columns: 1fr !important; }
+          .ty-main { grid-template-columns: 1fr; }
           .ty-summary { order: -1; }
-          .ty-2up { grid-template-columns: 1fr !important; }
-          .ty-contact { grid-template-columns: 1fr !important; }
-          .ty-tl-when { display: none !important; }
-          .ty-mobile { display: block; }
+          .ty-ways { grid-template-columns: 1fr; }
+          .ty-way { border-left: 0; border-top: 1px solid ${T.line}; }
+          .ty-way:first-child { border-top: 0; }
+        }
+        @media (max-width: 560px) {
+          .ty-top { grid-template-columns: 1fr; justify-items: center; gap: 8px; padding: 16px ${pageX}; }
+          .ty-top > span:last-child { display: none; }
+          .ty-top > span:first-child { justify-self: center !important; }
+          .ty-word { font-size: 21px; order: -1; }
+          .ty-2up { grid-template-columns: 1fr; }
+          .ty-steps li { grid-template-columns: 1fr; }
+          .ty-when { grid-column: 1; grid-row: auto; }
+          .ty-actions .ty-btn { width: 100%; }
+          .ty-order { margin: 0 calc(-1 * ${pageX}); padding: 24px ${pageX}; }
         }
       `}</style>
 
-      {/* Stripped header — matches checkout */}
-      <header style={{ borderBottom: `1px solid ${T.rule}`, background: T.paper }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", padding: "18px clamp(20px, 4vw, 48px)" }}>
-          <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.muted, justifySelf: "start" }}>Order confirmed</span>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: 22, letterSpacing: "0.04em", color: T.ink }}>McCulloch</div>
-          <span />
-        </div>
+      {/* Stripped header, as on the checkout */}
+      <header className="ty-top">
+        <span style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: T.text, justifySelf: "start" }}>Order confirmed</span>
+        <Link to="/" className="ty-word" aria-label="McCulloch, home">McCulloch</Link>
+        <span />
       </header>
 
-      {/* 1 — Confirmation block */}
-      <section style={{ padding: `clamp(48px, 7vw, 96px) ${pageX} clamp(36px, 4vw, 56px)`, textAlign: "center" }}>
-        <div className="ty-rise" style={{ maxWidth: 760, margin: "0 auto" }}>
-          {order.orderNumber && <div style={{ ...eyebrow, marginBottom: 20 }}>Order {order.orderNumber}</div>}
-          <h1 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(44px, 5.4vw, 86px)", lineHeight: 1.02, color: T.ink, fontWeight: 400, maxWidth: "15ch", margin: "0 auto" }}>
-            Thank you{order.customerName ? `, ${order.customerName.split(" ")[0]}` : ""}.
-          </h1>
-          <div className="ty-rule" style={{ width: 64, height: 1, background: T.ruleStrong, margin: "28px auto" }} />
-          <p style={{ fontSize: 15.5, color: T.body, lineHeight: 1.7, maxWidth: 520, margin: "0 auto" }}>
-            Your order is confirmed. A receipt is on its way to <strong style={{ color: T.ink, fontWeight: 500 }}>{order.customerEmail || "your email"}</strong>, and we’ll be in touch as your piece moves through the workshop.
-          </p>
-        </div>
+      {/* Confirmation */}
+      <section style={{ padding: `clamp(48px, 7vw, 100px) ${pageX} clamp(44px, 5vw, 72px)`, textAlign: "center" }}>
+        {order.orderNumber && <div className="ty-rise" style={eyebrow}>Order {order.orderNumber}</div>}
+        <h1 className="ty-h1 ty-rise d1">Thank you{order.customerName ? `, ${order.customerName.split(" ")[0]}` : ""}.</h1>
+        <div className="ty-rule" />
+        <p className="ty-rise d2" style={{ fontSize: 16, lineHeight: 1.8, color: T.text, maxWidth: "50ch", margin: "0 auto" }}>
+          Your order is confirmed. A receipt is on its way to <strong style={{ fontWeight: 500 }}>{order.customerEmail || "your email"}</strong>, and we’ll be in touch as your {items.length > 1 ? "order" : "piece"} moves through the workshop.
+        </p>
       </section>
 
-      {/* Main: timeline + summary */}
-      <section style={{ padding: `0 ${pageX} clamp(56px, 7vw, 104px)`, maxWidth: 1240, margin: "0 auto" }}>
-        <div className="ty-main" style={{ display: "grid", gridTemplateColumns: "1.25fr 0.75fr", gap: "clamp(36px, 5vw, 80px)", alignItems: "start" }}>
-          {/* Left — What happens next */}
+      {/* What happens next + the order */}
+      <section className="ty-wrap">
+        <div className="ty-main">
           <div>
-            <div style={{ ...eyebrow, marginBottom: 22 }}>What happens next</div>
-            <div>
-              {TIMELINE.map((s, i) => {
-                const roman = ["I", "II", "III", "IV"][i];
-                return (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "44px 1fr auto", gap: 14, alignItems: "baseline", padding: "18px 0", borderTop: i === 0 ? "none" : `1px solid ${T.rule}` }}>
-                    <span style={{ fontFamily: FONT_DISPLAY, fontSize: 22, color: s.done ? T.gold : "#C4BCB0" }}>{roman}</span>
-                    <div>
-                      <div style={{ fontSize: 15, color: s.done ? T.ink : T.body }}>{s.title}</div>
-                      <div style={{ fontSize: 13, color: T.muted, marginTop: 4, lineHeight: 1.55 }}>{s.note}</div>
-                      {/* Mobile: timing on the note line */}
-                      <div className="ty-mobile" style={{ fontSize: 11.5, letterSpacing: "0.06em", textTransform: "uppercase", color: s.done ? T.gold : "#8A8377", marginTop: 6 }}>{s.when}</div>
-                    </div>
-                    <span className="ty-tl-when" style={{ fontSize: 11.5, letterSpacing: "0.06em", textTransform: "uppercase", color: s.done ? T.gold : "#8A8377", whiteSpace: "nowrap" }}>{s.when}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <h2 className="ty-h2">What happens next</h2>
+            <ol className="ty-steps">
+              {timeline.map((s) => (
+                <li key={s.title} className={s.done ? "is-done" : ""}>
+                  <b>{s.title}</b>
+                  <span className="ty-when">{s.when}</span>
+                  <p>{s.note}</p>
+                </li>
+              ))}
+            </ol>
 
-            {/* Delivery address + payment 2-up */}
-            <div className="ty-2up" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, marginTop: 36, paddingTop: 28, borderTop: `1px solid ${T.rule}` }}>
+            <div className="ty-2up">
               <div>
-                <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.muted, marginBottom: 10 }}>Delivery to</div>
-                <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.65 }}>
+                <div style={eyebrow}>Delivery to</div>
+                <div>
                   {order.customerName && <div>{order.customerName}</div>}
                   {addr.line1 && <div>{addr.line1}</div>}
                   {addr.line2 && <div>{addr.line2}</div>}
                   {(addr.city || addr.postcode) && <div>{[addr.city, addr.postcode].filter(Boolean).join(", ")}</div>}
                   {addr.country && <div>{addr.country}</div>}
-                  {addr.phone && <div style={{ color: T.muted, marginTop: 4 }}>{addr.phone}</div>}
+                  {addr.phone && <div style={{ color: T.textMuted, marginTop: 4 }}>{addr.phone}</div>}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.muted, marginBottom: 10 }}>Payment</div>
-                <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.65 }}>
+                <div style={eyebrow}>Payment</div>
+                <div>
                   <div>{order.paymentMethod || "Card"}</div>
-                  <div style={{ color: T.muted, marginTop: 4 }}>{money(total)} paid</div>
+                  <div style={{ color: T.textMuted, marginTop: 4 }}>{money(total)} paid</div>
                 </div>
               </div>
             </div>
 
-            {/* Actions */}
-            <div style={{ display: "flex", gap: 14, marginTop: 32, flexWrap: "wrap" }}>
-              <Link to="/orders" className="ty-cta" style={{ padding: "15px 30px", background: T.ink, color: T.paper, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", textDecoration: "none", transition: "background 0.25s" }}>
-                Track this order
-              </Link>
-              <Link to="/engagement-rings" className="ty-outline" style={{ padding: "15px 30px", background: "transparent", color: T.ink, border: `1px solid ${T.ruleStrong}`, fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", textDecoration: "none", transition: "background 0.25s" }}>
-                Continue shopping
-              </Link>
+            <div className="ty-actions">
+              <Link to="/orders" className="ty-btn">Track this order</Link>
+              <Link to="/engagement-rings" className="ty-link">Continue shopping</Link>
             </div>
           </div>
 
-          {/* Right — Order summary */}
           <aside className="ty-summary">
-            <div style={{ background: T.tint, padding: "26px 24px" }}>
-              <div style={{ fontSize: 10.5, letterSpacing: "0.2em", textTransform: "uppercase", color: T.ink, marginBottom: 18 }}>Your order</div>
+            <div className="ty-order">
+              <h2 className="ty-h2" style={{ fontSize: 24 }}>Your order</h2>
               {items.map((it, i) => (
-                <div key={i} style={{ display: "grid", gridTemplateColumns: "72px 1fr auto", gap: 14, alignItems: "start", padding: "14px 0", borderTop: i === 0 ? "none" : `1px solid ${T.ruleSoft}` }}>
-                  <div style={{ position: "relative", width: 72, aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden" }}>
-                    {it.image
-                      ? <img src={getMediaUrl(it.image)} alt={it.product_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, fontSize: 12, color: T.muted, textAlign: "center", padding: 4 }}>{it.product_name}</div>}
-                    {it.quantity > 1 && <span style={{ position: "absolute", top: -8, right: -8, width: 22, height: 22, borderRadius: "50%", background: T.ink, color: T.paper, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>{it.quantity}</span>}
+                <div key={i} className="ty-line">
+                  <div className="ty-thumb">
+                    {it.image && <img src={getMediaUrl(it.image)} alt={it.product_name} />}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontFamily: FONT_DISPLAY, fontSize: 17, color: T.ink, lineHeight: 1.2 }}>{it.product_name}</div>
-                    {configSummary(it) && <div style={{ fontSize: 11.5, color: T.muted, marginTop: 3 }}>{configSummary(it)}</div>}
-                    <div style={{ fontSize: 11.5, color: T.muted, marginTop: 4 }}>{leadTime(it)}</div>
+                    <div style={{ fontSize: 15, lineHeight: 1.4, color: T.text }}>{tidy(it.product_name)}</div>
+                    {configSummary(it) && <div className="ty-pnote">{configSummary(it)}</div>}
+                    {it.quantity > 1 && <div className="ty-pnote">Quantity {it.quantity}</div>}
+                    <div className="ty-pnote">{leadTime(it)}</div>
                   </div>
-                  <div style={{ fontSize: 13.5, color: T.ink, whiteSpace: "nowrap" }}>{money(it.total_price)}</div>
+                  <div style={{ fontSize: 14.5, color: T.text, whiteSpace: "nowrap" }}>{money(it.total_price)}</div>
                 </div>
               ))}
 
-              <div style={{ borderTop: `1px solid ${T.ruleSoft}`, marginTop: 8, paddingTop: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, color: T.body, marginBottom: 10 }}><span>Subtotal</span><span style={{ color: T.ink }}>{money(subtotal)}</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, color: T.body, marginBottom: 10 }}><span>{order.deliveryName || "Delivery"}</span><span style={{ color: deliveryCost === 0 ? T.gold : T.ink }}>{deliveryCost === 0 ? "Free" : money(deliveryCost)}</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, color: T.body }}><span>VAT (incl.)</span><span style={{ color: T.ink }}>{money(vat)}</span></div>
+              <div style={{ marginTop: 18 }}>
+                <div className="ty-row"><span>Subtotal</span><span>{money(subtotal)}</span></div>
+                <div className="ty-row"><span>{order.deliveryName || "Delivery"}</span><span>{deliveryCost === 0 ? "Free" : money(deliveryCost)}</span></div>
+                <div className="ty-row"><span>VAT (included)</span><span>{money(vat)}</span></div>
               </div>
-
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", paddingTop: 16, marginTop: 12, borderTop: `1px solid ${T.ruleStrong}` }}>
-                <span style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.ink }}>Paid</span>
-                <span style={{ fontFamily: FONT_DISPLAY, fontSize: 32, color: T.ink, lineHeight: 1 }}>{money(total)}</span>
-              </div>
+              <div className="ty-total"><span>Paid</span><span>{money(total)}</span></div>
             </div>
 
-            {/* Included with every piece */}
-            <div style={{ border: `1px solid ${T.rule}`, padding: "22px 24px", marginTop: 18 }}>
-              <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink, marginBottom: 14 }}>Included with every piece</div>
-              {INCLUDED.map((x, i) => (
-                <div key={x} style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 0", borderTop: i === 0 ? "none" : `1px dashed ${T.ruleSoft}`, fontSize: 13, color: T.body }}>
-                  <Check size={13} strokeWidth={2} style={{ color: T.gold, flexShrink: 0 }} /> {x}
-                </div>
-              ))}
+            <div style={{ padding: "26px clamp(24px, 2.4vw, 32px) 0" }}>
+              <div style={eyebrow}>Included with every piece</div>
+              <ul className="ty-incl">
+                {INCLUDED.map((x) => <li key={x}>{tick}{x}</li>)}
+              </ul>
             </div>
           </aside>
         </div>
       </section>
 
-      {/* Contact band */}
-      <section style={{ background: T.ink, color: T.onDarkSoft }}>
-        <div className="ty-contact" style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: "clamp(28px, 4vw, 72px)", alignItems: "center", maxWidth: 1240, margin: "0 auto", padding: `clamp(44px, 5vw, 72px) ${pageX}` }}>
-          <div>
-            <div style={{ ...eyebrow }}>Here to help</div>
-            <h2 style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(28px, 3vw, 42px)", color: "#F4EFE6", fontWeight: 400, marginTop: 14, lineHeight: 1.1 }}>
-              The bench is a telephone call away.
-            </h2>
-          </div>
-          <div>
+      {/* Here to help */}
+      <section className="ty-wrap">
+        <div className="ty-help">
+          <div style={eyebrow}>Here to help</div>
+          <h2 className="ty-h2" style={{ marginTop: 16, fontSize: "clamp(26px, 2.6vw, 38px)" }}>The bench is a telephone call away.</h2>
+          <div className="ty-ways">
             {[
-              { label: "Telephone", value: "0115 925 7552", note: "Mon – Sat, 9 – 5:30", href: "tel:01159257552" },
+              { label: "Telephone", value: "0115 925 7552", note: "Mon to Sat, 9 to 5:30", href: "tel:01159257552" },
               { label: "Email about this order", value: "has@mccullochjewellers.co.uk", note: order.orderNumber ? `Quote ${order.orderNumber}` : "We reply within one working day", href: "mailto:has@mccullochjewellers.co.uk" },
               { label: "Visit the showroom", value: "7 The Square, Beeston", note: "Nottingham NG9 2JG", href: "/visit-us" },
-            ].map((r, i) => (
-              <a key={r.label} href={r.href} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "baseline", padding: "16px 0", borderTop: `1px solid ${T.ruleDark}`, textDecoration: "none" }}>
-                <div>
-                  <div style={{ fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase", color: T.gold, marginBottom: 5 }}>{r.label}</div>
-                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: 20, color: "#F4EFE6" }}>{r.value}</div>
-                </div>
-                <div style={{ fontSize: 12, color: T.onDarkMuted, whiteSpace: "nowrap" }}>{r.note}</div>
+            ].map((r) => (
+              <a key={r.label} href={r.href} className="ty-way">
+                <span style={eyebrow}>{r.label}</span>
+                <span className="v">{r.value}</span>
+                <span className="n">{r.note}</span>
               </a>
             ))}
           </div>

@@ -18,11 +18,11 @@ const Index = (): JSX.Element => {
   } : null;
 
   return (
-    <div className="flex flex-col w-full min-h-screen" style={{ background: "#F8F6F0" }}>
+    <div className="flex flex-col w-full min-h-screen" style={{ background: "#FFFEFD" }}>
       <NavigationV2 />
       <SeasonalOfferV2 />
       <ChatWidget user={user} />
-      <MainContentV2 />
+      <main id="main"><MainContentV2 /></main>
       <FooterV2 />
     </div>
   );

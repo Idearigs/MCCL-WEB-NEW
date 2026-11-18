@@ -2,16 +2,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
-import CategoryCopyV2 from "../components/home-v2/CategoryCopyV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 import API_BASE_URL, { getMediaUrl } from "../config/api";
 import { useFavorites } from "../contexts/FavoritesContext";
+import { LISTING_CSS, GROUND, TILE, PAGE_SIZE, PAGE_X, BAR_TOP_CSS, M_BAR_TOP_CSS, Chev, XICON, PillTick, useFilterPanel } from "../components/home-v2/listingShared";
 
 /**
  * Jewellery listing — v2, one template for Earrings / Necklaces / Bracelets
- * (design_handoff_mcculloch_jewellery, 9th package). Category tab bar, a filter rail
- * whose 4th group changes per category (Fastening / Length / Fit), a 3-up grid with a
- * save heart and lead time, and a per-category "Before you ask" advice band.
+ * (design_handoff_mcculloch_jewellery, 9th package), restyled in Nov 2026 to match the
+ * engagement rings listing: centred header, one slim filter row (the last group changes
+ * per category: Fastening / Length / Fit), a 4-up grid with a save heart, and "Show more".
+ * The look itself lives in components/home-v2/listingShared.tsx.
  *
  * DATA: fetches ?category=<cat>. Real jewellery products currently carry no structured
  * facet tags, so Style / Metal / Stone / detail are inferred from the product name
@@ -19,7 +20,6 @@ import { useFavorites } from "../contexts/FavoritesContext";
  * NOT YET PUBLISHED — photography and catalogue are still in progress.
  */
 
-const NAV_H = 96;
 
 type Key = "availability" | "style" | "metal" | "stone" | "detail";
 const AVAIL_LIVE = "Ready to ship";
@@ -146,6 +146,9 @@ interface Product {
   image?: { url: string } | null; images?: { url: string; is_primary?: boolean }[];
 }
 
+type PanelKey = Key | "price" | "sort";
+const PRICE_MAX = 4400;
+
 const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => {
   const cat = CATS[category] || CATS.earrings;
   const [searchParams] = useSearchParams();
@@ -160,22 +163,24 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
     { key: "detail", title: cat.detailTitle, options: cat.detailOptions },
   ], [cat]);
 
-  const [sel, setSel] = useState<Record<Key, string[]>>({ availability: [], style: [], metal: [], stone: [], detail: [] });
-  const [maxPrice, setMaxPrice] = useState(4400);
+  const NONE: Record<Key, string[]> = { availability: [], style: [], metal: [], stone: [], detail: [] };
+  const [sel, setSel] = useState<Record<Key, string[]>>(NONE);
+  const [maxPrice, setMaxPrice] = useState(PRICE_MAX);
   const [sort, setSort] = useState("featured");
-  const [open, setOpen] = useState<Record<Key, boolean>>({ availability: true, style: true, metal: true, stone: false, detail: false });
+  const [open, setOpen] = useState<Record<Key, boolean>>({ availability: true, style: true, metal: false, stone: false, detail: false });
+  const [panel, setPanel] = useState<PanelKey | null>(null); // which filter panel is open on a laptop
+  const [shown, setShown] = useState(PAGE_SIZE);             // how many results are on screen
   const { isFavorite, toggleFavorite } = useFavorites();
   const [sheet, setSheet] = useState(false);
   const [sortSheet, setSortSheet] = useState(false);
 
   // Reset filters/sort when the category changes (filters don't carry across)
   useEffect(() => {
-    setSel({ availability: [], style: [], metal: [], stone: [], detail: [] });
-    setMaxPrice(4400); setSort("featured");
-    setOpen({ availability: true, style: true, metal: true, stone: false, detail: false });
+    setSel(NONE); setMaxPrice(PRICE_MAX); setSort("featured"); setPanel(null);
+    setOpen({ availability: true, style: true, metal: false, stone: false, detail: false });
     window.scrollTo(0, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
-
 
   useEffect(() => {
     const lock = sheet || sortSheet; document.body.style.overflow = lock ? "hidden" : "";
@@ -216,6 +221,12 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
   };
   const fieldFor = (r: typeof rows[number], k: Key) => r[k];
 
+  // Leave out options no piece in this category has, unless already chosen; a group with nothing left is left off.
+  const visibleOpts = (g: { key: Key; options: string[] }) => g.options.filter(o => sel[g.key].includes(o) || rows.some(r => fieldFor(r, g.key).includes(o)));
+  const shownGroups = groups.filter(g => loading || visibleOpts(g).length > 1 || sel[g.key].length > 0);
+  // Only label pieces "Ready to ship" where the category mixes stock and made-to-order pieces.
+  const mixed = rows.some(r => r.inStock) && rows.some(r => !r.inStock);
+
   const results = useMemo(() => {
     let list = rows.filter(r => passes(r));
     if (sort === "low") list = [...list].sort((a, b) => a.price - b.price);
@@ -226,299 +237,327 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, sel, maxPrice, sort]);
 
-  const toggle = (k: Key, v: string) => setSel(s => ({ ...s, [k]: s[k].includes(v) ? s[k].filter(x => x !== v) : [...s[k], v] }));
-  const clearAll = () => { setSel({ availability: [], style: [], metal: [], stone: [], detail: [] }); setMaxPrice(4400); };
+  // A new filter or sort starts again from the first rows.
+  useEffect(() => { setShown(PAGE_SIZE); }, [sel, maxPrice, sort, category]);
+
+  const { barRef, mainRef, toResults } = useFilterPanel(!!panel, () => setPanel(null));
+  const toggle = (k: Key, v: string) => { setSel(s => ({ ...s, [k]: s[k].includes(v) ? s[k].filter(x => x !== v) : [...s[k], v] })); toResults(); };
+  const clearAll = () => { setSel(NONE); setMaxPrice(PRICE_MAX); toResults(); };
+  const showLabel = (n: number) => `Show ${n} ${n === 1 ? "piece" : "pieces"}`;
   const chips = groups.flatMap(g => sel[g.key].map(v => ({ key: g.key, label: v })));
-  const activeCount = chips.length + (maxPrice < 4400 ? 1 : 0);
-  const eyebrow: React.CSSProperties = { fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: T.gold };
+  const activeCount = chips.length + (maxPrice < PRICE_MAX ? 1 : 0);
   const sortOptions = [{ value: "featured", label: "Featured" }, { value: "low", label: "Price, low to high" }, { value: "high", label: "Price, high to low" }, { value: "new", label: "Newest" }];
   const sortLabel = sortOptions.find(o => o.value === sort)?.label || "Featured";
-  const priceLabel = maxPrice >= 4400 ? "Any" : "Up to " + money(maxPrice);
-  const leadTime = (inStock: boolean) => inStock ? "Ships in 48 hours" : "Made to order, up to 6 weeks";
+  const priceLabel = maxPrice >= PRICE_MAX ? "Any" : "Up to " + money(maxPrice);
+  const countLabel = loading ? "Loading…" : `${results.length} ${results.length === 1 ? "piece" : "pieces"}`;
 
+  // One option row; "big" is the phone sheet size.
+  const optRow = (g: { key: Key }, o: string, big: boolean) => {
+    const on = sel[g.key].includes(o);
+    const n = rows.filter(r => passes(r, g.key) && fieldFor(r, g.key).includes(o)).length;
+    return (
+      <button key={o} type="button" onClick={() => toggle(g.key, o)} className="erv2-opt" data-fopt aria-pressed={on}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: big ? "12px 0" : "10px 0", cursor: "pointer", background: "transparent", border: 0, textAlign: "left", fontFamily: FONT_BODY, fontSize: big ? 15 : 14, color: T.text }}>
+        <span style={{ display: "flex", alignItems: "center", gap: big ? 12 : 11 }}>
+          <span className="erv2-box" style={{ width: big ? 16 : 14, height: big ? 16 : 14, flex: "none", border: `1px solid ${on ? T.text : T.ruleStrong}`, background: on ? T.text : "transparent" }} />
+          {g.key === "stone" && o === "None" ? "No stones" : o}
+        </span>
+        <span style={{ fontSize: big ? 12.5 : 12, color: T.textMuted }}>{n}</span>
+      </button>
+    );
+  };
+
+  // Laptop panels: each choice is an outlined pill.
+  const pill = (g: { key: Key }, o: string) => {
+    const on = sel[g.key].includes(o);
+    const n = rows.filter(r => passes(r, g.key) && fieldFor(r, g.key).includes(o)).length;
+    return (
+      <button key={o} type="button" onClick={() => toggle(g.key, o)} className="erv2-pill" data-fopt aria-pressed={on}>
+        <PillTick />
+        {g.key === "stone" && o === "None" ? "No stones" : o}<span className="erv2-pill-n">{n}</span>
+      </button>
+    );
+  };
+
+  // Phone sheet: the same groups as accordions, then price
   const filterGroupsJsx = (
     <>
-      {groups.map(g => (
+      {shownGroups.map(g => (
         <div key={g.key} style={{ borderBottom: `1px solid ${T.rule}` }}>
-          <button onClick={() => setOpen(o => ({ ...o, [g.key]: !o[g.key] }))}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, width: "100%", padding: "17px 0", cursor: "pointer", background: "transparent", border: 0, textAlign: "left", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink }}>
+          <button type="button" data-acc aria-expanded={open[g.key]} onClick={() => setOpen(o => ({ ...o, [g.key]: !o[g.key] }))}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, width: "100%", padding: "17px 0", cursor: "pointer", background: "transparent", border: 0, textAlign: "left", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.text }}>
             <span>{g.title}</span>
             <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
-              {sel[g.key].length > 0 && <span style={{ fontSize: 11, color: T.gold }}>{sel[g.key].length}</span>}
-              <span style={{ fontSize: 14, color: "#8A8377" }}>{open[g.key] ? "−" : "+"}</span>
+              {sel[g.key].length > 0 && <span style={{ fontSize: 12, color: T.textMuted }}>({sel[g.key].length})</span>}
+              <Chev />
             </span>
           </button>
-          {open[g.key] && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, paddingBottom: 16 }}>
-              {g.options.map(o => {
-                const on = sel[g.key].includes(o);
-                const n = rows.filter(r => passes(r, g.key) && fieldFor(r, g.key).includes(o)).length;
-                return (
-                  <button key={o} onClick={() => toggle(g.key, o)} className="jl-opt"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "9px 8px 9px 0", cursor: "pointer", background: "transparent", border: 0, textAlign: "left", fontFamily: FONT_BODY, fontSize: 13, color: on ? T.ink : T.body }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ width: 16, height: 16, flex: "none", border: `1px solid ${on ? T.ink : T.ruleStrong}`, background: on ? T.ink : "transparent" }} />
-                      {o}
-                    </span>
-                    <span style={{ fontSize: 11.5, color: "#8A8377" }}>{n}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div style={{ display: open[g.key] ? "flex" : "none", flexDirection: "column", gap: 1, paddingBottom: 16 }}>
+            {visibleOpts(g).map(o => optRow(g, o, true))}
+          </div>
         </div>
       ))}
       <div style={{ padding: "20px 0 8px" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-          <span style={{ fontSize: 11.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>Price</span>
-          <span style={{ fontSize: 12.5, color: T.muted }}>{priceLabel}</span>
+          <span style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.text }}>Price</span>
+          <span style={{ fontSize: 13.5, color: T.textMuted }}>{priceLabel}</span>
         </div>
-        <input type="range" min={200} max={4400} step={100} value={maxPrice} onChange={e => setMaxPrice(+e.target.value)} className="jl-range" aria-valuetext={priceLabel} />
+        <input type="range" min={200} max={PRICE_MAX} step={100} value={maxPrice} onChange={e => setMaxPrice(+e.target.value)} className="erv2-range" aria-valuetext={priceLabel} />
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "#8A8377", marginTop: 8 }}><span>£200</span><span>£4,400+</span></div>
-      </div>
-      {/* Commission card inside the rail */}
-      <div style={{ marginTop: 22, padding: "20px", background: T.tint }}>
-        <div style={{ fontFamily: FONT_DISPLAY, fontSize: 18, marginBottom: 8 }}>Not quite it?</div>
-        <p style={{ margin: "0 0 14px", fontSize: 13, lineHeight: 1.6, color: T.body }}>If nothing here is right, we can create a bespoke piece for you.</p>
-        <Link to="/bespoke-design" style={{ fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink, borderBottom: `1px solid ${T.ruleStrong}`, paddingBottom: 2 }}>Commission it</Link>
       </div>
     </>
   );
 
+  // Bracelets: ready-to-ship stock and made-to-order pieces are shown apart, all at once.
+  const split = cat.slug === "bracelets";
+
+  const card = ({ p, inStock }: typeof results[number]) => {
+    const imgs = p.images || [];
+    const primaryObj = imgs.find(i => i.is_primary) || imgs[0];
+    const img = p.image?.url || primaryObj?.url;
+    // These are photographs, not cut-outs, so they fill the tile edge to edge. Hover: the piece's next photograph.
+    const second = imgs.find(i => i.url && i.url !== img)?.url;
+    const href = `/${cat.slug}/${p.slug}`;
+    const saved = isFavorite(p.id);
+    const label = !split && mixed && inStock ? "Ready to ship" : p.is_featured ? "Most asked for" : "";
+    const from = ((p as any).variants || []).filter((v: any) => Number(v.price) > 0).length > 1 ? "From " : "";
+    return (
+      <div key={p.id} className={`erv2-card${second ? " has-alt" : ""}`} style={{ position: "relative" }}>
+        <Link to={href} style={{ display: "block" }}>
+          <div style={{ position: "relative", aspectRatio: "1 / 1.1", background: TILE, overflow: "hidden" }}>
+            {img
+              ? <img src={getMediaUrl(img)} alt={p.name} className="erv2-main-img" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+              : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: T.muted, padding: 12, textAlign: "center" }}>{p.name}</div>}
+            {second && <img src={getMediaUrl(second)} alt="" aria-hidden="true" className="erv2-card-alt" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
+            {label && <span style={{ position: "absolute", top: 12, left: 12, padding: "5px 9px", background: "rgba(255,254,253,0.9)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: T.text }}>{label}</span>}
+            <span className="erv2-add">Add to bag</span>
+          </div>
+          {/* Jewellery names are long, so the price sits under the name rather than beside it */}
+          <div className="jl-name" style={{ marginTop: 14, fontSize: 14.5, lineHeight: 1.45, color: T.text }}>{p.name}</div>
+          <div style={{ marginTop: 5, fontSize: 14, color: T.textMuted }}>{from}{p.price}</div>
+        </Link>
+        <button type="button" className="erv2-save" aria-pressed={saved} aria-label={saved ? `Remove ${p.name} from saved` : `Save ${p.name}`}
+          onClick={() => toggleFavorite(p.id, p.name, img ? getMediaUrl(img) : "", href)}
+          style={{ position: "absolute", top: 6, right: 6, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "transparent", border: 0, color: T.text }}>
+          <svg width="20" height="18" viewBox="0 0 20 18" fill={saved ? "currentColor" : "none"} aria-hidden="true"><path d="M10 16.6C4.6 12.7 1 9.6 1 5.9 1 3.3 3 1.4 5.4 1.4c1.8 0 3.5 1 4.6 2.7 1.1-1.7 2.8-2.7 4.6-2.7C17 1.4 19 3.3 19 5.9c0 3.7-3.6 6.8-9 10.7z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" /></svg>
+        </button>
+      </div>
+    );
+  };
+  const grid = (list: typeof results) => (
+    <div style={{ display: "grid", gap: "clamp(28px,3vw,44px) clamp(16px,1.6vw,28px)", marginTop: 32 }} className="erv2-grid">
+      {list.map(card)}
+    </div>
+  );
+  const groupHead = (title: string, note: string) => (
+    <div style={{ marginTop: "clamp(44px, 4.4vw, 68px)", textAlign: "center" }}>
+      <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(21px, 2vw, 27px)", lineHeight: 1.22, margin: "0 0 8px", color: T.text }}>{title}</h2>
+      <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: T.textMuted }}>{note}</p>
+    </div>
+  );
+  const ready = results.filter(r => r.inStock), bespoke = results.filter(r => !r.inStock);
+
   return (
-    <div style={{ background: T.paper, color: T.ink, fontFamily: FONT_BODY, minHeight: "100vh" }}>
+    <div style={{ background: GROUND, color: T.text, fontFamily: FONT_BODY, minHeight: "100vh", WebkitFontSmoothing: "antialiased", MozOsxFontSmoothing: "grayscale", textRendering: "optimizeLegibility" } as React.CSSProperties}>
+      <style>{LISTING_CSS}</style>
       <style>{`
-        .jl a { color: inherit; text-decoration: none; }
-        .jl-opt:hover { color: ${T.ink} !important; }
-        .jl-chip:hover { border-color: ${T.ink} !important; }
-        .jl-card img { transition: transform 0.5s ease; }
-        .jl-card:hover img { transform: scale(1.04); }
-        .jl-card img.jl-card-alt { opacity: 0; transition: opacity 0.55s ease, transform 0.5s ease; }
-        .jl-card:hover img.jl-card-alt { opacity: 1; }
-        .jl-range { -webkit-appearance:none; appearance:none; width:100%; height:1px; background:${T.ruleStrong}; outline:none; }
-        .jl-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%; background:${T.gold}; cursor:pointer; }
-        .jl-range::-moz-range-thumb { width:15px; height:15px; border:0; border-radius:50%; background:${T.gold}; cursor:pointer; }
-        @keyframes jlIn { from { opacity:0; transform: translateY(10px);} to {opacity:1; transform:none;} }
-        @media (prefers-reduced-motion: reduce){ .jl-body { animation: none !important; } }
+        .jl-tab { padding: 6px 0 5px; font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: ${T.textMuted}; border-bottom: 1px solid transparent; transition: color 0.2s ease, border-color 0.2s ease; }
+        .jl-tab:hover { color: ${T.text}; }
+        .jl-tab[aria-current="page"] { color: ${T.text}; border-bottom-color: ${T.text}; }
+        @media (max-width: 900px) {
+          .jl-tab { font-size: 10.5px; letter-spacing: 0.12em; }
+          .jl-tabs { gap: 6px 15px !important; }
+          .jl-name { font-size: 13.5px !important; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        }
+        @keyframes jlIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .jl-body { animation: none !important; } }
       `}</style>
 
       <NavigationV2 solid />
 
-      <div className="jl" style={{ paddingTop: "var(--v2nav-h, 96px)" }}>
-        {/* Category tab bar */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 clamp(24px, 3vw, 52px)", background: T.tint, borderBottom: `1px solid ${T.rule}`, overflowX: "auto" }}>
-          {ORDER.map(k => {
-            const on = k === category;
-            return (
-              <Link key={k} to={`/${k}`} style={{ padding: "15px clamp(14px, 2vw, 26px)", borderBottom: `2px solid ${on ? T.ink : "transparent"}`, fontSize: 12.5, letterSpacing: "0.1em", textTransform: "uppercase", color: on ? T.ink : T.muted, whiteSpace: "nowrap" }}>
-                {CATS[k].label}
-              </Link>
-            );
-          })}
-        </div>
-
+      <div className="erv2" style={{ paddingTop: "var(--v2nav-h, 96px)" }}>
         <div key={category} className="jl-body" style={{ animation: "jlIn 0.4s cubic-bezier(0.22,1,0.36,1) both" }}>
-          <div style={{ display: "flex", gap: 10, padding: "clamp(26px,3vw,40px) clamp(24px, 3vw, 52px) 18px", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8A8377" }}>
-            <Link to="/">Home</Link><span>/</span><Link to="/jewellery">Jewellery</Link><span>/</span><span style={{ color: T.ink }}>{cat.label}</span>
+          {/* Breadcrumb */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 10, padding: `clamp(30px,3.4vw,52px) ${PAGE_X} 16px`, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.textMuted }}>
+            <Link to="/">Home</Link><span>/</span><Link to="/jewellery">Jewellery</Link><span>/</span><span style={{ color: T.text }}>{cat.label}</span>
           </div>
 
-          <section style={{ padding: "clamp(20px,3vw,40px) clamp(24px,3vw,52px) clamp(36px,4vw,56px)", borderBottom: `1px solid ${T.rule}` }}>
-            <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(44px, 5.2vw, 84px)", lineHeight: 1, letterSpacing: "0.005em", margin: "0 0 20px" }}>{cat.label}</h1>
+          {/* Page header — centred and compact */}
+          <section className="erv2-head" style={{ padding: `0 ${PAGE_X} clamp(34px,3.8vw,56px)`, textAlign: "center" }}>
+            <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(28px, 3.2vw, 44px)", lineHeight: 1.15, margin: "0 0 16px", color: T.text }}>{cat.label}</h1>
             {cat.standfirst.map((para, i) => (
-              <p key={i} style={{ margin: i ? "14px 0 0" : 0, maxWidth: "52ch", fontSize: 15, lineHeight: 1.75, color: T.body }}>{para}</p>
+              <p key={i} style={{ margin: i ? "10px auto 0" : "0 auto", maxWidth: "58ch", fontSize: 15.5, lineHeight: 1.7, color: T.text }}>{para}</p>
             ))}
-            {cat.cta?.kind === "link" && (
-              <Link to={cat.cta.to} style={{ display: "inline-block", marginTop: 18, fontSize: 14, fontWeight: 500, color: T.gold, borderBottom: `1px solid ${T.gold}`, paddingBottom: 2 }}>{cat.cta.label}</Link>
-            )}
-            {cat.cta?.kind === "button" && (
-              <Link to={cat.cta.to} style={{ display: "inline-block", marginTop: 22, padding: "15px 28px", background: T.ink, color: T.paper, fontSize: 11.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>{cat.cta.label}</Link>
-            )}
+            {cat.cta && <div><Link to={cat.cta.to} className="erv2-textlink" style={{ color: T.text, marginTop: 6 }}>{cat.cta.label}</Link></div>}
+            {/* The four jewellery pages, one tap apart */}
+            <nav aria-label="Jewellery categories" className="jl-tabs" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "6px clamp(18px, 2.4vw, 36px)", marginTop: "clamp(26px, 2.8vw, 38px)" }}>
+              {ORDER.map(k => <Link key={k} to={`/${k}`} className="jl-tab" aria-current={k === category ? "page" : undefined}>{CATS[k].label}</Link>)}
+            </nav>
           </section>
 
-          {/* Mobile trigger bar */}
-          <div className="jl-triggerbar" style={{ position: "sticky", top: 78, zIndex: 40, gridTemplateColumns: "1fr 1fr", gap: 1, background: T.rule, borderTop: `1px solid ${T.rule}`, borderBottom: `1px solid ${T.rule}` }}>
-            <button onClick={() => setSheet(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 0", background: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink }}>
-              Filter{activeCount > 0 && <span style={{ minWidth: 18, height: 18, borderRadius: 9, background: T.gold, color: "#fff", fontSize: 10.5, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>{activeCount}</span>}
-            </button>
-            <button onClick={() => setSortSheet(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "14px 0", background: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink }}>
-              Sort<span style={{ fontSize: 10, color: "#8A8377", textTransform: "none", letterSpacing: 0 }}>· {sortLabel}</span>
-            </button>
+          {/* Phone filter row: Filter on the left, the count in the middle, Sort on the right */}
+          <div className="erv2-triggerbar" style={{ position: "sticky", top: M_BAR_TOP_CSS, zIndex: 40, background: GROUND, padding: `0 ${PAGE_X}` }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", borderTop: `1px solid ${T.line}`, borderBottom: `1px solid ${T.line}` }}>
+              <button type="button" className="erv2-mbtn" data-sheetbtn="filter" onClick={() => setSheet(true)} style={{ justifySelf: "start" }}>
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden="true"><path d="M0 3h16M0 9h16" stroke="currentColor" strokeWidth="1" /><circle cx="5" cy="3" r="2" fill={GROUND} stroke="currentColor" strokeWidth="1" /><circle cx="11" cy="9" r="2" fill={GROUND} stroke="currentColor" strokeWidth="1" /></svg>
+                Filter{activeCount > 0 && <span style={{ color: T.textMuted }}>({activeCount})</span>}
+              </button>
+              <span style={{ fontSize: 12.5, color: T.textMuted }}>{countLabel}</span>
+              <button type="button" className="erv2-mbtn" data-sheetbtn="sort" onClick={() => setSortSheet(true)} style={{ justifySelf: "end" }}>
+                Sort<Chev />
+              </button>
+            </div>
           </div>
 
-          <main style={{ display: "grid", gridTemplateColumns: "236px minmax(0, 1fr)", gap: "clamp(28px, 3vw, 56px)", padding: "clamp(28px,3vw,44px) clamp(24px,3vw,52px) clamp(56px,5vw,88px)", alignItems: "start" }} className="jl-main">
-            <aside style={{ position: "sticky", top: NAV_H + 12 }} className="jl-aside">
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, paddingBottom: 14, borderBottom: `1px solid ${T.ink}` }}>
-                <span style={{ fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase" }}>Filter</span>
-                <button className="jl-opt" onClick={clearAll} style={{ padding: 0, cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 11, color: "#8A8377" }}>Clear all</button>
-              </div>
-              {filterGroupsJsx}
-            </aside>
-
-            <div>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, paddingBottom: 18, borderBottom: `1px solid ${T.rule}` }}>
-                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 12.5, color: T.muted }}>{loading ? "Loading…" : `${results.length} ${results.length === 1 ? "piece" : "pieces"}`}</span>
-                  {chips.map((c, i) => (
-                    <button key={i} onClick={() => toggle(c.key, c.label)} className="jl-chip" style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 11px", cursor: "pointer", background: T.tint, border: `1px solid ${T.ruleSoft}`, fontFamily: FONT_BODY, fontSize: 11.5, color: T.ink }}>
-                      {c.label}<span style={{ color: "#8A8377" }}>×</span>
+          <div>
+            {/* Laptop filter bar: one quiet row; each label opens its options underneath */}
+            <div ref={barRef} className={`erv2-bar${panel ? " has-open" : ""}`} style={{ position: "sticky", top: BAR_TOP_CSS, zIndex: 30, background: GROUND, padding: `0 ${PAGE_X}` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, borderTop: `1px solid ${T.line}`, borderBottom: `1px solid ${T.line}` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "clamp(20px, 2.6vw, 44px)" }}>
+                  {[...shownGroups.map(g => ({ key: g.key as PanelKey, label: g.title, n: sel[g.key].length })), { key: "price" as PanelKey, label: "Price", n: maxPrice < PRICE_MAX ? 1 : 0 }].map(b => (
+                    <button key={b.key} type="button" className="erv2-fbtn" data-fbtn={b.key} aria-expanded={panel === b.key} onClick={() => setPanel(v => v === b.key ? null : b.key)}>
+                      {b.label}{b.n > 0 && <span style={{ color: T.textMuted }}>({b.n})</span>}<Chev />
                     </button>
                   ))}
                 </div>
-                <div className="jl-sortdesktop" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8A8377" }}>Sort</span>
-                  <select value={sort} onChange={e => setSort(e.target.value)} style={{ padding: "9px 12px", fontFamily: FONT_BODY, fontSize: 13, color: T.ink, background: T.paper, border: `1px solid ${T.ruleStrong}`, borderRadius: 0, cursor: "pointer" }}>
-                    {sortOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                <div style={{ display: "flex", alignItems: "center", gap: "clamp(20px, 2.6vw, 44px)" }}>
+                  <span style={{ fontSize: 12.5, color: T.textMuted }}>{countLabel}</span>
+                  <button type="button" className="erv2-fbtn" data-fbtn="sort" aria-expanded={panel === "sort"} onClick={() => setPanel(v => v === "sort" ? null : "sort")}>
+                    Sort<span style={{ color: T.textMuted, textTransform: "none", letterSpacing: 0, fontSize: 12.5 }}>{sortLabel}</span><Chev />
+                  </button>
                 </div>
+              </div>
+              {shownGroups.map(g => (
+                <div key={g.key} data-fpanel={g.key} className={`erv2-panel${panel === g.key ? " is-open" : ""}`}><div className="erv2-panel-clip"><div className="erv2-panel-in">
+                  <div className="erv2-pills">{visibleOpts(g).map(o => pill(g, o))}</div>
+                  <div className="erv2-panel-foot">
+                    <span />
+                    <span style={{ display: "flex", alignItems: "center", gap: "clamp(20px, 2.4vw, 36px)" }}>
+                      {sel[g.key].length > 0 && <button type="button" className="is-quiet" onClick={() => setSel(s => ({ ...s, [g.key]: [] }))}>Clear</button>}
+                      <button type="button" data-fclose onClick={() => setPanel(null)}>{showLabel(results.length)}</button>
+                    </span>
+                  </div>
+                </div></div></div>
+              ))}
+              <div data-fpanel="price" className={`erv2-panel${panel === "price" ? " is-open" : ""}`}><div className="erv2-panel-clip"><div className="erv2-panel-in">
+                <div style={{ maxWidth: 380 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 18, fontSize: 14, color: T.text }}>
+                    <span>Maximum price</span><span style={{ color: T.textMuted }}>{priceLabel}</span>
+                  </div>
+                  <input type="range" min={200} max={PRICE_MAX} step={100} value={maxPrice} onChange={e => setMaxPrice(+e.target.value)} className="erv2-range" aria-label="Maximum price" />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: T.textMuted, marginTop: 10 }}><span>£200</span><span>£4,400+</span></div>
+                </div>
+                <div className="erv2-panel-foot">
+                  <span />
+                  <span style={{ display: "flex", alignItems: "center", gap: "clamp(20px, 2.4vw, 36px)" }}>
+                    {maxPrice < PRICE_MAX && <button type="button" className="is-quiet" onClick={() => setMaxPrice(PRICE_MAX)}>Clear</button>}
+                    <button type="button" data-fclose onClick={() => setPanel(null)}>{showLabel(results.length)}</button>
+                  </span>
+                </div>
+              </div></div></div>
+              <div data-fpanel="sort" className={`erv2-panel${panel === "sort" ? " is-open" : ""}`}><div className="erv2-panel-clip"><div className="erv2-panel-in">
+                <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "4px clamp(22px, 2.6vw, 40px)" }}>
+                  {sortOptions.map(o => (
+                    <button key={o.value} type="button" className="erv2-sortopt" aria-pressed={sort === o.value} onClick={() => { setSort(o.value); setPanel(null); }}
+                      style={{ padding: "8px 0 5px", cursor: "pointer", background: "transparent", border: 0, borderBottom: `1px solid ${sort === o.value ? T.text : "transparent"}`, fontFamily: FONT_BODY, fontSize: 14, color: sort === o.value ? T.text : T.textMuted }}>{o.label}</button>
+                  ))}
+                </div>
+              </div></div></div>
+            </div>
+
+            <div className={`erv2-scrim${panel ? " is-on" : ""}`} data-scrim onClick={() => setPanel(null)} aria-hidden="true" />
+
+            <main ref={mainRef} style={{ padding: `0 ${PAGE_X} clamp(64px,6vw,104px)` }} className="erv2-main">
+              {/* Chosen filters */}
+              <div className="erv2-meta" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginTop: activeCount ? 24 : 0 }}>
+                {chips.map((c, i) => (
+                  <button key={i} type="button" onClick={() => toggle(c.key, c.label)} className="erv2-chip"
+                    style={{ display: "flex", alignItems: "center", gap: 9, padding: "7px 12px", cursor: "pointer", background: "transparent", border: `1px solid ${T.line}`, fontFamily: FONT_BODY, fontSize: 12, color: T.text }}>
+                    {c.label}<span aria-hidden="true" style={{ color: T.textMuted }}>×</span>
+                  </button>
+                ))}
+                {maxPrice < PRICE_MAX && (
+                  <button type="button" onClick={() => setMaxPrice(PRICE_MAX)} className="erv2-chip"
+                    style={{ display: "flex", alignItems: "center", gap: 9, padding: "7px 12px", cursor: "pointer", background: "transparent", border: `1px solid ${T.line}`, fontFamily: FONT_BODY, fontSize: 12, color: T.text }}>
+                    {priceLabel}<span aria-hidden="true" style={{ color: T.textMuted }}>×</span>
+                  </button>
+                )}
+                {activeCount > 0 && <button type="button" className="erv2-clear" onClick={clearAll} style={{ marginLeft: 8, padding: "7px 0", cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 12, color: T.textMuted, textDecoration: "underline", textUnderlineOffset: 4 }}>Clear all</button>}
               </div>
 
               {loading ? (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }}>
-                  {Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ aspectRatio: "4 / 5", background: T.tint }} />)}
+                <div style={{ display: "grid", gap: "clamp(28px,3vw,44px) clamp(16px,1.6vw,28px)", marginTop: 32 }} className="erv2-grid">
+                  {Array.from({ length: 8 }).map((_, i) => <div key={i} style={{ aspectRatio: "1 / 1.1", background: TILE }} />)}
                 </div>
               ) : results.length === 0 ? (
-                <div style={{ padding: "72px 0", textAlign: "center" }}>
-                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: 26, marginBottom: 14 }}>Nothing matches those filters</div>
-                  <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-                    <button onClick={clearAll} style={{ padding: "13px 26px", cursor: "pointer", background: T.ink, color: T.paper, border: 0, fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Clear filters</button>
-                    <Link to="/bespoke-design" style={{ padding: "13px 26px", border: `1px solid ${T.ruleStrong}`, color: T.ink, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Commission it instead</Link>
+                <div style={{ padding: "clamp(72px, 9vw, 130px) 0 40px", textAlign: "center" }}>
+                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(21px, 2vw, 27px)", color: T.text, marginBottom: 12 }}>Nothing matches those choices</div>
+                  <p style={{ margin: "0 auto 10px", maxWidth: "40ch", fontSize: 15, lineHeight: 1.7, color: T.text }}>Remove a filter to see more, or ask us to make the piece you have in mind.</p>
+                  <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "4px clamp(20px, 3vw, 40px)" }}>
+                    <button type="button" onClick={clearAll} className="erv2-textlink" style={{ cursor: "pointer", background: "transparent", borderTop: 0, borderLeft: 0, borderRight: 0, fontFamily: FONT_BODY, color: T.text }}>Clear all filters</button>
+                    <Link to="/bespoke-design" className="erv2-textlink" style={{ color: T.text }}>Start a commission</Link>
                   </div>
                 </div>
+              ) : split ? (
+                <>
+                  {ready.length > 0 && <>{groupHead("Ready to ship", "In our showroom now. Ships in 48 hours.")}{grid(ready)}</>}
+                  {bespoke.length > 0 && <div id="bespoke">{groupHead("Bespoke bracelets", "Made to order in our own workshop, in your choice of gold and stones. Please allow up to 6 weeks.")}{grid(bespoke)}</div>}
+                </>
               ) : (
-                (() => {
-                  const card = ({ p, inStock }: typeof results[number]) => {
-                    const imgs = p.images || [];
-                    const primaryObj = imgs.find(i => i.is_primary) || imgs[0];
-                    const img = p.image?.url || primaryObj?.url;
-                    const pMetal = (primaryObj as any)?.metal_id;
-                    const second = imgs.find(i => i.url && i.url !== img && (i as any).metal_id === pMetal)?.url
-                      || imgs.find(i => i.url && i.url !== img)?.url;
-                    const on = isFavorite(p.id);
-                    return (
-                      <div key={p.id} className="jl-card">
-                        <div style={{ position: "relative", aspectRatio: "4 / 5", background: "#FFFFFF", overflow: "hidden" }}>
-                          <Link to={`/${cat.slug}/${p.slug}`} style={{ position: "absolute", inset: 0, display: "block" }}>
-                            {img
-                              ? <img src={getMediaUrl(img)} alt={p.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
-                              : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_DISPLAY, color: "#8C8375", padding: 12, textAlign: "center" }}>{p.name}</div>}
-                            {second && <img src={getMediaUrl(second)} alt="" aria-hidden="true" className="jl-card-alt" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
-                          </Link>
-                          {p.is_featured && <span style={{ position: "absolute", top: 10, left: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>Most asked for</span>}
-                          {p.is_live_stock && <span style={{ position: "absolute", bottom: 10, left: 10, padding: "5px 10px", background: "rgba(248,246,240,0.94)", fontSize: 9.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.body }}>Ready to ship</span>}
-                          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(p.id, p.name, img, `/${cat.slug}/${p.slug}`); }} aria-pressed={on} aria-label={`Save ${p.name}`} style={{ position: "absolute", top: 8, right: 8, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: "rgba(248,246,240,0.92)", border: 0, fontSize: 15, lineHeight: 1, color: on ? T.gold : "#8A8377" }}>{on ? "♥" : "♡"}</button>
-                        </div>
-                        <Link to={`/${cat.slug}/${p.slug}`} style={{ display: "block" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginTop: 16, fontSize: 14.5 }}>
-                            <span>{p.name}</span><span style={{ color: "#56534D" }}>{((p as any).variants || []).filter((v: any) => Number(v.price) > 0).length > 1 ? "From " : ""}{p.price}</span>
-                          </div>
-                          <div style={{ fontSize: 11.5, color: inStock ? "#4A7A52" : T.muted, marginTop: 6 }}>{leadTime(inStock)}</div>
-                        </Link>
-                      </div>
-                    );
-                  };
-                  const grid = (list: typeof results) => (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "clamp(18px,2vw,32px)", marginTop: 32 }} className="jl-grid">
-                      {list.map(card)}
-                    </div>
-                  );
-                  // Bracelets: ready-to-ship stock and made-to-order bespoke pieces are shown apart.
-                  if (cat.slug !== "bracelets") return grid(results);
-                  const ready = results.filter(r => r.inStock), bespoke = results.filter(r => !r.inStock);
-                  const head = (title: string, note: string) => (
-                    <div style={{ marginTop: 40, paddingBottom: 14, borderBottom: `1px solid ${T.rule}` }}>
-                      <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(26px,2.6vw,38px)", lineHeight: 1.1, margin: "0 0 8px" }}>{title}</h2>
-                      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: T.muted }}>{note}</p>
-                    </div>
-                  );
-                  return (
-                    <>
-                      {ready.length > 0 && <>{head("Ready to ship", "In our showroom now. Ships in 48 hours.")}{grid(ready)}</>}
-                      {bespoke.length > 0 && <div id="bespoke">{head("Bespoke bracelets", "Made to order in our own workshop, in your choice of gold and stones. Please allow up to 6 weeks.")}{grid(bespoke)}</div>}
-                    </>
-                  );
-                })()
-              )}
-            </div>
-          </main>
-
-          {/* "Before you ask" band */}
-          <section style={{ background: T.ink, color: T.onDarkSoft, padding: "clamp(56px,6vw,96px) clamp(24px,3vw,52px)" }}>
-            <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-              <div style={{ maxWidth: "52ch", marginBottom: 44 }}>
-                <div style={{ ...eyebrow, marginBottom: 20 }}>Before you ask</div>
-                <h2 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, letterSpacing: "0.005em", fontSize: "clamp(28px,3.2vw,46px)", lineHeight: 1.1, margin: "0 0 20px", color: "#FFFFFF" }}>{cat.band.headline}</h2>
-                <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.8, color: T.onDarkBody }}>{cat.band.body}</p>
-              </div>
-              <div className="jl-guide" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderTop: `1px solid ${T.ruleDark}` }}>
-                {cat.band.guide.map((g, i) => (
-                  <div key={g.k} className="jl-guide-cell" style={{ display: "flex", flexDirection: "column", padding: "24px 22px 26px", borderLeft: i ? `1px solid ${T.ruleDark}` : undefined }}>
-                    <div style={{ fontFamily: FONT_DISPLAY, fontSize: 20, color: "#FFFFFF", marginBottom: 8 }}>{g.title}</div>
-                    <div style={{ fontSize: 13, lineHeight: 1.6, color: T.onDarkMuted, marginBottom: 16 }}>{g.note}</div>
-                    <div style={{ marginTop: "auto", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.gold }}>{g.meta}</div>
+                <>
+                  {grid(results.slice(0, shown))}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginTop: "clamp(40px, 4vw, 64px)" }}>
+                    <span style={{ fontSize: 12.5, color: T.textMuted }}>Showing {Math.min(shown, results.length)} of {results.length} pieces</span>
+                    <span aria-hidden="true" style={{ width: 160, height: 1, background: T.line, position: "relative" }}>
+                      <span style={{ position: "absolute", left: 0, top: 0, height: 1, background: T.text, width: `${Math.min(100, (shown / results.length) * 100)}%` }} />
+                    </span>
+                    {shown < results.length && (
+                      <button type="button" className="erv2-more" onClick={() => setShown(n => n + PAGE_SIZE)}
+                        style={{ marginTop: 10, padding: "15px 34px", cursor: "pointer", background: "transparent", border: `1px solid ${T.text}`, fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.text }}>Show more {cat.label.toLowerCase()}</button>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-          </section>
+                </>
+              )}
+            </main>
+          </div>
         </div>
 
-        <CategoryCopyV2 />
         <FooterV2 />
       </div>
 
-      {/* Mobile filter sheet */}
-      {sheet && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 80, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-          <div onClick={() => setSheet(false)} style={{ position: "absolute", inset: 0, background: "rgba(20,18,15,0.45)" }} />
-          <div style={{ position: "relative", background: T.paper, maxHeight: "86vh", display: "flex", flexDirection: "column", animation: "jlSheetIn 0.32s cubic-bezier(0.22,1,0.36,1)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: `1px solid ${T.rule}` }}>
-              <span style={{ fontFamily: FONT_DISPLAY, fontSize: 20 }}>Filter</span>
-              <button onClick={() => setSheet(false)} aria-label="Close" style={{ background: "none", border: 0, cursor: "pointer", fontSize: 24, lineHeight: 1, color: T.ink }}>×</button>
-            </div>
-            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 20px" }}>{filterGroupsJsx}</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 10, padding: "14px 20px calc(14px + env(safe-area-inset-bottom))", borderTop: `1px solid ${T.rule}` }}>
-              <button onClick={clearAll} style={{ padding: "15px 0", background: "transparent", border: `1px solid ${T.ruleStrong}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink }}>Clear</button>
-              <button onClick={() => setSheet(false)} style={{ padding: "15px 0", background: T.ink, color: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.1em", textTransform: "uppercase" }}>Show {results.length} {results.length === 1 ? "piece" : "pieces"}</button>
-            </div>
+      {/* Phone filter sheet */}
+      <div data-sheet="filter" style={{ position: "fixed", inset: 0, zIndex: 80, display: sheet ? "flex" : "none", flexDirection: "column", justifyContent: "flex-end" }}>
+        <div data-sheetclose onClick={() => setSheet(false)} style={{ position: "absolute", inset: 0, background: "rgba(28,26,23,0.38)" }} />
+        <div style={{ position: "relative", background: GROUND, maxHeight: "86vh", display: "flex", flexDirection: "column", animation: "erv2SheetIn 0.32s cubic-bezier(0.22,1,0.36,1)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 8px 8px 24px", borderBottom: `1px solid ${T.line}` }}>
+            <span style={{ fontFamily: FONT_DISPLAY, fontSize: 21, color: T.text }}>Filter</span>
+            <button type="button" data-sheetclose onClick={() => setSheet(false)} aria-label="Close" className="erv2-x">{XICON}</button>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 24px" }}>{filterGroupsJsx}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 10, padding: "14px 24px calc(14px + env(safe-area-inset-bottom))", borderTop: `1px solid ${T.line}` }}>
+            <button type="button" onClick={clearAll} style={{ padding: "16px 0", background: "transparent", border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.text, textDecoration: "underline", textUnderlineOffset: 5, textDecorationColor: T.ruleStrong }}>Clear all</button>
+            <button type="button" data-sheetclose onClick={() => setSheet(false)} style={{ padding: "15px 0", background: T.ink, color: T.paper, border: 0, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11.5, letterSpacing: "0.1em", textTransform: "uppercase" }}>Show {results.length} {results.length === 1 ? "piece" : "pieces"}</button>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Mobile sort sheet */}
-      {sortSheet && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 80, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-          <div onClick={() => setSortSheet(false)} style={{ position: "absolute", inset: 0, background: "rgba(20,18,15,0.45)" }} />
-          <div style={{ position: "relative", background: T.paper, animation: "jlSheetIn 0.32s cubic-bezier(0.22,1,0.36,1)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: `1px solid ${T.rule}` }}>
-              <span style={{ fontFamily: FONT_DISPLAY, fontSize: 20 }}>Sort</span>
-              <button onClick={() => setSortSheet(false)} aria-label="Close" style={{ background: "none", border: 0, cursor: "pointer", fontSize: 24, lineHeight: 1, color: T.ink }}>×</button>
-            </div>
-            <div style={{ padding: "4px 20px calc(14px + env(safe-area-inset-bottom))" }}>
-              {sortOptions.map(o => (
-                <button key={o.value} onClick={() => { setSort(o.value); setSortSheet(false); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "16px 0", background: "none", border: 0, borderBottom: `1px solid ${T.rule}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 15, color: sort === o.value ? T.ink : T.body }}>
-                  {o.label}{sort === o.value && <span style={{ color: T.gold }}>✓</span>}
-                </button>
-              ))}
-            </div>
+      {/* Phone sort sheet */}
+      <div data-sheet="sort" style={{ position: "fixed", inset: 0, zIndex: 80, display: sortSheet ? "flex" : "none", flexDirection: "column", justifyContent: "flex-end" }}>
+        <div data-sheetclose onClick={() => setSortSheet(false)} style={{ position: "absolute", inset: 0, background: "rgba(28,26,23,0.38)" }} />
+        <div style={{ position: "relative", background: GROUND, animation: "erv2SheetIn 0.32s cubic-bezier(0.22,1,0.36,1)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 8px 8px 24px", borderBottom: `1px solid ${T.line}` }}>
+            <span style={{ fontFamily: FONT_DISPLAY, fontSize: 21, color: T.text }}>Sort</span>
+            <button type="button" data-sheetclose onClick={() => setSortSheet(false)} aria-label="Close" className="erv2-x">{XICON}</button>
+          </div>
+          <div style={{ padding: "4px 24px calc(18px + env(safe-area-inset-bottom))" }}>
+            {sortOptions.map(o => (
+              <button key={o.value} type="button" data-sheetclose onClick={() => { setSort(o.value); setSortSheet(false); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "17px 0", background: "none", border: 0, borderBottom: `1px solid ${T.line}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 15, color: sort === o.value ? T.text : T.textMuted }}>
+                {o.label}{sort === o.value && <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true"><path d="M1 5l4 4 8-8" stroke={T.gold} strokeWidth="1.25" /></svg>}
+              </button>
+            ))}
           </div>
         </div>
-      )}
-
-      <style>{`
-        .jl-triggerbar { display: none; }
-        @keyframes jlSheetIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @media (max-width: 900px){
-          .jl-main{ grid-template-columns: 1fr !important; }
-          .jl-aside{ display: none !important; }
-          .jl-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
-          .jl-triggerbar{ display: grid !important; }
-          .jl-sortdesktop{ display: none !important; }
-          .jl-guide{ grid-template-columns: 1fr !important; }
-          .jl-guide-cell{ border-left: 0 !important; border-bottom: 1px solid ${T.ruleDark}; }
-          .jl-range::-webkit-slider-thumb{ width:22px !important; height:22px !important; }
-          .jl-range::-moz-range-thumb{ width:22px !important; height:22px !important; }
-        }
-      `}</style>
+      </div>
     </div>
   );
 };

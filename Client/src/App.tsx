@@ -53,6 +53,7 @@ const WeddingRingDetail = lazy(() => import("./pages/WeddingRingDetail"));
 
 // Info / account pages
 const Contact           = lazy(() => import("./pages/ContactV2"));
+const ShareExperience   = lazy(() => import("./pages/ShareExperienceV2"));
 const OurStory          = lazy(() => import("./pages/OurStoryV2"));
 const BespokeDesign     = lazy(() => import("./pages/BespokeDesignV2"));
 const CustomerService   = lazy(() => import("./pages/CustomerService"));
@@ -167,6 +168,7 @@ const AppRoutes = () => {
 
       {/* Info */}
       <Route path="/contact" element={<Contact />} />
+      <Route path="/share-your-experience" element={<ShareExperience />} />
       {/* In-shop ID check before a piece leaves the cabinet (QR at the counter) + PIN owner panel */}
       <Route path="/secure-viewing" element={<SecureViewing />} />
       <Route path="/secure-viewing/admin" element={<SecureViewingAdmin />} />
