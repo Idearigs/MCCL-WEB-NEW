@@ -147,9 +147,41 @@ const metalIcon = (name: string): JSX.Element => {
     </svg>
   );
 };
+// A wedding band seen from above, drawn in the same line as the engagement ring icons.
+const bandIcon = (kind: string): JSX.Element => {
+  const k = kind.toLowerCase();
+  const strip = <rect x="1" y="4.5" width="30" height="7" rx="1.2" fill={PAGE} stroke={INK} strokeWidth="0.9" />;
+  let body: JSX.Element;
+  if (k.includes("diamond cut")) body = <>{strip}{[7, 10, 13, 16, 19, 22].map(x => <path key={x} d={`M${x} 11.5L${x + 3} 4.5`} stroke={INK} strokeWidth="0.55" opacity="0.75" />)}</>;
+  else if (k.includes("diamond set")) body = <>{strip}{[8, 12, 16, 20, 24].map(x => <g key={x}><circle cx={x} cy="8" r="1.75" fill={PAGE} stroke={INK} strokeWidth="0.7" /><circle cx={x} cy="8" r="0.7" fill="none" stroke={INK} strokeWidth="0.4" opacity="0.7" /></g>)}</>;
+  else if (k.includes("two")) body = <>{strip}<rect x="1.5" y="6.7" width="29" height="2.6" fill="#DDB552" opacity="0.6" /><path d="M1.5 6.7H30.5M1.5 9.3H30.5" stroke={INK} strokeWidth="0.5" opacity="0.7" /></>;
+  else if (k.includes("shaped")) body = <path d="M1 3.2Q9 3.2 16 8Q23 3.2 31 3.2V8.4Q23 8.4 16 13.2Q9 8.4 1 8.4Z" fill={PAGE} stroke={INK} strokeWidth="0.9" strokeLinejoin="round" />;
+  else body = <>{strip}<path d="M3.5 6.4H28.5" stroke={INK} strokeWidth="0.5" opacity="0.4" /></>;
+  return <svg viewBox="0 0 32 16" width="42" height="21" aria-hidden="true" style={{ flex: "none", display: "block" }}>{body}</svg>;
+};
+// The band cut through: the outside of the ring is the top edge, the finger side is the bottom edge.
+const PROFILE_PATH: [string, string][] = [
+  ["traditional", "M7 8.6Q16 0.4 25 8.6Q16 12.6 7 8.6Z"],
+  ["soft", "M7 8Q7 5.2 10 4.9Q16 3.9 22 4.9Q25 5.2 25 8Q25 10.5 22 10.8Q16 11.7 10 10.8Q7 10.5 7 8Z"],
+  ["flat court", "M7.6 4.6H24.4Q25 4.6 25 5.2V8.6Q16 12.6 7 8.6V5.2Q7 4.6 7.6 4.6Z"],
+  ["flat", "M7.6 4.8H24.4Q25 4.8 25 5.4V10.6Q25 11.2 24.4 11.2H7.6Q7 11.2 7 10.6V5.4Q7 4.8 7.6 4.8Z"],
+  ["d-shape", "M7 11.2Q7 3.4 16 3.4Q25 3.4 25 11.2Z"],
+  ["concave", "M7 4.4Q16 8.2 25 4.4V10.6Q25 11.2 24.4 11.2H7.6Q7 11.2 7 10.6Z"],
+];
+const profileIcon = (name: string): JSX.Element => {
+  const d = (PROFILE_PATH.find(([key]) => name.toLowerCase().includes(key)) || PROFILE_PATH[0])[1];
+  return (
+    <svg viewBox="0 0 32 16" width="42" height="21" aria-hidden="true" style={{ flex: "none", display: "block" }}>
+      <path d="M2 13.6H30" stroke={INK} strokeWidth="0.5" strokeDasharray="1 1.4" opacity="0.45" />
+      <path d={d} fill={PAGE} stroke={INK} strokeWidth="0.9" strokeLinejoin="round" />
+    </svg>
+  );
+};
 const menuIcon = (colTitle: string, label: string): JSX.Element | null => {
   const t = colTitle.toLowerCase();
   if (t.includes("ring type")) return ringIcon(label);
+  if (t.includes("ring style")) return bandIcon(label);
+  if (t === "profile") return profileIcon(label);
   if (t.includes("gemstone")) return gemIcon(label);
   if (t.includes("metal")) return metalIcon(label);
   return null;
