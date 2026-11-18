@@ -208,6 +208,8 @@ export default function ChatList({ admin, onOpenChat, onLogout, onSwitchToOrders
   // Socket.IO for instant updates
   useEffect(() => {
     const socket = io(SOCKET_URL, {
+      // Staff sockets identify themselves (re-read on every reconnect, so a refreshed token is used)
+      auth: (cb: (d: object) => void) => cb({ token: localStorage.getItem('admin_token') || '' }),
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
@@ -289,7 +291,7 @@ export default function ChatList({ admin, onOpenChat, onLogout, onSwitchToOrders
 
         await fetch(`${API_BASE_URL}/chats/push/subscribe`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
           body: JSON.stringify(subscription.toJSON()),
         });
       } catch (err) {

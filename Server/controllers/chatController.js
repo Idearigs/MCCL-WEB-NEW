@@ -1,6 +1,22 @@
 const { getModels } = require('../models');
 const { sendPushToAllAdmins, saveSubscription, removeSubscription, VAPID_PUBLIC_KEY } = require('../utils/pushNotifications');
 
+const jwt = require('jsonwebtoken');
+const config = require('../config');
+
+// The signed-in customer's id from an optional user bearer token, or null.
+const optionalUserId = (req) => {
+  try {
+    const h = req.headers.authorization || '';
+    if (!h.startsWith('Bearer ')) return null;
+    const d = jwt.verify(h.substring(7), config.jwt.secret);
+    return d && d.type !== 'admin' && d.userId ? String(d.userId) : null;
+  } catch { return null; }
+};
+
+// Staff-only Socket.io room (sockets authenticated with an admin token join it in index.js).
+const STAFF_ROOM = 'staff';
+
 const getModelInstance = () => {
   try {
     return getModels();
@@ -23,18 +39,20 @@ exports.createChat = async (req, res) => {
       });
     }
 
+    // Only link the chat to an account when the caller proves it is that account.
+    const signedIn = optionalUserId(req);
     const chat = await Chat.create({
       customer_name,
       customer_email,
-      customer_user_id: customer_user_id || null,
+      customer_user_id: signedIn && customer_user_id && String(customer_user_id) === signedIn ? signedIn : null,
       subject: subject || null,
       status: 'waiting',
       last_message_at: new Date()
     });
 
-    // Emit new chat event via WebSocket to admin panel
+    // Tell staff dashboards only (not every connected visitor) about the new chat
     if (req.io) {
-      req.io.emit('new_chat', {
+      req.io.to(STAFF_ROOM).emit('new_chat', {
         id: chat.id,
         customer_name: chat.customer_name,
         customer_email: chat.customer_email,
@@ -235,12 +253,15 @@ exports.getChatById = async (req, res) => {
 exports.sendMessage = async (req, res) => {
   try {
     const { ChatMessage, Chat } = getModelInstance();
-    const { chat_id, sender_type, sender_id, message } = req.body;
+    const { chat_id, sender_id, message } = req.body;
+    // The author's role comes from authentication, never from the request body:
+    // a valid admin token (optionalAdminAuth) means staff, anything else is the customer.
+    const sender_type = req.admin ? 'admin' : 'customer';
 
-    if (!chat_id || !sender_type) {
+    if (!chat_id) {
       return res.status(400).json({
         success: false,
-        message: 'chat_id and sender_type are required'
+        message: 'chat_id is required'
       });
     }
 
@@ -270,7 +291,7 @@ exports.sendMessage = async (req, res) => {
     const chatMessage = await ChatMessage.create({
       chat_id,
       sender_type,
-      sender_id: sender_id || null,
+      sender_id: req.admin ? req.admin.id : (sender_id || null),
       message: message || '',
       attachment_url: attachment_url,
       is_read: false
@@ -289,6 +310,14 @@ exports.sendMessage = async (req, res) => {
         body: message || 'Sent an image',
         chatId: chat_id,
       }).catch(err => console.error('Push notification error:', err));
+    }
+
+    // Real-time delivery from the server, using the stored record: the chat room gets the
+    // message, and only authenticated staff sockets get the dashboard update.
+    if (req.io) {
+      const payload = chatMessage.toJSON();
+      req.io.to(`chat_${chat_id}`).emit('receive_message', payload);
+      req.io.to(STAFF_ROOM).emit('admin_chat_update', { ...payload, chat_id });
     }
 
     return res.status(201).json({
@@ -456,6 +485,11 @@ exports.getCustomerChats = async (req, res) => {
         success: false,
         message: 'customer_user_id is required'
       });
+    }
+
+    // A customer may list only their own chats (authMiddleware sets req.user).
+    if (!req.user || !req.user.userId || String(req.user.userId) !== String(customer_user_id)) {
+      return res.status(403).json({ success: false, message: 'Not allowed' });
     }
 
     const chats = await Chat.findAll({

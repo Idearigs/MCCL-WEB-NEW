@@ -25,7 +25,8 @@ const {
   deleteMessage,
   deleteChat
 } = require('../controllers/chatController');
-const { adminAuth } = require('../middleware/adminAuth');
+const { adminAuth, optionalAdminAuth } = require('../middleware/adminAuth');
+const { authMiddleware } = require('../middleware/auth');
 
 // Configure multer for image uploads only
 const storage = multer.diskStorage({
@@ -59,8 +60,9 @@ const upload = multer({
 
 // Push notification routes
 router.get('/push/vapid-key', getVapidPublicKey);
-router.post('/push/subscribe', subscribePush);
-router.post('/push/unsubscribe', unsubscribePush);
+// Staff devices only: subscriptions receive every customer's name and message text.
+router.post('/push/subscribe', adminAuth, subscribePush);
+router.post('/push/unsubscribe', adminAuth, unsubscribePush);
 
 // Label CRUD routes (admin auth) - must come before parameterized routes
 router.get('/labels', adminAuth, getAllLabels);
@@ -73,13 +75,15 @@ router.delete('/messages/:messageId', adminAuth, deleteMessage);
 
 // Public POST routes
 router.post('/', createChat);
-router.post('/message/send', upload.single('attachment'), sendMessage);
+// Staff identify themselves with their admin token (checked before the upload is stored);
+// anonymous senders are always recorded as the customer.
+router.post('/message/send', optionalAdminAuth, upload.single('attachment'), sendMessage);
 
 // PUBLIC GET routes (before admin routes)
 router.get('/view/:id', getChatByIdPublic);
 
 // Specific GET routes (must come before parameterized routes)
-router.get('/customer/:customer_user_id', getCustomerChats);
+router.get('/customer/:customer_user_id', authMiddleware, getCustomerChats);
 router.get('/unread/count', adminAuth, getUnreadCount);
 
 // Parameterized routes (auth required)

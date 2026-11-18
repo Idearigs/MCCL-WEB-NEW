@@ -49,6 +49,8 @@ export default function AdminChats(): JSX.Element {
   // Global WebSocket for chat list updates
   useEffect(() => {
     const socket = io(API_BASE_URL.replace('/api/v1', ''), {
+      // Staff sockets identify themselves (re-read on every reconnect, so a refreshed token is used)
+      auth: (cb: (d: object) => void) => cb({ token: localStorage.getItem('admin_token') || '' }),
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
@@ -92,6 +94,8 @@ export default function AdminChats(): JSX.Element {
     if (!selectedChat) return;
 
     const socket = io(API_BASE_URL.replace('/api/v1', ''), {
+      // Staff sockets identify themselves (re-read on every reconnect, so a refreshed token is used)
+      auth: (cb: (d: object) => void) => cb({ token: localStorage.getItem('admin_token') || '' }),
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

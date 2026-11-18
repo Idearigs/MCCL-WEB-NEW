@@ -265,6 +265,8 @@ export default function ChatConversation({
 
   useEffect(() => {
     const socket = io(mediaBase, {
+      // Staff sockets identify themselves (re-read on every reconnect, so a refreshed token is used)
+      auth: (cb: (d: object) => void) => cb({ token: localStorage.getItem('admin_token') || '' }),
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

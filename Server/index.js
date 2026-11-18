@@ -231,94 +231,69 @@ app.get('/health', async (req, res) => {
 });
 
 // Socket.io Chat Events
-const typingUsers = new Map(); // Track typing users by chat_id
+//
+// Visitors connect anonymously and may join only the room of a chat whose id they hold.
+// Staff sockets authenticate with their admin access token (handshake auth.token) and
+// join the 'staff' room, which alone receives dashboard events (new_chat,
+// admin_chat_update). Messages are broadcast by the HTTP send route from the stored
+// record, so the socket 'send_message' relay is ignored. Every handler validates its
+// payload: a thrown error here would reach process.on('uncaughtException').
+const { verifyAdminToken } = require('./middleware/adminAuth');
+const CHAT_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const chatRoom = (data) => {
+  const id = data && typeof data === 'object' ? data.chat_id : null;
+  return typeof id === 'string' && CHAT_ID_RE.test(id) ? `chat_${id}` : null;
+};
+const safe = (fn) => (...args) => {
+  try { return fn(...args); } catch (err) { logger.warn(`Socket handler error: ${err.message}`); }
+};
+
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake && socket.handshake.auth && socket.handshake.auth.token;
+    if (token) socket.data.staff = await verifyAdminToken(token);
+  } catch { /* anonymous */ }
+  next();
+});
 
 io.on('connection', (socket) => {
-  logger.info(`Chat connection established: ${socket.id}`);
+  const isStaff = !!socket.data.staff;
+  if (isStaff) socket.join('staff');
+  logger.info(`Chat connection established: ${socket.id}${isStaff ? ' (staff)' : ''}`);
 
-  // Join a chat room
-  socket.on('join_chat', (data) => {
-    const { chat_id, user_type, user_id } = data;
-    const roomName = `chat_${chat_id}`;
-    socket.join(roomName);
-
-    if (!typingUsers.has(chat_id)) {
-      typingUsers.set(chat_id, []);
-    }
-
-    // Notify others that someone joined
-    socket.to(roomName).emit('user_joined', {
-      user_type,
-      user_id,
+  // Join a chat room (the chat id is the visitor's capability for their own chat)
+  socket.on('join_chat', safe((data) => {
+    const room = chatRoom(data);
+    if (!room) return;
+    socket.join(room);
+    socket.to(room).emit('user_joined', {
+      user_type: isStaff ? 'admin' : 'customer',
+      user_id: isStaff ? socket.data.staff.id : null,
       timestamp: new Date()
     });
+  }));
 
-    logger.info(`User joined chat ${chat_id}: ${user_type}`);
-  });
+  // Kept for older clients that still relay after sending; delivery now happens in
+  // POST /chats/message/send, so relayed (unverified) content is not re-broadcast.
+  socket.on('send_message', () => {});
 
-  // Send message in real-time
-  socket.on('send_message', (data) => {
-    const { chat_id, message } = data;
-    const roomName = `chat_${chat_id}`;
-
-    // Broadcast message to all users in this chat room
-    io.to(roomName).emit('receive_message', {
-      ...message,
-      id: message.id,
-      created_at: message.created_at
+  // Typing indicator, only within a room this socket has joined
+  socket.on('user_typing', safe((data) => {
+    const room = chatRoom(data);
+    if (!room || !socket.rooms.has(room)) return;
+    socket.to(room).emit('typing_status', {
+      chat_id: data.chat_id,
+      user_type: isStaff ? 'admin' : 'customer',
+      user_id: isStaff ? socket.data.staff.id : null,
+      is_typing: !!data.is_typing,
+      typing_users: []
     });
+  }));
 
-    // Broadcast to admin panel for chat list updates (admin_chat_list room)
-    // This is a separate broadcast to avoid duplication on client side
-    io.emit('admin_chat_update', {
-      ...message,
-      chat_id: chat_id,
-      id: message.id,
-      created_at: message.created_at
-    });
-
-    logger.info(`Message in chat ${chat_id}`);
-  });
-
-  // Typing indicator
-  socket.on('user_typing', (data) => {
-    const { chat_id, user_type, user_id, is_typing } = data;
-    const roomName = `chat_${chat_id}`;
-
-    if (is_typing) {
-      const typingKey = `${user_type}_${user_id}`;
-      if (!typingUsers.get(chat_id).includes(typingKey)) {
-        typingUsers.get(chat_id).push(typingKey);
-      }
-    } else {
-      const typingKey = `${user_type}_${user_id}`;
-      const users = typingUsers.get(chat_id) || [];
-      typingUsers.set(chat_id, users.filter(u => u !== typingKey));
-    }
-
-    // Broadcast typing status
-    socket.to(roomName).emit('typing_status', {
-      chat_id,
-      user_type,
-      user_id,
-      is_typing,
-      typing_users: typingUsers.get(chat_id) || []
-    });
-  });
-
-  // Leave chat
-  socket.on('leave_chat', (data) => {
-    const { chat_id } = data;
-    const roomName = `chat_${chat_id}`;
-    socket.leave(roomName);
-
-    // Clean up typing users
-    if (typingUsers.has(chat_id)) {
-      typingUsers.delete(chat_id);
-    }
-
-    logger.info(`User left chat ${chat_id}`);
-  });
+  socket.on('leave_chat', safe((data) => {
+    const room = chatRoom(data);
+    if (room) socket.leave(room);
+  }));
 
   socket.on('disconnect', () => {
     logger.info(`Chat disconnected: ${socket.id}`);

@@ -135,8 +135,39 @@ const requireAdmin = requireRole(['admin', 'super_admin']);
 // Any admin role
 const requireAnyAdmin = requireRole(['editor', 'admin', 'super_admin']);
 
+// Resolve an admin access token to the active staff member, or null. Never throws.
+// Used where staff and anonymous callers share an entry point (chat send, Socket.io).
+const verifyAdminToken = async (token) => {
+  try {
+    if (!token || typeof token !== 'string') return null;
+    const decoded = jwt.verify(token, config.jwt.secret);
+    if (decoded.type !== 'admin') return null;
+    const { AdminUser, AdminSession } = getAdminModelInstance();
+    const session = await AdminSession.findOne({
+      where: {
+        token_hash: crypto.createHash('sha256').update(token).digest('hex'),
+        is_active: true,
+        expires_at: { [require('sequelize').Op.gt]: new Date() }
+      },
+      include: [{ model: AdminUser, as: 'admin_user', where: { is_active: true } }]
+    });
+    if (!session) return null;
+    const u = session.admin_user;
+    return { id: u.id, email: u.email, role: u.role, first_name: u.first_name, last_name: u.last_name };
+  } catch {
+    return null;
+  }
+};
+
+// Runs adminAuth only when a bearer token is sent; anonymous requests pass through
+// without req.admin. A token that is sent but invalid is still rejected (401).
+const optionalAdminAuth = (req, res, next) =>
+  req.headers.authorization ? adminAuth(req, res, next) : next();
+
 module.exports = {
   adminAuth,
+  optionalAdminAuth,
+  verifyAdminToken,
   requireRole,
   requireSuperAdmin,
   requireAdmin,
