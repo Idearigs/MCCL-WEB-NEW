@@ -307,7 +307,7 @@ const AdminWatches: React.FC = () => {
   const saveWatchStraps = async (watchId: string) => {
     try {
       const token = localStorage.getItem('admin_token');
-      await fetch(`${API_BASE_URL}/watches/${watchId}/straps`, {
+      await fetch(`${API_BASE_URL}/admin/watches/${watchId}/straps`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ strap_ids: selectedStrapIds })

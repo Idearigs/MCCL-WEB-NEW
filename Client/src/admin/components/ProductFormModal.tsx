@@ -559,7 +559,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   useEffect(() => {
     const productId = (initialData as any)?.id;
     if (!productId || mode !== 'edit') return;
-    fetch(`${API_BASE_URL}/ring-pricing/${productId}/specs`)
+    fetch(`${API_BASE_URL}/ring-pricing/${productId}/specs`, { headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` } })
       .then(r => r.json())
       .then(res => {
         if (res.success && res.data) {
@@ -663,7 +663,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       try {
         const res = await fetch(`${API_BASE_URL}/ring-pricing/${productId}/calculate`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
           body: JSON.stringify({ nivodaDiamondPriceGBP: 0 }),
         });
         const data = await res.json();
@@ -733,7 +733,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       });
       const res = await fetch(`${API_BASE_URL}/ring-pricing/${productId}/specs`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
         body: JSON.stringify({
           specs: {
             silver_wt:    computedWeights.silver_wt,
@@ -797,7 +797,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         await saveRingSpecs();
         const res = await fetch(`${API_BASE_URL}/ring-pricing/${productId}/calculate`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
           body: JSON.stringify({ nivodaDiamondPriceGBP: 0 }),
         });
         const data = await res.json();
@@ -816,7 +816,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         });
         const res = await fetch(`${API_BASE_URL}/ring-pricing/preview`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` },
           body: JSON.stringify({
             specs: {
               ...computedWeights,

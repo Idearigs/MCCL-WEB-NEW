@@ -1,17 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/ringPricingController');
+const { adminAuth } = require('../middleware/adminAuth');
 
-// Metal price endpoints (no auth needed for now — data is public)
+// Public: current metal prices (read-only market data).
 router.get('/metal-prices',              ctrl.getMetalPrices);
-router.post('/metal-prices/refresh',     ctrl.refreshMetalPrices);
-router.post('/refresh-all-prices',       ctrl.refreshAllProductPrices);
-router.post('/recalculate-all',          ctrl.recalculateAll);
-router.post('/preview',                  ctrl.previewPrice);
 
-// Per-product ring spec endpoints
-router.get('/:productId/specs',     ctrl.getRingSpecs);
-router.put('/:productId/specs',     ctrl.saveRingSpecs);
-router.post('/:productId/calculate', ctrl.calculatePrice);
+// Staff only. These write the price overrides that the storefront shows and that
+// checkout uses as its price floor, or start catalogue-wide recalculation jobs.
+router.post('/metal-prices/refresh',     adminAuth, ctrl.refreshMetalPrices);
+router.post('/refresh-all-prices',       adminAuth, ctrl.refreshAllProductPrices);
+router.post('/recalculate-all',          adminAuth, ctrl.recalculateAll);
+router.post('/preview',                  adminAuth, ctrl.previewPrice);
+
+// Per-product ring spec endpoints (staff only)
+router.get('/:productId/specs',      adminAuth, ctrl.getRingSpecs);
+router.put('/:productId/specs',      adminAuth, ctrl.saveRingSpecs);
+router.post('/:productId/calculate', adminAuth, ctrl.calculatePrice);
 
 module.exports = router;

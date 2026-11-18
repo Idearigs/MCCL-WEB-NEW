@@ -454,7 +454,7 @@ const AdminProducts: React.FC = () => {
     setRecalcRunning(true);
     setRecalcReport(null);
     try {
-      const res  = await fetch(`${API_BASE_URL}/ring-pricing/recalculate-all`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      const res  = await fetch(`${API_BASE_URL}/ring-pricing/recalculate-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` } });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Recalculation failed');
       setRecalcReport(data.data);

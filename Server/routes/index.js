@@ -42,7 +42,13 @@ router.use('/products', productRoutes);
 router.use('/admin', adminRoutes);
 router.use('/admin/products', adminProductRoutes);
 router.use('/filters', filtersRoutes);
-router.use('/watches', watchRoutes);
+// Public storefront mount is read-only. The same router is mounted behind adminAuth at
+// /admin/watches (routes/admin.js) for every create/update/delete/upload.
+const readOnly = (req, res, next) =>
+  (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS')
+    ? next()
+    : res.status(405).json({ success: false, message: 'Method not allowed' });
+router.use('/watches', readOnly, watchRoutes);
 router.use('/users/addresses', addressRoutes); // before '/users' so it isn't shadowed
 router.use('/users', userRoutes);
 router.use('/favorites', favoritesRoutes);
