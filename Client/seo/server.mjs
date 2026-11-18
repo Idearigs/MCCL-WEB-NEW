@@ -163,6 +163,14 @@ const INFO_ROUTES = {
   '/ring-size-guide': 'ring-size-guide', '/diamond-guide': 'diamond-guide', '/gemstone-guide': 'gemstone-guide',
   '/birthstone-guide': 'birthstone-guide', '/hallmark-guide': 'hallmark-guide', '/jewellery-care': 'jewellery-care',
 };
+// Retired pages → their replacement (permanent). Mirrors the <Navigate> routes in App.tsx.
+const MOVED_PAGES = {
+  '/products': '/jewellery',
+  '/festina-watches': '/festina', '/briston-watches': '/briston', '/roamer-watches': '/roamer',
+  '/collections/festina-classic-collection': '/festina',
+  '/collections/briston-heritage-collection': '/briston',
+  '/collections/roamer-swiss-tradition': '/roamer',
+};
 // Real pages that shouldn't appear in search (account, basket, legacy duplicates).
 const NOINDEX = /^\/(cart|checkout|thank-you|account|orders|favorites|verify-email|auth|admin|secure-viewing|products|product|diamonds)(\/|$)/;
 // Collections that have their own hand-built page rather than /collections/:slug.
@@ -805,6 +813,9 @@ const server = http.createServer(async (req, res) => {
     if (/\.[a-z0-9]{1,5}$/i.test(url.pathname)) {
       return LEGACY_JUNK.test(url.pathname.toLowerCase()) ? send(410, 'text/plain', 'Gone') : send(404, 'text/plain', 'Not found');
     }
+    // Old hand-built pages replaced by the redesigned brand and listing pages.
+    const moved = MOVED_PAGES[url.pathname.replace(/\/+$/, '').toLowerCase()];
+    if (moved) return redirect(moved);
     const alias = await productAlias(url.pathname);
     if (alias) return redirect(alias);
     // Couldn't check (API busy): send people to the right category, temporarily, so Google retries later.

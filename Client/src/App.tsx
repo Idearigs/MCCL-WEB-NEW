@@ -20,7 +20,6 @@ import MaintenancePage from "./pages/MaintenancePage";
 // ── Lazily loaded pages (split into separate chunks) ──────────────────────
 const Jewellery         = lazy(() => import("./pages/JewelleryAllV2"));
 const Watches           = lazy(() => import("./pages/WatchesV2"));
-const Products          = lazy(() => import("./pages/Products"));
 const Cart              = lazy(() => import("./pages/CartV2"));
 const Checkout          = lazy(() => import("./pages/CheckoutV2"));
 const ThankYou          = lazy(() => import("./pages/ThankYouV2"));
@@ -29,12 +28,6 @@ const ThankYou          = lazy(() => import("./pages/ThankYouV2"));
 const Roamer            = lazy(() => import("./pages/WatchBrandV2"));
 const Briston           = lazy(() => import("./pages/WatchBrandV2"));
 const Festina           = lazy(() => import("./pages/WatchBrandV2"));
-const FestinaWatches    = lazy(() => import("./pages/FestinaWatches"));
-const BristonWatches    = lazy(() => import("./pages/BristonWatches"));
-const RoamerWatches     = lazy(() => import("./pages/RoamerWatches"));
-const FestinaClassicCollection  = lazy(() => import("./pages/FestinaClassicCollection"));
-const BristonHeritageCollection = lazy(() => import("./pages/BristonHeritageCollection"));
-const RoamerSwissTradition      = lazy(() => import("./pages/RoamerSwissTradition"));
 const WatchCollection   = lazy(() => import("./pages/CollectionV2"));
 
 // Jewellery categories
@@ -124,7 +117,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
 
       {/* Shop */}
-      <Route path="/products" element={<Products />} />
+      <Route path="/products" element={<Navigate to="/jewellery" replace />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/thank-you" element={<ThankYou />} />
@@ -145,12 +138,12 @@ const AppRoutes = () => {
       <Route path="/roamer" element={<Roamer />} />
       <Route path="/briston" element={<Briston />} />
       <Route path="/festina" element={<Festina />} />
-      <Route path="/festina-watches" element={<FestinaWatches />} />
-      <Route path="/briston-watches" element={<BristonWatches />} />
-      <Route path="/roamer-watches" element={<RoamerWatches />} />
-      <Route path="/collections/festina-classic-collection" element={<FestinaClassicCollection />} />
-      <Route path="/collections/briston-heritage-collection" element={<BristonHeritageCollection />} />
-      <Route path="/collections/roamer-swiss-tradition" element={<RoamerSwissTradition />} />
+      <Route path="/festina-watches" element={<Navigate to="/festina" replace />} />
+      <Route path="/briston-watches" element={<Navigate to="/briston" replace />} />
+      <Route path="/roamer-watches" element={<Navigate to="/roamer" replace />} />
+      <Route path="/collections/festina-classic-collection" element={<Navigate to="/festina" replace />} />
+      <Route path="/collections/briston-heritage-collection" element={<Navigate to="/briston" replace />} />
+      <Route path="/collections/roamer-swiss-tradition" element={<Navigate to="/roamer" replace />} />
       <Route path="/collections/:collectionSlug" element={<WatchCollection />} />
 
       {/* Product detail pages */}
@@ -164,7 +157,7 @@ const AppRoutes = () => {
       <Route path="/jewellery/:productId" element={<ProductDetailV2 />} />
       <Route path="/watches/:productId" element={<WatchDetail />} />
       <Route path="/diamonds/:productId" element={<ProductDetail />} />
-      <Route path="/product/:productId" element={<ProductDetail />} />
+      <Route path="/product/:productId" element={<ProductDetailV2 />} />
 
       {/* Info */}
       <Route path="/contact" element={<Contact />} />
