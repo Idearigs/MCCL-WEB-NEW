@@ -70,3 +70,6 @@ Server/scripts/briston-scraper/output/
 
 # Source images — large PNGs, stored on VPS only
 Client/images/
+
+# Local agent settings (may contain credentials) — never commit
+.claude/settings.local.json

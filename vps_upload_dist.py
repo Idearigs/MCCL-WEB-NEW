@@ -3,7 +3,7 @@ import os
 
 host = "31.97.116.89"
 user = "root"
-password = "31102010Ashana@"
+password = os.environ["VPS_SSH_PASSWORD"]  # never commit credentials
 
 LOCAL_DIST = r"C:\xampp\htdocs\TESTMCCL\McCulloch Website\McCulloch Website\Client\dist"
 REMOTE_TMP = "/tmp/mccl_dist"

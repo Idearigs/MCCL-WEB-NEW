@@ -513,6 +513,7 @@ exports.getCustomerChats = async (req, res) => {
 
 // Get VAPID public key for push subscription
 exports.getVapidPublicKey = (req, res) => {
+  if (!VAPID_PUBLIC_KEY) return res.json({ success: false, message: 'Push notifications are not configured' });
   res.json({ success: true, data: { publicKey: VAPID_PUBLIC_KEY } });
 };
 

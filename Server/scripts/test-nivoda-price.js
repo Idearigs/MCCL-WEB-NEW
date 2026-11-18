@@ -19,8 +19,8 @@
 const axios = require('axios');
 
 const NIVODA_API_URL = 'https://integrations.nivoda.net/api/diamonds';
-const EMAIL    = 'has@mccullochjewellers.co.uk';
-const PASSWORD = '31Ashana';
+const EMAIL    = process.env.NIVODA_EMAIL || '';
+const PASSWORD = process.env.NIVODA_PASSWORD || '';
 
 function arg(key, fallback) {
   const idx = process.argv.indexOf(`--${key}`);

@@ -8,7 +8,7 @@ import paramiko
 HOST = '31.97.116.89'
 PORT = 22
 USER = 'root'
-PASSWORD = '31102010Ashana@'
+PASSWORD = os.environ["VPS_SSH_PASSWORD"]  # never commit credentials
 VOLUME_PRODUCTS = '/var/lib/docker/volumes/xsgkgg808g0g4oso8cwgkkkk-mcculloch-media/_data/products'
 
 BASE = 'C:/xampp/htdocs/TESTMCCL/McCulloch Website/McCulloch Website'

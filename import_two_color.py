@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 import_two_color.py
@@ -39,7 +40,7 @@ DB = dict(
     port     = 5433,
     dbname   = "mcculloch_db",
     user     = "mcculloch_admin",
-    password = "#mcculloch_admin#20026",
+    password = os.environ["PG_PASSWORD"],
 )
 
 RINGS_JEWELRY_TYPE_ID = "dd88e9fd-10dc-4a30-b060-3e4fbf69c915"

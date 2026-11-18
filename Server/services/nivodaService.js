@@ -5,8 +5,12 @@ const NIVODA_STAGING_URL = 'https://intg-customer-staging.nivodaapi.net/api/diam
 const NIVODA_PROD_URL    = 'https://integrations.nivoda.net/api/diamonds';
 
 const NIVODA_API_URL   = NIVODA_PROD_URL;
-const STAGING_EMAIL    = 'has@mccullochjewellers.co.uk';
-const STAGING_PASSWORD = '31Ashana';
+// Nivoda trade-account login comes from the environment (Coolify), never from source.
+const STAGING_EMAIL    = process.env.NIVODA_EMAIL || '';
+const STAGING_PASSWORD = process.env.NIVODA_PASSWORD || '';
+if (!STAGING_EMAIL || !STAGING_PASSWORD) {
+  console.warn('[nivoda] NIVODA_EMAIL / NIVODA_PASSWORD are not set: live diamond search and pricing will fail until they are.');
+}
 
 class NivodaService {
   constructor() {

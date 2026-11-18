@@ -41,7 +41,7 @@ DB = dict(
     port     = 5433,
     dbname   = "mcculloch_db",
     user     = "mcculloch_admin",
-    password = "#mcculloch_admin#20026",
+    password = os.environ["PG_PASSWORD"],
 )
 
 # Rings jewelry_type id (same as used in import_wedding_variants.py)

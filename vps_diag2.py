@@ -1,8 +1,9 @@
+import os
 import paramiko
 
 host = "31.97.116.89"
 user = "root"
-password = "31102010Ashana@"
+password = os.environ["VPS_SSH_PASSWORD"]  # never commit credentials
 
 client = paramiko.SSHClient()
 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

@@ -10,8 +10,8 @@
 const BASE = 'http://localhost:5000/api/v1';
 
 // ─── Credentials ────────────────────────────────────────────────────────────
-const ADMIN_EMAIL    = 'admin@mcculloch.com';
-const ADMIN_PASSWORD = 'admin123!';
+const ADMIN_EMAIL    = process.env.TEST_ADMIN_EMAIL || '';
+const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || '';
 const TEST_USER_EMAIL    = `testuser_${Date.now()}@test.com`;
 const TEST_USER_PASSWORD = 'TestUser123!';
 

@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 
 # ── Config ────────────────────────────────────────────────────────────────────
-DB_URL   = os.environ.get('DATABASE_URL', 'postgresql://mcculloch_admin:#mcculloch_admin#20026@31.97.116.89:5433/mcculloch_db')
+DB_URL   = os.environ['DATABASE_URL']
 XLSX     = Path(__file__).parent.parent.parent / 'McCulloch_Ring_Data_Extracted.xlsx'
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
