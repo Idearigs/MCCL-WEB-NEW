@@ -56,7 +56,7 @@ const IN_STOCK = [
   { title: "Insured delivery", note: "Fully insured and signed for, or ready to collect.", when: "After dispatch", done: false },
 ];
 
-const INCLUDED = ["Certification & documentation", "First-year insurance", "Free resizing", "Lifetime servicing"];
+const INCLUDED = ["Certification & documentation", "First-year insurance", "Lifetime servicing"];
 
 const configSummary = (it: OrderItemData): string => {
   const a = it.attributes || {};

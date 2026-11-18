@@ -2080,7 +2080,7 @@ const ProductDetail = () => {
               ['White glove delivery', 'Insured, tracked and hand-delivered to your door.', <path key="a" d="M4 9.5l10-5 10 5v10l-10 5-10-5z M4 9.5l10 5 10-5 M14 14.5v10" />],
               ['Signature presentation', 'Every piece arrives in our signature box, ready to give.', <path key="b" d="M5.5 12.5h17v11h-17z M4 8.5h20v4H4z M14 8.5v15 M14 8.5c-2.5-4.5-7.5-3-5 0 M14 8.5c2.5-4.5 7.5-3 5 0" />],
               ['Ethical excellence', 'Responsibly sourced stones and metals, hallmarked in the UK.', <path key="c" d="M14 3.5l9 3v7c0 6-4 9.5-9 11.5-5-2-9-5.5-9-11.5v-7z M10 14l3 3 5.5-6" />],
-              ['Sizing expertise', 'Complimentary resizing to get the fit exactly right.', <path key="d" d="M14 24.5a7 7 0 100-14 7 7 0 000 14z M11 4.5h6l2 2.5-5 3.5-5-3.5z" />],
+              ['Sizing expertise', 'Sized in our own workshop to get the fit exactly right.', <path key="d" d="M14 24.5a7 7 0 100-14 7 7 0 000 14z M11 4.5h6l2 2.5-5 3.5-5-3.5z" />],
             ] as [string, string, React.ReactNode][]).map(([t, d, icon]) => (
               <div key={t}>
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke={T.gold} strokeWidth="1" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">{icon}</svg>

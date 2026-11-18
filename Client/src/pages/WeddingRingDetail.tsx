@@ -217,7 +217,7 @@ const CSS = `
   /* the one sand band */
   .wr-band { background: ${T.sand}; padding: clamp(52px, 6vw, 88px) ${pageX}; text-align: center; }
   .wr-band h2 { font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: clamp(28px, 3.2vw, 44px); line-height: 1.12; margin: 14px 0 0; color: ${T.text}; text-wrap: balance; }
-  .wr-promise { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px 24px; max-width: 1080px; margin: clamp(34px, 4vw, 52px) auto 0; }
+  .wr-promise { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px 24px; max-width: 1080px; margin: clamp(34px, 4vw, 52px) auto 0; }
   .wr-promise div { padding-top: 18px; border-top: 1px solid ${T.gold}; font-family: ${FONT_DISPLAY}; font-size: 18px; line-height: 1.3; color: ${T.text}; }
 
   .wr-bar-fixed { display: none; }
@@ -266,7 +266,7 @@ const CSS = `
     .wr-note { margin-top: 0; }
     .wr-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 16px; }
     .wr-specs dd { font-size: 16.5px; }
-    .wr-promise { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 16px; }
+    .wr-promise { grid-template-columns: 1fr; gap: 20px; }
     .wr-promise div { font-size: 16.5px; }
     .wr-bar-fixed { display: flex; align-items: center; gap: 16px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 55; padding: 12px ${pageX} calc(12px + env(safe-area-inset-bottom, 0px)); background: ${GROUND}; border-top: 1px solid ${T.line}; }
     .wr-bar-fixed > div { flex: 1; min-width: 0; }
@@ -447,8 +447,11 @@ const WeddingRingDetail = (): JSX.Element => {
   const saved = isFavorite(String(design.id));
   const summary = onRequest ? `${design.collection || 'Wedding ring'} pattern` : [metalName, `${curWidth}mm`, isClassic ? wlabel(curWeight) : curRow?.carat ? `${curRow.carat}ct` : '', onRequest ? '' : `Size ${size}`].filter(Boolean).join(' · ');
   const story = fillText(design.descriptionTemplate || design.shortDescription || design.description, metalName, curRow?.hallmark).split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+  // The catalogue lists every grade it offers; show only the grade of the ring being bought.
+  const soldGrade = (() => { const [c, cl] = String(curRow?.quality || '').split('-'); return c && cl ? `${c} colour, ${cl} clarity` : ''; })();
   const specs = fillText(design.specification, metalName, curRow?.hallmark).split('\n').map(l => { const i = l.indexOf(':'); return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 1).trim()] : null; })
-    .filter((p): p is string[] => !!p && !!p[1] && !/^ring size$/i.test(p[0]));
+    .filter((p): p is string[] => !!p && !!p[1] && !/^ring size$/i.test(p[0]))
+    .map(([k, v]) => /^diamond (clarity|colour|color|grade|quality)$/i.test(k) && soldGrade ? ['Diamond grade', soldGrade] : [k, v]);
   const bar = (mm: number) => <i style={{ width: Math.max(6, Math.round(mm * 4)), background: BAR[curWay] || BAR.W }} />;
   const lab = (name: string, value?: string) => <div className="wr-lab">{name}{value ? <>: <b>{value}</b></> : null}</div>;
 
@@ -533,7 +536,7 @@ const WeddingRingDetail = (): JSX.Element => {
           {onRequest
             ? <Link to="/contact" className="wr-btn">Enquire about this ring</Link>
             : <button type="button" className="wr-btn" data-addbag onClick={handleAdd}>{added ? 'Added to bag' : 'Add to bag'}</button>}
-          <p className="wr-note">Made to order in your finger size, with complimentary resizing if it is not quite right. Free insured UK delivery.</p>
+          <p className="wr-note">Made to order in your finger size. Free insured UK delivery.</p>
           <div className="wr-quiet">
             <button type="button" className="wr-link" aria-pressed={saved} data-savebtn onClick={() => toggleFavorite(String(design.id), design.name, heroImg ? getMediaUrl(heroImg) : '', window.location.pathname)}>{saved ? 'Saved' : 'Save'}</button>
             <Link to="/book-appointment" className="wr-link">Try it on in the showroom</Link>
@@ -559,7 +562,7 @@ const WeddingRingDetail = (): JSX.Element => {
         <section className="wr-band">
           <div className="wr-eyebrow">With every wedding ring</div>
           <h2>Made for one finger, to be worn every day.</h2>
-          <div className="wr-promise"><div>Made to your size</div><div>Complimentary resizing</div><div>Hallmarked in the UK</div><div>Free insured UK delivery</div></div>
+          <div className="wr-promise"><div>Made to your size</div><div>Hallmarked in the UK</div><div>Free insured UK delivery</div></div>
         </section>
       </main>
 
