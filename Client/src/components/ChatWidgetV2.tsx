@@ -95,7 +95,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
         const bg = getComputedStyle(el as HTMLElement).backgroundColor;
         const m = bg.match(/rgba?\(([^)]+)\)/);
         if (!m) continue;
-        const [r, g, b, a = "1"] = m[1].split(",").map((s) => parseFloat(s));
+        const [r, g, b, a = 1] = m[1].split(",").map((s) => parseFloat(s));
         if (a < 0.5) continue; // transparent — keep looking underneath
         const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
         dark = lum < 0.4;
