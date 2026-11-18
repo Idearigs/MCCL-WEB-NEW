@@ -138,10 +138,11 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
   const [recents, setRecents] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load the full catalogue once (the list endpoint defaults to 24 per page, so we ask
-  // for a large page — client-side token search needs every product, not just page one)
+  // Load the full catalogue once, the first time search opens (the list endpoint defaults
+  // to 24 per page, so we ask for a large page — client-side token search needs every
+  // product, not just page one). Fetching it on every page view cost ~130 KB per visit.
   useEffect(() => {
-    if (catalogue.length) return;
+    if (!isOpen || catalogue.length) return;
     fetch(`${API_BASE_URL}/products?limit=1000`)
       .then((r) => r.json())
       .then((d) => {
@@ -183,7 +184,7 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
         );
       })
       .catch(() => {});
-  }, [catalogue.length]);
+  }, [isOpen, catalogue.length]);
 
   // Recent searches + focus on open
   useEffect(() => {
@@ -316,7 +317,7 @@ const SearchOverlayV2: React.FC<SearchOverlayV2Props> = ({ isOpen, onClose, isMo
 
   const total = matches.length + guideMatches.length;
   const idle = !q;
-  const noResults = !!q && total === 0;
+  const noResults = !!q && total === 0 && catalogue.length > 0; // not while the catalogue is still arriving
 
   const pushRecent = (val: string) => {
     const v = val.trim();

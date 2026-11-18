@@ -93,10 +93,12 @@ const Spin360 = ({ spin, way }: { spin: any; way: string }): JSX.Element | null 
   const N = frameList.length;
   const [pos, setPos] = useState(0);
   const [ready, setReady] = useState(false);
+  // The other frames wait until the first one is on screen, so the ring itself appears first.
+  const [firstShown, setFirstShown] = useState(false);
   const drag = React.useRef<{ x: number; p: number } | null>(null);
 
   useEffect(() => {
-    if (!tmpl) return;
+    if (!tmpl || !firstShown) return;
     let alive = true; let loaded = 0; setReady(false);
     let idx = 0;
     const loadBatch = () => {
@@ -111,7 +113,7 @@ const Spin360 = ({ spin, way }: { spin: any; way: string }): JSX.Element | null 
     };
     loadBatch();
     return () => { alive = false; };
-  }, [tmpl, frameList, N]);
+  }, [tmpl, frameList, N, firstShown]);
 
   if (!tmpl) return null;
   const url = tmpl.replace('{index}', String(frameList[pos] ?? frameList[0]));
@@ -127,7 +129,7 @@ const Spin360 = ({ spin, way }: { spin: any; way: string }): JSX.Element | null 
   const up = () => { drag.current = null; };
   return (
     <div className="wr-spin" onMouseDown={down} onMouseMove={move} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchMove={move} onTouchEnd={up}>
-      <img src={url} alt="The ring, turned by dragging" draggable={false} />
+      <img src={url} alt="The ring, turned by dragging" draggable={false} fetchPriority="high" onLoad={() => setFirstShown(true)} onError={() => setFirstShown(true)} />
       {!ready && <div className="wr-spinload">Loading</div>}
     </div>
   );

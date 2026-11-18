@@ -1,8 +1,4 @@
 import { Suspense, lazy } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import CookieConsentV2 from "./components/CookieConsentV2";
@@ -73,14 +69,8 @@ const PageLoader = () => (
   </div>
 );
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,   // cache API responses for 5 minutes
-      gcTime: 1000 * 60 * 10,     // keep unused data for 10 minutes
-    },
-  },
-});
+// Toast messages (used by a few older components); their code loads alongside, not inside, the first bundle.
+const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
 
 const PixelPageViewTracker = () => {
   usePixelPageView();
@@ -215,13 +205,11 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  <>
       <UserAuthProvider>
         <FavoritesProvider>
           <CartProvider>
-            <Toaster />
-            <Sonner />
+            <Suspense fallback={null}><Toaster /></Suspense>
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <ScrollToTop />
               <CookieConsentV2 />
@@ -234,8 +222,7 @@ const App = () => (
           </CartProvider>
         </FavoritesProvider>
       </UserAuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  </>
 );
 
 export default App;

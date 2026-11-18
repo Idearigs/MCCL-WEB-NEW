@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, Search as SearchIcon, User as UserIcon } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoritesContext";
 import { useUserAuth } from "../../contexts/UserAuthContext";
 import { useIsMobile } from "../../hooks/use-mobile";
-import CartSlide from "../CartSlide";
-import SavedDrawerV2 from "./SavedDrawerV2";
-import SearchOverlayV2 from "./SearchOverlayV2";
-import AuthModal from "../AuthModalV2";
+import { useAfterLoad } from "../../hooks/use-after-load";
+// The drawers and panels open on a click, so their code loads after the page, not with it.
+const CartSlide = lazy(() => import("../CartSlide"));
+const SavedDrawerV2 = lazy(() => import("./SavedDrawerV2"));
+const SearchOverlayV2 = lazy(() => import("./SearchOverlayV2"));
+const AuthModal = lazy(() => import("../AuthModalV2"));
 import TrustBarV2 from "./TrustBarV2";
 import API_BASE_URL from "../../config/api";
 import { T, FONT_DISPLAY, FONT_LOGO, FONT_BODY } from "./tokens";
@@ -208,6 +210,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navOpen, setNavOpen] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const overlaysReady = useAfterLoad();
   const [authOpen, setAuthOpen] = useState(false);
 
   // Measure the header stack so the search panel tucks directly under it
@@ -627,11 +630,15 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
         </div>
       )}
 
-      {/* Functional overlays */}
-      <CartSlide isOpen={isCartOpen} isVisible={isCartVisible} cartItems={cartItems} onClose={closeCart} onUpdateQuantity={updateQuantity} onRemoveItem={removeItem} />
-      <SearchOverlayV2 isOpen={searchOpen} onClose={() => setSearchOpen(false)} isMobile={isMobile} topOffset={navH} />
-      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} initialView="login" />
-      <SavedDrawerV2 isOpen={wishOpen} isVisible={wishVisible} onClose={closeWishlist} />
+      {/* Functional overlays: mounted once the page has loaded, or straight away if one is opened first */}
+      {(overlaysReady || isCartOpen || isCartVisible || searchOpen || authOpen || wishVisible) && (
+        <Suspense fallback={null}>
+          <CartSlide isOpen={isCartOpen} isVisible={isCartVisible} cartItems={cartItems} onClose={closeCart} onUpdateQuantity={updateQuantity} onRemoveItem={removeItem} />
+          <SearchOverlayV2 isOpen={searchOpen} onClose={() => setSearchOpen(false)} isMobile={isMobile} topOffset={navH} />
+          <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} initialView="login" />
+          <SavedDrawerV2 isOpen={wishOpen} isVisible={wishVisible} onClose={closeWishlist} />
+        </Suspense>
+      )}
     </>
   );
 };

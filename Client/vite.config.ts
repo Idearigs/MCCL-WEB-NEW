@@ -61,9 +61,13 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/socket.io-client') || id.includes('node_modules/engine.io-client')) {
             return 'vendor-socket';
           }
-          // All other node_modules (React, router, radix, framer-motion, etc.)
-          // kept together so React initialises before its dependents
-          if (id.includes('node_modules/')) {
+          // React and the router: needed by every page, cached on their own.
+          // Every other library is left to Rollup, so it travels with the page or drawer
+          // that uses it instead of being downloaded up front on every visit. (A catch-all
+          // 'vendor' chunk pulled toast, dialog, icon and chat libraries into the first load.)
+          // Those chunks import this one and it imports nothing back, so React still
+          // initialises before anything that depends on it.
+          if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom|@remix-run\/router)\//.test(id)) {
             return 'vendor';
           }
         },

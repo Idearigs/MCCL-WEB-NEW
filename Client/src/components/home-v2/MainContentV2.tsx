@@ -4,6 +4,7 @@ import API_BASE_URL, { getMediaUrl } from "../../config/api";
 import { T, FONT_DISPLAY, FONT_BODY, SP } from "./tokens";
 import JournalV2 from "./JournalV2";
 import { useFavorites } from "../../contexts/FavoritesContext";
+import { useAfterLoad } from "../../hooks/use-after-load";
 
 /**
  * MainContentV2 — the homepage v2 body (everything between nav and footer).
@@ -63,17 +64,28 @@ const VideoCover = ({ base, poster, title, formats = ["webm", "mp4"], lazy = fal
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const userPaused = useRef(false);
+  const inView = useRef(false);
+  // The film (several MB) waits until the page itself has loaded; the poster shows meanwhile.
+  const afterLoad = useAfterLoad();
+  const afterLoadRef = useRef(afterLoad);
   useEffect(() => {
     const v = ref.current; if (!v) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) userPaused.current = true; // stays on the poster until the visitor presses play
+    const saveData = !!(navigator as any).connection?.saveData;
+    if (reduce || saveData) userPaused.current = true; // stays on the poster until the visitor presses play
     const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !userPaused.current) v.play().catch(() => {});
+      inView.current = e.isIntersecting;
+      if (e.isIntersecting && !userPaused.current && afterLoadRef.current) v.play().catch(() => {});
       else if (!e.isIntersecting) v.pause();
     }, { threshold: 0.15 });
     io.observe(v);
     return () => io.disconnect();
   }, []);
+  useEffect(() => {
+    afterLoadRef.current = afterLoad;
+    const v = ref.current;
+    if (afterLoad && v && inView.current && !userPaused.current) v.play().catch(() => {});
+  }, [afterLoad]);
   const toggle = () => {
     const v = ref.current; if (!v) return;
     if (v.paused) { userPaused.current = false; v.play().catch(() => {}); }
@@ -82,7 +94,7 @@ const VideoCover = ({ base, poster, title, formats = ["webm", "mp4"], lazy = fal
   return (
     <>
       <video
-        ref={ref} muted loop playsInline preload={lazy ? "none" : "auto"} poster={poster} aria-label={title}
+        ref={ref} muted loop playsInline preload={lazy || !afterLoad ? "none" : "auto"} poster={poster} aria-label={title}
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }}
       >
