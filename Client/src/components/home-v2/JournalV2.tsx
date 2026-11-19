@@ -39,7 +39,7 @@ const toCard = (p: WpPost): Card => {
 
 // The shop's existing guide pages, used while the blog is empty.
 const GUIDES: Card[] = [
-  { id: -1, href: "/jewellery-care", title: "Looking after fine jewellery", category: "Guide", img: "/images/at-the-bench-1300.jpg", alt: "A jeweller working at the bench" },
+  { id: -1, href: "/jewellery-care", title: "Looking after fine jewellery", category: "Guide", img: "/images/workshop-bench-1600.jpg", alt: "A McCulloch jeweller at the workshop bench, seen from above" },
   { id: -2, href: "/diamond-guide", title: "The diamond guide", category: "Guide", img: null, alt: "" },
   { id: -3, href: "/gemstone-guide", title: "Choosing a coloured gemstone", category: "Guide", img: null, alt: "" },
   { id: -4, href: "/ring-size-guide", title: "Finding your ring size", category: "Guide", img: null, alt: "" },
@@ -82,7 +82,7 @@ const JournalV2 = ({ pageX, h2Style }: JournalV2Props): JSX.Element | null => {
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.15fr) minmax(0, 1fr)", gap: "clamp(32px, 6vw, 96px)", alignItems: "center", marginTop: 40 }} className="v2-split">
           <a href={lead.href} className="v2-prodcard v2-reveal" style={{ display: "block" }}>
             <div className="v2-reveal v2-rv-mask" style={{ position: "relative", aspectRatio: "16 / 10", overflow: "hidden", background: T.tint }}>
-              {lead.img && <img src={lead.img} alt={lead.alt} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
+              {lead.img && <img src={lead.img} srcSet={lead.img === "/images/workshop-bench-1600.jpg" ? "/images/workshop-bench-900.jpg 900w, /images/workshop-bench-1600.jpg 1600w" : undefined} sizes="(max-width: 900px) 100vw, 70vw" alt={lead.alt} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />}
             </div>
             <div style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.muted, margin: "18px 0 8px" }}>{lead.category}</div>
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: "clamp(19px, 1.7vw, 23px)", lineHeight: 1.28, color: T.text }}>{lead.title}</div>
