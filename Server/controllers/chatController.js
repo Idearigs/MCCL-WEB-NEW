@@ -14,6 +14,11 @@ const optionalUserId = (req) => {
   } catch { return null; }
 };
 
+// Delete an uploaded attachment when the message is rejected (multer stores it first).
+const discardUpload = (req) => {
+  if (req.file && req.file.path) require('fs').unlink(req.file.path, () => {});
+};
+
 // Staff-only Socket.io room (sockets authenticated with an admin token join it in index.js).
 const STAFF_ROOM = 'staff';
 
@@ -259,6 +264,7 @@ exports.sendMessage = async (req, res) => {
     const sender_type = req.admin ? 'admin' : 'customer';
 
     if (!chat_id) {
+      discardUpload(req);
       return res.status(400).json({
         success: false,
         message: 'chat_id is required'
@@ -267,6 +273,7 @@ exports.sendMessage = async (req, res) => {
 
     // Either message text or attachment is required
     if (!message && !req.file) {
+      discardUpload(req);
       return res.status(400).json({
         success: false,
         message: 'Either message text or image is required'
@@ -276,6 +283,7 @@ exports.sendMessage = async (req, res) => {
     // Validate chat exists
     const chat = await Chat.findByPk(chat_id);
     if (!chat) {
+      discardUpload(req);
       return res.status(404).json({
         success: false,
         message: 'Chat not found'
@@ -326,6 +334,7 @@ exports.sendMessage = async (req, res) => {
       message: 'Message sent successfully'
     });
   } catch (error) {
+    discardUpload(req);
     console.error('Error sending message:', error);
     return res.status(500).json({
       success: false,

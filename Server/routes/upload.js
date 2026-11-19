@@ -110,10 +110,20 @@ router.post('/category-image', uploadSingle('image'), (req, res) => {
 });
 
 // Delete file
+// Resolve a client-supplied file name strictly inside uploads/products (no ../ or
+// encoded separators), or null.
+const PRODUCTS_DIR = path.resolve(__dirname, '..', 'uploads', 'products');
+const safeProductPath = (name) => {
+  const base = path.basename(String(name || ''));
+  if (!base || base === '.' || base === '..') return null;
+  const full = path.resolve(PRODUCTS_DIR, base);
+  return full.startsWith(PRODUCTS_DIR + path.sep) ? full : null;
+};
+
 router.delete('/file/:filename', (req, res) => {
   try {
-    const filename = req.params.filename;
-    const filePath = path.join(__dirname, '..', 'uploads', 'products', filename);
+    const filePath = safeProductPath(req.params.filename);
+    if (!filePath) return res.status(400).json({ message: 'Invalid file name' });
 
     const deleted = deleteFile(filePath);
 
@@ -131,8 +141,9 @@ router.delete('/file/:filename', (req, res) => {
 // Get file info
 router.get('/info/:filename', (req, res) => {
   try {
-    const filename = req.params.filename;
-    const filePath = path.join(__dirname, '..', 'uploads', 'products', filename);
+    const filePath = safeProductPath(req.params.filename);
+    if (!filePath) return res.status(400).json({ message: 'Invalid file name' });
+    const filename = path.basename(filePath);
 
     if (!require('fs').existsSync(filePath)) {
       return res.status(404).json({ message: 'File not found' });

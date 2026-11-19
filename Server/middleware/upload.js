@@ -13,6 +13,20 @@ const categoriesDir = path.join(uploadDir, 'categories');
   }
 });
 
+// Allowed upload types → the extension the stored file gets. The extension always
+// comes from this map, never from the uploader's file name, so a file can only ever be
+// served back as one of these media types.
+const ALLOWED_TYPES = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+  'video/mp4': '.mp4',
+  'video/webm': '.webm',
+  'video/ogg': '.ogg'
+};
+
 // Storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -30,7 +44,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     // Generate unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const fileExtension = path.extname(file.originalname);
+    const fileExtension = ALLOWED_TYPES[file.mimetype] || '.bin';
     const fileName = file.fieldname + '-' + uniqueSuffix + fileExtension;
     cb(null, fileName);
   }
@@ -38,19 +52,7 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  // Allowed file types
-  const allowedTypes = {
-    'image/jpeg': '.jpg',
-    'image/jpg': '.jpg',
-    'image/png': '.png',
-    'image/gif': '.gif',
-    'image/webp': '.webp',
-    'video/mp4': '.mp4',
-    'video/webm': '.webm',
-    'video/ogg': '.ogg'
-  };
-
-  if (allowedTypes[file.mimetype]) {
+  if (ALLOWED_TYPES[file.mimetype]) {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type. Only images (JPEG, PNG, GIF, WebP) and videos (MP4, WebM, OGG) are allowed.'), false);

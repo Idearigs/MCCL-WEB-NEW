@@ -35,15 +35,16 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'chat-' + uniqueSuffix + path.extname(file.originalname));
+    // Extension from the accepted type, never from the sender's file name
+    cb(null, 'chat-' + uniqueSuffix + CHAT_IMAGE_TYPES[file.mimetype]);
   }
 });
 
+// Raster images only (no SVG, which can carry script)
+const CHAT_IMAGE_TYPES = { 'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/png': '.png', 'image/gif': '.gif', 'image/webp': '.webp' };
+
 const fileFilter = (req, file, cb) => {
-  // Only accept image files
-  // Check MIME type or file extension as fallback
-  const isImage = file.mimetype.startsWith('image/') ||
-                  /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(file.originalname);
+  const isImage = Object.prototype.hasOwnProperty.call(CHAT_IMAGE_TYPES, file.mimetype);
 
   if (isImage) {
     cb(null, true);

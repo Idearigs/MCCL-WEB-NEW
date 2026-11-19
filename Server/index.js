@@ -128,6 +128,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   maxAge: '1d',
   // Set headers for video files
   setHeaders: (res, filePath) => {
+    // Uploaded files are media only: never let one run script or be sniffed as another
+    // type, even if a legacy upload kept a document-like extension.
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Content-Security-Policy', "default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'; sandbox");
+    if (/\.(html?|xhtml|xml|svg|svgz|js|mjs)$/i.test(filePath)) {
+      res.set('Content-Disposition', 'attachment');
+    }
     // Check if it's a video file
     if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg')) {
       // Keep byte-range support AND make the file cleanly cacheable at the edge.
