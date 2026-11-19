@@ -19,7 +19,7 @@ const errorHandler = (err, req, res, next) => {
   logger.error(`Error ${req.method} ${req.originalUrl}:`, {
     message: err.message,
     stack: err.stack,
-    body: req.body,
+    body: require('./security').redactBody(req.body),
     user: req.user?.id
   });
 

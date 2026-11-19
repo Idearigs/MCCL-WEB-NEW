@@ -47,6 +47,19 @@ const emailFooter = `
 /**
  * Send order confirmation email to customer
  */
+// Order data comes from the checkout request, so every string is HTML-escaped (values
+// and attribute keys, recursively) before it is placed in an email. customerEmail is
+// kept raw because it is also the SMTP recipient / reply-to; it is escaped where shown.
+function escHtmlDeep(v) {
+  if (typeof v === 'string') return esc(v);
+  if (v == null || typeof v !== 'object' || v instanceof Date) return v;
+  if (Array.isArray(v)) return v.map(escHtmlDeep);
+  const out = {};
+  for (const [k, val] of Object.entries(v)) out[esc(k)] = escHtmlDeep(val);
+  return out;
+}
+const escOrderForHtml = (o) => ({ ...escHtmlDeep(o || {}), customerEmail: o && o.customerEmail });
+
 const sendOrderConfirmationEmail = async (orderData) => {
   const {
     id: orderId,
@@ -58,7 +71,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
     items = [],
     shippingAddress,
     createdAt,
-  } = orderData;
+  } = escOrderForHtml(orderData);
   const orderStatusUrl = orderId ? `${FRONTEND_URL}/orders/${orderId}` : `${FRONTEND_URL}/orders`;
 
   const orderDate = new Date(createdAt).toLocaleDateString('en-GB', {
@@ -216,7 +229,7 @@ const sendOwnerOrderNotificationEmail = async (orderData) => {
     items = [],
     shippingAddress,
     createdAt,
-  } = orderData;
+  } = escOrderForHtml(orderData);
 
   const orderDate = new Date(createdAt).toLocaleString('en-GB', {
     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -313,7 +326,7 @@ const sendOwnerOrderNotificationEmail = async (orderData) => {
               <div style="font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#1a1a1a; margin-bottom:12px;">Customer</div>
               <div style="color:#4b5563; line-height:1.8;">
                 <strong>${customerName || '—'}</strong><br>
-                <a href="mailto:${customerEmail}" style="color:#C9A96E; text-decoration:none;">${customerEmail}</a>
+                <a href="mailto:${esc(customerEmail)}" style="color:#C9A96E; text-decoration:none;">${esc(customerEmail)}</a>
                 ${customerPhone ? `<br>${customerPhone}` : ''}
               </div>
             </div>
@@ -382,7 +395,7 @@ const sendOrderStatusUpdateEmail = async (orderData, newStatus) => {
     customerName,
     orderNumber,
     trackingNumber = null,
-  } = orderData;
+  } = escOrderForHtml(orderData);
 
   const statusConfig = {
     processing: {

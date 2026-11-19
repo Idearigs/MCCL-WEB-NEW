@@ -113,6 +113,20 @@ const helmetConfig = helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 });
 
+// Request bodies are logged for diagnostics, but never their secrets or personal data:
+// passwords, PINs, tokens, ID numbers, card/payment fields and contact details.
+const REDACT_KEY = /pass(word)?|pin\b|^pin$|token|secret|otp|code$|id_number|card|cvc|cvv|iban|sort_?code|account_?number|phone|date_of_birth|dob|address|street|postcode|postal/i;
+const redactBody = (body, depth = 0) => {
+  if (body == null || typeof body !== 'object') return body;
+  if (depth > 3) return '[object]';
+  if (Array.isArray(body)) return body.slice(0, 20).map((v) => redactBody(v, depth + 1));
+  const out = {};
+  for (const [k, v] of Object.entries(body)) {
+    out[k] = REDACT_KEY.test(k) ? '[redacted]' : (typeof v === 'object' ? redactBody(v, depth + 1) : v);
+  }
+  return out;
+};
+
 const securityLogger = (req, res, next) => {
   const originalSend = res.send;
 
@@ -121,7 +135,7 @@ const securityLogger = (req, res, next) => {
       logger.warn(`Security event: ${res.statusCode} ${req.method} ${req.originalUrl}`, {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
-        body: req.body,
+        body: redactBody(req.body),
         user: req.user?.id
       });
     }
@@ -153,6 +167,7 @@ const ipWhitelist = (allowedIPs = []) => {
 };
 
 module.exports = {
+  redactBody,
   createRateLimit,
   authRateLimit,
   generalRateLimit,
