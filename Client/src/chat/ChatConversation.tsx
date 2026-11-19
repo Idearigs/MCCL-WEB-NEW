@@ -297,6 +297,14 @@ export default function ChatConversation({
       }
     });
 
+    // Closed or reopened elsewhere (another staff device or the Truedesk app)
+    socket.on('chat_status', (d: { chat_id: string; status: 'active' | 'closed' | 'waiting' }) => {
+      if (d.chat_id === chatId) onStatusChange(d.status);
+    });
+    socket.on('message_deleted', (d: { chat_id: string; id: string }) => {
+      if (d.chat_id === chatId) setMessages((prev) => prev.filter((m) => m.id !== d.id));
+    });
+
     return () => {
       socket.emit('leave_chat', { chat_id: chatId });
       socket.disconnect();

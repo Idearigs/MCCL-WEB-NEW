@@ -251,6 +251,11 @@ export default function ChatList({ admin, onOpenChat, onLogout, onSwitchToOrders
       );
     });
 
+    // Closed or reopened anywhere (website, staff app, Truedesk app)
+    socket.on('chat_status', (d: { chat_id: string; status: Chat['status'] }) => {
+      setChats((prev) => prev.map((c) => (c.id === d.chat_id ? { ...c, status: d.status } : c)));
+    });
+
     socket.on('new_chat', (chat: Chat) => {
       if (knownChatIds.current.has(chat.id)) return;
       knownChatIds.current.add(chat.id);

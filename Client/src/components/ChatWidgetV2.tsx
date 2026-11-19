@@ -8,14 +8,20 @@ import { T, FONT_DISPLAY, FONT_BODY } from "./home-v2/tokens";
  * A cream launcher with a hairline edge, and a cream window: topics as underlined words,
  * fields as single lines, light bubbles. No solid black header.
  *
- * WIRED to the real chat backend, unchanged: POST /chats (create, topic -> subject),
- * GET /chats/view/:id (history), POST /chats/message/send (FormData, optional attachment),
- * and Socket.io (receive_message / typing_status). Presence is derived from opening hours
- * (Mon-Sat 9-18) rather than always implying someone is online.
+ * WIRED to the real chat backend: POST /chats (create, topic -> subject; returns the chat's
+ * visitor token), GET /chats/view/:id (history, X-Chat-Token), POST /chats/message/send
+ * (FormData, optional attachment, X-Chat-Token), POST /chats/resume (email links) and
+ * Socket.io (receive_message / typing_status / chat_status / message_deleted).
+ *
+ * The chat id and its visitor token are kept in localStorage, so the conversation survives a
+ * reload and follows the visitor around the site (the widget is mounted site-wide in App).
+ * Presence is derived from opening hours (Mon-Sat 9-18) rather than always implying someone
+ * is online.
  */
 
 const GROUND = "#FFFEFD";
 const SOCKET_URL = API_BASE_URL.replace("/api/v1", "");
+const STORE_KEY = "mccl_chat_v1";
 
 const TOPICS = ["A commission", "An order", "Sizing", "A stone", "Repairs"];
 const PLACEHOLDERS: Record<string, string> = {
@@ -28,6 +34,18 @@ const PLACEHOLDERS: Record<string, string> = {
 
 interface ChatUser { id: string; email: string; name?: string }
 interface Message { id: string; chat_id: string; sender_type: "customer" | "admin"; message: string; created_at: string; attachment_url?: string }
+type ChatStatus = "waiting" | "active" | "closed";
+interface Stored { id: string; token: string }
+
+const readStored = (): Stored | null => {
+  try {
+    const v = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    return v && typeof v.id === "string" && typeof v.token === "string" ? v : null;
+  } catch { return null; }
+};
+const writeStored = (v: Stored | null) => {
+  try { if (v) localStorage.setItem(STORE_KEY, JSON.stringify(v)); else localStorage.removeItem(STORE_KEY); } catch { /* private mode */ }
+};
 
 const isOpenNow = () => {
   const n = new Date();
@@ -44,12 +62,31 @@ const fmtTime = (iso?: string) => {
   } catch { return "just now"; }
 };
 
+const dayLabel = (iso?: string) => {
+  const d = new Date(iso || "");
+  if (isNaN(d.getTime())) return "Today";
+  const today = new Date();
+  const y = new Date(); y.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "Today";
+  if (d.toDateString() === y.toDateString()) return "Yesterday";
+  return d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+};
+
+const byTime = (a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+const mergeMessages = (prev: Message[], incoming: Message[]) => {
+  const map = new Map(prev.map((m) => [m.id, m]));
+  incoming.forEach((m) => { if (m && m.id) map.set(m.id, m); });
+  return [...map.values()].sort(byTime);
+};
+
 export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.Element {
   const [state, setState] = useState<"closed" | "form" | "live">("closed");
   const [topic, setTopic] = useState<string>("A commission");
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", message: "" });
-  const [chatId, setChatId] = useState<string | null>(null);
+  const [chat, setChat] = useState<Stored | null>(null);
+  const [chatStatus, setChatStatus] = useState<ChatStatus>("waiting");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [unseen, setUnseen] = useState(0);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -63,7 +100,10 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
   const isTypingRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
+  const chatId = chat?.id || null;
   const open = isOpenNow();
 
   // Escape closes the panel, like search and the bag.
@@ -76,45 +116,99 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
 
   useEffect(() => { setForm((f) => ({ ...f, name: user?.name || f.name, email: user?.email || f.email })); }, [user]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, theyTyping]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, theyTyping, state]);
 
-  // Socket + history once a chat exists
+  useEffect(() => { if (state === "live") setUnseen(0); }, [state]);
+
+  // On load: a "continue the conversation" email link (?chat=…&resume=…), else the chat this
+  // browser already has.
   useEffect(() => {
-    if (!chatId) return;
-    const socket = io(SOCKET_URL, { reconnection: true, reconnectionDelay: 1000, reconnectionAttempts: 5 });
+    const params = new URLSearchParams(window.location.search);
+    const linkChat = params.get("chat");
+    const resume = params.get("resume");
+    if (linkChat && resume) {
+      params.delete("chat"); params.delete("resume");
+      const q = params.toString();
+      window.history.replaceState(window.history.state, "", `${window.location.pathname}${q ? `?${q}` : ""}${window.location.hash}`);
+      fetch(`${API_BASE_URL}/chats/resume`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: linkChat, resume }),
+      }).then((r) => r.json()).then((d) => {
+        if (d?.success && d.data?.visitor_token) {
+          const v = { id: d.data.chat_id, token: d.data.visitor_token };
+          writeStored(v); setChat(v); setState("live");
+        } else {
+          setError(d?.message || "This link has expired. Please start a new conversation.");
+          const v = readStored(); if (v) setChat(v); else setState("form");
+        }
+      }).catch(() => { const v = readStored(); if (v) setChat(v); });
+      return;
+    }
+    const v = readStored();
+    if (v) setChat(v);
+  }, []);
+
+  const forget = () => { writeStored(null); setChat(null); setMessages([]); setChatStatus("waiting"); setUnseen(0); };
+
+  // History + live connection once a chat exists
+  useEffect(() => {
+    if (!chat) return;
+    let cancelled = false;
+    const load = () => fetch(`${API_BASE_URL}/chats/view/${chat.id}`, { headers: { "X-Chat-Token": chat.token } })
+      .then((r) => (r.status === 404 ? { gone: true } : r.json()))
+      .then((d: any) => {
+        if (cancelled) return;
+        if (d?.gone) { forget(); return; }
+        if (d?.success) {
+          setMessages((prev) => mergeMessages(prev, d.data.chat.messages || []));
+          setChatStatus(d.data.chat.status || "waiting");
+        }
+      }).catch(() => {});
+    load();
+
+    const socket = io(SOCKET_URL, { reconnection: true, reconnectionDelay: 1000, reconnectionDelayMax: 10000 });
     socketRef.current = socket;
-
-    fetch(`${API_BASE_URL}/chats/view/${chatId}`).then((r) => r.json()).then((d) => {
-      if (d?.success) setMessages(d.data.chat.messages || []);
-    }).catch(() => {});
-
-    socket.emit("join_chat", { chat_id: chatId, user_type: "customer", user_id: user?.id || null });
-    socket.on("receive_message", (m: Message) => setMessages((prev) => [...prev, m]));
+    socket.on("connect", () => {
+      socket.emit("join_chat", { chat_id: chat.id, token: chat.token });
+      load(); // pick up anything sent while disconnected
+    });
+    socket.on("receive_message", (m: Message) => {
+      if (!m || m.chat_id !== chat.id) return;
+      setMessages((prev) => mergeMessages(prev, [m]));
+      if (m.sender_type === "admin") { setTheyTyping(false); if (stateRef.current !== "live") setUnseen((n) => n + 1); }
+    });
     socket.on("typing_status", (d: any) => {
       if (d.user_type && d.user_type !== "customer") setTheyTyping(!!d.is_typing);
     });
+    socket.on("chat_status", (d: any) => {
+      if (d?.chat_id === chat.id && d.status) setChatStatus(d.status);
+    });
+    socket.on("message_deleted", (d: any) => {
+      if (d?.chat_id === chat.id) setMessages((prev) => prev.filter((m) => m.id !== d.id));
+    });
 
-    return () => { socket.emit("leave_chat", { chat_id: chatId }); socket.disconnect(); };
-  }, [chatId, user?.id]);
+    return () => { cancelled = true; socket.emit("leave_chat", { chat_id: chat.id }); socket.disconnect(); socketRef.current = null; };
+  }, [chat?.id, chat?.token]);
 
-  const createChat = async (): Promise<string | null> => {
+  const createChat = async (): Promise<Stored> => {
+    // Signed-in customers send their own token so the chat is linked to their account.
+    let auth: Record<string, string> = {};
+    try { const t = localStorage.getItem("user_access_token"); if (t && user?.id) auth = { Authorization: `Bearer ${t}` }; } catch { /* ignore */ }
     const res = await fetch(`${API_BASE_URL}/chats`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json", ...auth },
       body: JSON.stringify({ customer_name: form.name || "Guest", customer_email: form.email, customer_user_id: user?.id || null, subject: topic }),
     }).then((r) => r.json());
-    if (res?.success) return res.data.chat.id;
+    if (res?.success && res.data?.chat?.id && res.data.visitor_token) return { id: res.data.chat.id, token: res.data.visitor_token };
     throw new Error(res?.message || "Could not start the conversation.");
   };
 
-  const sendRaw = async (targetId: string, text: string, file?: File | null) => {
+  const sendRaw = async (target: Stored, text: string, file?: File | null) => {
     const body = new FormData();
-    body.append("chat_id", targetId);
-    body.append("sender_type", "customer");
-    body.append("sender_id", user?.id || "");
+    body.append("chat_id", target.id);
     body.append("message", text || "");
     if (file) body.append("attachment", file);
-    const res = await fetch(`${API_BASE_URL}/chats/message/send`, { method: "POST", body }).then((r) => r.json());
-    if (res?.success && socketRef.current) socketRef.current.emit("send_message", { chat_id: targetId, message: res.data.message });
+    const res = await fetch(`${API_BASE_URL}/chats/message/send`, { method: "POST", headers: { "X-Chat-Token": target.token }, body }).then((r) => r.json());
+    if (res?.success && res.data?.message) setMessages((prev) => mergeMessages(prev, [res.data.message]));
     return res;
   };
 
@@ -122,12 +216,13 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
     if (!form.email.trim() || !form.message.trim()) { setError("Please add your email and a message."); return; }
     setStarting(true); setError(null);
     try {
-      const id = await createChat();
-      if (!id) throw new Error("Could not start the conversation.");
-      setChatId(id);
+      const created = await createChat();
+      writeStored(created);
+      setMessages([]); setChatStatus("waiting");
+      setChat(created);
       setState("live");
-      // give the socket a beat to join, then send the opening message
-      setTimeout(() => { sendRaw(id, form.message).catch(() => {}); }, 400);
+      const res = await sendRaw(created, form.message);
+      if (!res?.success) setError(res?.message || "Message not sent.");
       setForm((f) => ({ ...f, message: "" }));
     } catch (e: any) {
       setError(e?.message || "Something went wrong. Please try again.");
@@ -136,9 +231,11 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
     }
   };
 
+  const startAgain = () => { forget(); setError(null); setState("form"); };
+
   const emitTyping = (typing: boolean) => {
     if (!socketRef.current || !chatId) return;
-    socketRef.current.emit("user_typing", { chat_id: chatId, user_type: "customer", user_id: user?.id || null, is_typing: typing });
+    socketRef.current.emit("user_typing", { chat_id: chatId, is_typing: typing });
   };
 
   const onInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,12 +247,12 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatId || (!input.trim() && !image)) return;
+    if (!chat || (!input.trim() && !image)) return;
     setSending(true); setError(null);
     const text = input; const file = image;
     setInput(""); clearImage();
     try {
-      const res = await sendRaw(chatId, text, file);
+      const res = await sendRaw(chat, text, file);
       if (!res?.success) setError(res?.message || "Message not sent.");
       isTypingRef.current = false; emitTyping(false);
     } catch { setError("Message not sent. Please try again."); }
@@ -173,9 +270,13 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
   };
   const clearImage = () => { setImage(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = ""; };
 
-  const presence = open
-    ? "Open now. We usually reply within minutes."
-    : state === "live" ? "Closed now. We will reply when we open." : "Closed now. Leave a message and we will reply when we open.";
+  const closedChat = chatStatus === "closed";
+
+  const presence = state === "live" && closedChat
+    ? "This conversation is closed."
+    : open
+      ? "Open now. We usually reply within minutes."
+      : state === "live" ? "Closed now. We will reply when we open, and email you if you have left." : "Closed now. Leave a message and we will reply when we open.";
 
   return (
     <>
@@ -186,6 +287,9 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
         .cw-launch svg { display: none; }
         .cw-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${T.gold}; }
         .cw-dot[data-off] { background: ${T.ruleStrong}; }
+        .cw-new { flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: ${T.ink}; color: ${T.paper}; font-size: 10px; line-height: 18px; letter-spacing: 0; text-align: center; }
+        .cw-ended { margin: 18px 0 0; padding: 14px 0 0; border-top: 1px solid ${T.line}; font-size: 13px; line-height: 1.6; color: ${T.textMuted}; }
+        .cw-ended button { margin-top: 10px; }
         /* Hidden while the phone menu is open, where it covered "Book an appointment". */
         body[data-v2-menu] .cw-launch { display: none !important; }
 
@@ -250,10 +354,10 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
 
       {/* Launcher */}
       {state === "closed" && (
-        <button type="button" onClick={() => setState(chatId ? "live" : "form")} className="cw-launch" data-cw-launch aria-label="Ask the workshop">
+        <button type="button" onClick={() => setState(chatId ? "live" : "form")} className="cw-launch" data-cw-launch aria-label={unseen ? `Ask the workshop: ${unseen} new ${unseen === 1 ? "reply" : "replies"}` : "Ask the workshop"}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true"><path d="M4 5h16v11h-9.5L6 20v-4H4z" /></svg>
-          <span className="cw-dot" data-off={open ? undefined : ""} />
-          <b style={{ fontWeight: 400 }}>Ask the workshop</b>
+          {unseen > 0 ? <span className="cw-new" aria-hidden="true">{unseen}</span> : <span className="cw-dot" data-off={open ? undefined : ""} />}
+          <b style={{ fontWeight: 400 }}>{unseen > 0 ? "New reply" : chatId ? "Your conversation" : "Ask the workshop"}</b>
         </button>
       )}
 
@@ -263,7 +367,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
           <div className="cw-head">
             <div>
               <h2>Ask the workshop</h2>
-              <p className="cw-pres"><span className="cw-dot" data-off={open ? undefined : ""} />{presence}</p>
+              <p className="cw-pres"><span className="cw-dot" data-off={open && !(state === "live" && closedChat) ? undefined : ""} />{presence}</p>
             </div>
             <button type="button" onClick={() => setState("closed")} aria-label="Close" className="cw-x">×</button>
           </div>
@@ -282,7 +386,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
               <label className="cw-fld"><span className="cw-lab">Message</span><textarea rows={2} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} placeholder={PLACEHOLDERS[topic]} /></label>
               {error && <p className="cw-err" role="alert">{error}</p>}
               <button type="button" onClick={startConversation} disabled={starting} className="cw-cta">{starting ? "Sending…" : "Send message"}</button>
-              <p className="cw-fine">A jeweller answers, not a robot. Nothing is shared outside the workshop.</p>
+              <p className="cw-fine">A jeweller answers, not a robot. Your messages go only to the McCulloch team. <a href="/privacy" style={{ color: "inherit" }}>Privacy</a></p>
             </div>
           )}
 
@@ -290,20 +394,32 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
           {state === "live" && (
             <>
               <div className="cw-body">
-                <p className="cw-day">Today</p>
+                {messages.length === 0 && <p className="cw-day">Today</p>}
                 {messages.map((m, i) => {
                   const mine = m.sender_type === "customer";
+                  const day = dayLabel(m.created_at);
+                  const newDay = i === 0 || dayLabel(messages[i - 1].created_at) !== day;
                   return (
-                    <div key={`${m.id}-${i}`} className="cw-msg" data-me={mine ? "" : undefined}>
+                    <React.Fragment key={m.id}>
+                    {newDay && <p className="cw-day">{day}</p>}
+                    <div className="cw-msg" data-me={mine ? "" : undefined}>
                       <small>{mine ? "You" : "McCulloch"} · {fmtTime(m.created_at)}</small>
                       <span>
                         {m.attachment_url && <img src={`${SOCKET_URL}${m.attachment_url}`} alt="Attached photograph" style={{ marginBottom: m.message ? 8 : 0 }} />}
                         {m.message}
                       </span>
                     </div>
+                    </React.Fragment>
                   );
                 })}
-                {theyTyping && (
+                {closedChat && (
+                  <div className="cw-ended">
+                    This conversation has been closed. If there is anything else, we would be glad to hear from you.
+                    <br />
+                    <button type="button" onClick={startAgain} className="cw-cta">Start a new conversation</button>
+                  </div>
+                )}
+                {theyTyping && !closedChat && (
                   <div className="cw-msg">
                     <small>McCulloch</small>
                     <span className="cw-typing" aria-label="McCulloch is typing"><i /><i /><i /></span>
@@ -312,7 +428,7 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                 <div ref={endRef} />
               </div>
 
-              <div className="cw-foot">
+              {!closedChat && <div className="cw-foot">
                 {imagePreview && (
                   <div className="cw-thumb">
                     <img src={imagePreview} alt="" />
@@ -327,8 +443,8 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
                   <input type="text" value={input} onChange={onInput} placeholder="Write a message" aria-label="Write a message" disabled={sending} />
                   <button type="submit" disabled={sending || (!input.trim() && !image)} className="cw-send">{sending ? "…" : "Send"}</button>
                 </form>
-                <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} style={{ display: "none" }} />
-              </div>
+                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={pickImage} style={{ display: "none" }} />
+              </div>}
             </>
           )}
         </aside>

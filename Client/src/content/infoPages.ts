@@ -176,6 +176,13 @@ export const INFO_PAGES: Record<string, InfoPage> = {
         "bullets": []
       },
       {
+        "heading": "Live Chat",
+        "paras": [
+          "If you message us through the live chat on our website, we keep your name, email address, the topic you choose, your messages and any photographs you send, so that our team can reply and pick up the conversation again later. Your messages go only to the McCulloch team. They are stored by us and by our chat software provider, Truedesk, on a server in the UK with encrypted backups, so that our staff can answer from the shop or from a staff phone. If you leave the website before we reply, we may email our reply to the address you gave us. Your browser keeps a small record of your conversation so that it is still there when you return; clearing your browser data removes it. To have a conversation deleted, please contact us."
+        ],
+        "bullets": []
+      },
+      {
         "heading": "Marketing Communications",
         "paras": [
           "If you choose to receive marketing communications from Andrew McCulloch Jewellers, we may occasionally send you information about new collections, special offers, events and company news. You can unsubscribe at any time by clicking the unsubscribe link included in our emails or by contacting us directly. We will only send marketing communications where we have a lawful basis to do so."

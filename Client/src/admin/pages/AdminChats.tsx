@@ -79,6 +79,15 @@ export default function AdminChats(): JSX.Element {
       setChats((prevChats) => [chat, ...prevChats]);
     });
 
+    // Closed or reopened anywhere (here, the staff app, or the Truedesk app)
+    socket.on('chat_status', (d: { chat_id: string; status: Chat['status'] }) => {
+      setChats((prev) => prev.map((c) => (c.id === d.chat_id ? { ...c, status: d.status } : c)));
+      setSelectedChat((prev) => (prev && prev.id === d.chat_id ? { ...prev, status: d.status } : prev));
+    });
+    socket.on('message_deleted', (d: { chat_id: string; id: string }) => {
+      setSelectedChat((prev) => (prev && prev.id === d.chat_id ? { ...prev, messages: (prev.messages || []).filter((m) => m.id !== d.id) } : prev));
+    });
+
     return () => {
       socket.disconnect();
     };
@@ -111,10 +120,11 @@ export default function AdminChats(): JSX.Element {
       user_id: localStorage.getItem('admin_id')
     });
 
-    // Listen for new messages
+    // Listen for new messages (the sender's own reply can also arrive from its HTTP response)
     socket.on('receive_message', (message: Message) => {
       setSelectedChat((prev) => {
         if (prev) {
+          if ((prev.messages || []).some((m) => m.id === message.id)) return prev;
           return {
             ...prev,
             messages: [...(prev.messages || []), message]

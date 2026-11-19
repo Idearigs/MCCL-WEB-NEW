@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import CookieConsentV2 from "./components/CookieConsentV2";
+import SiteChat from "./components/SiteChat";
 import ReturnToCheckout from "./components/home-v2/ReturnToCheckout";
 import { CartProvider } from "./contexts/CartContext";
 import { UserAuthProvider } from "./contexts/UserAuthContext";
@@ -218,6 +219,7 @@ const App = () => (
               <Suspense fallback={<PageLoader />}>
                 <AppRoutes />
               </Suspense>
+              <SiteChat />
             </BrowserRouter>
           </CartProvider>
         </FavoritesProvider>
