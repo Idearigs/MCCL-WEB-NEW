@@ -23,8 +23,10 @@ const {
   assignLabel,
   removeLabel,
   deleteMessage,
-  deleteChat
+  deleteChat,
+  resumeChat
 } = require('../controllers/chatController');
+const { chatStartLimit, chatMessageLimit } = require('../middleware/security');
 const { adminAuth, optionalAdminAuth } = require('../middleware/adminAuth');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -59,6 +61,16 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+// A refused or oversized photo is the sender's mistake: answer 400, not 500.
+const uploadAttachment = (req, res, next) => upload.single('attachment')(req, res, (err) => {
+  if (!err) return next();
+  const tooBig = err.code === 'LIMIT_FILE_SIZE';
+  return res.status(400).json({
+    success: false,
+    message: tooBig ? 'Photos can be up to 5 MB.' : 'Only JPEG, PNG, GIF or WebP photos can be attached.'
+  });
+});
+
 // Push notification routes
 router.get('/push/vapid-key', getVapidPublicKey);
 // Staff devices only: subscriptions receive every customer's name and message text.
@@ -75,10 +87,12 @@ router.delete('/labels/:id', adminAuth, deleteLabel);
 router.delete('/messages/:messageId', adminAuth, deleteMessage);
 
 // Public POST routes
-router.post('/', createChat);
+router.post('/', chatStartLimit, createChat);
 // Staff identify themselves with their admin token (checked before the upload is stored);
-// anonymous senders are always recorded as the customer.
-router.post('/message/send', optionalAdminAuth, upload.single('attachment'), sendMessage);
+// anonymous senders are always recorded as the customer and need the chat's visitor token.
+router.post('/message/send', chatMessageLimit, optionalAdminAuth, uploadAttachment, sendMessage);
+// "Continue the conversation" email links
+router.post('/resume', chatStartLimit, resumeChat);
 
 // PUBLIC GET routes (before admin routes)
 router.get('/view/:id', getChatByIdPublic);

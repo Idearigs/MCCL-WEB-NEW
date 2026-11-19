@@ -739,7 +739,36 @@ const sendEmailVerificationEmail = async (customerEmail, firstName, token) => {
   return result;
 };
 
+// Live chat: staff replied while the visitor was away from the site. The link reopens the
+// conversation in the chat window (the resume key is exchanged for a token on that device).
+const sendChatReplyEmail = async ({ to, name, replyText, chatId, resumeKey }) => {
+  const base = FRONTEND_URL.replace(/\/$/, '');
+  const link = `${base}/?chat=${encodeURIComponent(chatId)}&resume=${encodeURIComponent(resumeKey)}`;
+  const first = String(name || '').trim().split(/\s+/)[0];
+  const text = String(replyText || '').trim();
+  const quote = text
+    ? `<p style="margin:0 0 22px; padding:14px 18px; border-left:2px solid #C9A96E; background:#faf8f4; white-space:pre-wrap;">${esc(text.length > 1200 ? text.slice(0, 1200) + '…' : text)}</p>`
+    : `<p style="margin:0 0 22px;">We have sent you a photograph.</p>`;
+  const body = `
+    <p style="margin:0 0 18px;">Hello${first && first !== 'Guest' ? ' ' + esc(first) : ''},</p>
+    <p style="margin:0 0 18px;">We have replied to your message on our website:</p>
+    ${quote}
+    <p style="margin:0 0 26px;"><a href="${esc(link)}" style="display:inline-block; padding:14px 28px; background:#1a1a1a; color:#ffffff; text-decoration:none; letter-spacing:2px; text-transform:uppercase; font-size:12px;">Continue the conversation</a></p>
+    <p style="margin:0; color:#6b7280; font-size:13px;">You can also simply reply to this email. The link works for 30 days.</p>`;
+  const transporter = createTransporter();
+  const result = await transporter.sendMail({
+    from:    `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+    to,
+    subject: 'McCulloch has replied to your message',
+    html:    viewingEmailShell('We have replied', 'Live chat', 'We have replied to your message', body),
+    replyTo: SUPPORT_EMAIL,
+  });
+  logger.info('Chat reply email sent');
+  return result;
+};
+
 module.exports = {
+  sendChatReplyEmail,
   sendEmailVerificationEmail,
   sendContactEnquiryEmail, sendNewsletterSignupEmail,
   sendOrderConfirmationEmail, sendOwnerOrderNotificationEmail, sendOrderStatusUpdateEmail, sendWelcomeEmail,

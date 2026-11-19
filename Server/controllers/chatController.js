@@ -3,6 +3,9 @@ const { sendPushToAllAdmins, saveSubscription, removeSubscription, VAPID_PUBLIC_
 
 const jwt = require('jsonwebtoken');
 const config = require('../config');
+const chatService = require('../services/chatService');
+const outbox = require('../services/truedesk/outbox');
+const { postgresDB } = require('../config/database');
 
 // The signed-in customer's id from an optional user bearer token, or null.
 const optionalUserId = (req) => {
@@ -20,7 +23,15 @@ const discardUpload = (req) => {
 };
 
 // Staff-only Socket.io room (sockets authenticated with an admin token join it in index.js).
-const STAFF_ROOM = 'staff';
+const STAFF_ROOM = chatService.STAFF_ROOM;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Chats carrying a label, so a renamed, recoloured or deleted label reaches Truedesk too.
+const chatsWithLabel = async (labelId, t) => {
+  const { ChatLabelAssignment } = getModelInstance();
+  const rows = await ChatLabelAssignment.findAll({ where: { label_id: labelId }, attributes: ['chat_id'], transaction: t });
+  return [...new Set(rows.map((r) => r.chat_id))];
+};
 
 const getModelInstance = () => {
   try {
@@ -46,13 +57,20 @@ exports.createChat = async (req, res) => {
 
     // Only link the chat to an account when the caller proves it is that account.
     const signedIn = optionalUserId(req);
-    const chat = await Chat.create({
-      customer_name,
-      customer_email,
-      customer_user_id: signedIn && customer_user_id && String(customer_user_id) === signedIn ? signedIn : null,
-      subject: subject || null,
-      status: 'waiting',
-      last_message_at: new Date()
+    // The visitor token lets this browser reopen the chat after a reload; only its hash is kept.
+    const { token: visitorToken, hash } = chatService.newVisitorToken();
+    const chat = await postgresDB().transaction(async (t) => {
+      const created = await Chat.create({
+        customer_name: String(customer_name).slice(0, 100),
+        customer_email: String(customer_email).slice(0, 255),
+        customer_user_id: signedIn && customer_user_id && String(customer_user_id) === signedIn ? signedIn : null,
+        subject: subject ? String(subject).slice(0, 255) : null,
+        status: 'waiting',
+        last_message_at: new Date(),
+        visitor_token_hashes: hash
+      }, { transaction: t });
+      await outbox.chatCreated(t, created.get({ plain: true }));
+      return created;
     });
 
     // Tell staff dashboards only (not every connected visitor) about the new chat
@@ -78,11 +96,11 @@ exports.createChat = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      data: { chat },
+      data: { chat, visitor_token: visitorToken },
       message: 'Chat session created successfully'
     });
   } catch (error) {
-    console.error('Error creating chat:', error);
+    console.error('Error creating chat:', error.message);
     return res.status(500).json({
       success: false,
       message: 'Failed to create chat',
@@ -204,10 +222,11 @@ exports.getChatById = async (req, res) => {
     const includes = [
       {
         model: ChatMessage,
-        as: 'messages',
-        order: [['created_at', 'ASC']]
+        as: 'messages'
       }
     ];
+    // Order belongs on the top-level query (inside an include it is ignored).
+    const order = [[{ model: ChatMessage, as: 'messages' }, 'createdAt', 'ASC']];
 
     if (ChatLabelAssignment && ChatLabel) {
       includes.push({
@@ -220,16 +239,13 @@ exports.getChatById = async (req, res) => {
 
     let chat;
     try {
-      chat = await Chat.findByPk(id, { include: includes });
+      chat = await Chat.findByPk(id, { include: includes, order });
     } catch (includeErr) {
       // Fallback: query without label includes if table doesn't exist
       console.warn('Label include failed, retrying without:', includeErr.message);
       chat = await Chat.findByPk(id, {
-        include: [{
-          model: ChatMessage,
-          as: 'messages',
-          order: [['created_at', 'ASC']]
-        }]
+        include: [{ model: ChatMessage, as: 'messages' }],
+        order
       });
     }
 
@@ -245,7 +261,7 @@ exports.getChatById = async (req, res) => {
       data: { chat }
     });
   } catch (error) {
-    console.error('Error getting chat:', error);
+    console.error('Error getting chat:', error.message);
     return res.status(500).json({
       success: false,
       message: 'Failed to get chat',
@@ -257,8 +273,8 @@ exports.getChatById = async (req, res) => {
 // Send a message in a chat
 exports.sendMessage = async (req, res) => {
   try {
-    const { ChatMessage, Chat } = getModelInstance();
-    const { chat_id, sender_id, message } = req.body;
+    const { Chat } = getModelInstance();
+    const { chat_id, message } = req.body;
     // The author's role comes from authentication, never from the request body:
     // a valid admin token (optionalAdminAuth) means staff, anything else is the customer.
     const sender_type = req.admin ? 'admin' : 'customer';
@@ -280,9 +296,9 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
-    // Validate chat exists
-    const chat = await Chat.findByPk(chat_id);
-    if (!chat) {
+    // Validate chat exists; a visitor must hold the chat's visitor token.
+    const chat = typeof chat_id === 'string' && UUID_RE.test(chat_id) ? await Chat.findByPk(chat_id) : null;
+    if (!chat || (!req.admin && !chatService.tokenOpens(chat, chatService.tokenFrom(req)))) {
       discardUpload(req);
       return res.status(404).json({
         success: false,
@@ -290,43 +306,21 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
-    // Handle file upload
-    let attachment_url = null;
-    if (req.file) {
-      attachment_url = `/uploads/${req.file.filename}`;
-    }
+    const attachment_url = req.file ? `/uploads/${req.file.filename}` : null;
 
-    const chatMessage = await ChatMessage.create({
-      chat_id,
-      sender_type,
-      sender_id: req.admin ? req.admin.id : (sender_id || null),
-      message: message || '',
-      attachment_url: attachment_url,
-      is_read: false
+    // Saved with its Truedesk outbox row in one transaction, then delivered over Socket.io
+    // (chat room + staff dashboards), web push for visitor messages, and the "we replied"
+    // email when a staff reply finds the visitor gone.
+    const { message: chatMessage } = await chatService.postMessage({
+      chat,
+      senderType: sender_type,
+      // Staff: from their login. Visitors: their account only when their token proves it.
+      senderId: req.admin ? req.admin.id : null,
+      text: typeof message === 'string' ? message.slice(0, 5000) : '',
+      attachmentUrl: attachment_url,
+      origin: 'web',
+      staffName: req.admin ? req.admin.first_name : undefined
     });
-
-    // Update chat's last_message_at
-    await chat.update({
-      last_message_at: new Date(),
-      status: sender_type === 'admin' ? 'active' : chat.status
-    });
-
-    // Send push notification to admins when customer sends a message
-    if (sender_type === 'customer') {
-      sendPushToAllAdmins({
-        title: chat.customer_name || 'Customer',
-        body: message || 'Sent an image',
-        chatId: chat_id,
-      }).catch(err => console.error('Push notification error:', err));
-    }
-
-    // Real-time delivery from the server, using the stored record: the chat room gets the
-    // message, and only authenticated staff sockets get the dashboard update.
-    if (req.io) {
-      const payload = chatMessage.toJSON();
-      req.io.to(`chat_${chat_id}`).emit('receive_message', payload);
-      req.io.to(STAFF_ROOM).emit('admin_chat_update', { ...payload, chat_id });
-    }
 
     return res.status(201).json({
       success: true,
@@ -335,7 +329,7 @@ exports.sendMessage = async (req, res) => {
     });
   } catch (error) {
     discardUpload(req);
-    console.error('Error sending message:', error);
+    console.error('Error sending message:', error.message);
     return res.status(500).json({
       success: false,
       message: 'Failed to send message',
@@ -359,11 +353,12 @@ exports.updateChatStatus = async (req, res) => {
       });
     }
 
-    const updateData = {};
-    if (status) updateData.status = status;
-    if (assigned_admin_id) updateData.assigned_admin_id = assigned_admin_id;
-
-    await chat.update(updateData);
+    if (status && !['waiting', 'active', 'closed'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Unknown status' });
+    }
+    const extra = assigned_admin_id ? { assigned_admin_id } : {};
+    if (status) await chatService.setStatus(chat, status, extra);
+    else if (assigned_admin_id) await chat.update(extra);
 
     return res.json({
       success: true,
@@ -394,9 +389,7 @@ exports.closeChat = async (req, res) => {
       });
     }
 
-    await chat.update({
-      status: 'closed'
-    });
+    await chatService.setStatus(chat, 'closed');
 
     return res.json({
       success: true,
@@ -416,21 +409,19 @@ exports.closeChat = async (req, res) => {
 // Mark messages as read
 exports.markMessagesAsRead = async (req, res) => {
   try {
-    const { ChatMessage } = getModelInstance();
+    const { ChatMessage, Chat } = getModelInstance();
     const { chat_id } = req.params;
 
-    await ChatMessage.update(
-      {
-        is_read: true,
-        read_at: new Date()
-      },
-      {
-        where: {
-          chat_id,
-          is_read: false
-        }
-      }
-    );
+    const now = new Date();
+    await postgresDB().transaction(async (t) => {
+      await ChatMessage.update(
+        { is_read: true, read_at: now },
+        { where: { chat_id, is_read: false }, transaction: t }
+      );
+      // Staff opened the chat: every staff device (and the Truedesk app) counts it as read.
+      const [n] = await Chat.update({ staff_read_at: now }, { where: { id: chat_id }, transaction: t });
+      if (n) await outbox.chatChanged(t, chat_id, { staffReadAt: now.toISOString() });
+    });
 
     return res.json({
       success: true,
@@ -585,7 +576,10 @@ exports.updateLabel = async (req, res) => {
     if (!label) return res.status(404).json({ success: false, message: 'Label not found' });
     if (name) label.name = name;
     if (color) label.color = color;
-    await label.save();
+    await postgresDB().transaction(async (t) => {
+      await label.save({ transaction: t });
+      for (const chatId of await chatsWithLabel(id, t)) await outbox.chatLabelsChanged(t, chatId);
+    });
     return res.json({ success: true, data: { label } });
   } catch (error) {
     console.error('Error updating label:', error);
@@ -598,8 +592,13 @@ exports.deleteLabel = async (req, res) => {
   try {
     const { ChatLabel, ChatLabelAssignment } = getModelInstance();
     const { id } = req.params;
-    await ChatLabelAssignment.destroy({ where: { label_id: id } });
-    const deleted = await ChatLabel.destroy({ where: { id } });
+    let deleted = 0;
+    await postgresDB().transaction(async (t) => {
+      const affected = await chatsWithLabel(id, t);
+      await ChatLabelAssignment.destroy({ where: { label_id: id }, transaction: t });
+      deleted = await ChatLabel.destroy({ where: { id }, transaction: t });
+      for (const chatId of affected) await outbox.chatLabelsChanged(t, chatId);
+    });
     if (!deleted) return res.status(404).json({ success: false, message: 'Label not found' });
     return res.json({ success: true, message: 'Label deleted' });
   } catch (error) {
@@ -617,9 +616,14 @@ exports.assignLabel = async (req, res) => {
     const { id } = req.params;
     const { labelId } = req.body;
     if (!labelId) return res.status(400).json({ success: false, message: 'labelId is required' });
-    const [assignment, created] = await ChatLabelAssignment.findOrCreate({
-      where: { chat_id: id, label_id: labelId },
-      defaults: { chat_id: id, label_id: labelId }
+    const [assignment, created] = await postgresDB().transaction(async (t) => {
+      const result = await ChatLabelAssignment.findOrCreate({
+        where: { chat_id: id, label_id: labelId },
+        defaults: { chat_id: id, label_id: labelId },
+        transaction: t
+      });
+      if (result[1]) await outbox.chatLabelsChanged(t, id);
+      return result;
     });
     return res.status(created ? 201 : 200).json({ success: true, data: { assignment } });
   } catch (error) {
@@ -633,7 +637,10 @@ exports.removeLabel = async (req, res) => {
   try {
     const { ChatLabelAssignment } = getModelInstance();
     const { id, labelId } = req.params;
-    await ChatLabelAssignment.destroy({ where: { chat_id: id, label_id: labelId } });
+    await postgresDB().transaction(async (t) => {
+      const n = await ChatLabelAssignment.destroy({ where: { chat_id: id, label_id: labelId }, transaction: t });
+      if (n) await outbox.chatLabelsChanged(t, id);
+    });
     return res.json({ success: true, message: 'Label removed from chat' });
   } catch (error) {
     console.error('Error removing label:', error);
@@ -648,8 +655,13 @@ exports.deleteMessage = async (req, res) => {
   try {
     const { ChatMessage } = getModelInstance();
     const { messageId } = req.params;
-    const deleted = await ChatMessage.destroy({ where: { id: messageId } });
-    if (!deleted) return res.status(404).json({ success: false, message: 'Message not found' });
+    const msg = UUID_RE.test(String(messageId)) ? await ChatMessage.findByPk(messageId) : null;
+    if (!msg) return res.status(404).json({ success: false, message: 'Message not found' });
+    await postgresDB().transaction(async (t) => {
+      await msg.destroy({ transaction: t });
+      await outbox.messageDeleted(t, msg.id);
+    });
+    chatService.emitMessageDeleted(msg.chat_id, msg.id);
     return res.json({ success: true, message: 'Message deleted' });
   } catch (error) {
     console.error('Error deleting message:', error);
@@ -664,9 +676,13 @@ exports.deleteChat = async (req, res) => {
     const { id } = req.params;
     const chat = await Chat.findByPk(id);
     if (!chat) return res.status(404).json({ success: false, message: 'Chat not found' });
-    await ChatMessage.destroy({ where: { chat_id: id } });
-    await ChatLabelAssignment.destroy({ where: { chat_id: id } });
-    await chat.destroy();
+    await postgresDB().transaction(async (t) => {
+      const messages = await ChatMessage.findAll({ where: { chat_id: id }, attributes: ['id'], transaction: t });
+      await ChatMessage.destroy({ where: { chat_id: id }, transaction: t });
+      if (ChatLabelAssignment) await ChatLabelAssignment.destroy({ where: { chat_id: id }, transaction: t });
+      await chat.destroy({ transaction: t });
+      await outbox.chatDeleted(t, id, messages.map((m) => m.id));
+    });
     return res.json({ success: true, message: 'Chat deleted' });
   } catch (error) {
     console.error('Error deleting chat:', error);
@@ -680,15 +696,13 @@ exports.getChatByIdPublic = async (req, res) => {
     const { Chat, ChatMessage } = getModelInstance();
     const { id } = req.params;
 
-    const chat = await Chat.findByPk(id, {
-      include: [{
-        model: ChatMessage,
-        as: 'messages',
-        order: [['created_at', 'ASC']]
-      }]
-    });
+    const chat = UUID_RE.test(String(id)) ? await Chat.findByPk(id, {
+      include: [{ model: ChatMessage, as: 'messages' }],
+      order: [[{ model: ChatMessage, as: 'messages' }, 'createdAt', 'ASC']]
+    }) : null;
 
-    if (!chat) {
+    // The chat's visitor token (X-Chat-Token) is required; a wrong one looks like no chat.
+    if (!chat || !chatService.tokenOpens(chat, chatService.tokenFrom(req))) {
       return res.status(404).json({
         success: false,
         message: 'Chat not found'
@@ -700,11 +714,30 @@ exports.getChatByIdPublic = async (req, res) => {
       data: { chat }
     });
   } catch (error) {
-    console.error('Error getting chat:', error);
+    console.error('Error getting chat:', error.message);
     return res.status(500).json({
       success: false,
       message: 'Failed to get chat',
       error: error.message
     });
+  }
+};
+
+// Reopen a chat from a "continue the conversation" email link (PUBLIC).
+// Body: { chat_id, resume } → { visitor_token } for this browser to keep.
+exports.resumeChat = async (req, res) => {
+  try {
+    const { Chat } = getModelInstance();
+    const { chat_id, resume } = req.body || {};
+    const chat = typeof chat_id === 'string' && UUID_RE.test(chat_id) ? await Chat.findByPk(chat_id) : null;
+    if (!chat || !chatService.resumeKeyOpens(resume, chat.id)) {
+      return res.status(404).json({ success: false, message: 'This link has expired. Please start a new conversation.' });
+    }
+    const { token, hash } = chatService.newVisitorToken();
+    await chat.update({ visitor_token_hashes: chatService.addHash(chat, hash) });
+    return res.json({ success: true, data: { chat_id: chat.id, visitor_token: token } });
+  } catch (error) {
+    console.error('Error resuming chat:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not reopen the conversation' });
   }
 };

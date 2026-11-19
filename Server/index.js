@@ -67,7 +67,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Chat-Token']
 };
 
 app.use(cors(corsOptions));
@@ -246,6 +246,8 @@ app.get('/health', async (req, res) => {
 // record, so the socket 'send_message' relay is ignored. Every handler validates its
 // payload: a thrown error here would reach process.on('uncaughtException').
 const { verifyAdminToken } = require('./middleware/adminAuth');
+const chatService = require('./services/chatService');
+chatService.setIo(io);
 const CHAT_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const chatRoom = (data) => {
   const id = data && typeof data === 'object' ? data.chat_id : null;
@@ -268,17 +270,25 @@ io.on('connection', (socket) => {
   if (isStaff) socket.join('staff');
   logger.info(`Chat connection established: ${socket.id}${isStaff ? ' (staff)' : ''}`);
 
-  // Join a chat room (the chat id is the visitor's capability for their own chat)
-  socket.on('join_chat', safe((data) => {
+  // Join a chat room. Staff may join any chat; a visitor needs the chat's visitor token
+  // ({ chat_id, token }), except on chats started before tokens existed.
+  socket.on('join_chat', (data) => {
     const room = chatRoom(data);
     if (!room) return;
-    socket.join(room);
-    socket.to(room).emit('user_joined', {
-      user_type: isStaff ? 'admin' : 'customer',
-      user_id: isStaff ? socket.data.staff.id : null,
-      timestamp: new Date()
-    });
-  }));
+    (async () => {
+      if (!isStaff) {
+        const { getModels } = require('./models');
+        const chat = await getModels().Chat.findByPk(data.chat_id, { attributes: ['id', 'visitor_token_hashes'] });
+        if (!chat || !chatService.tokenOpens(chat, data.token)) return;
+      }
+      socket.join(room);
+      socket.to(room).emit('user_joined', {
+        user_type: isStaff ? 'admin' : 'customer',
+        user_id: isStaff ? socket.data.staff.id : null,
+        timestamp: new Date()
+      });
+    })().catch((err) => logger.warn(`Socket join_chat error: ${err.message}`));
+  });
 
   // Kept for older clients that still relay after sending; delivery now happens in
   // POST /chats/message/send, so relayed (unverified) content is not re-broadcast.
@@ -403,6 +413,11 @@ const startServer = async () => {
       } catch (err) {
         logger.warn('Could not start daily price refresh scheduler:', err.message);
       }
+    }
+
+    // Truedesk Cloud chat sync (off unless TRUEDESK_ENABLED=true; see services/truedesk)
+    if (dbConnected) {
+      require('./services/truedesk').start().catch((err) => logger.error(`Truedesk sync did not start: ${err.message}`));
     }
 
     // Start HTTP server regardless of database status

@@ -802,6 +802,28 @@ const initializeModels = (sequelize) => {
     is_archived: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    // Migration 021 (applied at startup by config/chatSyncSchema.js)
+    truedesk_version: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      comment: 'Truedesk Cloud version of this chat last seen by the website'
+    },
+    staff_read_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'When any member of staff last opened the chat'
+    },
+    visitor_token_hashes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'SHA-256 hex hashes of the visitor chat tokens, comma-separated. Never sent to clients'
+    },
+    visitor_emailed_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Last reply-notification email to the visitor'
     }
   }, {
     tableName: 'chats',
@@ -848,6 +870,12 @@ const initializeModels = (sequelize) => {
     read_at: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+    origin: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'web',
+      comment: "'web' (website) or 'truedesk' (a reply from the Truedesk app)"
     }
   }, {
     tableName: 'chat_messages',
@@ -1442,6 +1470,26 @@ const initializeModels = (sequelize) => {
   // Promotion associations
   Promotion.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
   Product.hasMany(Promotion, { foreignKey: 'product_id', as: 'promotions' });
+
+  // Chat JSON for every client (widget, staff PWA, admin, sockets): snake_case times as the
+  // clients read them (Sequelize's own keys are createdAt/updatedAt), messages in time
+  // order, and never the visitor token hashes.
+  const withSnakeTimes = (v) => {
+    if (v.createdAt !== undefined && v.created_at === undefined) v.created_at = v.createdAt;
+    if (v.updatedAt !== undefined && v.updated_at === undefined) v.updated_at = v.updatedAt;
+    return v;
+  };
+  const byCreated = (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  ChatMessage.prototype.toJSON = function toJSON() {
+    return withSnakeTimes({ ...this.get({ plain: true }) });
+  };
+  Chat.prototype.toJSON = function toJSON() {
+    const v = withSnakeTimes({ ...this.get({ plain: true }) });
+    delete v.visitor_token_hashes;
+    delete v.visitor_emailed_at;
+    if (Array.isArray(v.messages)) v.messages = v.messages.map((m) => withSnakeTimes({ ...m })).sort(byCreated);
+    return v;
+  };
 
   // Chat associations
   Chat.hasMany(ChatMessage, { foreignKey: 'chat_id', as: 'messages', onDelete: 'CASCADE' });

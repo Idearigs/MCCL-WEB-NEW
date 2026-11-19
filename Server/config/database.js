@@ -234,6 +234,14 @@ const connectPostgreSQL = async () => {
       logger.debug('Chat tables setup completed');
     }
 
+    // Visitor tokens, staff read time and the Truedesk Cloud outbox (migration 021).
+    // Columns the chat models read, so a failure here is logged loudly.
+    try {
+      await require('./chatSyncSchema').ensureChatSyncSchema(postgresDB);
+    } catch (error) {
+      logger.error('Chat sync schema (migration 021) could not be applied:', error.message);
+    }
+
     // NEVER run sync({ alter: true }) in production — it recreates duplicate
     // UNIQUE constraints on every deploy, causing catastrophic index bloat.
     // Use SQL migration files for schema changes instead.

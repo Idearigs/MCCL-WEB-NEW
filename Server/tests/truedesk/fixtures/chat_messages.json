@@ -1,0 +1,30 @@
+{
+  "contractVersion": 1,
+  "collection": "chat_messages",
+  "records": [
+    {
+      "id": "0192f1a0-0000-7000-8000-000000000061",
+      "fields": {
+        "chatID": "0192f1a0-0000-7000-8000-000000000051",
+        "sender": "visitor",
+        "senderName": "Sophie",
+        "text": "Hi, do you have this oval halo ring in size M?",
+        "attachment": {
+          "$blob": "9c1d1111111111111111111111111111111111111111111111111111111111b2"
+        },
+        "sentAt": "2026-11-19T10:00:05.000Z"
+      }
+    },
+    {
+      "id": "0192f1a0-0000-7000-8000-000000000062",
+      "fields": {
+        "chatID": "0192f1a0-0000-7000-8000-000000000051",
+        "sender": "staff",
+        "senderName": "Andrew",
+        "text": "Hello Sophie, yes we do. Would you like to come in and try it?",
+        "attachment": null,
+        "sentAt": "2026-11-19T10:02:00.000Z"
+      }
+    }
+  ]
+}

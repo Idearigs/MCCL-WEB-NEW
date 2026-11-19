@@ -1,0 +1,26 @@
+{
+  "contractVersion": 1,
+  "collection": "chats",
+  "records": [
+    {
+      "id": "0192f1a0-0000-7000-8000-000000000051",
+      "fields": {
+        "visitorName": "Sophie",
+        "visitorEmail": "sophie@example.com",
+        "subject": "Engagement rings",
+        "status": "active",
+        "source": "website",
+        "websiteUserID": null,
+        "labels": [
+          {
+            "name": "Hot lead",
+            "color": "#ef4444"
+          }
+        ],
+        "lastMessageAt": "2026-11-19T10:02:00.000Z",
+        "staffReadAt": "2026-11-19T10:01:30.000Z",
+        "createdAt": "2026-11-19T10:00:00.000Z"
+      }
+    }
+  ]
+}

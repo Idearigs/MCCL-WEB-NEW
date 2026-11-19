@@ -3,6 +3,14 @@ const helmet = require('helmet');
 const config = require('../config');
 const { logger } = require('../config/database');
 
+// The visitor's address. Behind Cloudflare every request reaches us from a Cloudflare edge
+// address (req.ip), so limits keyed on it would be shared by many visitors; Cloudflare puts
+// the real address in CF-Connecting-IP.
+const clientIp = (req) => {
+  const cf = req.get && req.get('cf-connecting-ip');
+  return (cf && cf.length <= 64 ? cf.trim() : '') || req.ip || 'unknown';
+};
+
 const createRateLimit = (options = {}) => {
   // Skip rate limiting in development
   if (process.env.NODE_ENV === 'development') {
@@ -21,8 +29,10 @@ const createRateLimit = (options = {}) => {
     },
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: clientIp,
+    ...(options.skip ? { skip: options.skip } : {}),
     handler: (req, res) => {
-      logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
+      logger.warn(`Rate limit exceeded for IP: ${clientIp(req)}`);
       res.status(429).json({
         success: false,
         message: 'Too many requests, please try again later'
@@ -38,6 +48,11 @@ const authRateLimit = createRateLimit({
 
 // Generous window for a catalog site: listing pages fire several API calls each.
 const generalRateLimit = createRateLimit({ windowMs: 15 * 60 * 1000, max: 2000 });
+
+// Live chat (public): starting or reopening a conversation, and visitor messages.
+// Staff (who send an Authorization header) are not limited here.
+const chatStartLimit = createRateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+const chatMessageLimit = createRateLimit({ windowMs: 5 * 60 * 1000, max: 60, skip: (req) => Boolean(req.headers.authorization) });
 
 const apiRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -115,7 +130,7 @@ const helmetConfig = helmet({
 
 // Request bodies are logged for diagnostics, but never their secrets or personal data:
 // passwords, PINs, tokens, ID numbers, card/payment fields and contact details.
-const REDACT_KEY = /pass(word)?|pin\b|^pin$|token|secret|otp|code$|id_number|card|cvc|cvv|iban|sort_?code|account_?number|phone|date_of_birth|dob|address|street|postcode|postal/i;
+const REDACT_KEY = /pass(word)?|pin\b|^pin$|token|secret|otp|code$|id_number|card|cvc|cvv|iban|sort_?code|account_?number|phone|date_of_birth|dob|address|street|postcode|postal|email|^name$|first_?name|last_?name|full_?name|customer_|^message$|^text$|resume/i;
 const redactBody = (body, depth = 0) => {
   if (body == null || typeof body !== 'object') return body;
   if (depth > 3) return '[object]';
@@ -167,6 +182,9 @@ const ipWhitelist = (allowedIPs = []) => {
 };
 
 module.exports = {
+  clientIp,
+  chatStartLimit,
+  chatMessageLimit,
   redactBody,
   createRateLimit,
   authRateLimit,
