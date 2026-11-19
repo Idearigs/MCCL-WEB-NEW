@@ -1,23 +1,20 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-import { MessageCircle } from "lucide-react";
 import API_BASE_URL from "../config/api";
-import { useIsMobile } from "../hooks/use-mobile";
 import { T, FONT_DISPLAY, FONT_BODY } from "./home-v2/tokens";
 
 /**
- * ChatWidgetV2 — the "Ask the workshop" chat.
- * VISUAL design: design_handoff_mcculloch_signin_chat_watches (Live chat). Ink launcher
- * pill, panel with a pre-chat form (topic chips set the message placeholder) and a live
- * conversation (ink/champagne bubbles, typing indicator).
+ * ChatWidgetV2: the "Ask the workshop" chat ("the note").
+ * A cream launcher with a hairline edge, and a cream window: topics as underlined words,
+ * fields as single lines, light bubbles. No solid black header.
  *
- * WIRED to the real chat backend, unchanged: POST /chats (create, topic → subject),
+ * WIRED to the real chat backend, unchanged: POST /chats (create, topic -> subject),
  * GET /chats/view/:id (history), POST /chats/message/send (FormData, optional attachment),
  * and Socket.io (receive_message / typing_status). Presence is derived from opening hours
- * (Mon–Sat 9–18) rather than always implying someone is online — the README requires that.
+ * (Mon-Sat 9-18) rather than always implying someone is online.
  */
 
-const M2 = T.textMuted; // was #8A8377
+const GROUND = "#FFFEFD";
 const SOCKET_URL = API_BASE_URL.replace("/api/v1", "");
 
 const TOPICS = ["A commission", "An order", "Sizing", "A stone", "Repairs"];
@@ -25,7 +22,7 @@ const PLACEHOLDERS: Record<string, string> = {
   "A commission": "Roughly what you have in mind, and whether there is a date to meet.",
   "An order": "Your order number if you have it to hand.",
   Sizing: "Which piece, and whether you know the size already.",
-  "A stone": "Carat, cut or certificate number — whatever you have.",
+  "A stone": "Carat, cut or certificate number, whatever you have.",
   Repairs: "What the piece is and what has happened to it.",
 };
 
@@ -48,9 +45,7 @@ const fmtTime = (iso?: string) => {
 };
 
 export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.Element {
-  const isMobile = useIsMobile();
   const [state, setState] = useState<"closed" | "form" | "live">("closed");
-  const [onDark, setOnDark] = useState(false); // launcher sits over a dark section (e.g. footer)
   const [topic, setTopic] = useState<string>("A commission");
   const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", message: "" });
   const [chatId, setChatId] = useState<string | null>(null);
@@ -81,33 +76,6 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
 
   useEffect(() => { setForm((f) => ({ ...f, name: user?.name || f.name, email: user?.email || f.email })); }, [user]);
 
-  // Flip the launcher to a light style when it overlaps a dark section (footer / hero),
-  // otherwise the dark button vanishes against the dark background.
-  useEffect(() => {
-    if (state !== "closed") return;
-    const check = () => {
-      const y = window.innerHeight - (typeof window !== "undefined" && window.innerWidth <= 768 ? 40 : 50); // launcher centre from bottom
-      const x = window.innerWidth - 80;
-      let dark = false;
-      const els = document.elementsFromPoint(x, y);
-      for (const el of els) {
-        if ((el as HTMLElement).closest?.("[data-cw-launch]")) continue; // skip the launcher itself
-        const bg = getComputedStyle(el as HTMLElement).backgroundColor;
-        const m = bg.match(/rgba?\(([^)]+)\)/);
-        if (!m) continue;
-        const [r, g, b, a = 1] = m[1].split(",").map((s) => parseFloat(s));
-        if (a < 0.5) continue; // transparent — keep looking underneath
-        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        dark = lum < 0.4;
-        break;
-      }
-      setOnDark(dark);
-    };
-    check();
-    window.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
-    return () => { window.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
-  }, [state]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, theyTyping]);
 
   // Socket + history once a chat exists
@@ -205,143 +173,160 @@ export default function ChatWidgetV2({ user }: { user?: ChatUser | null }): JSX.
   };
   const clearImage = () => { setImage(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = ""; };
 
-  const presence = state === "live"
-    ? (open ? "The workshop, at the bench" : "We're closed — we'll reply when we open")
-    : (open ? "Someone is here — we usually reply in minutes" : "Closed now — leave a message and we'll reply");
-
-  const inputStyle: React.CSSProperties = { width: "100%", padding: 14, fontFamily: FONT_BODY, fontSize: 14, color: T.ink, background: "#FFFFFF", border: `1px solid ${T.ruleStrong}`, borderRadius: 0, outline: "none" };
-  const labelStyle: React.CSSProperties = { display: "block", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: M2, marginBottom: 8 };
-
-  const panelWidth = isMobile ? "100vw" : "min(392px, calc(100vw - 40px))";
-  const panelStyle: React.CSSProperties = isMobile
-    ? { position: "fixed", inset: 0, zIndex: 75, display: "flex", flexDirection: "column", background: T.paper, animation: "cw2In 0.32s cubic-bezier(0.22,1,0.36,1) both" }
-    : { position: "fixed", right: 28, bottom: 28, zIndex: 75, display: "flex", flexDirection: "column", width: panelWidth, maxHeight: "min(620px, calc(100vh - var(--v2nav-h, 112px) - 40px))", background: T.paper, border: `1px solid ${T.rule}`, boxShadow: "0 24px 60px rgba(20,18,15,0.28)", animation: "cw2In 0.32s cubic-bezier(0.22,1,0.36,1) both" };
-
-  const dividerAt = messages[0]?.created_at;
+  const presence = open
+    ? "Open now. We usually reply within minutes."
+    : state === "live" ? "Closed now. We will reply when we open." : "Closed now. Leave a message and we will reply when we open.";
 
   return (
     <>
       <style>{`
-        .cw2-nobar::-webkit-scrollbar { display: none; }
-        .cw2-launch:hover { background: ${T.text} !important; }
-        .cw2-x:hover { color: #FFFFFF !important; }
-        .cw2-send:hover { background: ${T.text} !important; }
-        .cw2-cta:hover { background: ${T.text} !important; }
-        .cw2-mini:hover { color: ${T.ink} !important; }
-        @keyframes cw2In { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: none; } }
-        @keyframes cw2Msg { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        @keyframes cw2Blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
-        @media (prefers-reduced-motion: reduce) { .cw2-panel, .cw2-panel * { animation: none !important; } }
+        .cw-launch, .cw-panel, .cw-panel input, .cw-panel textarea, .cw-panel button { font-family: ${FONT_BODY}; }
+        .cw-launch { position: fixed; right: 28px; bottom: 28px; z-index: 70; display: flex; align-items: center; gap: 10px; padding: 13px 20px; cursor: pointer; color: ${T.text}; background: ${T.paper}; border: 1px solid ${T.ruleStrong}; border-radius: 0; box-shadow: 0 10px 28px -14px rgba(28,26,23,0.4); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; transition: border-color .25s ease, box-shadow .25s ease; }
+        .cw-launch:hover { border-color: ${T.ink}; box-shadow: 0 14px 32px -14px rgba(28,26,23,0.5); }
+        .cw-launch svg { display: none; }
+        .cw-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${T.gold}; }
+        .cw-dot[data-off] { background: ${T.ruleStrong}; }
         /* Hidden while the phone menu is open, where it covered "Book an appointment". */
-        body[data-v2-menu] .cw2-launch { display: none !important; }
+        body[data-v2-menu] .cw-launch { display: none !important; }
+
+        .cw-panel { position: fixed; right: 28px; bottom: 28px; z-index: 75; display: flex; flex-direction: column; width: min(380px, calc(100vw - 40px)); max-height: min(640px, calc(100vh - var(--v2nav-h, 112px) - 40px)); color: ${T.text}; background: ${T.paper}; border: 1px solid ${T.line}; box-shadow: 0 24px 60px -20px rgba(28,26,23,0.35); font-size: 14px; animation: cwIn .32s cubic-bezier(.22,1,.36,1) both; }
+        .cw-head { flex: none; display: flex; justify-content: space-between; gap: 14px; padding: 22px 22px 18px; border-bottom: 1px solid ${T.line}; }
+        .cw-head h2 { margin: 0; font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: 23px; line-height: 1.15; color: ${T.text}; }
+        .cw-pres { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0 0; font-size: 12.5px; line-height: 1.5; }
+        .cw-pres .cw-dot { margin-top: 7px; }
+        .cw-x { flex: none; width: 34px; height: 34px; margin: -6px -8px 0 0; padding: 0; cursor: pointer; color: ${T.text}; background: transparent; border: 0; font-size: 22px; font-weight: 300; line-height: 1; }
+        .cw-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 20px 22px 22px; }
+        .cw-body::-webkit-scrollbar { display: none; }
+        .cw-lab { display: block; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: ${T.textMuted}; }
+        .cw-words { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 4px; }
+        .cw-words button { position: relative; padding: 8px 0; cursor: pointer; font-size: 14px; color: ${T.textMuted}; background: transparent; border: 0; white-space: nowrap; transition: color .2s ease; }
+        .cw-words button:hover, .cw-words button[aria-pressed="true"] { color: ${T.text}; }
+        .cw-words button[aria-pressed="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 4px; height: 1px; background: ${T.gold}; }
+        .cw-fld { display: block; margin-top: 18px; }
+        .cw-fld input, .cw-fld textarea { display: block; width: 100%; padding: 8px 0 10px; font-size: 15px; line-height: 1.5; color: ${T.text}; background: transparent; border: 0; border-bottom: 1px solid ${T.ruleStrong}; border-radius: 0; outline: none; resize: none; box-shadow: none; }
+        .cw-fld input:focus, .cw-fld textarea:focus { border-bottom-color: ${T.ink}; }
+        .cw-panel ::placeholder { color: #8E897E; opacity: 1; }
+        .cw-err { margin: 14px 0 0; padding-left: 12px; border-left: 1px solid ${T.gold}; font-size: 13px; line-height: 1.5; color: ${T.text}; }
+        .cw-cta { display: block; width: 100%; margin-top: 22px; padding: 16px; cursor: pointer; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.paper}; background: ${T.ink}; border: 0; border-radius: 0; transition: background .25s ease; }
+        .cw-cta:hover { background: ${T.text}; }
+        .cw-cta:disabled { opacity: 0.7; cursor: default; }
+        .cw-fine { margin: 12px 0 0; font-size: 12px; line-height: 1.55; color: ${T.textMuted}; }
+        .cw-day { margin: 0 0 18px; text-align: center; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.textMuted}; }
+        .cw-msg { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 16px; animation: cwMsg .3s cubic-bezier(.22,1,.36,1) both; }
+        .cw-msg[data-me] { align-items: flex-end; }
+        .cw-msg small { margin-bottom: 6px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: ${T.textMuted}; }
+        .cw-msg > span { max-width: 84%; padding: 12px 14px; font-size: 13.5px; line-height: 1.6; color: ${T.text}; background: ${GROUND}; border: 1px solid ${T.line}; overflow-wrap: anywhere; white-space: pre-wrap; }
+        .cw-msg[data-me] > span { background: ${T.tint}; border-color: ${T.tint}; }
+        .cw-msg img { display: block; max-width: 100%; }
+        .cw-typing { display: flex !important; align-items: center; gap: 5px; padding: 15px !important; }
+        .cw-typing i { width: 5px; height: 5px; border-radius: 50%; background: ${T.textMuted}; animation: cwBlink 1.4s ease-in-out infinite; }
+        .cw-typing i:nth-child(2) { animation-delay: .2s; } .cw-typing i:nth-child(3) { animation-delay: .4s; }
+        .cw-foot { flex: none; padding: 8px 22px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid ${T.line}; background: ${GROUND}; }
+        .cw-comp { display: flex; align-items: center; gap: 12px; }
+        .cw-comp input[type="text"] { flex: 1; min-width: 0; padding: 12px 0; font-size: 15px; color: ${T.text}; background: transparent; border: 0; outline: none; box-shadow: none; }
+        .cw-clip { flex: none; display: flex; padding: 6px 0; cursor: pointer; color: ${T.text}; background: transparent; border: 0; }
+        .cw-send { flex: none; padding: 10px 0; cursor: pointer; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.text}; background: transparent; border: 0; border-bottom: 1px solid ${T.gold}; }
+        .cw-send:disabled { opacity: 0.45; cursor: default; }
+        .cw-thumb { position: relative; display: inline-block; margin: 6px 0 2px; }
+        .cw-thumb img { display: block; max-height: 64px; border: 1px solid ${T.line}; }
+        .cw-thumb button { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; padding: 0; cursor: pointer; border-radius: 50%; color: ${T.paper}; background: ${T.ink}; border: 0; font-size: 12px; line-height: 1; }
+        .cw-launch:focus-visible, .cw-panel button:focus-visible { outline: 1px solid ${T.ink}; outline-offset: 3px; }
+
+        @keyframes cwIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+        @keyframes cwMsg { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        @keyframes cwBlink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .cw-panel, .cw-panel * { animation: none !important; } }
+
+        @media (max-width: 768px) {
+          .cw-launch { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 50px; height: 50px; padding: 0; justify-content: center; border-radius: 50%; }
+          .cw-launch svg { display: block; }
+          .cw-launch b { display: none; }
+          .cw-launch .cw-dot { position: absolute; top: 13px; right: 12px; box-shadow: 0 0 0 2px ${T.paper}; }
+          .cw-panel { inset: 0; width: auto; max-height: none; border: 0; box-shadow: none; }
+          .cw-head { padding-top: calc(22px + env(safe-area-inset-top, 0px)); }
+          .cw-fld input, .cw-fld textarea, .cw-comp input[type="text"] { font-size: 16px; }
+        }
       `}</style>
 
       {/* Launcher */}
       {state === "closed" && (
-        <button type="button" onClick={() => setState("form")} className="cw2-launch" data-cw-launch
-          aria-label={isMobile ? "Ask us: chat with the workshop" : undefined}
-          style={{ position: "fixed", right: isMobile ? 16 : 28, bottom: isMobile ? "calc(16px + env(safe-area-inset-bottom))" : 28, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, ...(isMobile ? { width: 52, height: 52, padding: 0, borderRadius: "50%" } : { padding: "15px 22px" }), cursor: "pointer", background: onDark ? T.paper : T.ink, border: `1px solid ${onDark ? T.ruleStrong : "transparent"}`, boxShadow: onDark ? "0 12px 32px rgba(20,18,15,0.45)" : "0 12px 32px rgba(20,18,15,0.24)", fontFamily: FONT_BODY, transition: "background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease" }}>
-          {isMobile ? (
-            <span style={{ position: "relative", display: "flex" }}>
-              <MessageCircle size={22} strokeWidth={1.6} color={onDark ? T.ink : T.paper} />
-              <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: "50%", background: open ? T.gold : M2, border: `1.5px solid ${onDark ? T.paper : T.ink}` }} />
-            </span>
-          ) : (
-            <>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: open ? T.gold : (onDark ? T.gold : M2), transition: "background 0.4s ease" }} />
-              <span style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: onDark ? T.ink : T.paper, transition: "color 0.4s ease" }}>Ask the workshop</span>
-            </>
-          )}
+        <button type="button" onClick={() => setState(chatId ? "live" : "form")} className="cw-launch" data-cw-launch aria-label="Ask the workshop">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true"><path d="M4 5h16v11h-9.5L6 20v-4H4z" /></svg>
+          <span className="cw-dot" data-off={open ? undefined : ""} />
+          <b style={{ fontWeight: 400 }}>Ask the workshop</b>
         </button>
       )}
 
-      {/* Panel */}
+      {/* Window */}
       {state !== "closed" && (
-        <aside className="cw2-panel" style={panelStyle}>
-          {/* Header */}
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "start", gap: 14, padding: "20px 22px", background: T.ink, flex: "none" }}>
+        <aside className="cw-panel" role="dialog" aria-label="Ask the workshop">
+          <div className="cw-head">
             <div>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: 21, letterSpacing: "0.2em", color: "#FFFFFF", lineHeight: 1 }}>McCulloch</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: open ? T.gold : M2 }} />
-                <span style={{ fontSize: 11, color: T.onDarkBody }}>{presence}</span>
-              </div>
+              <h2>Ask the workshop</h2>
+              <p className="cw-pres"><span className="cw-dot" data-off={open ? undefined : ""} />{presence}</p>
             </div>
-            <button type="button" onClick={() => setState("closed")} aria-label="Close" className="cw2-x" style={{ width: 32, height: 32, margin: "-4px -6px 0 0", cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 19, color: T.onDarkMuted }}>×</button>
+            <button type="button" onClick={() => setState("closed")} aria-label="Close" className="cw-x">×</button>
           </div>
 
-          {/* Pre-chat form */}
+          {/* Before the conversation */}
           {state === "form" && (
-            <div className="cw2-nobar" style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "24px 22px" }}>
-              <p style={{ margin: "0 0 22px", fontSize: 14, lineHeight: 1.7, color: T.body }}>A jeweller answers these, not a robot. Tell us what you are after and we will pick it up{open ? " — usually within a few minutes during opening hours." : ". We're closed now, so we'll reply when we next open."}</p>
-
-              <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: M2, marginBottom: 11 }}>What is it about?</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 22 }}>
-                {TOPICS.map((tp) => {
-                  const on = tp === topic;
-                  return (
-                    <button key={tp} type="button" onClick={() => setTopic(tp)} style={{ padding: "10px 13px", cursor: "pointer", fontFamily: FONT_BODY, fontSize: 12, color: on ? T.paper : T.body, background: on ? T.ink : "transparent", border: `1px solid ${on ? T.ink : T.line}`, transition: "all 0.2s ease" }}>{tp}</button>
-                  );
-                })}
+            <div className="cw-body">
+              <span className="cw-lab">What is it about?</span>
+              <div className="cw-words">
+                {TOPICS.map((tp) => (
+                  <button key={tp} type="button" aria-pressed={tp === topic} onClick={() => setTopic(tp)}>{tp}</button>
+                ))}
               </div>
-
-              <div style={{ display: "grid", gap: 14 }}>
-                <label style={{ display: "block" }}><span style={labelStyle}>Your name</span><input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="First and last name" style={inputStyle} /></label>
-                <label style={{ display: "block" }}><span style={labelStyle}>Email address</span><input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="you@example.co.uk" style={inputStyle} /></label>
-                <label style={{ display: "block" }}><span style={labelStyle}>Message</span><textarea rows={4} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} placeholder={PLACEHOLDERS[topic]} style={{ ...inputStyle, lineHeight: 1.6, resize: "vertical" }} /></label>
-              </div>
-
-              {error && <p style={{ margin: "12px 0 0", fontSize: 13, color: "#C4A46A" }}>{error}</p>}
-
-              <button type="button" onClick={startConversation} disabled={starting} className="cw2-cta" style={{ width: "100%", marginTop: 16, padding: 16, cursor: starting ? "default" : "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: T.paper, background: T.ink, border: 0, opacity: starting ? 0.7 : 1, transition: "background 0.25s ease" }}>{starting ? "Starting…" : "Start the conversation"}</button>
-              <p style={{ margin: "14px 0 0", fontSize: 11.5, lineHeight: 1.6, color: M2 }}>We keep a transcript so you do not have to explain twice. Nothing is shared outside the workshop.</p>
+              <label className="cw-fld"><span className="cw-lab">Your name</span><input type="text" autoComplete="name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="First and last name" /></label>
+              <label className="cw-fld"><span className="cw-lab">Email</span><input type="email" autoComplete="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="you@example.co.uk" /></label>
+              <label className="cw-fld"><span className="cw-lab">Message</span><textarea rows={2} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} placeholder={PLACEHOLDERS[topic]} /></label>
+              {error && <p className="cw-err" role="alert">{error}</p>}
+              <button type="button" onClick={startConversation} disabled={starting} className="cw-cta">{starting ? "Sending…" : "Send message"}</button>
+              <p className="cw-fine">A jeweller answers, not a robot. Nothing is shared outside the workshop.</p>
             </div>
           )}
 
-          {/* Live conversation */}
+          {/* The conversation */}
           {state === "live" && (
             <>
-              <div className="cw2-nobar" style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: 22 }}>
-                <div style={{ textAlign: "center", fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", color: T.textMuted, marginBottom: 22 }}>Today, {fmtTime(dividerAt)}</div>
+              <div className="cw-body">
+                <p className="cw-day">Today</p>
                 {messages.map((m, i) => {
                   const mine = m.sender_type === "customer";
                   return (
-                    <div key={`${m.id}-${i}`} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start", marginBottom: 18, animation: "cw2Msg 0.3s cubic-bezier(0.22,1,0.36,1) both", animationDelay: `${Math.min(i * 0.05, 0.4)}s` }}>
-                      <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: T.textMuted, marginBottom: 7 }}>{mine ? "You" : "McCulloch"}</span>
-                      <span style={{ maxWidth: "84%", padding: "13px 15px", fontSize: 13.5, lineHeight: 1.65, color: mine ? "#F1EDE4" : T.heading, background: mine ? T.ink : T.tint, border: `1px solid ${mine ? T.ink : T.rule}` }}>
-                        {m.attachment_url && <img src={`${SOCKET_URL}${m.attachment_url}`} alt="" style={{ display: "block", maxWidth: "100%", marginBottom: m.message ? 8 : 0 }} />}
+                    <div key={`${m.id}-${i}`} className="cw-msg" data-me={mine ? "" : undefined}>
+                      <small>{mine ? "You" : "McCulloch"} · {fmtTime(m.created_at)}</small>
+                      <span>
+                        {m.attachment_url && <img src={`${SOCKET_URL}${m.attachment_url}`} alt="Attached photograph" style={{ marginBottom: m.message ? 8 : 0 }} />}
                         {m.message}
                       </span>
                     </div>
                   );
                 })}
                 {theyTyping && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 10, letterSpacing: "0.12em", color: T.textMuted, marginBottom: 7 }}>McCulloch</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5, padding: 15, background: T.tint, border: `1px solid ${T.rule}` }}>
-                      {[0, 0.2, 0.4].map((d) => <span key={d} style={{ width: 5, height: 5, borderRadius: "50%", background: M2, animation: `cw2Blink 1.4s ease-in-out ${d}s infinite` }} />)}
-                    </span>
+                  <div className="cw-msg">
+                    <small>McCulloch</small>
+                    <span className="cw-typing" aria-label="McCulloch is typing"><i /><i /><i /></span>
                   </div>
                 )}
                 <div ref={endRef} />
               </div>
 
-              {/* Composer */}
-              <div style={{ padding: "14px 22px 18px", borderTop: `1px solid ${T.rule}`, background: "#FFFFFF", flex: "none" }}>
+              <div className="cw-foot">
                 {imagePreview && (
-                  <div style={{ position: "relative", display: "inline-block", marginBottom: 10 }}>
-                    <img src={imagePreview} alt="" style={{ maxHeight: 64, border: `1px solid ${T.rule}` }} />
-                    <button type="button" onClick={clearImage} aria-label="Remove image" style={{ position: "absolute", top: -8, right: -8, width: 20, height: 20, borderRadius: "50%", background: T.ink, color: T.paper, border: 0, cursor: "pointer", fontSize: 12, lineHeight: 1 }}>×</button>
+                  <div className="cw-thumb">
+                    <img src={imagePreview} alt="" />
+                    <button type="button" onClick={clearImage} aria-label="Remove photograph">×</button>
                   </div>
                 )}
-                <form onSubmit={send} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "center", gap: 12 }}>
-                  <input type="text" value={input} onChange={onInput} placeholder="Write a message" disabled={sending} style={{ width: "100%", padding: "13px 0", fontFamily: FONT_BODY, fontSize: isMobile ? 15 : 14, color: T.ink, background: "transparent", border: 0, outline: "none" }} />
-                  <button type="submit" disabled={sending || (!input.trim() && !image)} className="cw2-send" style={{ padding: "12px 18px", cursor: sending ? "default" : "pointer", fontFamily: FONT_BODY, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: T.paper, background: T.ink, border: 0, opacity: sending || (!input.trim() && !image) ? 0.5 : 1, transition: "background 0.25s ease" }}>{sending ? "…" : "Send"}</button>
+                {error && <p className="cw-err" role="alert" style={{ margin: "6px 0" }}>{error}</p>}
+                <form onSubmit={send} className="cw-comp">
+                  <button type="button" onClick={() => fileRef.current?.click()} className="cw-clip" aria-label="Attach a photograph" title="Attach a photograph">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true"><path d="M20 11.5l-8 8a5 5 0 01-7-7l8.500-8.500a3.500 3.500 0 015 5L10 17.500a2 2 0 01-3-3l7.500-7.500" /></svg>
+                  </button>
+                  <input type="text" value={input} onChange={onInput} placeholder="Write a message" aria-label="Write a message" disabled={sending} />
+                  <button type="submit" disabled={sending || (!input.trim() && !image)} className="cw-send">{sending ? "…" : "Send"}</button>
                 </form>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginTop: 12, fontSize: 11, color: T.textMuted }}>
-                  <button type="button" onClick={() => fileRef.current?.click()} className="cw2-mini" style={{ padding: 0, cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 11, color: M2 }}>Attach a photograph</button>
-                  <a href="/contact" style={{ color: M2, textDecoration: "none" }}>Book a call instead</a>
-                </div>
                 <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} style={{ display: "none" }} />
               </div>
             </>
