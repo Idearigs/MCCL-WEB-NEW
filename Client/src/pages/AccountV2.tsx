@@ -228,7 +228,7 @@ const AccountV2 = (): JSX.Element => {
       case "saved":
         return (
           <div>
-            <PaneHead title="Saved items" right={<span>Kept for as long as you like</span>} />
+            <PaneHead title="Wish list" right={<span>Kept for as long as you like</span>} />
             {savedItems.length === 0 ? (
               <EmptyPane head="Nothing saved yet." body="Tap the heart on any piece and it will wait here for you." cta={{ label: "Browse engagement rings", to: "/engagement-rings" }} />
             ) : (
@@ -417,7 +417,7 @@ const AccountV2 = (): JSX.Element => {
 
   const figures = [
     { n: loadingOrders ? "" : String(orderCount), l: orderCount === 1 ? "Order" : "Orders" },
-    { n: String(favoritesCount), l: "Saved" },
+    { n: String(favoritesCount), l: "Wish list" },
     { n: clientSince, l: "Client since" },
   ];
   const counts: Record<string, number | string> = { orders: loadingOrders ? "" : orderCount, saved: favoritesCount, appointments: appointments.length || "", pieces: pieces.length || "", details: "", addresses: addresses.length || "" };

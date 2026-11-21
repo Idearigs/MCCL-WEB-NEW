@@ -57,8 +57,8 @@ const Favorites: React.FC = () => {
   return shell(
     <>
       <section className="ac-wrap ac-open">
-        <div className="ac-crumb"><Link to="/">Home</Link><span>/</span><span>Saved</span></div>
-        <h1 className="ac-h1" style={{ marginTop: 0 }}>Saved</h1>
+        <div className="ac-crumb"><Link to="/">Home</Link><span>/</span><span>Wish list</span></div>
+        <h1 className="ac-h1" style={{ marginTop: 0 }}>Wish list</h1>
         <div className="ac-eyebrow" style={{ marginTop: 16 }}>{favoritesCount} {favoritesCount === 1 ? "piece" : "pieces"}</div>
       </section>
 

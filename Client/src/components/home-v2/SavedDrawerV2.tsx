@@ -29,15 +29,15 @@ const favPrice = (p: any): number | undefined => {
 const favLink = (p: any) => (p?.slug ? `/product/${p.slug}` : "#");
 
 const savedAgo = (iso?: string): string => {
-  if (!iso) return "Saved";
+  if (!iso) return "Added";
   const then = new Date(iso).getTime();
-  if (isNaN(then)) return "Saved";
+  if (isNaN(then)) return "Added";
   const days = Math.floor((Date.now() - then) / 86400000);
-  if (days <= 0) return "Saved today";
-  if (days === 1) return "Saved yesterday";
-  if (days < 14) return `Saved ${days} days ago`;
-  if (days < 60) return `Saved ${Math.round(days / 7)} weeks ago`;
-  return "Saved last month";
+  if (days <= 0) return "Added today";
+  if (days === 1) return "Added yesterday";
+  if (days < 14) return `Added ${days} days ago`;
+  if (days < 60) return `Added ${Math.round(days / 7)} weeks ago`;
+  return "Added last month";
 };
 
 interface SavedDrawerV2Props {
@@ -115,7 +115,7 @@ const SavedDrawerV2: React.FC<SavedDrawerV2Props> = ({ isOpen, isVisible, onClos
         {/* Header */}
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, padding: "24px 26px 20px", borderBottom: `1px solid ${T.rule}`, flex: "none" }}>
           <div>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 26, lineHeight: 1 }}>Saved</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: 26, lineHeight: 1 }}>Wish list</div>
             <div style={{ fontSize: 11.5, color: M2, marginTop: 7 }}>{savedLine}</div>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" style={{ cursor: "pointer", background: "transparent", border: 0, fontFamily: FONT_BODY, fontSize: 22, lineHeight: 1, color: T.body }}>×</button>
@@ -154,7 +154,7 @@ const SavedDrawerV2: React.FC<SavedDrawerV2Props> = ({ isOpen, isVisible, onClos
 
         {/* Footer */}
         <div style={{ padding: "20px 26px 24px", borderTop: `1px solid ${T.rule}`, background: T.tint, flex: "none" }}>
-          <p style={{ margin: "0 0 16px", fontSize: 12.5, lineHeight: 1.65, color: T.body }}>Saved pieces keep their specification. Nothing is reserved — everything is made to order.</p>
+          <p style={{ margin: "0 0 16px", fontSize: 12.5, lineHeight: 1.65, color: T.body }}>Pieces in your wish list keep their specification. Nothing is reserved — everything is made to order.</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <Link to="/account" onClick={onClose} style={{ padding: 14, textAlign: "center", background: T.ink, color: T.paper, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase" }}>Open in account</Link>
             <Link to="/contact" onClick={onClose} style={{ padding: 14, textAlign: "center", border: `1px solid ${T.ink}`, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: T.ink }}>See them in person</Link>

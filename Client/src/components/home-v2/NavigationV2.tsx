@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Search as SearchIcon, User as UserIcon } from "lucide-react";
+import { Menu, X, Search as SearchIcon, User as UserIcon, Heart as HeartIcon, ShoppingBag as BagIcon } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useFavorites } from "../../contexts/FavoritesContext";
 import { useUserAuth } from "../../contexts/UserAuthContext";
@@ -423,6 +423,10 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
   const headerBorder = solid ? T.rule : "rgba(248,246,240,0.22)";
   const navColor = solid ? T.heading : "#FFFFFF";
   const utilColor = solid ? T.muted : "rgba(255,255,255,0.78)";
+  // Count bubble on the wish list and bag icons: dark on the solid bar, light over the hero.
+  const navBadge = (n: number) => n > 0
+    ? <span className="v2nav-badge" aria-hidden="true" style={{ background: solid ? T.ink : "#FFFFFF", color: solid ? "#FFFFFF" : T.ink }}>{n > 99 ? "99+" : n}</span>
+    : null;
   // Over the hero the bar matches the header (translucent dark); once scrolled it
   // goes solid dark ink with light text, while the header row below turns ivory.
 
@@ -484,6 +488,9 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
         .v2nav-item { position: relative; padding: 6px 0; border-bottom: 1px solid transparent; white-space: nowrap; transition: border-color 0.25s ease, color 0.25s ease; }
         .v2nav-item:hover { border-bottom-color: ${T.gold}; }
         .v2nav-util { transition: color 0.25s ease; cursor: pointer; background: none; border: 0; font: inherit; padding: 10px 0; }
+        .v2nav-icon { position: relative; }
+        .v2nav-icon:hover { text-decoration: none; opacity: 0.7; }
+        .v2nav-badge { position: absolute; top: 6px; right: 4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; font-family: ${FONT_BODY}; font-size: 10px; line-height: 16px; letter-spacing: 0; text-align: center; font-weight: 500; pointer-events: none; }
         .v2nav-tap { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 !important; }
         .v2-skip { position: fixed; left: 12px; top: -60px; z-index: 100; padding: 12px 18px; background: ${T.ink}; color: ${T.paper}; font-family: ${FONT_BODY}; font-size: 13px; text-decoration: none; transition: top 0.2s ease; }
         .v2-skip:focus { top: 12px; }
@@ -543,13 +550,13 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
               ))}
             </nav>
 
-            <div onFocus={() => setMenu(null)} style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "clamp(12px, 1.4vw, 20px)", whiteSpace: "nowrap", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor, transition: "color 0.35s ease" }}>
-              <button className="v2nav-util" onMouseEnter={() => setMenu(null)} onClick={() => setSearchOpen(true)}>Search</button>
-              <button className="v2nav-util" onClick={openWishlist} style={{ display: "flex", alignItems: "baseline", gap: 5 }}>Saved{favoritesCount > 0 ? <span>({favoritesCount})</span> : null}</button>
+            <div onFocus={() => setMenu(null)} style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 4, whiteSpace: "nowrap", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: navColor, marginRight: -12, transition: "color 0.35s ease" }}>
+              <button className="v2nav-util v2nav-tap v2nav-icon" onMouseEnter={() => setMenu(null)} onClick={() => setSearchOpen(true)} aria-label="Search" title="Search"><SearchIcon size={19} strokeWidth={1.6} /></button>
+              <button className="v2nav-util v2nav-tap v2nav-icon" onClick={openWishlist} aria-label={favoritesCount > 0 ? `Wish list, ${favoritesCount} item${favoritesCount === 1 ? "" : "s"}` : "Wish list"} title="Wish list"><HeartIcon size={19} strokeWidth={1.6} />{navBadge(favoritesCount)}</button>
               {isAuthenticated
-                ? <Link to="/account" className="v2nav-util" title={`Signed in as ${user?.email || accountFirstName}`} style={{ display: "flex", alignItems: "center", gap: 6 }}><UserIcon size={15} strokeWidth={1.6} /><span style={{ textTransform: "none", letterSpacing: "0.02em" }}>{accountFirstName}</span></Link>
-                : <button className="v2nav-util" onClick={() => setAuthOpen(true)}>Account</button>}
-              <button className="v2nav-util" onClick={openCart}>Bag ({getCartCount()})</button>
+                ? <Link to="/account" className="v2nav-util v2nav-tap v2nav-icon" aria-label={`Account, signed in as ${accountFirstName}`} title={`Signed in as ${user?.email || accountFirstName}`}><UserIcon size={19} strokeWidth={1.6} /></Link>
+                : <button className="v2nav-util v2nav-tap v2nav-icon" onClick={() => setAuthOpen(true)} aria-label="Sign in" title="Sign in"><UserIcon size={19} strokeWidth={1.6} /></button>}
+              <button className="v2nav-util v2nav-tap v2nav-icon" onClick={openCart} aria-label={`Bag, ${getCartCount()} item${getCartCount() === 1 ? "" : "s"}`} title="Bag"><BagIcon size={19} strokeWidth={1.6} />{navBadge(getCartCount())}</button>
             </div>
           </div>
 
@@ -561,7 +568,8 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
             </Link>
             <div style={{ display: "flex", alignItems: "center", marginRight: -6 }}>
               <button className="v2nav-util v2nav-tap" onClick={() => setSearchOpen(true)} aria-label="Search"><SearchIcon style={{ width: 19, height: 19, color: navColor }} strokeWidth={1.6} /></button>
-              <button className="v2nav-util v2nav-tap" onClick={openCart} style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: utilColor }}>Bag ({getCartCount()})</button>
+              <button className="v2nav-util v2nav-tap v2nav-icon" onClick={openWishlist} aria-label={favoritesCount > 0 ? `Wish list, ${favoritesCount} item${favoritesCount === 1 ? "" : "s"}` : "Wish list"} style={{ color: navColor }}><HeartIcon style={{ width: 19, height: 19 }} strokeWidth={1.6} />{navBadge(favoritesCount)}</button>
+              <button className="v2nav-util v2nav-tap v2nav-icon" onClick={openCart} aria-label={`Bag, ${getCartCount()} item${getCartCount() === 1 ? "" : "s"}`} style={{ color: navColor }}><BagIcon style={{ width: 19, height: 19 }} strokeWidth={1.6} />{navBadge(getCartCount())}</button>
             </div>
           </div>
 
@@ -620,7 +628,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
               <Link to="/contact" onClick={() => setMobileOpen(false)} style={{ display: "block", textAlign: "center", padding: "15px 0", background: T.ink, color: T.paper, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase" }}>Book an appointment</Link>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
                 <button onClick={() => { setMobileOpen(false); setSearchOpen(true); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ink}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Search</button>
-                <button onClick={() => { setMobileOpen(false); openWishlist(); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ink}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Saved{favoritesCount > 0 ? ` (${favoritesCount})` : ""}</button>
+                <button onClick={() => { setMobileOpen(false); openWishlist(); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ink}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink }}>Wish list{favoritesCount > 0 ? ` (${favoritesCount})` : ""}</button>
                 {isAuthenticated
                   ? <Link to="/account" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, padding: "13px 0", border: `1px solid ${T.ink}`, fontSize: 11, letterSpacing: "0.04em", color: T.ink, gridColumn: "span 2" }}><UserIcon size={15} strokeWidth={1.6} />{accountFirstName}</Link>
                   : <button onClick={() => { setMobileOpen(false); setAuthOpen(true); }} style={{ padding: "13px 0", background: "transparent", border: `1px solid ${T.ink}`, cursor: "pointer", fontFamily: FONT_BODY, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink, gridColumn: "span 2" }}>Account</button>}
