@@ -131,7 +131,7 @@ export const SERVICES: ServicesContent = {
       "h1": "Pearl Restringing",
       "intro": [
         "We offer restringing and knotting of pearl and bead jewellery, through our showroom in Beeston, Nottingham.",
-        "Pearls are delicate organic gemstones. Bring your necklace or bracelet in and we'll look at its condition, talk you through the options and confirm the cost before any work begins."
+        "Pearls are delicate organic gemstones. Bring your necklace or bracelet to our showroom for an assessment. We will provide an estimate before carrying out any chargeable work whenever possible."
       ],
       "includes": ["Pearl necklace and bracelet restringing", "Knotting between pearls", "Bead jewellery restringing"],
       "sections": [
