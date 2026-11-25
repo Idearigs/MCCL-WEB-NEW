@@ -249,7 +249,7 @@ const VisitUs = (): JSX.Element => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="font-cormorant font-medium text-gray-900">Monday – Saturday</span>
-                  <span className="font-cormorant text-gray-600">9:00am – 5:30pm</span>
+                  <span className="font-cormorant text-gray-600">9:30am – 5:00pm</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="font-cormorant font-medium text-gray-900">Sunday</span>
@@ -303,7 +303,7 @@ const VisitUs = (): JSX.Element => {
                 <p className="text-base font-cormorant text-gray-600 leading-relaxed mb-2">
                   Walk-in customers are always welcome. Appointments are recommended for bespoke consultations and valuations.
                 </p>
-                <div className="text-sm font-cormorant text-gray-600">Mon–Sat: 9:00am–5:30pm</div>
+                <div className="text-sm font-cormorant text-gray-600">Mon–Sat: 9:30am–5:00pm</div>
               </div>
             </div>
           </div>

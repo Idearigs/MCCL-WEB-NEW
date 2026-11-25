@@ -24,6 +24,7 @@ const columns: { title: string; links: { label: string; to: string; external?: b
     title: "Services",
     links: [
       { label: "Bespoke design", to: "/bespoke-design" },
+      { label: "Services & aftercare", to: "/services" },
       { label: "Portfolio", to: "/bespoke-design" },
       { label: "Visit us", to: "/visit-us" },
       { label: "Contact", to: "/contact" },

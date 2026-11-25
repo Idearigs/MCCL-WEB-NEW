@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
+import GoogleReviewsV2 from "../components/home-v2/GoogleReviewsV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 import API_BASE_URL, { getMediaUrl } from "../config/api";
 import { useFavorites } from "../contexts/FavoritesContext";
@@ -476,6 +477,7 @@ const EngagementRingsV2 = (): JSX.Element => {
         </div>
       )}
 
+      <GoogleReviewsV2 />
       <FooterV2 />
 
     </div>

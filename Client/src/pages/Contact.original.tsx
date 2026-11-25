@@ -116,7 +116,7 @@ const Contact = (): JSX.Element => {
                     Opening Hours
                   </h3>
                   <p className="text-base font-cormorant text-gray-600 leading-relaxed">
-                    Monday–Saturday: 9:00am–5:30pm<br />
+                    Monday–Saturday: 9:30am–5:00pm<br />
                     Sunday: Closed
                   </p>
                 </div>

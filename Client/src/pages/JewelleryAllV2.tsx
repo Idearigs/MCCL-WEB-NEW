@@ -19,7 +19,7 @@ import { LISTING_CSS, GROUND, TILE, PAGE_X } from "../components/home-v2/listing
 const CATS = [
   { label: "Earrings", slug: "earrings", img: "/images/cat-earrings", note: "Weight matters more than size." },
   { label: "Necklaces", slug: "necklaces", img: "/images/cat-necklaces", note: "Measure the one you wear most." },
-  { label: "Bracelets", slug: "bracelets", img: "/images/cat-bracelets", note: "Two millimetres decides everything." },
+  { label: "Bracelets", slug: "bracelets", img: "/images/cat-bracelets", note: "Explore our carefully selected bracelets. For bespoke designs or personal preferences, please get in touch." },
 ] as const;
 type Slug = typeof CATS[number]["slug"];
 const SHELF = 4; // pieces shown from each category

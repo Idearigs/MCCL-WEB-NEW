@@ -288,7 +288,7 @@ const ThankYouV2 = (): JSX.Element => {
           <h2 className="ty-h2" style={{ marginTop: 16, fontSize: "clamp(26px, 2.6vw, 38px)" }}>The bench is a telephone call away.</h2>
           <div className="ty-ways">
             {[
-              { label: "Telephone", value: "0115 925 7552", note: "Mon to Sat, 9 to 5:30", href: "tel:01159257552" },
+              { label: "Telephone", value: "0115 925 7552", note: "Mon to Sat, 9:30 am to 5:00 pm", href: "tel:01159257552" },
               { label: "Email about this order", value: "has@mccullochjewellers.co.uk", note: order.orderNumber ? `Quote ${order.orderNumber}` : "We reply within one working day", href: "mailto:has@mccullochjewellers.co.uk" },
               { label: "Visit the showroom", value: "7 The Square, Beeston", note: "Nottingham NG9 2JG", href: "/visit-us" },
             ].map((r) => (

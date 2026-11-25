@@ -14,6 +14,7 @@ const AuthModal = lazy(() => import("../AuthModalV2"));
 import TrustBarV2 from "./TrustBarV2";
 import API_BASE_URL from "../../config/api";
 import { T, FONT_DISPLAY, FONT_LOGO, FONT_BODY } from "./tokens";
+import { SERVICES } from "../../content/services";
 
 /**
  * NavigationV2 — the homepage v2 header.
@@ -36,7 +37,7 @@ interface WatchBrand { id: string; name: string; slug: string; collections: Watc
 interface Column {
   title: string;
   titleTo?: string;
-  links: { label: string; to: string }[];
+  links: { label: string; to: string; note?: string }[];
   shopAll?: { label: string; to: string };
 }
 interface MenuContent {
@@ -199,6 +200,7 @@ const NAV_ITEMS = [
   { key: "watches", label: "Watches", to: "/watches", hasMenu: true },
   { key: "bespoke", label: "Bespoke", to: "/bespoke-design", hasMenu: false },
   { key: "story", label: "Our story", to: "/our-story", hasMenu: false },
+  { key: "services", label: "Services", to: "/services", hasMenu: true },
   // WordPress, not a shop route, so its links do a full page load (reloadDocument).
   { key: "journal", label: "Journal", to: "/blog/", hasMenu: false },
 ];
@@ -412,6 +414,14 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
         })),
         feature: { title: "New & pre-owned", to: "/watches", img: "/images/sample-watch.avif" },
       },
+      // Showroom services (owner's Services brief): each has its own page under /services.
+      services: {
+        columns: [
+          { title: "Care & repairs", links: SERVICES.pages.filter(x => ["jewellery-care-aftercare", "jewellery-repairs", "watch-repairs"].includes(x.slug)).map(x => ({ label: x.name, to: `/services/${x.slug}`, note: x.menuNote })) },
+          { title: "Remodelling & valuations", links: SERVICES.pages.filter(x => ["jewellery-remodelling", "jewellery-valuations", "pearl-restringing"].includes(x.slug)).map(x => ({ label: x.name, to: `/services/${x.slug}`, note: x.menuNote })) },
+        ],
+        feature: { title: "In our Beeston showroom", to: "/services", img: "/images/services-jeweller-700.webp" },
+      },
     };
   }, [navigationData, earringTypes, necklaceTypes, braceletTypes, watchBrands]);
 
@@ -464,7 +474,9 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
                         : <div className="v2nav-coltitle" style={{ border: 0, padding: 0, marginBottom: 12, color: T.muted }}>{col.title}</div>}
                       <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
                         {col.links.slice(0, 6).map((l, li) => (
-                          <Link key={li} to={l.to} className="v2nav-sublink" style={{ fontSize: 13, color: T.text, display: "flex", alignItems: "center", gap: 12 }}>{menuIcon(col.title, l.label)}<span style={{ whiteSpace: "nowrap" }}>{l.label.replace(/\bRed\b/, "Rose")}</span></Link>
+                          <Link key={li} to={l.to} className="v2nav-sublink" style={{ fontSize: 13, color: T.text, display: "flex", alignItems: "center", gap: 12 }}>{menuIcon(col.title, l.label)}{l.note
+                            ? <span style={{ display: "block", padding: "3px 0" }}><span style={{ display: "block", whiteSpace: "nowrap" }}>{l.label}</span><span style={{ display: "block", marginTop: 3, fontSize: 12, lineHeight: 1.45, color: T.muted }}>{l.note}</span></span>
+                            : <span style={{ whiteSpace: "nowrap" }}>{l.label.replace(/\bRed\b/, "Rose")}</span>}</Link>
                         ))}
                       </div>
                       {(col.shopAll || col.links.length > 6) && <Link to={(col.shopAll || { to: activeItem?.to || "/" }).to} className="v2nav-shopall" style={{ marginTop: 12 }}>{col.links.length > 6 ? `All ${col.links.length}` : "View all"}</Link>}
@@ -606,7 +618,7 @@ const NavigationV2 = ({ solid: forceSolid = false }: { solid?: boolean }): JSX.E
                         </button>
                         {isOpen && (
                           <div style={{ paddingBottom: 16, animation: "v2subIn 0.3s cubic-bezier(0.22,1,0.36,1)" }}>
-                            <Link to={item.to} onClick={() => setMobileOpen(false)} className="v2nav-shopall" style={{ marginTop: 0, marginBottom: 12 }}>Shop all {item.label.toLowerCase()}</Link>
+                            <Link to={item.to} onClick={() => setMobileOpen(false)} className="v2nav-shopall" style={{ marginTop: 0, marginBottom: 12 }}>{item.key === "services" ? "All services" : `Shop all ${item.label.toLowerCase()}`}</Link>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
                               {content.columns.flatMap(c => c.links).slice(0, 12).map((l, li) => (
                                 <Link key={li} to={l.to} onClick={() => setMobileOpen(false)} style={{ padding: "9px 0", fontSize: 13, color: T.muted }}>{l.label}</Link>

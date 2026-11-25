@@ -48,6 +48,7 @@ const OurStory          = lazy(() => import("./pages/OurStoryV2"));
 const BespokeDesign     = lazy(() => import("./pages/BespokeDesignV2"));
 const CustomerService   = lazy(() => import("./pages/CustomerService"));
 const InfoPage          = lazy(() => import("./pages/InfoPageV2"));
+const Services          = lazy(() => import("./pages/ServicesV2"));
 const Favorites         = lazy(() => import("./pages/Favorites"));
 const Account           = lazy(() => import("./pages/AccountV2"));
 const Orders            = lazy(() => import("./pages/Orders"));
@@ -171,6 +172,8 @@ const AppRoutes = () => {
       <Route path="/delivery" element={<InfoPage slug="delivery" />} />
       <Route path="/returns" element={<InfoPage slug="returns" />} />
       <Route path="/warranty" element={<InfoPage slug="warranty" />} />
+      <Route path="/services" element={<Services />} />
+      <Route path="/services/:slug" element={<Services />} />
       <Route path="/repairs" element={<InfoPage slug="repairs" />} />
       <Route path="/book-appointment" element={<InfoPage slug="book-appointment" />} />
       <Route path="/sustainability" element={<InfoPage slug="sustainability" />} />

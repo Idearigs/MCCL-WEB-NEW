@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
@@ -37,7 +37,12 @@ const DEPARTMENTS: { name: string; note: string; ext: string }[] = [
 const EMPTY = { name: "", phone: "", email: "", subject: "bespoke", message: "", newsletter: false };
 
 const ContactV2 = (): JSX.Element => {
-  const [form, setForm] = useState(EMPTY);
+  // ?subject=repairs (from the Services pages) opens the form on that subject.
+  const [params] = useSearchParams();
+  const [form, setForm] = useState(() => {
+    const want = params.get("subject");
+    return SUBJECTS.some(x => x.value === want) ? { ...EMPTY, subject: want as string } : EMPTY;
+  });
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -67,7 +72,7 @@ const ContactV2 = (): JSX.Element => {
   };
 
   const channels = [
-    { label: "Telephone", value: "0115 925 7552", note: "Mon to Sat, 9 to 5:30", href: "tel:01159257552" },
+    { label: "Telephone", value: "0115 925 7552", note: "Mon to Sat, 9:30 am to 5:00 pm", href: "tel:01159257552" },
     { label: "Email", value: "has@mccullochjewellers.co.uk", note: "We reply within one working day", href: "mailto:has@mccullochjewellers.co.uk" },
     { label: "In person", value: "7 The Square, Beeston", note: "Nottingham NG9 2JG", href: "/visit-us" },
   ];
@@ -236,13 +241,13 @@ const ContactV2 = (): JSX.Element => {
           </div>
           <div className="ct-block">
             <div className="ct-eyebrow" style={{ marginBottom: 10 }}>Opening hours</div>
-            <div className="ct-hours"><span>Monday to Saturday</span><span>9:00 to 5:30</span></div>
+            <div className="ct-hours"><span>Monday to Saturday</span><span>9:30 am to 5:00 pm</span></div>
             <div className="ct-hours" style={{ color: T.textMuted }}><span>Sunday</span><span>Closed</span></div>
           </div>
           <div className="ct-block">
             <div className="ct-eyebrow">Appointments</div>
-            <p className="ct-p" style={{ margin: "12px 0 16px" }}>Free, and about an hour. Bring a stone, a sketch or just an idea.</p>
-            <Link to="/book-appointment" className="ct-link">Book an appointment</Link>
+            <p className="ct-p" style={{ margin: "12px 0 16px" }}>Discover the art of bespoke jewellery through a private consultation with our expert jeweller, tailored to your individual vision.</p>
+            <Link to="/book-appointment" className="ct-link">Book a private consultation</Link>
           </div>
         </aside>
       </main>

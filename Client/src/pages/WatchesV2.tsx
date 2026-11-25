@@ -21,10 +21,11 @@ import { LISTING_CSS, GROUND, TILE, PAGE_SIZE, PAGE_X, BAR_TOP_CSS, M_BAR_TOP_CS
  * case size in that field.
  */
 
-export const HOUSES: { name: string; since: string; note: string; to: string; pick: RegExp }[] = [
-  { name: "Festina", since: "Spain, 1902", note: "Sports chronographs and clean everyday steel, at prices that do not ask you to think twice.", to: "/festina", pick: /timeless chrono/i },
-  { name: "Roamer", since: "Switzerland, 1888", note: "Swiss made, quietly traditional. Automatics and skeletons that read older than they are.", to: "/roamer", pick: /searock auto/i },
-  { name: "Briston", since: "France, 2013", note: "Acetate cases in colours nobody else is making. The one people ask about on the wrist.", to: "/briston", pick: /clubmaster classic/i },
+// title and points are the owner's brand cards on /watches (2026-11); since and note are used on the brand pages.
+export const HOUSES: { name: string; title: string; since: string; note: string; points: string[]; to: string; pick: RegExp }[] = [
+  { name: "Festina", title: "Festina", since: "Spain, 1902", note: "Sports chronographs and clean everyday steel, at prices that do not ask you to think twice.", points: ["Contemporary elegance since 1902", "Quartz & automatic", "Classic, contemporary, sports & chronograph watches", "2-year manufacturer's warranty"], to: "/festina", pick: /timeless chrono/i },
+  { name: "Roamer", title: "Roamer of Switzerland", since: "Switzerland, 1888", note: "Swiss made, quietly traditional. Automatics and skeletons that read older than they are.", points: ["Swiss craftsmanship since 1888", "Swiss quartz & automatic", "Classic, dress, sports & skeleton watches", "2-year warranty, extendable to 7 years upon registration"], to: "/roamer", pick: /searock auto/i },
+  { name: "Briston", title: "Briston", since: "France, 2013", note: "Acetate cases in colours nobody else is making. The one people ask about on the wrist.", points: ["French design with a British sporting spirit", "Quartz & automatic", "Sporty-chic, vintage-inspired, chronograph & diver watches", "2-year international warranty, extendable by 1 year upon authentication"], to: "/briston", pick: /clubmaster classic/i },
 ];
 const HOUSE_ORDER = HOUSES.map(h => h.name);
 // The three houses photograph differently: Roamer's watch sits small on a pale grey square,
@@ -308,11 +309,19 @@ const WatchesV2 = (): JSX.Element => {
       <style>{`
         .wt-img { transform: scale(var(--s, 1)); }
         .erv2-card:hover .wt-img, .wt-door:hover .wt-img { transform: scale(calc(var(--s, 1) * 1.035)); }
-        .wt-doors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; max-width: 1320px; margin: 0 auto; }
+        .wt-doors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 20px); max-width: 1320px; margin: 0 auto; }
         .wt-door { display: block; width: 100%; padding: 0; cursor: pointer; background: transparent; border: 0; font-family: ${FONT_BODY}; color: ${T.text}; text-align: center; }
         .wt-door-img { position: relative; aspect-ratio: 1 / 0.92; background: ${TILE}; overflow: hidden; }
         .wt-door-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 9%; transition: transform 0.7s cubic-bezier(0.22,1,0.36,1); }
-        .wt-door-name { display: block; margin-top: 22px; font-family: ${FONT_DISPLAY}; font-size: clamp(22px, 2.1vw, 29px); line-height: 1.15; }
+        .wt-houses-head { max-width: 780px; margin: 0 auto clamp(30px, 3.4vw, 50px); text-align: center; }
+        .wt-houses-head h2 { font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: clamp(24px, 2.6vw, 38px); line-height: 1.2; margin: 0 0 14px; color: ${T.text}; text-wrap: balance; }
+        .wt-houses-head p { margin: 0 auto; max-width: 62ch; font-size: 15.5px; line-height: 1.7; color: ${T.text}; text-wrap: pretty; }
+        .wt-houses-foot { max-width: 1320px; margin: clamp(22px, 2.4vw, 34px) auto 0; padding-top: 16px; border-top: 1px solid ${T.rule}; text-align: center; font-size: 13px; font-style: italic; line-height: 1.6; color: ${T.textMuted}; }
+        .wt-house { display: flex; flex-direction: column; background: ${TILE}; padding-bottom: clamp(22px, 2.2vw, 32px); }
+        .wt-door-name { display: block; margin-top: 18px; font-family: ${FONT_DISPLAY}; font-size: clamp(17px, 1.55vw, 22px); line-height: 1.2; letter-spacing: 0.16em; text-transform: uppercase; }
+        .wt-door-name::after { content: ""; display: block; width: 44px; height: 1px; margin: 14px auto 0; background: ${T.ruleStrong}; }
+        .wt-door-points { list-style: none; margin: 14px auto 14px; padding: 0 clamp(14px, 2vw, 30px); max-width: 40ch; font-size: 14px; line-height: 1.5; color: ${T.text}; text-align: center; }
+        .wt-door-points li + li { margin-top: 7px; }
         .wt-door-since { display: block; margin-top: 9px; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: ${T.textMuted}; }
         .wt-door-note { margin: 12px auto 0; max-width: 36ch; padding: 0 12px; font-size: 14px; line-height: 1.65; color: ${T.text}; }
         .wt-door-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 clamp(18px, 2vw, 30px); margin-top: 4px; }
@@ -327,10 +336,14 @@ const WatchesV2 = (): JSX.Element => {
           .wt-sub { display: none; }
           .wt-name { font-size: 13.5px !important; }
           .wt-doors { grid-template-columns: 1fr; gap: 0; border-top: 1px solid ${T.line}; }
-          .wt-house { display: grid; grid-template-columns: 104px minmax(0, 1fr); column-gap: 18px; align-items: center; padding: 14px 0; border-bottom: 1px solid ${T.line}; text-align: left; }
+          .wt-house { display: grid; grid-template-columns: 104px minmax(0, 1fr); column-gap: 18px; align-items: start; padding: 14px 0; border-bottom: 1px solid ${T.line}; text-align: left; background: transparent; }
           .wt-door { text-align: left; display: contents; }
           .wt-door-img { grid-row: 1 / span 3; aspect-ratio: 1 / 1.08; }
-          .wt-door-name { margin-top: 0; font-size: 22px; }
+          .wt-door-name { margin-top: 2px; font-size: 16px; }
+          .wt-door-name::after { margin: 10px 0 0; width: 32px; }
+          .wt-door-points { margin: 10px 0 10px; padding: 0; text-align: left; font-size: 13.5px; }
+          .wt-door-points li + li { margin-top: 4px; }
+          .wt-houses-foot { border-top: 0; padding-top: 0; }
           .wt-door-since { margin-top: 5px; }
           .wt-door-note { display: none; }
           .wt-door-links { justify-content: flex-start; margin-top: -4px; }
@@ -354,11 +367,15 @@ const WatchesV2 = (): JSX.Element => {
 
         <section className="erv2-head" style={{ padding: `0 ${PAGE_X} clamp(34px,3.8vw,56px)`, textAlign: "center" }}>
           <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: "clamp(28px, 3.2vw, 44px)", lineHeight: 1.15, margin: "0 0 16px", color: T.text }}>Watches</h1>
-          <p style={{ margin: "0 auto", maxWidth: "62ch", fontSize: 15.5, lineHeight: 1.7, color: T.text }}>We are an authorised retailer for Festina, Roamer and Briston. Every watch is delivered with its full manufacturer warranty, set up and regulated here before it leaves, and serviced at our own bench for as long as you own it.</p>
+          <p style={{ margin: "0 auto", maxWidth: "62ch", fontSize: 15.5, lineHeight: 1.7, color: T.text }}>As an authorised retailer of Festina, Roamer and Briston, we offer a carefully curated collection of timepieces that combine quality, craftsmanship and timeless style. Every watch is supplied with its full manufacturer's warranty.</p>
         </section>
 
-        {/* The three houses */}
-        <section aria-label="Our watch houses" style={{ padding: `0 ${PAGE_X} clamp(48px, 5vw, 80px)` }}>
+        {/* The three houses (owner's wording, 2026-11) */}
+        <section aria-labelledby="wt-houses-h" style={{ padding: `0 ${PAGE_X} clamp(48px, 5vw, 80px)` }}>
+          <div className="wt-houses-head">
+            <h2 id="wt-houses-h">Exceptional Timepieces. Distinctive Character.</h2>
+            <p>Discover our carefully selected collection of watches from three distinguished brands, each offering its own unique identity, craftsmanship and style.</p>
+          </div>
           <div className="wt-doors">
             {houses.map(h => (
               <div key={h.name} className="wt-house">
@@ -366,10 +383,9 @@ const WatchesV2 = (): JSX.Element => {
                   <span className="wt-door-img" style={{ display: "block" }}>
                     {h.image && <img src={getMediaUrl(h.image)} alt="" className="erv2-blend wt-img" style={photo({ brand: h.name })} loading="lazy" />}
                   </span>
-                  <span className="wt-door-name">{h.name}</span>
-                  <span className="wt-door-since">{h.since}</span>
+                  <span className="wt-door-name">{h.title}</span>
                 </button>
-                <p className="wt-door-note">{h.note}</p>
+                <ul className="wt-door-points">{h.points.map(t => <li key={t}>{t}</li>)}</ul>
                 <div className="wt-door-links">
                   <button type="button" className="erv2-textlink" data-house={h.name} onClick={() => openHouse(h.name)}>{loading ? "Shop watches" : `Shop ${h.count} ${noun(h.count)}`}</button>
                   <Link to={h.to} className="erv2-textlink wt-quiet">About {h.name}</Link>
@@ -377,6 +393,7 @@ const WatchesV2 = (): JSX.Element => {
               </div>
             ))}
           </div>
+          <p className="wt-houses-foot">All warranties are subject to each brand's terms and conditions. Movement types and styles shown reflect the wider collections.</p>
         </section>
 
         {/* Phone filter row: Filter on the left, the count in the middle, Sort on the right */}

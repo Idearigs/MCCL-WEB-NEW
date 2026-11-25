@@ -36,7 +36,7 @@ export const FooterSection = (): JSX.Element => {
     },
     {
       icon: <Clock className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />,
-      text: "Monday–Saturday: 9:00am–5:30pm"
+      text: "Monday–Saturday: 9:30am–5:00pm"
     },
     {
       icon: <Clock className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#8b7d65]" />,

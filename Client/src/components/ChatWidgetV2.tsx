@@ -15,7 +15,7 @@ import { T, FONT_DISPLAY, FONT_BODY } from "./home-v2/tokens";
  *
  * The chat id and its visitor token are kept in localStorage, so the conversation survives a
  * reload and follows the visitor around the site (the widget is mounted site-wide in App).
- * Presence is derived from opening hours (Mon-Sat 9-18) rather than always implying someone
+ * Presence is derived from opening hours (Mon-Sat 9:30-17:00, the shop's hours) rather than always implying someone
  * is online.
  */
 
@@ -51,7 +51,8 @@ const isOpenNow = () => {
   const n = new Date();
   const day = n.getDay(); // 0 Sun … 6 Sat
   const hr = n.getHours();
-  return day >= 1 && day <= 6 && hr >= 9 && hr < 18;
+  const mins = hr * 60 + n.getMinutes();
+  return day >= 1 && day <= 6 && mins >= 9 * 60 + 30 && mins < 17 * 60;
 };
 
 const fmtTime = (iso?: string) => {

@@ -1316,7 +1316,7 @@ export const INFO_PAGES: Record<string, InfoPage> = {
       {
         "heading": "Opening Hours",
         "paras": [
-          "Monday – Saturday: 9:00am – 5:30pm Sunday: Closed"
+          "Monday – Saturday: 9:30 am – 5:00 pm Sunday: Closed"
         ],
         "bullets": []
       }
@@ -1378,7 +1378,7 @@ export const INFO_PAGES: Record<string, InfoPage> = {
       {
         "heading": "Opening hours",
         "paras": [],
-        "bullets": ["Monday to Saturday: 9:00 – 5:30", "Sunday: closed"]
+        "bullets": ["Monday to Saturday: 9:30 am – 5:00 pm", "Sunday: closed"]
       },
       {
         "heading": "Appointments",

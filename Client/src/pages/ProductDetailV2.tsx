@@ -16,6 +16,7 @@ import DiamondHelpNudge from '../components/DiamondHelpNudge';
 // Redesign (Nov 2026): the listing pages' ground and tile, and the saved-pieces heart.
 import { GROUND, TILE } from '../components/home-v2/listingShared';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useGoogleRating } from '../components/home-v2/GoogleReviewsV2';
 
 /**
  * The primary product film.
@@ -343,6 +344,14 @@ const PD_CSS = `
   .pd-add { width: 100%; padding: 21px 24px; }
   .pd-btn2 { display: block; padding: 19px 24px; border: 1px solid ${T.ruleStrong}; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; color: ${T.text}; transition: border-color 0.2s ease; }
   .pd-btn2:hover { border-color: ${T.text}; }
+  .pd-rating { display: inline-flex; align-items: baseline; gap: 8px; margin-top: 30px; font-size: 13.5px; color: ${T.text}; border-bottom: 1px solid transparent; }
+  .pd-rating:hover { border-bottom-color: ${T.gold}; }
+  .pd-rating + .pd-actions { margin-top: 14px; }
+  .pd-reassure { list-style: none; margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid ${T.line}; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 20px; font-size: 13px; line-height: 1.45; color: ${T.text}; }
+  .pd-reassure li { position: relative; padding-left: 14px; }
+  .pd-reassure li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 5px; height: 5px; border-radius: 50%; background: ${T.gold}; }
+  .pd-reassure a { border-bottom: 1px solid ${T.ruleStrong}; }
+  .pd-reassure a:hover { border-bottom-color: ${T.gold}; }
   .pd-note { margin: 18px 0 0; font-size: 13.5px; line-height: 1.6; color: ${T.textMuted}; }
   .pd-note a { color: ${T.text}; border-bottom: 1px solid ${T.ruleStrong}; padding-bottom: 1px; white-space: nowrap; }
   .pd-sizemenu { display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; max-height: 296px; overflow-y: auto; z-index: 40; padding: 5px; background: #FFFFFF; border: 1px solid ${T.ruleStrong}; box-shadow: 0 18px 40px -18px rgba(51,47,42,0.28); scrollbar-width: thin; scrollbar-color: ${T.ruleStrong} transparent; }
@@ -548,6 +557,7 @@ const ProductDetail = () => {
   // Use global cart context
   const { addToCart } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites(); // redesign: save heart beside the title
+  const googleRating = useGoogleRating(); // live Google rating beside Add to bag, once set up
   const lightboxStep = useRef<(d: number) => void>();    // redesign: arrow keys in the enlarged view
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [playingTiles, setPlayingTiles] = useState<Record<number, boolean>>({});
@@ -1960,6 +1970,9 @@ const ProductDetail = () => {
               </section>
             )}
 
+            {googleRating && (
+              <a className="pd-rating" href={googleRating.url} target="_blank" rel="noopener noreferrer">{googleRating.rating} / 5 • Read our Google reviews</a>
+            )}
             <div className="pd-actions">
               <button type="button" onClick={handleAddToCart} disabled={isLoading} className="pd-btn pd-add" data-addbag>{isLoading ? 'Adding…' : 'Add to bag'}</button>
               <Link to="/book-appointment" className="pd-btn2">{isStock ? 'See it in the showroom' : 'Book an appointment'}</Link>
@@ -1968,6 +1981,15 @@ const ProductDetail = () => {
               {productData.is_live_stock ? 'In stock, usually dispatched within 2 to 3 working days.' : 'Made to order in our own workshop, up to 6 weeks.'} Free insured UK delivery.{isStock ? ' 30-day returns.' : ''}
               {isRingCat && <> <Link to="/ring-size-guide">Size guide</Link></>}
             </p>
+            {/* Reassurance near the purchase buttons (owner's Services brief, Nov 2026) */}
+            <ul className="pd-reassure" aria-label="Why buy from us">
+              <li>Five Generations of Expertise</li>
+              <li>Established UK Showroom</li>
+              <li>Expert Jewellery Craftsmanship</li>
+              <li><Link to="/services/jewellery-care-aftercare">Dedicated Aftercare</Link></li>
+              <li><Link to="/delivery">Insured UK Delivery</Link></li>
+              <li><Link to="/contact">Speak Directly with Our Jeweller</Link></li>
+            </ul>
 
             <div className="pd-accs">
               {[['delivery', 'Delivery information', productData.is_live_stock ? 'Free insured UK delivery. In stock and ready to ship, usually dispatched within 2 to 3 working days. 30-day returns.' : 'Free insured UK delivery. Made to order: please allow up to 6 weeks. Made-to-order pieces are not eligible for the 30-day return once work has begun.'], ['insurance', 'Complimentary insurance', 'Every piece includes complimentary insurance for the first year and a 1-year warranty.']].map(([key, title, body]) => (

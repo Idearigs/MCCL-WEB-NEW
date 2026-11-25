@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import API_BASE_URL, { getMediaUrl } from "../../config/api";
 import { T, FONT_DISPLAY, FONT_BODY, SP } from "./tokens";
 import JournalV2 from "./JournalV2";
+import GoogleReviewsV2, { useGoogleRating } from "./GoogleReviewsV2";
 import { useFavorites } from "../../contexts/FavoritesContext";
 import { useAfterLoad } from "../../hooks/use-after-load";
 
@@ -127,16 +128,10 @@ const eyebrow: React.CSSProperties = { fontSize: 12, letterSpacing: "0.2em", tex
 const h2Style: React.CSSProperties = { fontFamily: FONT_DISPLAY, fontWeight: 400, lineHeight: 1.2, margin: 0, color: T.text };
 const pageX = "clamp(24px, 3vw, 52px)";
 
-// Only published reviews are shown; with none, the quotes are left out (no stand-in quotes).
-interface Review { id: string; author_name: string; category?: string; body: string; created_at?: string; }
-
-// Where visitors can check the reviews for themselves: the shop on Google Maps.
-const GOOGLE_REVIEWS_URL = "https://www.google.com/maps/search/?api=1&query=McCulloch+Jewellers+7+The+Square+Beeston+Nottingham";
 
 const MainContentV2 = (): JSX.Element => {
   const [products, setProducts] = useState<Product[]>([]);
   const [watches, setWatches] = useState<Watch[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     // "Just off the bench" = most recently updated products (surfaces pieces
@@ -170,42 +165,13 @@ const MainContentV2 = (): JSX.Element => {
       fetch(`${API_BASE_URL}/watches?brand=${b}&in_stock=true&limit=2`).then(r => r.json()).then(d => (d.success && d.data?.watches) || []).catch(() => [])))
       .then(([ro, br, fe]) => setWatches([ro[0], br[0], fe[0], ro[1] || br[1] || fe[1]].filter(Boolean).slice(0, 4)))
       .catch(() => {});
-    fetch(`${API_BASE_URL}/reviews?featured=true&limit=3`)
-      .then(r => r.json())
-      .then(d => { if (d.success && d.data?.reviews?.length) setReviews(d.data.reviews.slice(0, 3)); })
-      .catch(() => {});
   }, []);
 
-  // Published featured reviews only. [body, author, category, date]
-  const quotes: [string, string, string, string][] = reviews.map(r => [
-    r.body, r.author_name, r.category || "",
-    r.created_at ? new Date(r.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "",
-  ]);
+  // The live Google rating, shown under the hero heading once Google has answered.
+  const google = useGoogleRating();
   const { isFavorite, toggleFavorite } = useFavorites();
   // Metal chosen per new-in card (swatches replace the old silent hover swap).
   const [cardMetal, setCardMetal] = useState<Record<string, string>>({});
-
-  // Slide the testimonials in when the section scrolls into view.
-  const quotesRef = useRef<HTMLDivElement>(null);
-  const [quotesIn, setQuotesIn] = useState(false);
-  const [activeQuote, setActiveQuote] = useState(0);
-  const onQuotesScroll = () => {
-    const el = quotesRef.current;
-    if (!el) return;
-    const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
-    setActiveQuote(i);
-  };
-  useEffect(() => {
-    const el = quotesRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setQuotesIn(true); io.disconnect(); } },
-      { threshold: 0.25 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-    // The quotes only render once reviews have loaded, so (re)attach when they arrive.
-  }, [reviews.length]);
 
   // Section entrances: mark each [.v2-reveal] / [.v2-stagger] element .is-in once, as it enters the viewport.
   const rootRef = useRef<HTMLDivElement>(null);
@@ -406,6 +372,11 @@ const MainContentV2 = (): JSX.Element => {
               <span className="v2-hero-in" style={{ display: "block", animationDelay: "0.45s" }}>A heritage of craftsmanship.</span>
               <span className="v2-hero-in" style={{ display: "block", animationDelay: "0.85s" }}>A lifetime of meaning.</span>
             </h1>
+            {google && (
+              <a href="#reviews" className="v2-hero-in v2-hero-rating" style={{ marginTop: "clamp(18px, 2.6vh, 26px)", pointerEvents: "auto", animationDelay: "1.15s", fontSize: 13, letterSpacing: "0.04em", color: "#F1EBDF" }}>
+                {google.rating} / 5{google.count != null ? ` • ${google.count.toLocaleString("en-GB")} Google reviews` : " • Google reviews"}
+              </a>
+            )}
             <div className="v2-hero-in" style={{ marginTop: "clamp(28px, 4.5vh, 48px)", pointerEvents: "auto", animationDelay: "1.5s" }}>
               <Link to="/rings?availability=live" className="v2-herolink" style={{ fontSize: 11.5, letterSpacing: "0.24em", textTransform: "uppercase", color: "#FFFFFF", paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.7)" }}>Discover the collection</Link>
             </div>
@@ -598,37 +569,6 @@ const MainContentV2 = (): JSX.Element => {
         </div>
       </section>
 
-      {/* 7. CLIENT WORDS — one review at a time, centred */}
-      <section className="v2-s-reviews" style={{ padding: `${SP} ${pageX} 0`, textAlign: "center" }}>
-        <div className="v2-stagger v2-rv-focus" style={{ maxWidth: 880, margin: "0 auto" }}>
-          <div className="v2-eyebrow" style={{ ...eyebrow, justifyContent: "center", marginBottom: 34 }}>What clients say</div>
-          {quotes.length > 0 && (
-            <>
-              <div style={{ display: "grid" }}>
-                {quotes.map(([q, name, cat2, date], i) => (
-                  <figure key={name + i} data-quote={i} style={{ gridArea: "1 / 1", margin: 0, opacity: activeQuote === i ? 1 : 0, visibility: activeQuote === i ? "visible" : "hidden", transition: "opacity 0.5s ease" }}>
-                    <blockquote style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: "clamp(19px, 1.9vw, 27px)", lineHeight: 1.42, color: T.text, textWrap: "balance" } as React.CSSProperties}>{q}</blockquote>
-                    <figcaption style={{ marginTop: 26, fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: T.textMuted }}>{name} · {cat2}{date ? ` · ${date}` : ""}</figcaption>
-                  </figure>
-                ))}
-              </div>
-              <div style={{ display: "flex", justifyContent: "center", marginTop: 18 }}>
-                {quotes.map(([, name], i) => (
-                  <button key={name + i} type="button" data-qdot={i} aria-label={`Show review ${i + 1}`} aria-current={activeQuote === i} onClick={() => setActiveQuote(i)}
-                    style={{ width: 44, height: 44, border: 0, padding: 0, cursor: "pointer", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ width: 26, height: activeQuote === i ? 2 : 1, background: T.text, opacity: activeQuote === i ? 1 : 0.35 }} />
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          <div style={{ display: "flex", justifyContent: "center", gap: "clamp(20px, 3vw, 40px)", flexWrap: "wrap", marginTop: 22 }}>
-            <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer" className="v2-textlink" style={{ color: T.text }}>Read our reviews on Google</a>
-            <Link to="/share-your-experience" className="v2-textlink" style={{ color: T.text }}>Share your experience</Link>
-          </div>
-        </div>
-      </section>
-
       {/* 8. JOURNAL — latest posts from the WordPress blog; hidden until there are any */}
       <JournalV2 pageX={pageX} h2Style={h2Style} />
 
@@ -639,7 +579,7 @@ const MainContentV2 = (): JSX.Element => {
             <div className="v2-eyebrow" style={{ ...eyebrow, marginBottom: 20 }}>Visit us</div>
             <h2 style={{ ...h2Style, fontSize: "clamp(23px, 2.2vw, 31px)", lineHeight: 1.22, marginBottom: 20 }}>Come and see them in daylight.</h2>
             <p style={{ maxWidth: "40ch", margin: 0, fontSize: 16, lineHeight: 1.7, color: T.text }}>Appointments are free and take about an hour. Walk-ins welcome whenever we are open.</p>
-            <p style={{ margin: "26px 0 0", fontSize: 15.5, lineHeight: 1.8, color: T.text }}>7 The Square, Beeston, Nottingham NG9 2JG<br />Monday to Saturday, 9 to 5:30</p>
+            <p style={{ margin: "26px 0 0", fontSize: 15.5, lineHeight: 1.8, color: T.text }}>7 The Square, Beeston, Nottingham NG9 2JG<br />Monday to Saturday, 9:30 am to 5:00 pm</p>
             <div className="v2-visitlinks" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "18px clamp(20px, 2.4vw, 34px)", marginTop: 34 }}>
               <Link to="/contact" className="v2-btn-ink v2-fullcta" style={{ padding: "15px 28px", background: T.ink, color: T.cream, fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase" }}>Book an appointment</Link>
               <a href="https://www.google.com/maps/dir/?api=1&destination=7+The+Square+Beeston+Nottingham+NG9+2JG" target="_blank" rel="noopener noreferrer" className="v2-textlink" style={{ color: T.text }}>Get directions</a>
@@ -671,6 +611,9 @@ const MainContentV2 = (): JSX.Element => {
           ))}
         </div>
       </section>
+
+      {/* 9c. CLIENT WORDS — the shop's Google reviews, just above the footer */}
+      <GoogleReviewsV2 />
 
       {/* 10. INSTAGRAM — hidden for now (uncomment to restore) */}
       {false && (

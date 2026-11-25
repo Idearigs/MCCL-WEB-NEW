@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
+import GoogleReviewsV2 from "../components/home-v2/GoogleReviewsV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 
 /**
@@ -339,7 +340,7 @@ const OurStoryV2 = (): JSX.Element => {
               </div>
               <div>
                 <div className="os-lab">Opening hours</div>
-                <div style={{ fontSize: 14.5, color: T.text, lineHeight: 1.6 }}>Mon to Sat, 9 to 5:30<br /><span style={{ color: T.textMuted }}>Sunday closed</span></div>
+                <div style={{ fontSize: 14.5, color: T.text, lineHeight: 1.6 }}>Mon to Sat, 9:30 am to 5:00 pm<br /><span style={{ color: T.textMuted }}>Sunday closed</span></div>
               </div>
             </div>
             <div className="os-actions" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "14px 30px", marginTop: 28 }}>
@@ -350,6 +351,7 @@ const OurStoryV2 = (): JSX.Element => {
         </div>
       </section>
 
+      <GoogleReviewsV2 />
       <FooterV2 />
     </div>
   );

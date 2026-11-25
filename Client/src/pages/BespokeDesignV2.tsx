@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
+import GoogleReviewsV2 from "../components/home-v2/GoogleReviewsV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
 import API_BASE_URL from "../config/api";
 
@@ -164,6 +165,10 @@ const BespokeDesignV2 = (): JSX.Element => {
         /* 1 — opening */
         .bsp-hero { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(32px, 5vw, 88px); align-items: center; padding-top: clamp(30px, 3.4vw, 52px); padding-bottom: clamp(64px, 7vw, 112px); }
         .bsp-crumb { display: flex; gap: 10px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: ${T.textMuted}; margin-bottom: clamp(28px, 4vw, 60px); }
+        .bsp-kicker { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: ${T.gold}; margin: 0 0 18px; }
+        .bsp-assure { list-style: none; margin: 30px 0 0; padding: 22px 0 0; border-top: 1px solid ${T.rule}; display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: 12px 36px; font-size: 13.5px; line-height: 1.4; color: ${T.text}; }
+        .bsp-assure li { position: relative; padding-left: 15px; }
+        .bsp-assure li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 5px; height: 5px; border-radius: 50%; background: ${T.gold}; }
         .bsp-h1 { font-family: ${FONT_DISPLAY}; font-weight: 400; font-size: clamp(34px, 3.9vw, 56px); line-height: 1.1; margin: 0; color: ${T.text}; text-wrap: balance; }
         .bsp-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 30px; margin-top: 30px; }
         .bsp-stage { position: relative; padding: 0 0 9% 13%; }
@@ -260,6 +265,7 @@ const BespokeDesignV2 = (): JSX.Element => {
           .bsp-sketch { left: 0; width: 36%; padding: 6px; }
           .bsp-filmnote { right: ${pageX}; bottom: calc(13% - 28px); }
           .bsp-actions .bsp-btn { width: 100%; }
+          .bsp-assure { grid-template-columns: 1fr; gap: 10px; }
           .bsp-stats { grid-template-columns: 1fr; max-width: 300px; }
           .bsp-stat { border-left: 0; border-top: 1px solid ${T.line}; padding: 20px 0; }
           .bsp-stat:first-child { border-top: 0; padding-top: 0; }
@@ -286,14 +292,21 @@ const BespokeDesignV2 = (): JSX.Element => {
       <section className="bsp-wrap bsp-hero">
         <div className="bsp-herotext v2-stagger">
           <div className="bsp-crumb"><Link to="/">Home</Link><span>/</span><span style={{ color: T.text }}>Bespoke</span></div>
-          <h1 className="bsp-h1">Nothing here yet. That is the point.</h1>
-          <p style={{ ...para, maxWidth: "44ch", marginTop: 22 }}>
-            A bespoke commission starts as a conversation and ends as the one piece no one else owns, designed with you and made on our bench in Beeston.
+          <div className="bsp-kicker">Bespoke jewellery</div>
+          <h1 className="bsp-h1">The Art of Creating Something Truly Yours.</h1>
+          <p style={{ ...para, maxWidth: "52ch", marginTop: 22 }}>
+            Discover the exceptional craftsmanship of a fifth-generation jeweller. From your initial inspiration to the finest finishing details, work directly with our expert jeweller to create a truly personal piece of jewellery, individually designed and crafted in our Beeston workshop.
           </p>
           <div className="bsp-actions">
-            <a href="#enquiry" onClick={goTo("enquiry")} data-goto="enquiry" className="bsp-btn">Start a commission</a>
-            <a href="#process" onClick={goTo("process")} data-goto="process" className="bsp-textlink">See how it works</a>
+            <a href="#enquiry" onClick={goTo("enquiry")} data-goto="enquiry" className="bsp-btn">Book a private consultation</a>
+            <a href="#process" onClick={goTo("process")} data-goto="process" className="bsp-textlink">Explore our bespoke process</a>
           </div>
+          <ul className="bsp-assure">
+            <li>Five Generations of Expertise</li>
+            <li>Exceptional Gemstones</li>
+            <li>Personal Design Consultations</li>
+            <li>In-House Craftsmanship</li>
+          </ul>
         </div>
         <div className="bsp-stage">
           <div className="bsp-film v2-reveal v2-rv-mask v2-reveal-d1">
@@ -488,6 +501,7 @@ const BespokeDesignV2 = (): JSX.Element => {
         </div>
       </section>
 
+      <GoogleReviewsV2 />
       <FooterV2 />
     </div>
   );

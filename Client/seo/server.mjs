@@ -90,6 +90,21 @@ function loadCategoryCopy() {
 }
 const CATEGORY_COPY = loadCategoryCopy();
 
+// Services & aftercare pages (src/content/services.ts → ServicesV2): /services and /services/:slug.
+const SERVICES_TS = process.env.SERVICES_TS || path.join(HERE, 'services.ts');
+function loadServices() {
+  try {
+    const src = fs.readFileSync(SERVICES_TS, 'utf8');
+    const start = src.indexOf('= {', src.indexOf('export const SERVICES')) + 2;
+    return JSON.parse(src.slice(start, src.indexOf('\n};', start) + 2));
+  } catch (e) {
+    console.error('[seo] services not loaded:', e.message);
+    return { landing: null, pages: [] };
+  }
+}
+const SERVICES = loadServices();
+const servicePage = (p) => { const m = p.match(/^\/services\/([a-z0-9-]+)$/); return m ? SERVICES.pages.find((x) => x.slug === m[1]) : null; };
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const xmlEsc = esc;
@@ -145,7 +160,7 @@ const STATIC = {
   '/roamer': { title: 'Roamer Watches — Swiss Made', desc: 'Roamer Swiss-made watches — automatic and quartz collections, available from McCulloch Jewellers.' },
   '/briston': { title: 'Briston Watches — Clubmaster & Streamliner', desc: 'Briston watches — Clubmaster, Streamliner and more, available from McCulloch Jewellers.' },
   '/festina': { title: 'Festina Watches', desc: 'Festina watches — chronographs, titanium and classic collections, available from McCulloch Jewellers.' },
-  '/bespoke-design': { title: 'Bespoke Jewellery Design', desc: 'Design your own engagement ring or piece of jewellery. Meet the person who will make it — we sketch, you choose the stone, and we make it by hand in our workshop.' },
+  '/bespoke-design': { title: 'Bespoke Jewellery Design in Nottingham', desc: 'Bespoke engagement rings and jewellery from a fifth-generation jeweller. Work directly with our expert jeweller to create a truly personal piece, designed and crafted in our Beeston workshop.' },
   '/our-story': { title: 'Our Story', desc: 'The family story behind McCulloch Jewellers — jewellers and goldsmiths in Beeston, Nottingham.' },
   '/contact': { title: 'Contact Us', desc: 'Contact McCulloch Jewellers — 7 The Square, Beeston, Nottingham NG9 2JG. Call 0115 925 7552 or send us a message.' },
   '/customer-service': { title: 'Customer Service', desc: 'Help with orders, delivery, returns, sizing, repairs and aftercare from McCulloch Jewellers.' },
@@ -215,7 +230,7 @@ const STORE = {
   telephone: '+44 115 925 7552',
   email: 'has@mccullochjewellers.co.uk',
   sameAs: ['https://www.instagram.com/andrewmccullochjewellers/', 'https://www.facebook.com/andrewmccullochjewellers/'],
-  openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], opens: '09:00', closes: '17:30' }],
+  openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], opens: '09:30', closes: '17:00' }],
   address: { '@type': 'PostalAddress', streetAddress: '7 The Square', addressLocality: 'Beeston', addressRegion: 'Nottingham', postalCode: 'NG9 2JG', addressCountry: 'GB' },
 };
 const crumbs = (items) => ({
@@ -235,6 +250,17 @@ async function resolve(pathname) {
 
   const alias = ALIASES[p];
   const key = alias || p;
+  if (key === '/services' && SERVICES.landing) {
+    return page({ title: `${SERVICES.landing.title} | ${BRAND}`, desc: SERVICES.landing.metaDesc, canonical: key, ld: [crumbs([['Home', '/'], ['Services', key]])] });
+  }
+  const svc = servicePage(key);
+  if (svc) {
+    return page({
+      title: `${svc.title} | ${BRAND}`, desc: svc.metaDesc, canonical: key,
+      ld: [crumbs([['Home', '/'], ['Services', '/services'], [svc.name, key]]),
+        { '@context': 'https://schema.org', '@type': 'Service', name: svc.name, serviceType: svc.name, description: svc.metaDesc, url: `${SITE}${key}`, areaServed: ['Beeston', 'Nottingham'], provider: { '@id': STORE['@id'] } }],
+    });
+  }
   if (STATIC[key]) {
     const s = STATIC[key];
     return page({ title: key === '/' ? s.title : `${s.title} | ${BRAND}`, desc: s.desc, canonical: key, ld: key === '/' ? [STORE] : [crumbs([['Home', '/'], [s.title.split(' — ')[0], key]])] });
@@ -457,6 +483,8 @@ async function buildSitemapNow() {
   add('/', '1.0');
   for (const k of Object.keys(STATIC)) add(k, '0.8');
   for (const k of Object.keys(INFO_ROUTES)) add(k, '0.4');
+  if (SERVICES.landing) add('/services', '0.7');
+  for (const x of SERVICES.pages) add(`/services/${x.slug}`, '0.6');
 
   const [prods, watches, colls, wedding] = await Promise.all([
     Promise.all(['engagement-rings', 'rings', 'earrings', 'necklaces', 'bracelets'].map((c) => api(`/products?category=${c}&limit=1000`, 60 * 60_000))),
@@ -497,10 +525,10 @@ async function buildSitemapNow() {
 // follow its links. React's createRoot replaces it on first render, so people see
 // the normal site; the inline style only shapes the moment before the app loads.
 const NAV = [['Engagement', '/engagement-rings'], ['Wedding', '/wedding-rings'], ['Jewellery', '/jewellery'], ['Watches', '/watches'],
-  ['Bespoke', '/bespoke-design'], ['Our story', '/our-story'], ['Journal', '/blog/']];
+  ['Bespoke', '/bespoke-design'], ['Our story', '/our-story'], ['Services', '/services'], ['Journal', '/blog/']];
 const FOOT = [
   ['Shop', [['Engagement rings', '/engagement-rings'], ['Wedding bands', '/wedding-rings'], ['Fine jewellery', '/jewellery'], ['Earrings', '/earrings'], ['Necklaces', '/necklaces'], ['Bracelets', '/bracelets'], ['Watches', '/watches'], ['All rings', '/rings']]],
-  ['Services', [['Bespoke design', '/bespoke-design'], ['Portfolio', '/portfolio'], ['Repairs & aftercare', '/repairs'], ['Book an appointment', '/book-appointment'], ['Visit us', '/visit-us'], ['Contact', '/contact']]],
+  ['Services', [['Bespoke design', '/bespoke-design'], ['Portfolio', '/portfolio'], ['Services & aftercare', '/services'], ['Repairs & aftercare', '/repairs'], ['Book an appointment', '/book-appointment'], ['Visit us', '/visit-us'], ['Contact', '/contact']]],
   ['Help', [['Delivery', '/delivery'], ['Returns & refunds', '/returns'], ['Warranty', '/warranty'], ['FAQs', '/faqs'], ['Customer service', '/customer-service']]],
   ['Guides', [['Ring size guide', '/ring-size-guide'], ['Diamond guide', '/diamond-guide'], ['Gemstone guide', '/gemstone-guide'], ['Birthstone guide', '/birthstone-guide'], ['Hallmark guide', '/hallmark-guide'], ['Jewellery care', '/jewellery-care']]],
   ['Company', [['Our story', '/our-story'], ['Sustainability', '/sustainability'], ['Certificates', '/certificate-of-authenticity'], ['Guarantees', '/trust-guarantees'], ['Journal', '/blog/'], ['Instagram', 'https://www.instagram.com/andrewmccullochjewellers/'], ['Facebook', 'https://www.facebook.com/andrewmccullochjewellers/']]],
@@ -620,6 +648,23 @@ async function bodyFor(pathname, head) {
   if (key === '/faqs' && INFO.faqs.length) {
     return `${crumbBar([['Home', '/'], ['FAQs', key]])}${h1('Frequently asked questions')}`
       + INFO.faqs.map((g) => `<h2>${esc(g.category)}</h2>${g.items.map((f) => `<h3>${esc(plain(f.q))}</h3><p>${esc(plain(f.a))}</p>`).join('')}`).join('') + storeBlock;
+  }
+
+  if (key === '/services' && SERVICES.landing) {
+    const L = SERVICES.landing;
+    return `${crumbBar([['Home', '/'], ['Services', key]])}${h1(L.heading)}${L.paras.map((t) => `<p>${esc(t)}</p>`).join('')}`
+      + `<h2>Our services</h2><ul>${SERVICES.pages.map((x) => `<li><a href="/services/${esc(x.slug)}">${esc(x.name)}</a> — ${esc(x.menuNote)}</li>`).join('')}<li><a href="/bespoke-design">Bespoke Jewellery</a></li></ul>`
+      + storeBlock;
+  }
+  const svcBody = servicePage(key);
+  if (svcBody) {
+    const x = svcBody;
+    return `${crumbBar([['Home', '/'], ['Services', '/services'], [x.name, key]])}${h1(x.h1)}${x.intro.map((t) => `<p>${esc(t)}</p>`).join('')}`
+      + `<h2>What we offer</h2><ul>${x.includes.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`
+      + x.sections.map((sec) => `<h2>${esc(sec.heading)}</h2>${sec.paras.map((t) => `<p>${esc(t)}</p>`).join('')}`).join('')
+      + `<p>This service is available through our Beeston showroom, not online. <a href="/contact">Make an enquiry</a> or call <a href="tel:+441159257552">0115 925 7552</a>.</p>`
+      + `<h2>More services</h2>${linkList(SERVICES.pages.filter((o) => o.slug !== x.slug).map((o) => [o.name, `/services/${o.slug}`]))}`
+      + storeBlock;
   }
 
   if (INFO_ROUTES[key]) {
