@@ -556,7 +556,7 @@ const money = (v) => { const n = num(v); return n ? `£${n.toLocaleString('en-GB
 // Copy → paragraphs (keeps the client's line breaks; strips any stray tags).
 const paras = (text) => String(text ?? '').replace(/<[^>]*>/g, ' ').split(/\n+/).map((l) => l.trim()).filter(Boolean).map((l) => `<p>${esc(l)}</p>`).join('');
 const linkList = (items) => `<ul class="ssr-links">${items.map(([t, h]) => `<li><a href="${esc(h)}">${esc(t)}</a></li>`).join('')}</ul>`;
-const cardList = (items) => `<ul class="ssr-grid">${items.map((c) => `<li><a href="${esc(c.href)}">${c.img ? `<img src="${esc(c.img)}" alt="${esc(c.name)}" loading="lazy" width="400" height="400">` : ''}<span>${esc(c.name)}</span>${c.price ? `<span>${esc(c.price)}</span>` : ''}</a></li>`).join('')}</ul>`;
+const cardList = (items) => `<ul class="ssr-grid">${items.map((c) => `<li><a href="${esc(c.href)}">${c.img ? `<img src="${esc(c.img)}" alt="${esc(c.name)}" loading="lazy" width="400" height="400">` : ''}<span>${esc(c.name)}</span>${c.price ? `<span>${esc(c.price)}</span>` : ''}${c.stock ? '<span>In stock</span>' : ''}</a></li>`).join('')}</ul>`;
 const crumbBar = (items) => `<nav class="ssr-crumbs" aria-label="Breadcrumb">${items.map(([t, h], i) => (i < items.length - 1 ? `<a href="${esc(h)}">${esc(t)}</a> / ` : esc(t))).join('')}</nav>`;
 const copyBlock = (key) => {
   const c = CATEGORY_COPY[key];
@@ -580,6 +580,7 @@ const productCard = (p) => ({
   name: p.name,
   price: p.price && /£/.test(p.price) ? p.price : money(p.sale_price || p.base_price),
   img: abs(p.image?.url || p.images?.[0]?.url || p.primary_image),
+  stock: !!p.is_live_stock,
 });
 async function categoryProducts(cats) {
   const lists = await Promise.all(cats.map((c) => api(`/products?category=${c}&limit=1000`, 60 * 60_000)));

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
+import InStockTag from "../components/home-v2/InStockTag";
 import API_BASE_URL, { getMediaUrl } from "../config/api";
 import { useFavorites } from "../contexts/FavoritesContext";
 import { LISTING_CSS, GROUND, TILE, PAGE_SIZE, PAGE_X, BAR_TOP_CSS, M_BAR_TOP_CSS, Chev, XICON, PillTick, useFilterPanel } from "../components/home-v2/listingShared";
@@ -335,6 +336,7 @@ const JewelleryListingV2 = ({ category }: { category: string }): JSX.Element => 
           {/* Jewellery names are long, so the price sits under the name rather than beside it */}
           <div className="jl-name" style={{ marginTop: 14, fontSize: 14.5, lineHeight: 1.45, color: T.text }}>{p.name}</div>
           <div style={{ marginTop: 5, fontSize: 14, color: T.textMuted }}>{from}{p.price}</div>
+          {inStock && <InStockTag />}
         </Link>
         <button type="button" className="erv2-save" aria-pressed={saved} aria-label={saved ? `Remove ${p.name} from saved` : `Save ${p.name}`}
           onClick={() => toggleFavorite(p.id, p.name, img ? getMediaUrl(img) : "", href)}

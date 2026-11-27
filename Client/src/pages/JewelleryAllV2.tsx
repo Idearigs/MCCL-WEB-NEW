@@ -3,6 +3,7 @@ import { Link, Navigate, useSearchParams } from "react-router-dom";
 import NavigationV2 from "../components/home-v2/NavigationV2";
 import FooterV2 from "../components/home-v2/FooterV2";
 import { T, FONT_DISPLAY, FONT_BODY } from "../components/home-v2/tokens";
+import InStockTag from "../components/home-v2/InStockTag";
 import API_BASE_URL, { getMediaUrl } from "../config/api";
 import { useFavorites } from "../contexts/FavoritesContext";
 import { LISTING_CSS, GROUND, TILE, PAGE_X } from "../components/home-v2/listingShared";
@@ -70,6 +71,7 @@ const JewelleryAllV2 = (): JSX.Element => {
           </div>
           <div className="ja-name" style={{ marginTop: 14, fontSize: 14.5, lineHeight: 1.45, color: T.text }}>{p.name}</div>
           <div style={{ marginTop: 5, fontSize: 14, color: T.textMuted }}>{from}{p.price}</div>
+          {p.is_live_stock && <InStockTag />}
         </Link>
         <button type="button" className="erv2-save" aria-pressed={saved} aria-label={saved ? `Remove ${p.name} from saved` : `Save ${p.name}`}
           onClick={() => toggleFavorite(p.id, p.name, img ? getMediaUrl(img) : "", href)}
